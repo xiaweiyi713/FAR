@@ -33,7 +33,7 @@ blind packet:
 
 ```bash
 export DEEPSEEK_API_KEY="<paste key here>"
-uv run falsirag-auto-annotate \
+uv run falsirag-auto-annotate generate \
   --packet-dir outputs/annotations \
   --output-dir outputs/deepseek_preannotations \
   --config experiments/configs/deepseek.yaml \
@@ -43,6 +43,19 @@ uv run falsirag-auto-annotate \
 The output is review aid only. It deliberately cannot satisfy the independent
 annotation, adjudication, or Cohen's kappa publication gates. See
 [`docs/AUTO_ANNOTATION.md`](AUTO_ANNOTATION.md).
+
+To create an editable human review draft from preannotations:
+
+```bash
+uv run falsirag-auto-annotate draft \
+  --packet-dir outputs/annotations \
+  --preannotation-dir outputs/deepseek_preannotations \
+  --output-dir outputs/deepseek_review_draft \
+  --reviewer-id annotator_a
+```
+
+The compiler rejects unreviewed machine drafts until `human_reviewed` is set to
+`true` by a human reviewer.
 
 ## Runs and resume
 

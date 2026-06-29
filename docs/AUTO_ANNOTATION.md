@@ -28,7 +28,7 @@ export DEEPSEEK_API_KEY="<paste key here>"
 Generate a small pilot before scaling:
 
 ```bash
-uv run falsirag-auto-annotate \
+uv run falsirag-auto-annotate generate \
   --packet-dir outputs/falsirag_annotation_packet \
   --output-dir outputs/deepseek_preannotations_pilot \
   --config experiments/configs/deepseek.yaml \
@@ -38,6 +38,32 @@ uv run falsirag-auto-annotate \
 ```
 
 If the pilot looks sane, remove `--limit` and run the full packet.
+
+For compatibility, `falsirag-auto-annotate --packet-dir ... --output-dir ...`
+also runs generate mode, but the explicit subcommand is clearer.
+
+## Creating a human review draft
+
+Convert the preannotations into a reviewer-editable draft:
+
+```bash
+uv run falsirag-auto-annotate draft \
+  --packet-dir outputs/falsirag_annotation_packet \
+  --preannotation-dir outputs/deepseek_preannotations_pilot \
+  --output-dir outputs/deepseek_review_draft \
+  --reviewer-id reviewer_a \
+  --overwrite
+```
+
+This creates `draft_annotations_reviewer_a.jsonl`. The rows are filled with LLM
+suggestions, but they include:
+
+- `draft_from_machine_preannotation: true`
+- `human_reviewed: false`
+
+`compile_annotations` rejects these rows until a human actually reviews the
+draft, corrects it as needed, and sets `human_reviewed` to `true`. This guard is
+intentional: a machine draft is a starting point, not an independent annotation.
 
 ## What the file means
 
@@ -63,7 +89,7 @@ same model biases as the FAR system being evaluated. Therefore:
 
 - `bench/manifest.json` remains `publication_ready: false`;
 - `compile_annotations` still requires completed annotation and adjudication
-  files;
+  files, and rejects unreviewed machine drafts;
 - the test split still requires an external blind custodian for final reporting.
 
 ## Open-source alternatives

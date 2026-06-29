@@ -10,6 +10,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from bench.annotations import PACKET_VERSION
 from bench.build.common import read_jsonl, sha256_file, write_json, write_jsonl
 from bench.schema import VALID_CONFLICT_TYPES, VALID_REVISION_ACTIONS
 from far.protocols import TextGenerator
@@ -187,15 +188,128 @@ def generate_preannotations(
     return result
 
 
+def build_review_draft(
+    packet_dir: Path,
+    preannotation_dir: Path,
+    output_dir: Path,
+    *,
+    reviewer_id: str,
+    overwrite: bool = False,
+) -> dict[str, Any]:
+    """Convert machine preannotations into a reviewer-editable draft file.
+
+    The draft is intentionally not referenced by ``packet_manifest.json`` and is
+    rejected by ``compile_annotations`` until a human sets ``human_reviewed`` to
+    true. This lets LLM suggestions accelerate review without silently becoming
+    independent human labels.
+    """
+
+    packet_manifest_path = packet_dir / "packet_manifest.json"
+    packet_sha256 = sha256_file(packet_manifest_path)
+    preannotation_manifest = json.loads(
+        (preannotation_dir / "preannotation_manifest.json").read_text(encoding="utf-8")
+    )
+    if preannotation_manifest.get("source_packet_sha256") != packet_sha256:
+        raise ValueError("preannotations do not match the current annotation packet")
+    preannotation_file = preannotation_dir / str(preannotation_manifest["preannotation_file"])
+    preannotation_rows = read_jsonl(preannotation_file)
+    if output_dir.exists():
+        if not overwrite:
+            raise FileExistsError(f"{output_dir} exists; pass --overwrite to replace it")
+        shutil.rmtree(output_dir)
+    output_dir.mkdir(parents=True)
+
+    draft_rows = []
+    for row in preannotation_rows:
+        suggestion = row["preannotation"]
+        present = bool(suggestion["conflict_present"])
+        conflict_type = "" if not present else str(suggestion["conflict_type"])
+        draft_rows.append(
+            {
+                "schema_version": PACKET_VERSION,
+                "sample_id": row["sample_id"],
+                "question": row["question"],
+                "initial_answer": row["initial_answer"],
+                "claims": row["claims"],
+                "evidence": row["evidence"],
+                "annotator_id": reviewer_id,
+                "annotation": {
+                    "conflict_present": present,
+                    "conflict_type": conflict_type,
+                    "revision_action": suggestion["revision_action"],
+                    "revised_answer_acceptable": bool(suggestion["revised_answer_acceptable"]),
+                    "rationale": (
+                        f"[MACHINE DRAFT — human must verify]\n{suggestion.get('rationale', '')}"
+                    ).strip(),
+                },
+                "suggested_revised_answer": suggestion.get("suggested_revised_answer", ""),
+                "machine_confidence": suggestion.get("confidence", 0.0),
+                "machine_preannotator_id": row.get("preannotator_id", ""),
+                "draft_from_machine_preannotation": True,
+                "human_reviewed": False,
+            }
+        )
+
+    filename = f"draft_annotations_{reviewer_id}.jsonl"
+    write_jsonl(output_dir / filename, draft_rows)
+    result = {
+        "schema_version": "falsirag-review-draft-v1",
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "source_packet_sha256": packet_sha256,
+        "source_preannotation_sha256": sha256_file(preannotation_file),
+        "reviewer_id": reviewer_id,
+        "draft_file": filename,
+        "samples": len(draft_rows),
+        "human_review_required": True,
+        "compile_guard": (
+            "compile_annotations rejects these rows while "
+            "draft_from_machine_preannotation=true and human_reviewed is false."
+        ),
+    }
+    write_json(output_dir / "review_draft_manifest.json", result)
+    return result
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--packet-dir", type=Path, required=True)
-    parser.add_argument("--output-dir", type=Path, required=True)
+    subparsers = parser.add_subparsers(dest="command")
+    generate_parser = subparsers.add_parser("generate")
+    generate_parser.add_argument("--packet-dir", type=Path, required=True)
+    generate_parser.add_argument("--output-dir", type=Path, required=True)
+    generate_parser.add_argument("--config", type=Path)
+    generate_parser.add_argument("--preannotator-id", default="llm_preannotator")
+    generate_parser.add_argument("--limit", type=int)
+    generate_parser.add_argument("--overwrite", action="store_true")
+    draft_parser = subparsers.add_parser("draft")
+    draft_parser.add_argument("--packet-dir", type=Path, required=True)
+    draft_parser.add_argument("--preannotation-dir", type=Path, required=True)
+    draft_parser.add_argument("--output-dir", type=Path, required=True)
+    draft_parser.add_argument("--reviewer-id", required=True)
+    draft_parser.add_argument("--overwrite", action="store_true")
+    # Backward-compatible direct mode from v0.1.0: no subcommand means generate.
+    parser.add_argument("--packet-dir", type=Path)
+    parser.add_argument("--output-dir", type=Path)
     parser.add_argument("--config", type=Path)
     parser.add_argument("--preannotator-id", default="llm_preannotator")
     parser.add_argument("--limit", type=int)
     parser.add_argument("--overwrite", action="store_true")
     args = parser.parse_args()
+
+    if args.command == "draft":
+        result = build_review_draft(
+            args.packet_dir,
+            args.preannotation_dir,
+            args.output_dir,
+            reviewer_id=args.reviewer_id,
+            overwrite=args.overwrite,
+        )
+        print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
+        return
+
+    packet_dir = args.packet_dir
+    output_dir = args.output_dir
+    if packet_dir is None or output_dir is None:
+        parser.error("generate mode requires --packet-dir and --output-dir")
 
     generator: TextGenerator | None = None
     model_name = ""
@@ -206,8 +320,8 @@ def main() -> None:
         generator = build_generator(config)
         model_name = str(config.get("llm", {}).get("model", ""))
     result = generate_preannotations(
-        args.packet_dir,
-        args.output_dir,
+        packet_dir,
+        output_dir,
         generator=generator,
         preannotator_id=args.preannotator_id,
         limit=args.limit,

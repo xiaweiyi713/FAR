@@ -64,7 +64,8 @@ three mean kappas; the values must be reported even when the gate fails.
 
 Machine preannotations can be generated with `falsirag-auto-annotate` to speed
 triage, but they remain `publication_gold: false` and cannot replace independent
-human annotation.
+human annotation. Reviewer draft files produced from preannotations are rejected
+by the compiler until a human explicitly marks them reviewed.
 
 ## Validation and retrieval viability
 

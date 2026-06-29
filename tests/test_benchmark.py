@@ -7,7 +7,7 @@ import pytest
 
 from bench.annotations import build_annotation_packet, cohen_kappa, compile_annotations
 from bench.build.audit_contamination import audit
-from bench.build.auto_annotate import generate_preannotations
+from bench.build.auto_annotate import build_review_draft, generate_preannotations
 from bench.build.extend_from_verabench import build
 from bench.build.import_fever_slice import import_slice
 from bench.build.validate_bench import validate
@@ -111,6 +111,53 @@ def test_llm_preannotation_fallback_stays_review_only(tmp_path: Path) -> None:
     row = json.loads((output / "preannotations_bad_llm.jsonl").read_text().splitlines()[0])
     assert row["preannotation"]["confidence"] == 0.0
     assert row["preannotation"]["needs_human_review"] is True
+
+
+def test_machine_review_draft_requires_explicit_human_review(tmp_path: Path) -> None:
+    class FakeGenerator:
+        def complete(self, prompt: str, **kwargs: object) -> str:
+            del prompt, kwargs
+            return json.dumps(
+                {
+                    "conflict_present": True,
+                    "conflict_type": "entity",
+                    "revision_action": "requalify_entity",
+                    "revised_answer_acceptable": False,
+                    "suggested_revised_answer": "Qualify the entity.",
+                    "rationale": "The entity in the answer differs from the evidence.",
+                    "confidence": 0.8,
+                }
+            )
+
+    packet = tmp_path / "packet"
+    build_annotation_packet(ROOT / "bench", packet, ["alice", "bob"])
+    preannotations = tmp_path / "preannotations"
+    generate_preannotations(
+        packet,
+        preannotations,
+        generator=FakeGenerator(),
+        preannotator_id="draft_source",
+        limit=1,
+    )
+    draft_dir = tmp_path / "draft"
+    manifest = build_review_draft(
+        packet,
+        preannotations,
+        draft_dir,
+        reviewer_id="alice",
+    )
+    assert manifest["human_review_required"] is True
+    draft_row = json.loads(
+        (draft_dir / "draft_annotations_alice.jsonl").read_text().splitlines()[0]
+    )
+    assert draft_row["draft_from_machine_preannotation"] is True
+    assert draft_row["human_reviewed"] is False
+
+    packet_manifest = json.loads((packet / "packet_manifest.json").read_text())
+    packet_manifest["annotation_files"]["alice"] = "../draft/draft_annotations_alice.jsonl"
+    (packet / "packet_manifest.json").write_text(json.dumps(packet_manifest), encoding="utf-8")
+    with pytest.raises(ValueError, match="human_reviewed=true"):
+        compile_annotations(ROOT / "bench", packet, tmp_path / "compiled")
 
 
 def test_cohen_kappa_handles_perfect_and_chance_adjusted_agreement() -> None:

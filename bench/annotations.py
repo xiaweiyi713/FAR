@@ -148,6 +148,10 @@ def cohen_kappa(left: list[str], right: list[str]) -> float:
 
 
 def _validated_annotation(row: dict[str, Any], field: str) -> dict[str, Any]:
+    if row.get("draft_from_machine_preannotation") and not row.get("human_reviewed"):
+        raise ValueError(
+            f"{row.get('sample_id')}: machine preannotation drafts require human_reviewed=true"
+        )
     annotation = row.get(field)
     if not isinstance(annotation, dict):
         raise ValueError(f"{row.get('sample_id')}: missing {field}")
