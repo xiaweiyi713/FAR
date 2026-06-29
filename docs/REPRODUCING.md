@@ -26,6 +26,24 @@ uv run python -m bench.build.annotate_packet compile \
 The compiler rejects missing labels, mismatched fingerprints, and incomplete
 adjudication. It reports three Cohen's kappa values without inventing them.
 
+## Automatic preannotation
+
+When humans are not yet available, generate non-gold LLM suggestions from a
+blind packet:
+
+```bash
+export DEEPSEEK_API_KEY="<paste key here>"
+uv run falsirag-auto-annotate \
+  --packet-dir outputs/annotations \
+  --output-dir outputs/deepseek_preannotations \
+  --config experiments/configs/deepseek.yaml \
+  --preannotator-id deepseek_chat_v1
+```
+
+The output is review aid only. It deliberately cannot satisfy the independent
+annotation, adjudication, or Cohen's kappa publication gates. See
+[`docs/AUTO_ANNOTATION.md`](AUTO_ANNOTATION.md).
+
 ## Runs and resume
 
 Use `experiments/configs/{deepseek,qwen_plus,qwen_open}.yaml`. API configs name

@@ -7,6 +7,7 @@ import pytest
 
 from bench.annotations import build_annotation_packet, cohen_kappa, compile_annotations
 from bench.build.audit_contamination import audit
+from bench.build.auto_annotate import generate_preannotations
 from bench.build.extend_from_verabench import build
 from bench.build.import_fever_slice import import_slice
 from bench.build.validate_bench import validate
@@ -49,6 +50,67 @@ def test_annotation_packet_hides_machine_labels_and_requires_completion(
     assert all(item["evidence_id"].startswith("EVIDENCE_") for item in first["evidence"])
     with pytest.raises(ValueError, match="conflict_present"):
         compile_annotations(ROOT / "bench", packet, tmp_path / "compiled")
+
+
+def test_llm_preannotations_are_non_gold_review_aids(tmp_path: Path) -> None:
+    class FakeGenerator:
+        def complete(self, prompt: str, **kwargs: object) -> str:
+            assert "expected_revision" not in prompt
+            assert "role-masked" in prompt
+            del kwargs
+            return json.dumps(
+                {
+                    "conflict_present": True,
+                    "conflict_type": "numerical",
+                    "revision_action": "replace_numerical",
+                    "revised_answer_acceptable": True,
+                    "suggested_revised_answer": "Use the evidence-backed number.",
+                    "rationale": "The evidence snippets contain a different number.",
+                    "confidence": 0.72,
+                }
+            )
+
+    packet = tmp_path / "packet"
+    build_annotation_packet(ROOT / "bench", packet, ["alice", "bob"])
+    output = tmp_path / "preannotations"
+    manifest = generate_preannotations(
+        packet,
+        output,
+        generator=FakeGenerator(),
+        preannotator_id="deepseek_dryrun",
+        limit=2,
+    )
+    assert manifest["publication_gold"] is False
+    assert manifest["can_satisfy_human_annotation_gate"] is False
+    rows = list(
+        map(json.loads, (output / "preannotations_deepseek_dryrun.jsonl").read_text().splitlines())
+    )
+    assert len(rows) == 2
+    assert rows[0]["publication_gold"] is False
+    assert rows[0]["preannotation"]["needs_human_review"] is True
+    assert rows[0]["preannotation"]["conflict_type"] == "numerical"
+
+
+def test_llm_preannotation_fallback_stays_review_only(tmp_path: Path) -> None:
+    class BadGenerator:
+        def complete(self, prompt: str, **kwargs: object) -> str:
+            del prompt, kwargs
+            return "not json"
+
+    packet = tmp_path / "packet"
+    build_annotation_packet(ROOT / "bench", packet, ["alice", "bob"])
+    output = tmp_path / "preannotations"
+    manifest = generate_preannotations(
+        packet,
+        output,
+        generator=BadGenerator(),
+        preannotator_id="bad_llm",
+        limit=1,
+    )
+    assert manifest["llm_failures"] == 1
+    row = json.loads((output / "preannotations_bad_llm.jsonl").read_text().splitlines()[0])
+    assert row["preannotation"]["confidence"] == 0.0
+    assert row["preannotation"]["needs_human_review"] is True
 
 
 def test_cohen_kappa_handles_perfect_and_chance_adjusted_agreement() -> None:

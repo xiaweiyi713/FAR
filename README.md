@@ -72,6 +72,7 @@ adjudication, reported Cohen's kappa, and an externally held blind test. See
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md): components and VeraRAG boundary
 - [`docs/REPRODUCING.md`](docs/REPRODUCING.md): benchmark, runs, resume, and paper
 - [`docs/EVALUATION.md`](docs/EVALUATION.md): metric and inference definitions
+- [`docs/AUTO_ANNOTATION.md`](docs/AUTO_ANNOTATION.md): DeepSeek/LLM preannotation workflow
 - [`docs/EXPERIMENT_PLAN.md`](docs/EXPERIMENT_PLAN.md): model/baseline/ablation matrix
 - [`docs/PROPOSAL_TRACEABILITY.md`](docs/PROPOSAL_TRACEABILITY.md): proposal-to-evidence audit
 - [`paper/main.tex`](paper/main.tex): anonymous AAAI-27 draft using the official kit

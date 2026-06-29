@@ -62,6 +62,10 @@ The compiler reports pairwise and mean Cohen's kappa for conflict presence,
 conflict type, and revision action. The promotion target is at least 0.60 on all
 three mean kappas; the values must be reported even when the gate fails.
 
+Machine preannotations can be generated with `falsirag-auto-annotate` to speed
+triage, but they remain `publication_gold: false` and cannot replace independent
+human annotation.
+
 ## Validation and retrieval viability
 
 The validator checks schema constraints, unique IDs, continuous or segmented
