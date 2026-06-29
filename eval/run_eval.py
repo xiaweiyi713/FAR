@@ -11,10 +11,73 @@ from bench.build.common import read_jsonl, sha256_file, write_json, write_jsonl
 from eval.metrics import PredictionRecord, aggregate_scores, score_sample
 from eval.stats import (
     dependency_cluster_bootstrap_ci,
+    dependency_cluster_typed_conflict_f1_ci,
     mcnemar_exact,
     paired_bootstrap_comparison,
+    paired_typed_conflict_f1_comparison,
     stratified_bootstrap_ci,
+    stratified_typed_conflict_f1_ci,
 )
+
+ROW_METRICS = (
+    "answer_correctness",
+    "answer_exact_match",
+    "unsupported_claim_rate",
+    "evidence_precision",
+    "evidence_recall",
+    "counter_evidence_recall",
+    "conflict_detected",
+    "typed_conflict_correct",
+    "revision_action_correct",
+    "revision_accuracy",
+    "overclaim_reduction",
+)
+
+BINARY_SUCCESS_METRICS = (
+    "answer_exact_match",
+    "conflict_detected",
+    "typed_conflict_correct",
+    "revision_action_correct",
+    "revision_accuracy",
+)
+
+
+def _validate_comparison_input(
+    baseline_scores_path: Path,
+    baseline_scores: list[dict[str, Any]],
+    candidate_scores: list[dict[str, Any]],
+    *,
+    benchmark_sha256: str,
+) -> tuple[str, str]:
+    if not baseline_scores:
+        raise ValueError("baseline score file must not be empty")
+    baseline_ids = [str(row["sample_id"]) for row in baseline_scores]
+    candidate_ids = [str(row["sample_id"]) for row in candidate_scores]
+    if len(set(baseline_ids)) != len(baseline_ids):
+        raise ValueError("baseline score file contains duplicate sample IDs")
+    if set(baseline_ids) != set(candidate_ids):
+        raise ValueError("baseline and candidate scores must contain identical sample IDs")
+    baseline_by_id = {str(row["sample_id"]): row for row in baseline_scores}
+    candidate_by_id = {str(row["sample_id"]): row for row in candidate_scores}
+    for sample_id in sorted(baseline_by_id):
+        for field in ("category", "split", "dependency_group"):
+            if baseline_by_id[sample_id].get(field) != candidate_by_id[sample_id].get(field):
+                raise ValueError(f"comparison metadata mismatch for {sample_id}: {field}")
+    baseline_methods = {str(row["method"]) for row in baseline_scores}
+    candidate_methods = {str(row["method"]) for row in candidate_scores}
+    if len(baseline_methods) != 1 or len(candidate_methods) != 1:
+        raise ValueError("comparison score files must each contain exactly one method")
+
+    baseline_report_path = baseline_scores_path.parent / "report.json"
+    if not baseline_report_path.exists():
+        raise ValueError("baseline scores require a sibling fingerprint-bound report.json")
+    baseline_report = json.loads(baseline_report_path.read_text(encoding="utf-8"))
+    provenance = baseline_report.get("provenance", {})
+    if provenance.get("scores_sha256") != sha256_file(baseline_scores_path):
+        raise ValueError("baseline report scores fingerprint mismatch")
+    if provenance.get("benchmark_sha256") != benchmark_sha256:
+        raise ValueError("baseline report was evaluated against a different benchmark")
+    return next(iter(baseline_methods)), next(iter(candidate_methods))
 
 
 def evaluate(
@@ -39,15 +102,6 @@ def evaluate(
         raise ValueError("one evaluation report may contain exactly one method")
     scores = [score_sample(samples[item.sample_id], item) for item in predictions]
     aggregate = aggregate_scores(scores)
-    interval_metrics = (
-        "answer_correctness",
-        "unsupported_claim_rate",
-        "evidence_precision",
-        "counter_evidence_recall",
-        "typed_conflict_correct",
-        "revision_accuracy",
-        "overclaim_reduction",
-    )
     intervals = {
         metric: stratified_bootstrap_ci(
             scores,
@@ -55,9 +109,14 @@ def evaluate(
             resamples=resamples,
             seed=seed,
         )
-        for metric in interval_metrics
+        for metric in ROW_METRICS
         if any(row.get(metric) is not None for row in scores)
     }
+    intervals["typed_conflict_f1"] = stratified_typed_conflict_f1_ci(
+        scores,
+        resamples=resamples,
+        seed=seed,
+    )
     dependency_intervals = {
         metric: dependency_cluster_bootstrap_ci(
             scores,
@@ -65,29 +124,65 @@ def evaluate(
             resamples=resamples,
             seed=seed,
         )
-        for metric in interval_metrics
+        for metric in ROW_METRICS
         if any(row.get(metric) is not None for row in scores)
     }
+    dependency_intervals["typed_conflict_f1"] = dependency_cluster_typed_conflict_f1_ci(
+        scores,
+        resamples=resamples,
+        seed=seed,
+    )
     comparison = None
     if baseline_scores_path is not None:
         baseline_scores = read_jsonl(baseline_scores_path)
-        comparison = {
+        benchmark_fingerprint = sha256_file(benchmark_path)
+        baseline_method, candidate_method = _validate_comparison_input(
+            baseline_scores_path,
+            baseline_scores,
+            scores,
+            benchmark_sha256=benchmark_fingerprint,
+        )
+        paired_metrics = {
             metric: paired_bootstrap_comparison(
                 baseline_scores,
                 scores,
                 metric,
                 resamples=resamples,
                 seed=seed,
+                higher_is_better=metric != "unsupported_claim_rate",
             )
-            for metric in ("answer_correctness", "revision_accuracy")
+            for metric in ROW_METRICS
+            if any(
+                baseline_row.get(metric) is not None and candidate_row.get(metric) is not None
+                for baseline_row, candidate_row in zip(
+                    sorted(baseline_scores, key=lambda row: str(row["sample_id"])),
+                    sorted(scores, key=lambda row: str(row["sample_id"])),
+                    strict=True,
+                )
+            )
         }
+        paired_metrics["typed_conflict_f1"] = paired_typed_conflict_f1_comparison(
+            baseline_scores,
+            scores,
+            resamples=resamples,
+            seed=seed,
+        )
         baseline_by_id = {row["sample_id"]: row for row in baseline_scores}
         score_by_id = {row["sample_id"]: row for row in scores}
         ordered_ids = sorted(score_by_id)
-        comparison["revision_accuracy_mcnemar"] = mcnemar_exact(
-            [bool(baseline_by_id[item]["revision_accuracy"]) for item in ordered_ids],
-            [bool(score_by_id[item]["revision_accuracy"]) for item in ordered_ids],
-        )
+        comparison = {
+            "baseline_method": baseline_method,
+            "candidate_method": candidate_method,
+            "baseline_scores_sha256": sha256_file(baseline_scores_path),
+            "metrics": paired_metrics,
+            "mcnemar": {
+                metric: mcnemar_exact(
+                    [bool(baseline_by_id[item][metric]) for item in ordered_ids],
+                    [bool(score_by_id[item][metric]) for item in ordered_ids],
+                )
+                for metric in BINARY_SUCCESS_METRICS
+            },
+        }
     output_dir.mkdir(parents=True, exist_ok=True)
     scores_path = output_dir / "scores.jsonl"
     write_jsonl(scores_path, scores)

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from unittest.mock import patch
 
@@ -59,6 +60,20 @@ def test_suite_runs_far_baseline_ablation_and_artifacts(tmp_path: Path) -> None:
     assert (tmp_path / "suite" / "suite_manifest.json").exists()
     assert (tmp_path / "suite" / "artifacts" / "main_results.csv").exists()
     assert (tmp_path / "suite" / "artifacts" / "ablation_results.csv").exists()
+    far_report = json.loads(
+        (tmp_path / "suite/evaluations/far/report.json").read_text(encoding="utf-8")
+    )
+    ablation_report = json.loads(
+        (tmp_path / "suite/evaluations/minus_typed_conflict/report.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert far_report["comparison"]["baseline_method"] == "vanilla_rag"
+    assert far_report["comparison"]["candidate_method"] == "far"
+    assert ablation_report["comparison"]["baseline_method"] == "far"
+    assert ablation_report["comparison"]["candidate_method"] == "far_minus_typed_conflict"
+    assert "typed_conflict_f1" in ablation_report["comparison"]["metrics"]
+    assert "typed_conflict_f1" in ablation_report["confidence_intervals"]
 
 
 def test_artifact_builder_explains_missing_eval_extra() -> None:

@@ -14,12 +14,16 @@ IDs, predicted conflict types, revision action, method name, and trace metadata.
   numerical values, reported only where defined.
 
 All primary means receive deterministic percentile bootstrap intervals,
-stratified by category (2,000 resamples, seed 1729). System comparisons use
-paired stratified bootstrap over aligned IDs. Binary revision success also uses
-the exact two-sided McNemar test. Source-document dependency-group sensitivity
-must accompany the final paper because 300 candidates are not 300 independent
-contexts.
+stratified by category (2,000 resamples, seed 1729). Typed conflict F1 is
+recomputed inside every resample rather than approximated by mean row accuracy.
+System comparisons use paired stratified bootstrap over aligned IDs: baselines
+are compared with Vanilla, while every component ablation is compared with full
+FAR. Binary answer, conflict, and revision outcomes also use exact two-sided
+McNemar tests. Source-document dependency-group sensitivity must accompany the
+final paper because 300 candidates are not 300 independent contexts.
 
 Do not compare reports with different benchmark, corpus, configuration, or
-implementation hashes. `experiments.validate_results` enforces prediction and
-evaluation provenance. Partial/demo reports are never publication evidence.
+implementation hashes. A paired report records both method names and the
+baseline score fingerprint, and rejects sample/category/split/dependency-group
+mismatches. `experiments.validate_results` enforces prediction and evaluation
+provenance. Partial/demo reports are never publication evidence.

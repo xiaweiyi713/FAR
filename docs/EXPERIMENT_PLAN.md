@@ -21,3 +21,8 @@ Go/no-go gates:
    central claim as a diagnostic or negative result; do not shop test prompts.
 5. Freeze code/config, transfer test gold to an independent custodian, then run
    test once. Report all failures and intervals.
+
+The suite binds comparison direction explicitly: FAR and other baselines are
+measured against Vanilla, and each `minus_*` report is measured against full
+FAR on identical sample IDs. Reports retain both method names and the baseline
+score fingerprint; comparison fails on benchmark or row-metadata mismatch.

@@ -75,7 +75,16 @@ def paired_bootstrap_comparison(
     resamples: int = 2000,
     confidence: float = 0.95,
     seed: int = 1729,
+    higher_is_better: bool = True,
 ) -> dict[str, Any]:
+    if resamples < 1:
+        raise ValueError("paired bootstrap requires at least one resample")
+    if not 0.0 < confidence < 1.0:
+        raise ValueError("confidence must be in (0, 1)")
+    if len({str(row["sample_id"]) for row in baseline_rows}) != len(baseline_rows):
+        raise ValueError("baseline rows contain duplicate sample IDs")
+    if len({str(row["sample_id"]) for row in candidate_rows}) != len(candidate_rows):
+        raise ValueError("candidate rows contain duplicate sample IDs")
     baseline = {str(row["sample_id"]): row for row in baseline_rows}
     candidate = {str(row["sample_id"]): row for row in candidate_rows}
     if set(baseline) != set(candidate):
@@ -112,11 +121,117 @@ def paired_bootstrap_comparison(
         "candidate_minus_baseline": observed,
         "lower": _percentile(differences, alpha),
         "upper": _percentile(differences, 1.0 - alpha),
-        "probability_improvement": sum(value > 0 for value in differences) / len(differences),
+        "higher_is_better": higher_is_better,
+        "probability_candidate_better": sum(
+            value > 0 if higher_is_better else value < 0 for value in differences
+        )
+        / len(differences),
         "confidence": confidence,
         "resamples": resamples,
         "seed": seed,
         "pairs": len(pairs),
+    }
+
+
+def _typed_conflict_f1(rows: list[dict[str, Any]]) -> float:
+    true_positives = sum(int(row["typed_conflict_correct"]) for row in rows)
+    predicted = sum(int(row["predicted_conflict_count"]) for row in rows)
+    gold = len(rows)
+    denominator = predicted + gold
+    return 2 * true_positives / denominator if denominator else 0.0
+
+
+def stratified_typed_conflict_f1_ci(
+    rows: list[dict[str, Any]],
+    *,
+    resamples: int = 2000,
+    confidence: float = 0.95,
+    seed: int = 1729,
+    strata_key: str = "category",
+) -> dict[str, Any]:
+    """Bootstrap the corpus-level typed conflict F1 rather than a row proxy."""
+
+    if not rows or resamples < 1:
+        raise ValueError("bootstrap requires rows and at least one resample")
+    if not 0.0 < confidence < 1.0:
+        raise ValueError("confidence must be in (0, 1)")
+    strata: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for row in rows:
+        strata[str(row[strata_key])].append(row)
+    rng = random.Random(seed)
+    estimates = []
+    for _ in range(resamples):
+        sampled = [
+            rng.choice(values) for _, values in sorted(strata.items()) for _ in range(len(values))
+        ]
+        estimates.append(_typed_conflict_f1(sampled))
+    alpha = (1.0 - confidence) / 2.0
+    return {
+        "method": "stratified-percentile-bootstrap-typed-f1-v1",
+        "metric": "typed_conflict_f1",
+        "estimate": _typed_conflict_f1(rows),
+        "lower": _percentile(estimates, alpha),
+        "upper": _percentile(estimates, 1.0 - alpha),
+        "confidence": confidence,
+        "resamples": resamples,
+        "seed": seed,
+        "strata": {key: len(values) for key, values in sorted(strata.items())},
+    }
+
+
+def paired_typed_conflict_f1_comparison(
+    baseline_rows: list[dict[str, Any]],
+    candidate_rows: list[dict[str, Any]],
+    *,
+    resamples: int = 2000,
+    confidence: float = 0.95,
+    seed: int = 1729,
+) -> dict[str, Any]:
+    """Paired stratified bootstrap for the nonlinear typed-conflict F1."""
+
+    if resamples < 1:
+        raise ValueError("paired bootstrap requires at least one resample")
+    if not 0.0 < confidence < 1.0:
+        raise ValueError("confidence must be in (0, 1)")
+    if len({str(row["sample_id"]) for row in baseline_rows}) != len(baseline_rows):
+        raise ValueError("baseline rows contain duplicate sample IDs")
+    if len({str(row["sample_id"]) for row in candidate_rows}) != len(candidate_rows):
+        raise ValueError("candidate rows contain duplicate sample IDs")
+    baseline = {str(row["sample_id"]): row for row in baseline_rows}
+    candidate = {str(row["sample_id"]): row for row in candidate_rows}
+    if set(baseline) != set(candidate) or not baseline:
+        raise ValueError("paired comparison requires identical non-empty sample IDs")
+    by_category: dict[str, list[tuple[dict[str, Any], dict[str, Any]]]] = defaultdict(list)
+    for sample_id in sorted(baseline):
+        by_category[str(candidate[sample_id]["category"])].append(
+            (baseline[sample_id], candidate[sample_id])
+        )
+    rng = random.Random(seed)
+    differences = []
+    for _ in range(resamples):
+        sampled_pairs = [
+            rng.choice(values)
+            for _, values in sorted(by_category.items())
+            for _ in range(len(values))
+        ]
+        differences.append(
+            _typed_conflict_f1([candidate_row for _, candidate_row in sampled_pairs])
+            - _typed_conflict_f1([baseline_row for baseline_row, _ in sampled_pairs])
+        )
+    observed = _typed_conflict_f1(candidate_rows) - _typed_conflict_f1(baseline_rows)
+    alpha = (1.0 - confidence) / 2.0
+    return {
+        "method": "paired-stratified-percentile-bootstrap-typed-f1-v1",
+        "metric": "typed_conflict_f1",
+        "candidate_minus_baseline": observed,
+        "lower": _percentile(differences, alpha),
+        "upper": _percentile(differences, 1.0 - alpha),
+        "higher_is_better": True,
+        "probability_candidate_better": sum(value > 0 for value in differences) / len(differences),
+        "confidence": confidence,
+        "resamples": resamples,
+        "seed": seed,
+        "pairs": len(baseline),
     }
 
 
@@ -183,6 +298,48 @@ def dependency_cluster_bootstrap_ci(
         "method": "source-dependency-cluster-bootstrap-v1",
         "metric": metric,
         "estimate": sum(observed) / len(observed),
+        "lower": _percentile(estimates, alpha),
+        "upper": _percentile(estimates, 1.0 - alpha),
+        "confidence": confidence,
+        "resamples": resamples,
+        "seed": seed,
+        "clusters": len(clusters),
+    }
+
+
+def dependency_cluster_typed_conflict_f1_ci(
+    rows: list[dict[str, Any]],
+    *,
+    resamples: int = 2000,
+    confidence: float = 0.95,
+    seed: int = 1729,
+    cluster_key: str = "dependency_group",
+) -> dict[str, Any]:
+    """Cluster-resample the nonlinear typed conflict F1 sensitivity interval."""
+
+    if not rows or resamples < 1:
+        raise ValueError("cluster bootstrap requires rows and at least one resample")
+    if not 0.0 < confidence < 1.0:
+        raise ValueError("confidence must be in (0, 1)")
+    clusters: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for row in rows:
+        cluster = row.get(cluster_key)
+        if cluster is not None:
+            clusters[str(cluster)].append(row)
+    if not clusters:
+        raise ValueError("typed_conflict_f1 has no clustered rows")
+    cluster_ids = sorted(clusters)
+    rng = random.Random(seed)
+    estimates = []
+    for _ in range(resamples):
+        sampled_ids = [rng.choice(cluster_ids) for _ in cluster_ids]
+        sampled = [row for cluster_id in sampled_ids for row in clusters[cluster_id]]
+        estimates.append(_typed_conflict_f1(sampled))
+    alpha = (1.0 - confidence) / 2.0
+    return {
+        "method": "source-dependency-cluster-bootstrap-typed-f1-v1",
+        "metric": "typed_conflict_f1",
+        "estimate": _typed_conflict_f1(rows),
         "lower": _percentile(estimates, alpha),
         "upper": _percentile(estimates, 1.0 - alpha),
         "confidence": confidence,

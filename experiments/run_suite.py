@@ -106,6 +106,7 @@ def run_suite(
         seed=seed,
     )
     reports["far"] = evaluations_dir / "far" / "report.json"
+    far_score_path = evaluations_dir / "far" / "scores.jsonl"
 
     baseline_score_path: Path | None = None
     if "vanilla_rag" in baselines:
@@ -153,7 +154,7 @@ def run_suite(
             evaluations_dir / ablation,
             resamples=resamples,
             seed=seed,
-            baseline_scores_path=baseline_score_path,
+            baseline_scores_path=far_score_path,
         )
         reports[ablation] = evaluations_dir / ablation / "report.json"
 

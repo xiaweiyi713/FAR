@@ -10,9 +10,12 @@ from baselines import (
 from eval.metrics import PredictionRecord, aggregate_scores, score_sample, soft_f1
 from eval.stats import (
     dependency_cluster_bootstrap_ci,
+    dependency_cluster_typed_conflict_f1_ci,
     mcnemar_exact,
     paired_bootstrap_comparison,
+    paired_typed_conflict_f1_comparison,
     stratified_bootstrap_ci,
+    stratified_typed_conflict_f1_ci,
 )
 from experiments.ablations import build_ablation
 from far.adapters import HeuristicConflictDetector, InMemoryRetriever
@@ -96,6 +99,16 @@ def test_statistics_are_deterministic_and_paired() -> None:
         seed=7,
     )
     assert comparison["candidate_minus_baseline"] == 1.0
+    assert comparison["probability_candidate_better"] == 1.0
+    lower_is_better = paired_bootstrap_comparison(
+        baseline,
+        candidate,
+        "score",
+        resamples=100,
+        seed=7,
+        higher_is_better=False,
+    )
+    assert lower_is_better["probability_candidate_better"] == 0.0
     exact = mcnemar_exact([False] * 6, [True] * 6)
     assert exact["candidate_only"] == 6
     assert exact["p_value"] == 0.03125
@@ -108,6 +121,36 @@ def test_statistics_are_deterministic_and_paired() -> None:
         resamples=50,
         seed=7,
     )
+    assert clustered["clusters"] == 2
+
+
+def test_typed_conflict_f1_is_recomputed_within_resamples() -> None:
+    baseline = [
+        {
+            "sample_id": f"F{index}",
+            "category": "a" if index < 2 else "b",
+            "dependency_group": f"g{index // 2}",
+            "typed_conflict_correct": 0.0,
+            "predicted_conflict_count": 1,
+        }
+        for index in range(4)
+    ]
+    candidate = [{**row, "typed_conflict_correct": 1.0} for row in baseline]
+    interval = stratified_typed_conflict_f1_ci(candidate, resamples=30, seed=9)
+    assert interval["estimate"] == 1.0
+    paired = paired_typed_conflict_f1_comparison(
+        baseline,
+        candidate,
+        resamples=30,
+        seed=9,
+    )
+    assert paired["candidate_minus_baseline"] == 1.0
+    clustered = dependency_cluster_typed_conflict_f1_ci(
+        candidate,
+        resamples=30,
+        seed=9,
+    )
+    assert clustered["estimate"] == 1.0
     assert clustered["clusters"] == 2
 
 
