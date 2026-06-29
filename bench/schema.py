@@ -22,6 +22,7 @@ class AnnotationStatus(str, Enum):
 
 
 VALID_SPLITS = {"train", "dev", "test"}
+BLIND_TEST_ALLOWED_FIELDS = {"id", "category", "split", "question", "initial_answer"}
 VALID_CLAIM_TYPES = {
     "factual",
     "numerical",

@@ -113,6 +113,42 @@ Omit the repeated `--baseline` and `--ablation` flags to run all five baselines
 and all four FAR ablations. Use `--limit` only for diagnostic smoke runs; suite
 manifests and built artifacts then remain marked `diagnostic_only`.
 
+## Externally held blind test
+
+Do not run the ordinary scored suite against local test gold. Before the one
+authorized final test, create a fresh gold-free handoff directory:
+
+```bash
+uv run falsirag-build-blind-bundle \
+  --data-dir bench \
+  --output-dir outputs/handoff/falsirag_blind_test
+```
+
+The command writes only a sanitized corpus, the five-field test inputs, and a
+fingerprint manifest. It strips construction metadata and dependency IDs and
+refuses a non-empty output directory, preventing stale gold files from being
+left in the handoff. Transfer that directory, the frozen config, code commit,
+and environment lock to the external custodian. The custodian runs predictions
+once, without receiving `falsirag_bench.jsonl`:
+
+```bash
+falsirag-suite \
+  --config experiments/configs/deepseek.yaml \
+  --data-dir /path/to/falsirag_blind_test \
+  --output-dir /path/to/returned/deepseek_test \
+  --split test --allow-test \
+  --ablation full
+```
+
+In test mode the suite never evaluates or builds figures. It emits
+`far-blind-suite-manifest-v1` with `unscored: true`, `gold_loaded: false`, the
+input/corpus hashes, and prediction hashes. The trusted scorer then evaluates
+the returned `predictions.jsonl` files against the frozen adjudicated benchmark
+using `falsirag-eval`; run Vanilla first and pass its `scores.jsonl` as
+`--baseline-scores` for paired reports. The external custodian and genuine
+one-shot execution remain human governance gates even though the data path is
+now technically separated.
+
 For targeted debugging, run individual components:
 
 ```bash

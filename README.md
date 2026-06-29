@@ -44,6 +44,11 @@ The `test` split is rejected unless `--allow-test` is supplied. Limited runs are
 marked `partial`, and any tables/figures built from them are marked
 `diagnostic_only`.
 
+For final test execution, first use `falsirag-build-blind-bundle`; test runners
+then consume only sanitized operational inputs and emit unscored prediction
+manifests. They do not load local gold or build result artifacts. The trusted
+scoring handoff is documented in `docs/REPRODUCING.md`.
+
 ## Method outputs
 
 `FARPipeline.run(question, initial_answer)` returns:

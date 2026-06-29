@@ -20,9 +20,12 @@ client; concrete BM25, dense, FAISS, hybrid RRF, and CrossEncoder-reranked
 retrieval builders; and the layered conflict graph. Hybrid runs fail if VeraRAG
 silently loses its dense component unless a diagnostic config explicitly sets
 `allow_dense_fallback: true`. Import failures give installation guidance. No
-benchmark gold metadata is read by normal detectors or runners; oracle metadata
-exists only behind an explicit test/demo flag.
+benchmark gold metadata is read by normal detectors. Train/dev runners use the
+research archive, but test runners exclusively parse the five-field operational
+`test_inputs.jsonl`; they can run from a gold-free bundle in which construction
+metadata and source dependency IDs are also removed. Oracle evidence metadata
+exists only behind an explicit test/demo detector flag.
 
-Experiment runners hash configuration, benchmark, corpus, and all Python
-implementation files. Checkpoints are append-only and fsynced per sample.
-Resumption is allowed only when the run signature matches exactly.
+Experiment runners hash configuration, the split-specific operational input,
+corpus, and all Python implementation files. Checkpoints are append-only and
+fsynced per sample. Resumption is allowed only when the signature matches.

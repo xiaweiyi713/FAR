@@ -13,6 +13,7 @@ from bench.build.auto_annotate import (
     generate_preannotations,
     import_label_studio,
 )
+from bench.build.build_blind_bundle import build as build_blind_bundle
 from bench.build.extend_from_verabench import build
 from bench.build.import_fever_slice import import_slice
 from bench.build.validate_bench import validate
@@ -34,6 +35,31 @@ def test_tracked_benchmark_is_balanced_traceable_and_retrievable() -> None:
         "multi_source_conflict": 60,
     }
     assert report["counter_evidence_retrieval"]["recall"] >= 0.8
+
+
+def test_blind_bundle_contains_only_operational_inputs(tmp_path: Path) -> None:
+    output_dir = tmp_path / "blind"
+    manifest = build_blind_bundle(ROOT / "bench", output_dir)
+    assert manifest["gold_included"] is False
+    assert manifest["samples"] == 58
+    assert set(path.relative_to(output_dir).as_posix() for path in output_dir.rglob("*")) == {
+        "blind_bundle_manifest.json",
+        "corpus.jsonl",
+        "splits",
+        "splits/test_inputs.jsonl",
+    }
+    rows = [
+        json.loads(line)
+        for line in (output_dir / "splits/test_inputs.jsonl").read_text().splitlines()
+    ]
+    assert all(
+        set(row) == {"id", "category", "split", "question", "initial_answer"} for row in rows
+    )
+    corpus_rows = [
+        json.loads(line) for line in (output_dir / "corpus.jsonl").read_text().splitlines()
+    ]
+    assert all("metadata" not in row and "source_doc_id" not in row for row in corpus_rows)
+    assert all(set(row) <= set(manifest["public_corpus_fields"]) for row in corpus_rows)
 
 
 @pytest.mark.skipif(not VERA_BENCH.exists(), reason="local VeraRAG fixture unavailable")

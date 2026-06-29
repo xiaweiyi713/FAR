@@ -41,9 +41,13 @@ dev, and 58 test candidates. No source-document dependency group crosses a
 split. `splits/test_inputs.jsonl` omits claims, counter-evidence roles, conflict
 labels, expected revisions, and source-generation metadata.
 
-The test gold remains in the full local research archive, so this is a frozen
-held-out protocol rather than a cryptographically blind benchmark. Publication
-claims require an externally held test copy or independent evaluator.
+The test gold remains in the full local research archive. The
+`falsirag-build-blind-bundle` command creates a separate handoff containing a
+sanitized corpus and operational inputs only; test runners can execute entirely
+from that directory and emit unscored predictions. This technical separation
+does not itself create organizational blindness: publication claims still
+require an external custodian/independent evaluator and a documented one-shot
+handoff.
 
 ## Annotation
 

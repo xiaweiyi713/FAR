@@ -69,3 +69,10 @@ def build_artifacts_main() -> None:
     from experiments.build_artifacts import main
 
     main()
+
+
+def build_blind_bundle_main() -> None:
+    _prefer_far_repo()
+    from bench.build.build_blind_bundle import main
+
+    main()

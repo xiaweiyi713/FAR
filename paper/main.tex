@@ -79,7 +79,7 @@ Multi-source conflict & 60 \\
 \label{tab:data}
 \end{table}
 
-The current build derives evidence-backed candidates from VeraBench v1.1.2, with controlled perturbations and explicitly marked synthetic causal-boundary or low-reliability passages. It contains 175 documents, including 120 controlled synthetic documents. A source-document dependency group is assigned wholly to train, development, or test; the realization is 182/60/58 and has zero group leakage. The operational test view hides gold fields, although genuine blindness still requires an external custodian.
+The current build derives evidence-backed candidates from VeraBench v1.1.2, with controlled perturbations and explicitly marked synthetic causal-boundary or low-reliability passages. It contains 175 documents, including 120 controlled synthetic documents. A source-document dependency group is assigned wholly to train, development, or test; the realization is 182/60/58 and has zero group leakage. A bundle builder emits only five-field test inputs and a sanitized corpus without construction or dependency metadata. Test runners can execute from this gold-free bundle and emit unscored, fingerprinted predictions; genuine organizational blindness and one-shot execution still require an external custodian.
 
 All 300 labels are \texttt{machine\_seeded}. Two independent annotators must label conflict presence/type, revision action, and answer acceptability before adjudication. Promotion requires complete adjudication and reported Cohen's $\kappa$ for conflict presence, type, and action. The current construction check obtains 0.93 lexical counter-evidence recall@10 when pooling all three query families. This only verifies that counter-evidence is retrievable; it is not a FAR performance result.
 

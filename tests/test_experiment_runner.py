@@ -6,6 +6,7 @@ from unittest.mock import patch
 
 import pytest
 
+from bench.build.build_blind_bundle import build as build_blind_bundle
 from eval.run_eval import evaluate
 from experiments.build_artifacts import _load_plotting_backend
 from experiments.run_far import run
@@ -74,6 +75,33 @@ def test_suite_runs_far_baseline_ablation_and_artifacts(tmp_path: Path) -> None:
     assert ablation_report["comparison"]["candidate_method"] == "far_minus_typed_conflict"
     assert "typed_conflict_f1" in ablation_report["comparison"]["metrics"]
     assert "typed_conflict_f1" in ablation_report["confidence_intervals"]
+
+
+def test_blind_test_suite_runs_without_loading_or_scoring_gold(tmp_path: Path) -> None:
+    data_dir = tmp_path / "blind-data"
+    build_blind_bundle(ROOT / "bench", data_dir)
+    output_dir = tmp_path / "blind-suite"
+    manifest = run_suite(
+        ROOT / "experiments/configs/offline_smoke.yaml",
+        data_dir,
+        output_dir,
+        split="test",
+        limit=5,
+        allow_test=True,
+        baselines=("vanilla_rag",),
+        ablations=(),
+        resamples=20,
+    )
+    assert manifest["schema_version"] == "far-blind-suite-manifest-v1"
+    assert manifest["unscored"] is True
+    assert manifest["gold_loaded"] is False
+    assert manifest["methods"] == ["far", "vanilla_rag"]
+    assert not (data_dir / "falsirag_bench.jsonl").exists()
+    assert not (output_dir / "evaluations").exists()
+    assert not (output_dir / "artifacts").exists()
+    identity = json.loads((output_dir / "runs/far/run_identity.json").read_text(encoding="utf-8"))
+    assert identity["benchmark_input"] == "splits/test_inputs.jsonl"
+    assert identity["schema_version"] == "far-run-signature-v2"
 
 
 def test_artifact_builder_explains_missing_eval_extra() -> None:

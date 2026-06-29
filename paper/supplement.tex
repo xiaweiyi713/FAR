@@ -19,16 +19,17 @@
 \section{Schema and Promotion Contract}
 We provide the full machine-readable schema, deterministic build scripts,
 source/corpus fingerprints, source-document-group split manifest, and masked
-test inputs. Machine seeds are never considered publication gold. Promotion
+test inputs. A handoff command writes a gold-free directory containing only a
+sanitized corpus, five-field operational test rows, and fingerprints. Test
+runners do not evaluate this directory; they return unscored predictions to a
+trusted scorer. Machine seeds are never considered publication gold. Promotion
 requires two independent complete annotation files, adjudication of all items,
-and reported agreement for conflict presence, conflict type, and revision
-action. The compiler preserves a false publication-readiness flag until an
-externally held blind test is established.
+reported agreement, and externally governed one-shot test execution.
 
 \section{Implementation and Failure Handling}
-Every run signature covers YAML configuration, benchmark, corpus, and Python
-implementation hashes. A checkpoint is flushed and synchronized after each
-sample. Resume rejects signature drift. Structured LLM decomposition and query
+Every run signature covers YAML configuration, split-specific operational
+input, corpus, and Python implementation hashes. A checkpoint is flushed and
+synchronized after each sample. Resume rejects signature drift. Structured LLM decomposition and query
 generation are schema-validated and fall back only for malformed content;
 provider failures remain errors. The typed revision policy is deterministic;
 the model may realize, but not replace, its selected action.

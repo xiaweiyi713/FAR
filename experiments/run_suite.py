@@ -97,6 +97,38 @@ def run_suite(
     for manifest in baseline_manifests:
         run_manifests[str(manifest["method"])] = manifest
 
+    if far_manifest["split"] == "test":
+        blind_input_path = data_dir / "splits" / "test_inputs.jsonl"
+        manifest = {
+            "schema_version": "far-blind-suite-manifest-v1",
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "config": str(config_path),
+            "config_sha256": sha256_file(config_path),
+            "blind_input_sha256": sha256_file(blind_input_path),
+            "corpus_sha256": sha256_file(data_dir / "corpus.jsonl"),
+            "split": "test",
+            "limit": limit,
+            "allow_test": allow_test,
+            "unscored": True,
+            "gold_loaded": False,
+            "diagnostic_only": limit is not None,
+            "methods": sorted(run_manifests),
+            "run_manifests": {
+                label: {
+                    "method": run_manifest["method"],
+                    "run_signature": run_manifest["run_signature"],
+                    "predictions_sha256": run_manifest["predictions_sha256"],
+                    "completed": run_manifest["completed"],
+                    "partial": run_manifest["partial"],
+                }
+                for label, run_manifest in sorted(run_manifests.items())
+            },
+            "reports": {},
+            "artifact_manifest": None,
+        }
+        write_json(output_dir / "suite_manifest.json", manifest)
+        return manifest
+
     reports: dict[str, Path] = {}
     far_report = _evaluate_and_validate(
         benchmark_path,

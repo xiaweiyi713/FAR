@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Any
 
 from bench.build.common import read_jsonl, sha256_file, write_json
-from bench.schema import CorpusDocument, FalsiRAGSample
+from bench.schema import BLIND_TEST_ALLOWED_FIELDS, CorpusDocument, FalsiRAGSample
 from far.adapters import InMemoryRetriever
 from far.claims import ClaimNode, ClaimType
 from far.counterfactual import TypedQueryGenerator
@@ -191,16 +191,8 @@ def validate(data_dir: Path, *, minimum_retrieval_recall: float = 0.8) -> dict[s
     test_ids = {sample.sample_id for sample in samples if sample.split == "test"}
     if {row.get("id") for row in test_rows} != test_ids:
         errors.append("test_inputs IDs do not match the frozen test split")
-    forbidden_test_fields = {
-        "claims",
-        "gold_evidence",
-        "counter_evidence",
-        "expected_revision",
-        "source_metadata",
-        "conflict_type",
-    }
-    if any(forbidden_test_fields & set(row) for row in test_rows):
-        errors.append("test_inputs exposes gold-only fields")
+    if any(set(row) != BLIND_TEST_ALLOWED_FIELDS for row in test_rows):
+        errors.append("test_inputs must contain exactly the five allowed operational fields")
 
     retrieval = _retrieval_recall(samples, corpus)
     if retrieval["recall"] < minimum_retrieval_recall:

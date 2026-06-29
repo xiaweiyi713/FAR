@@ -20,8 +20,8 @@ from experiments.runner import (
     build_generator,
     build_retriever,
     build_run_identity,
-    load_benchmark,
     load_config,
+    load_run_inputs,
     select_samples,
 )
 
@@ -57,7 +57,7 @@ def run(
 ) -> list[dict[str, Any]]:
     config = load_config(config_path)
     selected_split = split or str(config.get("run", {}).get("split", "dev"))
-    samples, documents = load_benchmark(data_dir)
+    samples, documents = load_run_inputs(data_dir, selected_split)
     selected = select_samples(
         samples,
         selected_split,

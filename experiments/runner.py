@@ -15,6 +15,7 @@ from typing import Any
 import yaml
 
 from bench.build.common import read_jsonl, sha256_file, write_json, write_jsonl
+from bench.schema import BLIND_TEST_ALLOWED_FIELDS
 from far.adapters import InMemoryRetriever, VeraLLMAdapter, VeraRetrieverAdapter
 from far.models import EvidenceDocument
 from far.protocols import TextGenerator
@@ -29,9 +30,8 @@ def load_config(path: Path) -> dict[str, Any]:
     return value
 
 
-def load_benchmark(data_dir: Path) -> tuple[list[dict[str, Any]], list[EvidenceDocument]]:
-    samples = read_jsonl(data_dir / "falsirag_bench.jsonl")
-    documents = [
+def _load_documents(data_dir: Path) -> list[EvidenceDocument]:
+    return [
         EvidenceDocument(
             evidence_id=row["doc_id"],
             text=row["content"],
@@ -39,11 +39,33 @@ def load_benchmark(data_dir: Path) -> tuple[list[dict[str, Any]], list[EvidenceD
             source=row["source"],
             date=row.get("date"),
             url=row.get("url"),
-            metadata={"synthetic": row.get("synthetic", False)},
         )
         for row in read_jsonl(data_dir / "corpus.jsonl")
     ]
-    return samples, documents
+
+
+def load_benchmark(data_dir: Path) -> tuple[list[dict[str, Any]], list[EvidenceDocument]]:
+    samples = read_jsonl(data_dir / "falsirag_bench.jsonl")
+    return samples, _load_documents(data_dir)
+
+
+def load_run_inputs(
+    data_dir: Path,
+    split: str,
+) -> tuple[list[dict[str, Any]], list[EvidenceDocument]]:
+    """Load operational inputs, never full gold rows for the test split."""
+
+    if split == "test":
+        samples = read_jsonl(data_dir / "splits" / "test_inputs.jsonl")
+        if any(set(row) != BLIND_TEST_ALLOWED_FIELDS for row in samples):
+            raise ValueError(
+                "blind test inputs must contain exactly id/category/split/question/initial_answer"
+            )
+        if any(row.get("split") != "test" for row in samples):
+            raise ValueError("blind test input file contains a non-test row")
+    else:
+        samples = read_jsonl(data_dir / "falsirag_bench.jsonl")
+    return samples, _load_documents(data_dir)
 
 
 def select_samples(
@@ -145,13 +167,19 @@ def build_run_identity(
     split: str,
     limit: int | None,
 ) -> dict[str, Any]:
+    benchmark_input_path = (
+        data_dir / "splits" / "test_inputs.jsonl"
+        if split == "test"
+        else data_dir / "falsirag_bench.jsonl"
+    )
     stable = {
-        "schema_version": "far-run-signature-v1",
+        "schema_version": "far-run-signature-v2",
         "method": method,
         "split": split,
         "limit": limit,
         "config_sha256": sha256_file(config_path),
-        "benchmark_sha256": sha256_file(data_dir / "falsirag_bench.jsonl"),
+        "benchmark_input": str(benchmark_input_path.relative_to(data_dir)),
+        "benchmark_input_sha256": sha256_file(benchmark_input_path),
         "corpus_sha256": sha256_file(data_dir / "corpus.jsonl"),
         "implementation_sha256": _implementation_sha256(),
         "llm": config.get("llm", {}),
