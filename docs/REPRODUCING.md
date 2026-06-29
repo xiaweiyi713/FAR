@@ -110,6 +110,19 @@ uv run falsirag-baselines --config experiments/configs/deepseek.yaml \
 Run every ablation with `--ablation minus_typed_conflict`,
 `minus_refutation_query`, `minus_boundary_query`, and `minus_typed_revision`.
 
+To rebuild only the paper-facing tables and figures from already validated
+reports, install the `eval` extra and call the artifact builder directly:
+
+```bash
+uv sync --extra eval
+uv run falsirag-build-artifacts \
+  --report far=outputs/evaluations/far/report.json \
+  --report vanilla=outputs/evaluations/vanilla_rag/report.json \
+  --report minus_typed_conflict=outputs/evaluations/minus_typed_conflict/report.json \
+  --prediction far=outputs/runs/far/predictions.jsonl \
+  --output-dir outputs/artifacts
+```
+
 ## Paper
 
 ```bash

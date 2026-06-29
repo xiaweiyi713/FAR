@@ -85,13 +85,26 @@ def _write_latex(path: Path, rows: list[dict[str, Any]]) -> None:
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
+def _load_plotting_backend() -> tuple[Any, Any]:
+    try:
+        return (
+            importlib.import_module("matplotlib.pyplot"),
+            importlib.import_module("matplotlib.font_manager"),
+        )
+    except ImportError as exc:
+        raise RuntimeError(
+            "Building FAR tables and figures requires the optional eval dependencies. "
+            "Install them with `uv sync --extra eval` for local development or "
+            "`pip install 'falsification-augmented-retrieval[eval]'` from a package."
+        ) from exc
+
+
 def build(
     report_paths: dict[str, Path],
     prediction_paths: dict[str, Path],
     output_dir: Path,
 ) -> dict[str, Any]:
-    plt: Any = importlib.import_module("matplotlib.pyplot")
-    font_manager: Any = importlib.import_module("matplotlib.font_manager")
+    plt, font_manager = _load_plotting_backend()
 
     unicode_font = Path("/System/Library/Fonts/Supplemental/Arial Unicode.ttf")
     if unicode_font.exists():

@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 
 from eval.run_eval import evaluate
+from experiments.build_artifacts import _load_plotting_backend
 from experiments.run_far import run
 from experiments.run_suite import run_suite
 from experiments.runner import ROOT, load_benchmark, select_samples
@@ -57,3 +59,14 @@ def test_suite_runs_far_baseline_ablation_and_artifacts(tmp_path: Path) -> None:
     assert (tmp_path / "suite" / "suite_manifest.json").exists()
     assert (tmp_path / "suite" / "artifacts" / "main_results.csv").exists()
     assert (tmp_path / "suite" / "artifacts" / "ablation_results.csv").exists()
+
+
+def test_artifact_builder_explains_missing_eval_extra() -> None:
+    with (
+        patch(
+            "experiments.build_artifacts.importlib.import_module",
+            side_effect=ModuleNotFoundError("No module named 'matplotlib'"),
+        ),
+        pytest.raises(RuntimeError, match="optional eval dependencies"),
+    ):
+        _load_plotting_backend()

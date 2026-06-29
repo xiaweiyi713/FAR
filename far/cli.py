@@ -62,3 +62,10 @@ def run_suite_main() -> None:
     from experiments.run_suite import main
 
     main()
+
+
+def build_artifacts_main() -> None:
+    _prefer_far_repo()
+    from experiments.build_artifacts import main
+
+    main()
