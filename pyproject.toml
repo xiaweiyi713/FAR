@@ -28,6 +28,19 @@ dependencies = [
 
 [project.optional-dependencies]
 eval = ["matplotlib>=3.7"]
+models = [
+  "faiss-cpu>=1.7",
+  "huggingface-hub>=0.20",
+  "sentence-transformers>=3.0,<6",
+]
+experiment = [
+  "anthropic>=0.5",
+  "faiss-cpu>=1.7",
+  "huggingface-hub>=0.20",
+  "ollama>=0.1",
+  "openai>=1.0",
+  "sentence-transformers>=3.0,<6",
+]
 dev = [
   "build>=1.2",
   "mypy>=1.10",
@@ -89,4 +102,17 @@ exclude = ["paper/"]
 
 [[tool.mypy.overrides]]
 module = ["pytest"]
+follow_imports = "skip"
+
+[[tool.mypy.overrides]]
+module = [
+  "huggingface_hub",
+  "huggingface_hub.*",
+  "numpy",
+  "numpy.*",
+  "sentence_transformers",
+  "sentence_transformers.*",
+  "src",
+  "src.*",
+]
 follow_imports = "skip"

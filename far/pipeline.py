@@ -97,6 +97,12 @@ class FARPipeline:
         retrieval_trace: list[QueryRetrieval] = []
 
         for claim in graph.topological_order():
+            if not claim.verifiable:
+                requirements[claim.claim_id] = ()
+                evidence_map[claim.claim_id] = ()
+                conflicts[claim.claim_id] = ()
+                revision_trace.append(self.revision_engine.revise(claim, (), ()))
+                continue
             claim_requirements = self.requirement_assigner.assign(claim)
             requirements[claim.claim_id] = claim_requirements
             queries = self.query_generator.generate(claim, claim_requirements)
@@ -117,12 +123,21 @@ class FARPipeline:
 
             detected: list[TypedConflict] = []
             seen_conflicts: set[tuple[str, str]] = set()
-            for item in evidence:
-                for conflict in self.conflict_detector.detect(claim, item):
-                    key = (conflict.evidence_id, conflict.conflict_type.value)
-                    if key not in seen_conflicts:
-                        seen_conflicts.add(key)
-                        detected.append(conflict)
+            detect_many = getattr(self.conflict_detector, "detect_many", None)
+            candidate_conflicts = (
+                detect_many(claim, evidence)
+                if callable(detect_many)
+                else tuple(
+                    conflict
+                    for item in evidence
+                    for conflict in self.conflict_detector.detect(claim, item)
+                )
+            )
+            for conflict in candidate_conflicts:
+                key = (conflict.evidence_id, conflict.conflict_type.value)
+                if key not in seen_conflicts:
+                    seen_conflicts.add(key)
+                    detected.append(conflict)
             claim_conflicts = tuple(
                 sorted(detected, key=lambda item: (-item.confidence, item.evidence_id))
             )

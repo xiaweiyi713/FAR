@@ -35,6 +35,7 @@ def test_tracked_benchmark_is_balanced_traceable_and_retrievable() -> None:
         "multi_source_conflict": 60,
     }
     assert report["counter_evidence_retrieval"]["recall"] >= 0.8
+    assert report["counts"]["ambiguous_operational_inputs"] == 0
 
 
 def test_blind_bundle_contains_only_operational_inputs(tmp_path: Path) -> None:

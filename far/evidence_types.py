@@ -101,6 +101,7 @@ class EvidenceRequirementAssigner:
                 evidence_type=EvidenceType.SOURCE_RELIABILITY,
                 rationale="prefer attributable and authoritative evidence",
                 priority=2,
+                constraints={"claim_source_reliability": claim.source_reliability},
             ),
             EvidenceRequirement(
                 claim_id=claim.claim_id,

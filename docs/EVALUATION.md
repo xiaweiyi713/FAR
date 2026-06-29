@@ -5,7 +5,7 @@ IDs, predicted conflict types, revision action, method name, and trace metadata.
 
 - **Answer correctness:** VeraRAG-compatible mixed Chinese/English soft F1.
 - **Unsupported claim rate:** fraction of claim rows with no retrieved gold or
-  counter-evidence document (one atomic claim in candidate v0.1).
+  counter-evidence document (evaluated after FAR's atomic decomposition).
 - **Evidence precision/recall:** set overlap over corpus document IDs.
 - **Counter-evidence recall:** recall restricted to annotated falsifying evidence.
 - **Typed conflict F1:** micro F1 over predicted versus gold conflict types.

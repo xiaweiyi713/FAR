@@ -75,13 +75,13 @@ Causal overclaim & 60 \\
 Multi-source conflict & 60 \\
 \bottomrule
 \end{tabular}
-\caption{The deterministic v0.1 candidate build. Counts are construction facts, not human-validated gold statistics.}
+\caption{The deterministic v0.2 candidate build. Counts are construction facts, not human-validated gold statistics.}
 \label{tab:data}
 \end{table}
 
 The current build derives evidence-backed candidates from VeraBench v1.1.2, with controlled perturbations and explicitly marked synthetic causal-boundary or low-reliability passages. It contains 175 documents, including 120 controlled synthetic documents. A source-document dependency group is assigned wholly to train, development, or test; the realization is 182/60/58 and has zero group leakage. A bundle builder emits only five-field test inputs and a sanitized corpus without construction or dependency metadata. Test runners can execute from this gold-free bundle and emit unscored, fingerprinted predictions; genuine organizational blindness and one-shot execution still require an external custodian.
 
-All 300 labels are \texttt{machine\_seeded}. Two independent annotators must label conflict presence/type, revision action, and answer acceptability before adjudication. Promotion requires complete adjudication and reported Cohen's $\kappa$ for conflict presence, type, and action. The current construction check obtains 0.93 lexical counter-evidence recall@10 when pooling all three query families. This only verifies that counter-evidence is retrievable; it is not a FAR performance result.
+All 300 labels are \texttt{machine\_seeded}. Two independent annotators must label conflict presence/type, revision action, and answer acceptability before adjudication. Promotion requires complete adjudication and reported Cohen's $\kappa$ for conflict presence, type, and action. The current construction check obtains 0.91 lexical counter-evidence recall@10 when pooling all three query families. This only verifies that counter-evidence is retrievable; it is not a FAR performance result.
 
 \section{Experimental Design}
 We will evaluate DeepSeek Chat, Qwen Plus, and a locally hashed open Qwen model with matched retrieval settings. Baselines are Vanilla RAG, Multi-query RAG, Reflective RAG, a closed-corpus CRAG-style reproduction, and a Self-RAG-style inference approximation. The latter two names explicitly avoid claiming equivalence to official trained systems.

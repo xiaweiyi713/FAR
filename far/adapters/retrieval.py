@@ -9,6 +9,7 @@ from dataclasses import replace
 from typing import Any, Protocol
 
 from ..models import EvidenceDocument
+from .model_assets import resolve_huggingface_snapshot
 
 
 def _load_vera_retrieval_classes() -> tuple[Any, Any, Any, Any, Any, Any]:
@@ -151,11 +152,18 @@ class VeraRetrieverAdapter:
         except ImportError as exc:
             raise RuntimeError(
                 "VeraRAG is required for vera_* retrieval backends; install it with "
-                "`python -m pip install -e '/path/to/VeraRAG[dense]'`."
+                "`uv sync --extra experiment` followed by "
+                "`uv pip install --no-deps -e /path/to/VeraRAG`."
             ) from exc
 
         sparse = cls._mapping(config.get("sparse"), field="sparse")
         dense = cls._mapping(config.get("dense"), field="dense")
+        if dense.get("model_name"):
+            dense["model_name"] = resolve_huggingface_snapshot(
+                str(dense["model_name"]),
+                str(dense["revision"]) if dense.get("revision") else None,
+                local_files_only=bool(dense.get("local_files_only", False)),
+            )
         if backend == "vera_bm25":
             retriever: Any = BM25Retriever(
                 config=sparse,
@@ -202,8 +210,13 @@ class VeraRetrieverAdapter:
             batch_size = int(rerank.get("batch_size", 16))
             if batch_size < 1:
                 raise ValueError("retrieval.rerank.batch_size must be positive")
+            reranker_model = resolve_huggingface_snapshot(
+                str(rerank.get("model_name", "BAAI/bge-reranker-base")),
+                str(rerank["revision"]) if rerank.get("revision") else None,
+                local_files_only=bool(rerank.get("local_files_only", False)),
+            )
             reranker = Reranker(
-                model_name=str(rerank.get("model_name", "BAAI/bge-reranker-base")),
+                model_name=reranker_model,
                 device=str(rerank.get("device", "cpu")),
                 batch_size=batch_size,
                 top_k=candidate_k,
@@ -221,7 +234,7 @@ class VeraRetrieverAdapter:
         except ImportError as exc:
             raise RuntimeError(
                 "The configured VeraRAG retrieval stack needs optional dense dependencies; "
-                "install VeraRAG with its `dense` extra."
+                "install FAR's `experiment` extra and the local VeraRAG package."
             ) from exc
 
         if (
@@ -251,7 +264,7 @@ class VeraRetrieverAdapter:
         except ImportError as exc:
             raise RuntimeError(
                 "The configured VeraRAG retrieval stack needs optional dense dependencies; "
-                "install VeraRAG with its `dense` extra."
+                "install FAR's `experiment` extra and the local VeraRAG package."
             ) from exc
         converted: list[EvidenceDocument] = []
         for result in results:

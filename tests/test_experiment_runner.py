@@ -11,7 +11,7 @@ from eval.run_eval import evaluate
 from experiments.build_artifacts import _load_plotting_backend
 from experiments.run_far import run
 from experiments.run_suite import run_suite
-from experiments.runner import ROOT, load_benchmark, select_samples
+from experiments.runner import ROOT, load_benchmark, load_config, select_samples
 from experiments.validate_results import validate_result_bundle
 
 
@@ -29,6 +29,31 @@ def test_sample_limit_is_category_balanced_and_test_is_guarded() -> None:
         select_samples(samples, "test", limit=1, allow_test=False)
 
 
+def test_formal_configs_pin_one_shared_retrieval_and_conflict_stack() -> None:
+    configs = [
+        load_config(ROOT / f"experiments/configs/{name}.yaml")
+        for name in ("deepseek", "qwen_plus", "qwen_open", "formal_stack_smoke")
+    ]
+    assert all(config["retrieval"] == configs[0]["retrieval"] for config in configs)
+    assert all(config["conflict_graph"] == configs[0]["conflict_graph"] for config in configs)
+    retrieval = configs[0]["retrieval"]
+    conflict = configs[0]["conflict_graph"]
+    assert retrieval["backend"] == "vera_hybrid"
+    assert retrieval["allow_dense_fallback"] is False
+    assert retrieval["dense"]["local_files_only"] is True
+    assert len(retrieval["dense"]["revision"]) == 40
+    assert retrieval["rerank"]["local_files_only"] is True
+    assert len(retrieval["rerank"]["revision"]) == 40
+    assert conflict["enable_nli"] is True
+    assert conflict["require_nli"] is True
+    assert conflict["nli_local_files_only"] is True
+    assert conflict["enable_nli_candidate_filter"] is True
+    assert len(conflict["nli_revision"]) == 40
+    assert conflict["enable_source_reliability_conflict"] is True
+    assert conflict["enable_scope_conflict"] is True
+    assert conflict["enable_granularity_conflict"] is True
+
+
 def test_runner_resumes_without_duplicates_and_evaluation_is_bound(tmp_path: Path) -> None:
     run_dir = tmp_path / "run"
     config = ROOT / "experiments/configs/offline_smoke.yaml"
@@ -36,6 +61,15 @@ def test_runner_resumes_without_duplicates_and_evaluation_is_bound(tmp_path: Pat
     second = run(config, ROOT / "bench", run_dir, limit=5)
     assert first["predictions_sha256"] == second["predictions_sha256"]
     assert first["completed"] == 5
+    identity = json.loads((run_dir / "run_identity.json").read_text(encoding="utf-8"))
+    assert {
+        "faiss-cpu",
+        "huggingface-hub",
+        "sentence-transformers",
+        "torch",
+        "transformers",
+        "verarag",
+    } <= set(identity["environment"]["packages"])
     evaluation_dir = tmp_path / "evaluation"
     evaluate(
         ROOT / "bench/falsirag_bench.jsonl",

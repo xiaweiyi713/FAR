@@ -327,8 +327,9 @@ def _build_sample(
             }
         )
     elif category == "multi_source_conflict":
+        initial_answer = f"An unverified secondary summary reports: {initial_answer}"
         misleading_id = f"{sample_id}-LOWREL"
-        misleading_text = f"An unverified secondary summary reports: {initial_answer}"
+        misleading_text = initial_answer
         synthetic_docs.append(
             {
                 "doc_id": misleading_id,
@@ -473,8 +474,8 @@ def build(source_dir: Path, output_dir: Path) -> dict[str, Any]:
     write_json(output_dir / "split_manifest.json", split_manifest)
     manifest = {
         "schema_version": "falsirag-bench-manifest-v1",
-        "dataset_id": "falsirag-bench-v0.1.0-candidate",
-        "version": "0.1.0-candidate",
+        "dataset_id": "falsirag-bench-v0.2.0-candidate",
+        "version": "0.2.0-candidate",
         "construction_seed": SEED,
         "counts": {
             "samples": len(samples),

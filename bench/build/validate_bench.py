@@ -127,6 +127,18 @@ def validate(data_dir: Path, *, minimum_retrieval_recall: float = 0.8) -> dict[s
         errors.append("corpus document IDs are not unique")
     if len({sample.sample_id for sample in samples}) != len(samples):
         errors.append("sample IDs are not unique")
+    input_groups: dict[tuple[str, str], list[FalsiRAGSample]] = defaultdict(list)
+    for sample in samples:
+        input_groups[(sample.question.strip(), sample.initial_answer.strip())].append(sample)
+    ambiguous_inputs = {
+        key: rows
+        for key, rows in input_groups.items()
+        if len({row.expected_revision["action"] for row in rows}) > 1
+    }
+    if ambiguous_inputs:
+        errors.append(
+            f"{len(ambiguous_inputs)} identical operational inputs have conflicting revision labels"
+        )
 
     untraceable: list[str] = []
     semantically_unanchored: list[str] = []
@@ -221,6 +233,7 @@ def validate(data_dir: Path, *, minimum_retrieval_recall: float = 0.8) -> dict[s
             "untraceable_evidence": len(untraceable),
             "semantically_unanchored_counter_evidence": len(semantically_unanchored),
             "cross_split_dependency_groups": len(cross_split),
+            "ambiguous_operational_inputs": len(ambiguous_inputs),
         },
         "fingerprints": observed_fingerprints,
         "counter_evidence_retrieval": retrieval,

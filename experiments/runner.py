@@ -194,7 +194,21 @@ def build_run_identity(
             "python": sys.version.split()[0],
             "platform": platform.platform(),
             "packages": {
-                name: _package_version(name) for name in ("numpy", "PyYAML", "rank-bm25", "verarag")
+                name: _package_version(name)
+                for name in (
+                    "anthropic",
+                    "faiss-cpu",
+                    "huggingface-hub",
+                    "numpy",
+                    "ollama",
+                    "openai",
+                    "PyYAML",
+                    "rank-bm25",
+                    "sentence-transformers",
+                    "torch",
+                    "transformers",
+                    "verarag",
+                )
             },
         },
     }

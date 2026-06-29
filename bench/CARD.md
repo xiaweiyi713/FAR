@@ -4,7 +4,7 @@
 
 FalsiRAG-Bench isolates a retrieval-augmented agent's ability to seek evidence
 that can falsify its initial answer and to revise under a typed conflict. The
-tracked v0.1.0 artifact contains 300 machine-seeded candidates: 60 each for
+tracked v0.2.0 artifact contains 300 machine-seeded candidates: 60 each for
 temporal shift, numerical conflict, entity confusion, causal overclaim, and
 multi-source conflict. Every candidate contains a falsifiable initial claim,
 claim-level evidence, in-corpus counter-evidence, a typed conflict seed, and an
@@ -77,8 +77,14 @@ The validator checks schema constraints, unique IDs, continuous or segmented
 evidence traceability, category balance, fingerprints, masked test inputs, and
 zero cross-split dependency leakage. It also runs FAR's deterministic lexical
 retriever over all three typed query families and requires counter-evidence
-recall@10 of at least 0.80. The current candidate build achieves 0.93; this is a
+recall@10 of at least 0.80. The current candidate build achieves 0.91; this is a
 construction check, not a model result.
+
+Candidate v0.2 also forbids identical `(question, initial_answer)` inputs with
+different revision labels. Multi-source rows explicitly attribute their initial
+answer to an unverified secondary summary, making source reliability observable
+without exposing the hidden category. This repairs 29 ambiguous input pairs in
+the previous candidate build.
 
 Contamination claims are scoped to explicitly supplied references:
 

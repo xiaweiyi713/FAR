@@ -23,10 +23,11 @@ uv run falsirag-validate-bench
 uv run python -m pytest
 ```
 
-For the formal hybrid+dense+reranker configurations, install VeraRAG's dense
-extra instead: `uv pip install -e '/Users/xuwenyao/VeraRAG[dense]'`. The formal
-configs fail closed if dense retrieval is unavailable, so a BM25 fallback can
-never be mislabeled as a hybrid result.
+For formal hybrid+dense+reranker+NLI configurations, run
+`uv sync --extra experiment` and install the local VeraRAG code with
+`uv pip install --no-deps -e /Users/xuwenyao/VeraRAG`. The formal configs fail
+closed if dense retrieval or NLI is unavailable, so a degraded run cannot be
+mislabeled as the configured method.
 
 Run a balanced, dependency-free diagnostic slice:
 
@@ -39,6 +40,10 @@ uv run falsirag-suite \
   --ablation minus_typed_conflict \
   --resamples 200
 ```
+
+After installing the `experiment` extra and VeraRAG, validate the exact pinned
+formal retrieval/NLI stack without API calls using
+`experiments/configs/formal_stack_smoke.yaml` (see the reproduction guide).
 
 The `test` split is rejected unless `--allow-test` is supplied. Limited runs are
 marked `partial`, and any tables/figures built from them are marked
@@ -66,15 +71,17 @@ failures remain visible.
 
 The VeraRAG adapter exposes its six providers (OpenAI, Anthropic, Ollama,
 DashScope, ZhipuAI, and DeepSeek) plus BM25, dense, FAISS, hybrid RRF, and an
-optional CrossEncoder reranker. The checked-in API configs use the same strict
-multilingual BGE hybrid+rereanking stack for paired model comparisons.
+optional CrossEncoder reranker. The checked-in API configs use the same pinned
+BGE hybrid+rereanking stack and required NLI conflict layer for
+paired model comparisons. Dense or NLI degradation aborts formal runs rather
+than changing the method silently.
 
 ## Benchmark status
 
-FalsiRAG-Bench v0.1.0-candidate contains five balanced categories (60 each),
+FalsiRAG-Bench v0.2.0-candidate contains five balanced categories (60 each),
 175 corpus documents, frozen source-document-group splits, and in-corpus
 counter-evidence. The validator currently reports zero cross-split dependency
-leakage and 0.93 lexical counter-evidence recall@10 across the three query
+leakage and 0.91 lexical counter-evidence recall@10 across the three query
 families. This is a construction check, not a model result.
 
 All 300 labels are `machine_seeded`. `bench/manifest.json` therefore sets

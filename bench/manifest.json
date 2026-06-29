@@ -24,9 +24,9 @@
     },
     "synthetic_documents": 120
   },
-  "dataset_id": "falsirag-bench-v0.1.0-candidate",
+  "dataset_id": "falsirag-bench-v0.2.0-candidate",
   "fingerprints": {
-    "benchmark_sha256": "75295ee0be363c84b8a455f089c9ffa3b2413a0b9a97aa08774bc9a62c3c45d3",
+    "benchmark_sha256": "c5bd988f60646bde33d62f654ddb456d2c2c1279175bee92ef503f362addbd8f",
     "corpus_sha256": "cca5f62db0fbb51e1bae8111ea85fe169fba7be5a8e63847a9c1c048cdae25cd",
     "split_manifest_sha256": "ac83fa38d452371017a0c9f7fdf3447817071731032bce3579543f2e2524ce4a"
   },
@@ -44,5 +44,5 @@
     "license": "MIT; upstream scenario/source materials retain their own terms",
     "questions_sha256": "c19e7401cbcd2526fb1e085c911d61095c8ce5bd19a664c13698a08024436882"
   },
-  "version": "0.1.0-candidate"
+  "version": "0.2.0-candidate"
 }

@@ -1,9 +1,35 @@
 from __future__ import annotations
 
 from far.adapters import HeuristicConflictDetector, InMemoryRetriever
+from far.claims import RuleBasedClaimDecomposer
 from far.models import EvidenceDocument
 from far.pipeline import FARPipeline
 from far.revision import RevisionAction
+
+
+class _AllRetriever:
+    def __init__(self, documents: list[EvidenceDocument]) -> None:
+        self.documents = documents
+
+    def retrieve(self, query: str, top_k: int = 5) -> list[EvidenceDocument]:
+        del query
+        return self.documents[:top_k]
+
+
+class _BatchOnlyDetector:
+    def __init__(self) -> None:
+        self.batch_sizes: list[int] = []
+
+    def detect(self, claim: object, evidence: object) -> tuple[object, ...]:
+        del claim, evidence
+        raise AssertionError("pipeline should use detect_many when available")
+
+    def detect_many(
+        self, claim: object, evidence: tuple[EvidenceDocument, ...]
+    ) -> tuple[object, ...]:
+        del claim
+        self.batch_sizes.append(len(evidence))
+        return ()
 
 
 def test_offline_pipeline_retrieves_counter_evidence_and_revises() -> None:
@@ -51,3 +77,51 @@ def test_pipeline_causal_path_works_without_oracle_metadata() -> None:
         "Exercise causes lower blood pressure.",
     )
     assert result.revision_trace[0].action is RevisionAction.DOWNGRADE_CAUSAL
+
+
+def test_heuristic_conflicts_require_topic_alignment() -> None:
+    detector = HeuristicConflictDetector()
+    claim = (
+        RuleBasedClaimDecomposer()
+        .decompose("Semiconductor revenue caused the market decline.")
+        .claims[0]
+    )
+    unrelated = EvidenceDocument(
+        "E1",
+        "Exercise correlates with blood pressure but does not establish causality.",
+    )
+    assert detector.detect(claim, unrelated) == ()
+    relevant = EvidenceDocument(
+        "E2",
+        "Semiconductor revenue declined, but the source does not establish "
+        "the added causal relationship.",
+    )
+    conflicts = detector.detect(claim, relevant)
+    assert conflicts[0].conflict_type.value == "causal"
+
+
+def test_pipeline_batches_all_evidence_for_batch_capable_detector() -> None:
+    detector = _BatchOnlyDetector()
+    pipeline = FARPipeline(
+        _AllRetriever(
+            [
+                EvidenceDocument("E1", "Revenue was 18 million."),
+                EvidenceDocument("E2", "Revenue was 19 million."),
+            ]
+        ),
+        conflict_detector=detector,  # type: ignore[arg-type]
+        top_k_per_query=2,
+    )
+    pipeline.run("What was revenue?", "Revenue was 20 million.")
+    assert detector.batch_sizes == [2]
+
+
+def test_pipeline_skips_non_verifiable_discourse_claims() -> None:
+    detector = _BatchOnlyDetector()
+    result = FARPipeline(
+        _AllRetriever([EvidenceDocument("E1", "Unrelated evidence is incorrect.")]),
+        conflict_detector=detector,  # type: ignore[arg-type]
+    ).run("Is the statement correct?", "这个说法不准确。")
+    assert detector.batch_sizes == []
+    assert result.revision_trace[0].action is RevisionAction.KEEP
+    assert result.claim_graph.claims[0].verifiable is False

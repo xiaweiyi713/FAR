@@ -6,7 +6,8 @@ from unittest.mock import patch
 
 import pytest
 
-from far.adapters import VeraLLMAdapter, VeraRetrieverAdapter
+from far.adapters import VeraConflictDetector, VeraLLMAdapter, VeraRetrieverAdapter
+from far.claims import ClaimNode, ClaimType
 from far.models import EvidenceDocument
 
 
@@ -94,9 +95,17 @@ def test_vera_hybrid_reranker_factory_preserves_configuration_and_provenance() -
         date="2025-01-01",
         metadata={"language": "en"},
     )
-    with patch(
-        "far.adapters.retrieval._load_vera_retrieval_classes",
-        return_value=_fake_vera_classes(),
+    with (
+        patch(
+            "far.adapters.retrieval._load_vera_retrieval_classes",
+            return_value=_fake_vera_classes(),
+        ),
+        patch(
+            "far.adapters.retrieval.resolve_huggingface_snapshot",
+            side_effect=lambda name, revision, **_: (
+                f"/snapshots/{revision}/{name.rsplit('/', 1)[-1]}"
+            ),
+        ) as resolve_model,
     ):
         adapter = VeraRetrieverAdapter.from_config(
             [document],
@@ -104,10 +113,15 @@ def test_vera_hybrid_reranker_factory_preserves_configuration_and_provenance() -
                 "backend": "vera_hybrid",
                 "sparse_weight": 0.4,
                 "dense_weight": 0.6,
-                "dense": {"model_name": "example/embed"},
+                "dense": {
+                    "model_name": "example/embed",
+                    "revision": "embed-revision",
+                    "local_files_only": True,
+                },
                 "rerank": {
                     "enabled": True,
                     "model_name": "example/reranker",
+                    "revision": "reranker-revision",
                     "candidate_k": 11,
                     "preserve_base_top_k": 1,
                 },
@@ -116,7 +130,13 @@ def test_vera_hybrid_reranker_factory_preserves_configuration_and_provenance() -
     assert isinstance(adapter.retriever, _FakeRerankingRetriever)
     base = adapter.retriever.base_retriever
     assert base.kwargs == {"sparse_weight": 0.4, "dense_weight": 0.6}
-    assert base.config["dense"] == {"model_name": "example/embed"}
+    dense_config = base.config["dense"]
+    assert isinstance(dense_config, dict)
+    assert dense_config["model_name"] == "/snapshots/embed-revision/embed"
+    assert resolve_model.call_count == 2
+    assert adapter.retriever.reranker.kwargs["model_name"] == (
+        "/snapshots/reranker-revision/reranker"
+    )
     assert adapter.retriever.kwargs == {"candidate_k": 11, "preserve_base_top_k": 1}
     result = adapter.retrieve("revenue", top_k=1)[0]
     assert result.evidence_id == "E1"
@@ -169,3 +189,75 @@ def test_vera_bm25_adapter_round_trip() -> None:
     results = adapter.retrieve("audited revenue 18 million", top_k=1)
     assert results[0].evidence_id == "E1"
     assert results[0].source == "official"
+
+
+@pytest.mark.skipif(importlib.util.find_spec("src") is None, reason="VeraRAG is not installed")
+def test_vera_conflict_adapter_emits_graph_and_fallback_signals() -> None:
+    detector = VeraConflictDetector({"conflict_graph": {"enable_nli": False}})
+    numeric = detector.detect(
+        ClaimNode(
+            "C1",
+            "Revenue was 20 million.",
+            ClaimType.NUMERICAL,
+            numbers=("20 million",),
+        ),
+        EvidenceDocument(
+            "E1",
+            "Revenue was 18 million in the audited report.",
+            source="official",
+        ),
+    )
+    assert numeric[0].conflict_type.value == "numerical"
+    assert numeric[0].metadata["detector"] == "verarag_conflict_graph"
+    assert numeric[0].metadata["resolver_strategy"] == "flag_for_verification"
+
+    causal = detector.detect(
+        ClaimNode(
+            "C2",
+            "The intervention caused the improvement.",
+            ClaimType.CAUSAL,
+        ),
+        EvidenceDocument(
+            "E2",
+            "The intervention correlated with the improvement, but does not establish causality.",
+            source="paper",
+        ),
+    )
+    assert causal[0].conflict_type.value == "causal"
+    assert causal[0].metadata["detector"] == "far_heuristic_fallback"
+
+    batched = detector.detect_many(
+        ClaimNode(
+            "C3",
+            "Revenue was 20 million.",
+            ClaimType.NUMERICAL,
+            numbers=("20 million",),
+        ),
+        (
+            EvidenceDocument("E3", "Revenue was 18 million.", source="official"),
+            EvidenceDocument("E4", "Revenue was 15 million.", source="report"),
+        ),
+    )
+    assert {item.evidence_id for item in batched} == {"E3", "E4"}
+    assert detector.builder.last_build_stats["claims"] == 3
+
+
+@pytest.mark.skipif(importlib.util.find_spec("src") is None, reason="VeraRAG is not installed")
+def test_vera_conflict_adapter_fails_closed_when_required_nli_is_unavailable() -> None:
+    class _UnavailableNLIBuilder:
+        _nli_tried = True
+        _nli_available = False
+
+        def build_graph(self, evidence: object, use_llm: bool) -> SimpleNamespace:
+            del evidence, use_llm
+            return SimpleNamespace(get_conflicts=lambda: [])
+
+    detector = VeraConflictDetector(
+        {"conflict_graph": {"enable_nli": True, "require_nli": True}},
+        builder=_UnavailableNLIBuilder(),
+    )
+    with pytest.raises(RuntimeError, match="NLI was required"):
+        detector.detect(
+            ClaimNode("C1", "A claim.", ClaimType.FACTUAL),
+            EvidenceDocument("E1", "Contrary evidence."),
+        )

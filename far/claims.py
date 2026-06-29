@@ -34,6 +34,7 @@ class ClaimNode:
     time_expressions: tuple[str, ...] = ()
     verifiable: bool = True
     confidence: float = 1.0
+    source_reliability: str = "unknown"
 
     def __post_init__(self) -> None:
         if not self.claim_id.strip() or not self.text.strip():
@@ -42,6 +43,8 @@ class ClaimNode:
             raise ValueError(f"claim {self.claim_id} cannot depend on itself")
         if not 0.0 <= self.confidence <= 1.0:
             raise ValueError("claim confidence must be in [0, 1]")
+        if self.source_reliability not in {"unknown", "low", "standard", "high"}:
+            raise ValueError("unsupported claim source reliability")
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -54,6 +57,7 @@ class ClaimNode:
             "time_expressions": list(self.time_expressions),
             "verifiable": self.verifiable,
             "confidence": self.confidence,
+            "source_reliability": self.source_reliability,
         }
 
 
@@ -117,7 +121,11 @@ class ClaimDecomposer(Protocol):
 class RuleBasedClaimDecomposer:
     """Conservative offline decomposition; an LLM implementation can replace it."""
 
-    _SENTENCE = re.compile(r"(?<=[。！？.!?;；])\s*|[\n]+")
+    _SENTENCE = re.compile(
+        r"(?<=[。！？!?;；])\s*|(?<!\d)\.(?!\d)\s*|"
+        r"(?:，|,)\s*(?=但|不过|然而|but\b|however\b)|[\n]+",
+        re.I,
+    )
     _NUMBER = re.compile(
         r"(?<![A-Za-z0-9_.,])[+-]?\d+(?:[.,]\d+)*(?:%|％|万|亿|million|billion)?",
         re.I,
@@ -137,10 +145,18 @@ class RuleBasedClaimDecomposer:
     )
     _INFERENCE_PREFIX = re.compile(r"^(?:因此|所以|由此|这表明|therefore|thus|hence)\b", re.I)
     _ENTITY = re.compile(r"[A-Z][A-Za-z0-9]*(?:[ -][A-Z][A-Za-z0-9]*)*|[\u4e00-\u9fff]{2,12}")
+    _LOW_RELIABILITY_PREFIX = re.compile(
+        r"^An unverified secondary summary reports:\s*",
+        re.I,
+    )
 
     def decompose(self, answer: str) -> ClaimGraph:
         if not isinstance(answer, str) or not answer.strip():
             raise ValueError("answer must be a non-empty string")
+        source_reliability = "unknown"
+        if self._LOW_RELIABILITY_PREFIX.match(answer.strip()):
+            source_reliability = "low"
+            answer = self._LOW_RELIABILITY_PREFIX.sub("", answer.strip(), count=1)
         segments = [self._clean(part) for part in self._SENTENCE.split(answer)]
         segments = [segment for segment in segments if segment]
         claims: list[ClaimNode] = []
@@ -161,6 +177,7 @@ class RuleBasedClaimDecomposer:
                     numbers=tuple(self._NUMBER.findall(text)),
                     time_expressions=tuple(self._TIME.findall(text)),
                     verifiable=not self._looks_subjective(text),
+                    source_reliability=source_reliability,
                 )
             )
         return ClaimGraph(tuple(claims))
@@ -174,9 +191,21 @@ class RuleBasedClaimDecomposer:
             return ClaimType.CAUSAL
         if self._DEFINITION.search(text):
             return ClaimType.DEFINITIONAL
-        if self._TIME.search(text):
+        time_matches = tuple(self._TIME.finditer(text))
+        number_matches = tuple(self._NUMBER.finditer(text))
+        has_non_temporal_number = any(
+            not any(
+                time_match.start() <= number_match.start()
+                and number_match.end() <= time_match.end()
+                for time_match in time_matches
+            )
+            for number_match in number_matches
+        )
+        if has_non_temporal_number:
+            return ClaimType.NUMERICAL
+        if time_matches:
             return ClaimType.TEMPORAL
-        if self._NUMBER.search(text):
+        if number_matches:
             return ClaimType.NUMERICAL
         if self._COMPARATIVE.search(text):
             return ClaimType.COMPARATIVE
@@ -187,7 +216,20 @@ class RuleBasedClaimDecomposer:
     @staticmethod
     def _looks_subjective(text: str) -> bool:
         lowered = text.lower()
-        return any(marker in lowered for marker in ("我认为", "我觉得", "in my opinion"))
+        return any(
+            marker in lowered
+            for marker in (
+                "我认为",
+                "我觉得",
+                "in my opinion",
+                "这个说法不准确",
+                "这个说法不正确",
+                "这一说法不准确",
+                "这一说法不正确",
+                "this claim is inaccurate",
+                "this statement is inaccurate",
+            )
+        )
 
 
 class LLMClaimDecomposer:
@@ -203,7 +245,9 @@ class LLMClaimDecomposer:
             "Preserve every entity, number, time expression, negation, and scope; add no facts. "
             'Return JSON only as {"claims":[{"claim_id":"C1","claim":"...",'
             '"type":"factual|numerical|temporal|causal|comparative|definitional|inferential",'
-            '"depends_on":[]}]}.\nAnswer: '
+            '"depends_on":[],"source_reliability":"unknown|low|standard|high"}]}.\n'
+            "When the answer is attributed to an unverified secondary summary, mark every "
+            "derived claim as low reliability. Answer: "
             f"{answer}"
         )
         try:
@@ -243,10 +287,12 @@ class LLMClaimDecomposer:
             text=str(row["claim"]),
             claim_type=ClaimType(str(row["type"])),
             depends_on=tuple(str(item) for item in row.get("depends_on", [])),
+            source_reliability=str(row.get("source_reliability", "unknown")),
         )
 
     @staticmethod
     def _source_coverage(answer: str, graph: ClaimGraph) -> bool:
+        answer = RuleBasedClaimDecomposer._LOW_RELIABILITY_PREFIX.sub("", answer.strip(), count=1)
         source_tokens = set(re.findall(r"[A-Za-z0-9]+|[\u4e00-\u9fff]", answer.lower()))
         claim_tokens = set(
             re.findall(

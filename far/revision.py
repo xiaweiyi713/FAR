@@ -59,12 +59,12 @@ class TypedRevisionEngine:
 
     _PRIORITY: ClassVar[dict[EvidenceType, int]] = {
         EvidenceType.COUNTER_EVIDENCE: 100,
+        EvidenceType.SOURCE_RELIABILITY: 95,
         EvidenceType.ENTITY: 90,
         EvidenceType.NUMERICAL: 80,
         EvidenceType.TEMPORAL: 70,
         EvidenceType.CAUSAL: 60,
         EvidenceType.DEFINITION: 50,
-        EvidenceType.SOURCE_RELIABILITY: 40,
     }
 
     def revise(
@@ -158,9 +158,15 @@ class TypedRevisionEngine:
 
     @staticmethod
     def _downgrade_causal(text: str) -> str:
-        chinese = re.match(r"^(.+?)(?:导致|造成|引起)(.+)$", text)
+        caused_by = re.match(r"^(.+?)(?:完全)?由(.+?)(?:导致|造成|引起)$", text)
+        if caused_by:
+            return f"{caused_by.group(1)}与{caused_by.group(2)}相关，但现有证据不足以确认因果关系"
+        chinese = re.match(r"^(.+?)(?:导致|造成|引起)(.*)$", text)
         if chinese:
-            return f"{chinese.group(1)}与{chinese.group(2)}相关，但现有证据不足以确认因果关系"
+            target = chinese.group(2).strip()
+            if target:
+                return f"{chinese.group(1)}与{target}相关，但现有证据不足以确认因果关系"
+            return f"{chinese.group(1)}存在相关性，但现有证据不足以确认因果关系"
         rewritten = re.sub(
             r"\b(?:causes?|caused|results? in|led to|leads to)\b",
             "is associated with",

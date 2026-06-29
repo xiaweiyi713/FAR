@@ -79,13 +79,36 @@ the required environment variable. Re-run the identical command to resume;
 changing code, data, config, split, or limit requires a new output directory.
 The held-out test requires `--allow-test`.
 
-The three formal API configs share BM25+BGE-M3 hybrid RRF and a BGE reranker so
-model comparisons do not confound the generator with a different retriever.
+The three formal API configs share BM25+BGE hybrid RRF and a pinned BGE
+CrossEncoder reranker, so model comparisons do not confound the generator with
+a different retriever.
 Install the complete optional retrieval stack before a formal run:
 
 ```bash
-uv pip install -e '../VeraRAG[dense]'
+uv sync --extra experiment
+uv pip install --no-deps -e ../VeraRAG
 ```
+
+They also share `cross-encoder/nli-distilroberta-base` for VeraRAG's conflict
+graph with `require_nli: true`. Each model is pinned to an immutable Hugging
+Face revision and resolved to a local snapshot before construction; the checked
+configs therefore require those snapshots to be pre-cached. A formal run aborts if hybrid retrieval
+loses dense search or if NLI cannot load; it must never silently relabel a
+rule-only run as the configured method. Graph-originated and transparent FAR
+fallback conflicts are distinguished in each trace by `metadata.detector`.
+
+Before spending API budget, verify those exact pinned assets and the batched
+VeraRAG graph offline:
+
+```bash
+uv run falsirag-run \
+  --config experiments/configs/formal_stack_smoke.yaml \
+  --output-dir outputs/formal_stack_smoke \
+  --limit 5
+```
+
+This diagnostic uses the formal retriever and conflict stack with LLM calls
+disabled. It is a systems check, not a paper result.
 
 Supported `retrieval.backend` values are `lexical` (offline diagnostics),
 `vera_bm25`, `vera_dense`, `vera_faiss`, and `vera_hybrid`; any Vera backend can

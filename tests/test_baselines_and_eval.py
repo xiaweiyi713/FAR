@@ -83,6 +83,32 @@ def test_metrics_cover_revision_conflict_evidence_and_overclaim() -> None:
     assert soft_f1("18 million", "Revenue was 18 million.") > 0.5
 
 
+def test_causal_overclaim_reduction_requires_causal_marker_removal() -> None:
+    sample = {
+        "id": "F2",
+        "category": "causal_overclaim",
+        "split": "dev",
+        "initial_answer": "这一结果完全由该因素导致",
+        "gold_evidence": [{"doc_id": "D1"}],
+        "counter_evidence": [{"doc_id": "D1"}],
+        "conflict_type": "causal",
+        "expected_revision": {
+            "action": "downgrade_causal_to_correlation",
+            "revised_answer": "这一结果与该因素相关，但不能确认因果关系",
+        },
+        "source_metadata": {"dependency_group": "D1"},
+    }
+    prediction = PredictionRecord(
+        sample_id="F2",
+        answer="这一结果与该因素相关，但现有证据不足以确认因果关系",
+        evidence_ids=("D1",),
+        predicted_conflict_types=("causal",),
+        revision_action="downgrade_causal_to_correlation",
+        method="far",
+    )
+    assert score_sample(sample, prediction)["overclaim_reduction"] == 1.0
+
+
 def test_statistics_are_deterministic_and_paired() -> None:
     baseline = [
         {"sample_id": f"F{i}", "category": "a" if i < 3 else "b", "score": 0.0} for i in range(6)
