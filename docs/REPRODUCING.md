@@ -79,6 +79,21 @@ the required environment variable. Re-run the identical command to resume;
 changing code, data, config, split, or limit requires a new output directory.
 The held-out test requires `--allow-test`.
 
+The three formal API configs share BM25+BGE-M3 hybrid RRF and a BGE reranker so
+model comparisons do not confound the generator with a different retriever.
+Install the complete optional retrieval stack before a formal run:
+
+```bash
+uv pip install -e '../VeraRAG[dense]'
+```
+
+Supported `retrieval.backend` values are `lexical` (offline diagnostics),
+`vera_bm25`, `vera_dense`, `vera_faiss`, and `vera_hybrid`; any Vera backend can
+enable the nested `rerank` block. Formal hybrid configs set
+`allow_dense_fallback: false`: missing embeddings or dense dependencies abort
+the run rather than silently producing mislabeled BM25 results. Set it to true
+only for a diagnostic run and report the degradation.
+
 Recommended: run one complete suite for a config. This executes FAR, selected
 baselines, selected ablations, evaluation, result validation, and table/figure
 artifact generation:

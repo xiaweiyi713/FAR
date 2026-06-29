@@ -3,7 +3,26 @@ run:
   top_k_per_query: 5
   conflict_detector: vera
 retrieval:
-  backend: vera_bm25
+  backend: vera_hybrid
+  allow_dense_fallback: false
+  sparse:
+    k1: 1.5
+    b: 0.75
+  dense:
+    model_name: BAAI/bge-m3
+    device: cpu
+    batch_size: 32
+    local_files_only: false
+  sparse_weight: 0.4
+  dense_weight: 0.6
+  rerank:
+    enabled: true
+    model_name: BAAI/bge-reranker-v2-m3
+    device: cpu
+    batch_size: 16
+    candidate_k: 20
+    preserve_base_top_k: 1
+    local_files_only: false
 llm:
   enabled: true
   provider: deepseek

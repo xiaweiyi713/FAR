@@ -16,10 +16,12 @@ historical `src.*` layout.
 6. `far/pipeline.py` records every intermediate object in `FARResult`.
 
 VeraRAG integration is centralized in `far/adapters/`: the six-provider LLM
-client, BM25/dense-compatible retriever contract, and layered conflict graph.
-Import failures give installation guidance. No benchmark gold metadata is read
-by normal detectors or runners; oracle metadata exists only behind an explicit
-test/demo flag.
+client; concrete BM25, dense, FAISS, hybrid RRF, and CrossEncoder-reranked
+retrieval builders; and the layered conflict graph. Hybrid runs fail if VeraRAG
+silently loses its dense component unless a diagnostic config explicitly sets
+`allow_dense_fallback: true`. Import failures give installation guidance. No
+benchmark gold metadata is read by normal detectors or runners; oracle metadata
+exists only behind an explicit test/demo flag.
 
 Experiment runners hash configuration, benchmark, corpus, and all Python
 implementation files. Checkpoints are append-only and fsynced per sample.

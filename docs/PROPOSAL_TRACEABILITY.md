@@ -7,7 +7,7 @@
 | Typed support/refutation/boundary queries | `far/counterfactual.py` | Implemented |
 | Typed conflict controls and VeraRAG reuse | `far/adapters/conflict.py` | Implemented |
 | Typed revision and before/after trace | `far/revision.py` | Implemented |
-| Six-provider LLM and retrieval reuse | `far/adapters/` | Implemented; optional Vera install |
+| Six-provider LLM; BM25/dense/FAISS/hybrid/rerank reuse | `far/adapters/`, API configs, adapter tests | Implemented; strict hybrid configs require optional Vera dense install |
 | 300--400 benchmark, five categories | 300 rows in `bench/falsirag_bench.jsonl` | Candidate complete |
 | In-corpus counter-evidence | `bench/corpus.jsonl`, validator recall 0.93 | Implemented |
 | Frozen held-out split/no leakage | `bench/split_manifest.json` | Frozen; external blindness pending |

@@ -81,11 +81,14 @@ def select_samples(
 
 
 def build_retriever(config: dict[str, Any], documents: list[EvidenceDocument]) -> Any:
-    name = config.get("retrieval", {}).get("backend", "lexical")
+    retrieval = config.get("retrieval", {})
+    if not isinstance(retrieval, dict):
+        raise TypeError("retrieval configuration must be a mapping")
+    name = retrieval.get("backend", "lexical")
     if name == "lexical":
         return InMemoryRetriever(documents)
-    if name == "vera_bm25":
-        return VeraRetrieverAdapter.bm25(documents, config.get("retrieval", {}))
+    if name in VeraRetrieverAdapter.SUPPORTED_BACKENDS:
+        return VeraRetrieverAdapter.from_config(documents, retrieval)
     raise ValueError(f"unsupported retrieval backend: {name}")
 
 

@@ -20,8 +20,13 @@ uv sync --extra dev --extra eval
 uv pip install --no-deps -e /Users/xuwenyao/VeraRAG  # optional adapters
 uv run python examples/offline_demo.py
 uv run falsirag-validate-bench
-uv run pytest
+uv run python -m pytest
 ```
+
+For the formal hybrid+dense+reranker configurations, install VeraRAG's dense
+extra instead: `uv pip install -e '/Users/xuwenyao/VeraRAG[dense]'`. The formal
+configs fail closed if dense retrieval is unavailable, so a BM25 fallback can
+never be mislabeled as a hybrid result.
 
 Run a balanced, dependency-free diagnostic slice:
 
@@ -53,6 +58,11 @@ The core runs offline with deterministic rules. Configured LLMs participate in
 claim decomposition, typed query generation, and revision realization. Invalid
 structured model outputs fall back to the deterministic protocol; provider
 failures remain visible.
+
+The VeraRAG adapter exposes its six providers (OpenAI, Anthropic, Ollama,
+DashScope, ZhipuAI, and DeepSeek) plus BM25, dense, FAISS, hybrid RRF, and an
+optional CrossEncoder reranker. The checked-in API configs use the same strict
+multilingual BGE hybrid+rereanking stack for paired model comparisons.
 
 ## Benchmark status
 

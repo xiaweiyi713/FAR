@@ -12,8 +12,24 @@ __all__ = ["TextGenerator", "VeraLLMAdapter"]
 class VeraLLMAdapter:
     """Wrap VeraRAG's six-provider client behind FAR's small stable interface."""
 
+    SUPPORTED_PROVIDERS = (
+        "openai",
+        "anthropic",
+        "ollama",
+        "dashscope",
+        "zhipuai",
+        "deepseek",
+    )
+
     def __init__(self, client: Any | None = None, **client_options: Any) -> None:
         if client is None:
+            provider = str(client_options.get("provider", "ollama")).strip().lower()
+            if provider not in self.SUPPORTED_PROVIDERS:
+                supported = ", ".join(self.SUPPORTED_PROVIDERS)
+                raise ValueError(
+                    f"unsupported VeraRAG LLM provider {provider!r}; choose {supported}"
+                )
+            client_options["provider"] = provider
             try:
                 from src.utils.llm_client import LLMClient
             except ImportError as exc:

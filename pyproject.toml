@@ -67,6 +67,7 @@ experiments = ["configs/*.yaml"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q --strict-markers"
+pythonpath = ["."]
 
 [tool.ruff]
 target-version = "py310"
