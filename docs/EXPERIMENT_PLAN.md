@@ -3,6 +3,9 @@
 Run FAR, five baselines, and four ablations on train/dev before touching test.
 Target backends are DeepSeek Chat, Qwen Plus, and local Qwen 2.5 7B; record exact
 service/model identifiers and immutable local model hashes where possible.
+Use `falsirag-suite` for the default run path so every prediction bundle is
+evaluated, validated, fingerprinted, and converted into tables/figures from the
+same recorded reports.
 
 Baselines are Vanilla RAG, Multi-query RAG, Reflective RAG, a closed-corpus
 CRAG-style reproduction, and an inference-time Self-RAG-style reproduction.

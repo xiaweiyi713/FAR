@@ -55,3 +55,10 @@ def auto_annotate_main() -> None:
     from bench.build.auto_annotate import main
 
     main()
+
+
+def run_suite_main() -> None:
+    _prefer_far_repo()
+    from experiments.run_suite import main
+
+    main()

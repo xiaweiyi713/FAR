@@ -26,13 +26,13 @@ uv run pytest
 Run a balanced, dependency-free diagnostic slice:
 
 ```bash
-uv run falsirag-run \
+uv run falsirag-suite \
   --config experiments/configs/offline_smoke.yaml \
-  --output-dir outputs/smoke/far --limit 10
-uv run falsirag-eval \
-  --benchmark bench/falsirag_bench.jsonl \
-  --predictions outputs/smoke/far/predictions.jsonl \
-  --output-dir outputs/smoke/eval_far --resamples 200
+  --output-dir outputs/smoke_suite \
+  --limit 10 \
+  --baseline vanilla_rag \
+  --ablation minus_typed_conflict \
+  --resamples 200
 ```
 
 The `test` split is rejected unless `--allow-test` is supplied. Limited runs are

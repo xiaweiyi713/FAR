@@ -1,0 +1,229 @@
+"""Run a complete FAR experiment suite for one config and split."""
+
+from __future__ import annotations
+
+import argparse
+import json
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any
+
+from bench.build.common import sha256_file, write_json
+from eval.run_eval import evaluate
+from experiments.ablations import ABLATION_NAMES
+from experiments.build_artifacts import build as build_artifacts
+from experiments.run_baselines import BASELINE_NAMES
+from experiments.run_baselines import run as run_baselines
+from experiments.run_far import run as run_far
+from experiments.runner import ROOT
+from experiments.validate_results import validate_result_bundle
+
+DEFAULT_ABLATIONS = tuple(name for name in ABLATION_NAMES if name != "full")
+
+
+def _evaluate_and_validate(
+    benchmark_path: Path,
+    run_dir: Path,
+    evaluation_dir: Path,
+    *,
+    resamples: int,
+    seed: int,
+    baseline_scores_path: Path | None = None,
+) -> dict[str, Any]:
+    report = evaluate(
+        benchmark_path,
+        run_dir / "predictions.jsonl",
+        evaluation_dir,
+        resamples=resamples,
+        seed=seed,
+        baseline_scores_path=baseline_scores_path,
+    )
+    validation = validate_result_bundle(run_dir, evaluation_dir)
+    if not validation["valid"]:
+        raise RuntimeError(f"{run_dir}: invalid result bundle: {validation['errors']}")
+    return report
+
+
+def run_suite(
+    config_path: Path,
+    data_dir: Path,
+    output_dir: Path,
+    *,
+    split: str | None = None,
+    limit: int | None = None,
+    allow_test: bool = False,
+    baselines: tuple[str, ...] = BASELINE_NAMES,
+    ablations: tuple[str, ...] = DEFAULT_ABLATIONS,
+    resamples: int = 2000,
+    seed: int = 1729,
+) -> dict[str, Any]:
+    output_dir.mkdir(parents=True, exist_ok=True)
+    benchmark_path = data_dir / "falsirag_bench.jsonl"
+    runs_dir = output_dir / "runs"
+    evaluations_dir = output_dir / "evaluations"
+
+    far_manifest = run_far(
+        config_path,
+        data_dir,
+        runs_dir / "far",
+        split=split,
+        limit=limit,
+        allow_test=allow_test,
+    )
+    run_manifests: dict[str, dict[str, Any]] = {"far": far_manifest}
+    for ablation in ablations:
+        if ablation == "full":
+            continue
+        manifest = run_far(
+            config_path,
+            data_dir,
+            runs_dir / ablation,
+            ablation=ablation,
+            split=split,
+            limit=limit,
+            allow_test=allow_test,
+        )
+        run_manifests[ablation] = manifest
+
+    baseline_manifests = run_baselines(
+        config_path,
+        data_dir,
+        runs_dir / "baselines",
+        methods=baselines,
+        split=split,
+        limit=limit,
+        allow_test=allow_test,
+    )
+    for manifest in baseline_manifests:
+        run_manifests[str(manifest["method"])] = manifest
+
+    reports: dict[str, Path] = {}
+    far_report = _evaluate_and_validate(
+        benchmark_path,
+        runs_dir / "far",
+        evaluations_dir / "far",
+        resamples=resamples,
+        seed=seed,
+    )
+    reports["far"] = evaluations_dir / "far" / "report.json"
+
+    baseline_score_path: Path | None = None
+    if "vanilla_rag" in baselines:
+        vanilla_report = _evaluate_and_validate(
+            benchmark_path,
+            runs_dir / "baselines" / "vanilla_rag",
+            evaluations_dir / "vanilla_rag",
+            resamples=resamples,
+            seed=seed,
+        )
+        del vanilla_report
+        reports["vanilla"] = evaluations_dir / "vanilla_rag" / "report.json"
+        baseline_score_path = evaluations_dir / "vanilla_rag" / "scores.jsonl"
+
+    for baseline in baselines:
+        if baseline == "vanilla_rag":
+            continue
+        _evaluate_and_validate(
+            benchmark_path,
+            runs_dir / "baselines" / baseline,
+            evaluations_dir / baseline,
+            resamples=resamples,
+            seed=seed,
+            baseline_scores_path=baseline_score_path,
+        )
+        reports[baseline] = evaluations_dir / baseline / "report.json"
+
+    # Re-evaluate FAR against vanilla when possible so paired comparison is present.
+    if baseline_score_path is not None:
+        far_report = _evaluate_and_validate(
+            benchmark_path,
+            runs_dir / "far",
+            evaluations_dir / "far",
+            resamples=resamples,
+            seed=seed,
+            baseline_scores_path=baseline_score_path,
+        )
+
+    for ablation in ablations:
+        if ablation == "full":
+            continue
+        _evaluate_and_validate(
+            benchmark_path,
+            runs_dir / ablation,
+            evaluations_dir / ablation,
+            resamples=resamples,
+            seed=seed,
+            baseline_scores_path=baseline_score_path,
+        )
+        reports[ablation] = evaluations_dir / ablation / "report.json"
+
+    artifact_manifest = build_artifacts(
+        reports,
+        {"far": runs_dir / "far" / "predictions.jsonl"},
+        output_dir / "artifacts",
+    )
+    manifest = {
+        "schema_version": "far-suite-manifest-v1",
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "config": str(config_path),
+        "config_sha256": sha256_file(config_path),
+        "benchmark_sha256": sha256_file(benchmark_path),
+        "split": far_manifest["split"],
+        "limit": limit,
+        "allow_test": allow_test,
+        "diagnostic_only": bool(limit is not None) or bool(artifact_manifest["diagnostic_only"]),
+        "methods": sorted(reports),
+        "run_manifests": {
+            label: {
+                "method": manifest["method"],
+                "run_signature": manifest["run_signature"],
+                "predictions_sha256": manifest["predictions_sha256"],
+                "completed": manifest["completed"],
+                "partial": manifest["partial"],
+            }
+            for label, manifest in sorted(run_manifests.items())
+        },
+        "reports": {label: sha256_file(path) for label, path in sorted(reports.items())},
+        "artifact_manifest": sha256_file(output_dir / "artifacts" / "artifact_manifest.json"),
+        "far_summary": far_report["aggregate"]["metrics"],
+    }
+    write_json(output_dir / "suite_manifest.json", manifest)
+    return manifest
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--config",
+        type=Path,
+        default=ROOT / "experiments/configs/offline_smoke.yaml",
+    )
+    parser.add_argument("--data-dir", type=Path, default=ROOT / "bench")
+    parser.add_argument("--output-dir", type=Path, required=True)
+    parser.add_argument("--split", choices=("train", "dev", "test"))
+    parser.add_argument("--limit", type=int)
+    parser.add_argument("--allow-test", action="store_true")
+    parser.add_argument("--baseline", choices=BASELINE_NAMES, action="append")
+    parser.add_argument("--ablation", choices=ABLATION_NAMES, action="append")
+    parser.add_argument("--resamples", type=int, default=2000)
+    parser.add_argument("--seed", type=int, default=1729)
+    args = parser.parse_args()
+    selected_ablations = tuple(args.ablation or DEFAULT_ABLATIONS)
+    selected_baselines = tuple(args.baseline or BASELINE_NAMES)
+    manifest = run_suite(
+        args.config,
+        args.data_dir,
+        args.output_dir,
+        split=args.split,
+        limit=args.limit,
+        allow_test=args.allow_test,
+        baselines=selected_baselines,
+        ablations=selected_ablations,
+        resamples=args.resamples,
+        seed=args.seed,
+    )
+    print(json.dumps(manifest, ensure_ascii=False, indent=2, sort_keys=True))
+
+
+if __name__ == "__main__":
+    main()

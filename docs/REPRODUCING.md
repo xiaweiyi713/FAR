@@ -64,6 +64,27 @@ the required environment variable. Re-run the identical command to resume;
 changing code, data, config, split, or limit requires a new output directory.
 The held-out test requires `--allow-test`.
 
+Recommended: run one complete suite for a config. This executes FAR, selected
+baselines, selected ablations, evaluation, result validation, and table/figure
+artifact generation:
+
+```bash
+uv run falsirag-suite \
+  --config experiments/configs/deepseek.yaml \
+  --output-dir outputs/suites/deepseek_dev \
+  --split dev \
+  --baseline vanilla_rag \
+  --baseline multi_query_rag \
+  --ablation minus_typed_conflict \
+  --ablation minus_refutation_query
+```
+
+Omit the repeated `--baseline` and `--ablation` flags to run all five baselines
+and all four FAR ablations. Use `--limit` only for diagnostic smoke runs; suite
+manifests and built artifacts then remain marked `diagnostic_only`.
+
+For targeted debugging, run individual components:
+
 ```bash
 uv run falsirag-run --config experiments/configs/deepseek.yaml \
   --output-dir outputs/runs/deepseek_far
