@@ -65,6 +65,46 @@ suggestions, but they include:
 draft, corrects it as needed, and sets `human_reviewed` to `true`. This guard is
 intentional: a machine draft is a starting point, not an independent annotation.
 
+## Reviewing in Label Studio
+
+If you want an open-source UI instead of editing JSONL by hand, export the blind
+packet and optional machine predictions to a Label Studio import bundle:
+
+```bash
+uv run falsirag-auto-annotate label-studio \
+  --packet-dir outputs/falsirag_annotation_packet \
+  --preannotation-dir outputs/deepseek_preannotations_pilot \
+  --output-dir outputs/label_studio_falsirag \
+  --overwrite
+```
+
+The export writes:
+
+- `label_config.xml`: a ready-to-import labeling interface;
+- `tasks.json`: blind packet tasks, with LLM preannotations attached as
+  Label Studio `predictions` when available;
+- `label_studio_manifest.json`: packet/preannotation fingerprints and a
+  `publication_gold: false` guard.
+
+Create a Label Studio project with `label_config.xml`, import `tasks.json`, and
+let reviewers correct the predicted labels. After review, export Label Studio's
+JSON task file and convert it back into FAR's reviewer JSONL format:
+
+```bash
+uv run falsirag-auto-annotate label-studio-import \
+  --packet-dir outputs/falsirag_annotation_packet \
+  --label-studio-json outputs/label_studio_falsirag/project-export.json \
+  --output-dir outputs/label_studio_reviewed_reviewer_a \
+  --reviewer-id reviewer_a \
+  --overwrite
+```
+
+The importer writes `annotations_reviewer_a.jsonl`. Copy it into the packet
+directory or reference it from `packet_manifest.json`, then repeat the process
+for a genuinely independent second reviewer and complete adjudication.
+
+The UI is a review accelerator, not a replacement for the publication gate.
+
 ## What the file means
 
 Each preannotation contains:
@@ -94,13 +134,16 @@ same model biases as the FAR system being evaluated. Therefore:
 
 ## Open-source alternatives
 
-If you later want a UI or weak-supervision layer around FAR's files:
+I checked the current open-source ecosystem on 2026-06-29. The practical options
+for FAR are:
 
-- Label Studio can import preannotations or connect ML backends.
-- Argilla is a collaborative annotation and feedback platform for AI datasets.
-- Snorkel is useful when you can write labeling functions instead of using an
-  LLM directly.
-- Refuel Autolabel is a lightweight LLM-based text labeling tool.
+| Tool | Best FAR use | Fit |
+|---|---|---|
+| [Label Studio](https://labelstud.io/) | Human review UI for blind packets with imported LLM predictions | Best immediate fit; FAR exports `label_config.xml` and `tasks.json` directly. |
+| [Argilla](https://github.com/argilla-io/argilla) | Collaborative feedback/annotation workflows for NLP/LLM datasets | Good if you want a hosted review workspace and feedback records, but requires a separate dataset schema bridge. |
+| [Snorkel](https://github.com/snorkel-team/snorkel) | Weak supervision from labeling functions | Useful for deterministic rules such as number/date/entity mismatch; less useful for nuanced revision quality. |
+| [Refuel Autolabel](https://github.com/refuel-ai/autolabel) | LLM-based batch labeling from prompts | Similar role to FAR's built-in preannotator; useful if you prefer its prompt/evaluation harness. |
+| [Distilabel](https://distilabel.argilla.io/) | LLM synthetic-data and labeling pipelines | Useful for larger LLM labeling pipelines, but more machinery than FAR needs for the current paper artifact. |
 
 FAR's built-in preannotator is intentionally simpler: it preserves the current
 JSONL protocol and avoids introducing another service into the reproduction

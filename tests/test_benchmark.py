@@ -7,7 +7,12 @@ import pytest
 
 from bench.annotations import build_annotation_packet, cohen_kappa, compile_annotations
 from bench.build.audit_contamination import audit
-from bench.build.auto_annotate import build_review_draft, generate_preannotations
+from bench.build.auto_annotate import (
+    build_review_draft,
+    export_label_studio,
+    generate_preannotations,
+    import_label_studio,
+)
 from bench.build.extend_from_verabench import build
 from bench.build.import_fever_slice import import_slice
 from bench.build.validate_bench import validate
@@ -158,6 +163,114 @@ def test_machine_review_draft_requires_explicit_human_review(tmp_path: Path) -> 
     (packet / "packet_manifest.json").write_text(json.dumps(packet_manifest), encoding="utf-8")
     with pytest.raises(ValueError, match="human_reviewed=true"):
         compile_annotations(ROOT / "bench", packet, tmp_path / "compiled")
+
+
+def test_label_studio_export_contains_machine_predictions_as_review_aids(
+    tmp_path: Path,
+) -> None:
+    class FakeGenerator:
+        def complete(self, prompt: str, **kwargs: object) -> str:
+            del prompt, kwargs
+            return json.dumps(
+                {
+                    "conflict_present": True,
+                    "conflict_type": "causal",
+                    "revision_action": "downgrade_causal_to_correlation",
+                    "revised_answer_acceptable": True,
+                    "suggested_revised_answer": "Treat the relationship as correlational.",
+                    "rationale": "The evidence does not establish causality.",
+                    "confidence": 0.66,
+                }
+            )
+
+    packet = tmp_path / "packet"
+    build_annotation_packet(ROOT / "bench", packet, ["alice", "bob"])
+    preannotations = tmp_path / "preannotations"
+    generate_preannotations(
+        packet,
+        preannotations,
+        generator=FakeGenerator(),
+        preannotator_id="label_studio_source",
+        limit=2,
+    )
+    export_dir = tmp_path / "label_studio"
+    manifest = export_label_studio(
+        packet,
+        export_dir,
+        preannotation_dir=preannotations,
+    )
+    assert manifest["publication_gold"] is False
+    assert manifest["human_review_required"] is True
+    assert manifest["tasks_with_predictions"] == 2
+    assert (export_dir / "label_config.xml").exists()
+    tasks = json.loads((export_dir / "tasks.json").read_text(encoding="utf-8"))
+    assert len(tasks) == 300
+    assert tasks[0]["meta"]["publication_gold"] is False
+    predicted_tasks = [task for task in tasks if task.get("predictions")]
+    assert len(predicted_tasks) == 2
+    result = predicted_tasks[0]["predictions"][0]["result"]
+    assert any(
+        item["from_name"] == "conflict_type" and item["value"]["choices"] == ["causal"]
+        for item in result
+    )
+
+
+def test_label_studio_import_returns_reviewed_far_annotation_file(tmp_path: Path) -> None:
+    packet = tmp_path / "packet"
+    build_annotation_packet(ROOT / "bench", packet, ["alice", "bob"])
+    export_dir = tmp_path / "label_studio"
+    export_label_studio(packet, export_dir)
+    tasks = json.loads((export_dir / "tasks.json").read_text(encoding="utf-8"))
+    annotation_result = [
+        {
+            "from_name": "conflict_presence",
+            "to_name": "context",
+            "type": "choices",
+            "value": {"choices": ["conflict"]},
+        },
+        {
+            "from_name": "conflict_type",
+            "to_name": "context",
+            "type": "choices",
+            "value": {"choices": ["counter_evidence"]},
+        },
+        {
+            "from_name": "revision_action",
+            "to_name": "context",
+            "type": "choices",
+            "value": {"choices": ["qualify_uncertainty"]},
+        },
+        {
+            "from_name": "revised_answer_acceptable",
+            "to_name": "context",
+            "type": "choices",
+            "value": {"choices": ["not_acceptable"]},
+        },
+        {
+            "from_name": "rationale",
+            "to_name": "context",
+            "type": "textarea",
+            "value": {"text": ["Reviewed in Label Studio."]},
+        },
+    ]
+    for task in tasks:
+        task["annotations"] = [{"result": annotation_result}]
+    reviewed_json = tmp_path / "label_studio_reviewed.json"
+    reviewed_json.write_text(json.dumps(tasks, ensure_ascii=False), encoding="utf-8")
+
+    import_dir = tmp_path / "imported"
+    manifest = import_label_studio(
+        packet,
+        reviewed_json,
+        import_dir,
+        reviewer_id="alice",
+    )
+    assert manifest["samples"] == 300
+    assert manifest["human_reviewed"] is True
+    row = json.loads((import_dir / "annotations_alice.jsonl").read_text().splitlines()[0])
+    assert row["source_tool"] == "label_studio"
+    assert row["human_reviewed"] is True
+    assert row["annotation"]["conflict_type"] == "counter_evidence"
 
 
 def test_cohen_kappa_handles_perfect_and_chance_adjusted_agreement() -> None:
