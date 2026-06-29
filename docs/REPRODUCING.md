@@ -5,7 +5,7 @@
 ```bash
 uv run python -m bench.build.extend_from_verabench \
   --source-dir ../VeraRAG/data/verabench --output-dir bench
-uv run far-validate-bench --output outputs/benchmark_validation.json
+uv run falsirag-validate-bench --output outputs/benchmark_validation.json
 uv run python -m bench.build.import_fever_slice
 ```
 
@@ -34,9 +34,9 @@ changing code, data, config, split, or limit requires a new output directory.
 The held-out test requires `--allow-test`.
 
 ```bash
-uv run far-run --config experiments/configs/deepseek.yaml \
+uv run falsirag-run --config experiments/configs/deepseek.yaml \
   --output-dir outputs/runs/deepseek_far
-uv run far-baselines --config experiments/configs/deepseek.yaml \
+uv run falsirag-baselines --config experiments/configs/deepseek.yaml \
   --output-dir outputs/runs/deepseek_baselines
 ```
 

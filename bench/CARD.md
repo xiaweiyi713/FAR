@@ -50,7 +50,7 @@ claims require an externally held test copy or independent evaluator.
 Run:
 
 ```bash
-far-validate-bench
+falsirag-validate-bench
 python -m bench.build.annotate_packet build \
   --data-dir bench --output-dir outputs/falsirag_annotation \
   --annotator annotator_a --annotator annotator_b

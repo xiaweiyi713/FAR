@@ -38,10 +38,13 @@ dev = [
 ]
 
 [project.scripts]
-far-run = "experiments.run_far:main"
-far-baselines = "experiments.run_baselines:main"
-far-eval = "eval.run_eval:main"
-far-validate-bench = "bench.build.validate_bench:main"
+falsirag-run = "far.cli:run_far_main"
+falsirag-baselines = "far.cli:run_baselines_main"
+falsirag-eval = "far.cli:run_eval_main"
+falsirag-validate-bench = "far.cli:validate_bench_main"
+far-run = "far.cli:run_far_main"
+far-eval = "far.cli:run_eval_main"
+far-validate-bench = "far.cli:validate_bench_main"
 
 [tool.setuptools.packages.find]
 where = ["."]

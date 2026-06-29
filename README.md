@@ -19,17 +19,17 @@ multi-model results; those require independent annotators and model credentials.
 uv sync --extra dev --extra eval
 uv pip install --no-deps -e /Users/xuwenyao/VeraRAG  # optional adapters
 uv run python examples/offline_demo.py
-uv run far-validate-bench
+uv run falsirag-validate-bench
 uv run pytest
 ```
 
 Run a balanced, dependency-free diagnostic slice:
 
 ```bash
-uv run far-run \
+uv run falsirag-run \
   --config experiments/configs/offline_smoke.yaml \
   --output-dir outputs/smoke/far --limit 10
-uv run far-eval \
+uv run falsirag-eval \
   --benchmark bench/falsirag_bench.jsonl \
   --predictions outputs/smoke/far/predictions.jsonl \
   --output-dir outputs/smoke/eval_far --resamples 200
