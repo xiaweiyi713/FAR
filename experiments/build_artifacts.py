@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import importlib
 import json
 from pathlib import Path
 from typing import Any
@@ -89,9 +90,8 @@ def build(
     prediction_paths: dict[str, Path],
     output_dir: Path,
 ) -> dict[str, Any]:
-    import matplotlib.pyplot as plt
-    import numpy as np
-    from matplotlib import font_manager
+    plt: Any = importlib.import_module("matplotlib.pyplot")
+    font_manager: Any = importlib.import_module("matplotlib.font_manager")
 
     unicode_font = Path("/System/Library/Fonts/Supplemental/Arial Unicode.ttf")
     if unicode_font.exists():
@@ -112,7 +112,7 @@ def build(
     _write_latex(output_dir / "ablation_results.tex", ablation_rows)
 
     categories = sorted(next(iter(reports.values()))["aggregate"]["by_category"])
-    x = np.arange(len(categories))
+    x = list(range(len(categories)))
     width = 0.8 / len(main_labels)
     fig, axis = plt.subplots(figsize=(10, 4.8))
     for index, label in enumerate(main_labels):
@@ -120,7 +120,8 @@ def build(
             reports[label]["aggregate"]["by_category"][category]["revision_accuracy"]
             for category in categories
         ]
-        axis.bar(x + (index - (len(main_labels) - 1) / 2) * width, values, width, label=label)
+        offset = (index - (len(main_labels) - 1) / 2) * width
+        axis.bar([position + offset for position in x], values, width, label=label)
     axis.set_xticks(x, [item.replace("_", "\n") for item in categories])
     axis.set_ylabel("Revision accuracy")
     axis.set_ylim(0, 1)

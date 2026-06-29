@@ -1,5 +1,20 @@
 # Reproduction Guide
 
+## Environment contract
+
+FAR declares Python 3.10+ support in `pyproject.toml`. The checked-in
+`.python-version` pins the local development environment to Python 3.12, but
+the static type/lint contract targets Python 3.10 so the artifact does not
+silently drift beyond the proposal's compatibility claim. Use:
+
+```bash
+uv run ruff check .
+uv run mypy far bench baselines eval experiments tests
+uv run python -m pytest
+```
+
+before publishing or replacing paper numbers.
+
 ## Build and validate data
 
 ```bash
