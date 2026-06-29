@@ -139,8 +139,8 @@ for FAR are:
 
 | Tool | Best FAR use | Fit |
 |---|---|---|
-| [Label Studio](https://labelstud.io/) | Human review UI for blind packets with imported LLM predictions | Best immediate fit; FAR exports `label_config.xml` and `tasks.json` directly. |
-| [Argilla](https://github.com/argilla-io/argilla) | Collaborative feedback/annotation workflows for NLP/LLM datasets | Good if you want a hosted review workspace and feedback records, but requires a separate dataset schema bridge. |
+| [Label Studio](https://labelstud.io/guide/predictions.html) | Human review UI for blind packets with imported LLM predictions | Best immediate fit; FAR exports `label_config.xml` and `tasks.json` directly in its documented `predictions` format. |
+| [Argilla](https://docs.argilla.io/v2.1/how_to_guides/annotate/) | Collaborative feedback/annotation workflows for NLP/LLM datasets | Its Suggestions are editable pre-filled responses; useful for review records, but FAR would need a separate schema bridge. |
 | [Snorkel](https://github.com/snorkel-team/snorkel) | Weak supervision from labeling functions | Useful for deterministic rules such as number/date/entity mismatch; less useful for nuanced revision quality. |
 | [Refuel Autolabel](https://github.com/refuel-ai/autolabel) | LLM-based batch labeling from prompts | Similar role to FAR's built-in preannotator; useful if you prefer its prompt/evaluation harness. |
 | [Distilabel](https://distilabel.argilla.io/) | LLM synthetic-data and labeling pipelines | Useful for larger LLM labeling pipelines, but more machinery than FAR needs for the current paper artifact. |

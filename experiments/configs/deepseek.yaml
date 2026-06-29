@@ -1,6 +1,6 @@
 run:
   split: dev
-  top_k_per_query: 5
+  top_k_per_query: 2
   conflict_detector: vera
 conflict_graph:
   enable_nli: true
@@ -39,13 +39,13 @@ retrieval:
 llm:
   enabled: true
   provider: deepseek
-  model: deepseek-chat
+  model: deepseek-v4-flash
   api_key_env: DEEPSEEK_API_KEY
   temperature: 0.0
   max_tokens: 1200
   cache_enabled: true
   cache_path: outputs/cache/deepseek.sqlite3
-  cache_namespace: far-deepseek-v1
+  cache_namespace: far-deepseek-v4-flash-v1
 statistics:
   bootstrap_resamples: 2000
   bootstrap_seed: 1729

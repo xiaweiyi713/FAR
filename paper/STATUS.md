@@ -2,13 +2,15 @@
 
 The anonymous AAAI-27 draft uses the official 2027 Author Kit. Method,
 benchmark protocol, baselines, ablations, metrics, limitations, and
-reproducibility text are complete.
+reproducibility text are complete. The official checklist is filled against the
+current evidence; items that depend on final experiments remain `partial` or
+`no` and must be revisited before submission.
 
 The following cannot be truthfully completed by code generation:
 
 1. two independent annotations and adjudication for 300 candidate items;
 2. an externally held blind test;
-3. full DeepSeek, Qwen Plus, and local Qwen runs;
+3. full DeepSeek V4-Flash, Qwen3.7 Plus (2026-05-26), and local Qwen3.5 9B runs;
 4. final paired confidence intervals, McNemar values, and typed-ablation claim;
 5. named authors, affiliations, and the human-required AAAI policy review.
 

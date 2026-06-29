@@ -1,6 +1,6 @@
 run:
   split: dev
-  top_k_per_query: 5
+  top_k_per_query: 2
   conflict_detector: vera
 conflict_graph:
   enable_nli: true

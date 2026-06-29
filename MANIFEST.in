@@ -14,6 +14,7 @@ prune tmp
 prune build
 prune dist
 prune paper/aaai27
+include paper/aaai27/ReproducibilityChecklist.tex
 global-exclude __pycache__/*
 global-exclude *.py[cod]
 global-exclude *.aux *.bbl *.blg *.log *.out *.pdf *.fls *.fdb_latexmk *.synctex.gz

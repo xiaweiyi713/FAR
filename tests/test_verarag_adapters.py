@@ -243,6 +243,26 @@ def test_vera_conflict_adapter_emits_graph_and_fallback_signals() -> None:
 
 
 @pytest.mark.skipif(importlib.util.find_spec("src") is None, reason="VeraRAG is not installed")
+def test_vera_conflict_adapter_aligns_the_edge_claim_not_the_whole_document() -> None:
+    detector = VeraConflictDetector({"conflict_graph": {"enable_nli": False}})
+    conflicts = detector.detect(
+        ClaimNode(
+            "C1",
+            "Willow has 105 qubits.",
+            ClaimType.NUMERICAL,
+            entities=("Willow",),
+            numbers=("105",),
+        ),
+        EvidenceDocument(
+            "E1",
+            "Willow has 105 qubits. A separate benchmark uses 5 trials.",
+            source="paper",
+        ),
+    )
+    assert not conflicts
+
+
+@pytest.mark.skipif(importlib.util.find_spec("src") is None, reason="VeraRAG is not installed")
 def test_vera_conflict_adapter_fails_closed_when_required_nli_is_unavailable() -> None:
     class _UnavailableNLIBuilder:
         _nli_tried = True

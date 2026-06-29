@@ -23,3 +23,6 @@ paper/build/
 .DS_Store
 tmp/
 paper/aaai27/
+!paper/aaai27/
+paper/aaai27/*
+!paper/aaai27/ReproducibilityChecklist.tex

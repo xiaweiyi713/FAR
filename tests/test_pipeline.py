@@ -100,6 +100,18 @@ def test_heuristic_conflicts_require_topic_alignment() -> None:
     assert conflicts[0].conflict_type.value == "causal"
 
 
+def test_heuristic_topic_alignment_allows_entity_replacements() -> None:
+    detector = HeuristicConflictDetector()
+    claim = RuleBasedClaimDecomposer().decompose("信越化学和SpaceX占全球硅晶圆市场约60%").claims[0]
+    evidence = EvidenceDocument(
+        "E1",
+        "主体不同: 信越化学和SUMCO占全球硅晶圆市场约60%，而SpaceX并非硅晶圆供应商。",
+        source="report",
+    )
+    conflicts = detector.detect(claim, evidence)
+    assert conflicts
+
+
 def test_pipeline_batches_all_evidence_for_batch_capable_detector() -> None:
     detector = _BatchOnlyDetector()
     pipeline = FARPipeline(

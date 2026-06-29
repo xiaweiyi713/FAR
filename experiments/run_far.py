@@ -19,6 +19,19 @@ from experiments.runner import (
     select_samples,
 )
 from far.adapters import HeuristicConflictDetector, VeraConflictDetector
+from far.revision import RevisionAction, RevisionTrace
+
+_PRIMARY_ACTION_PRIORITY = {
+    RevisionAction.PREFER_RELIABLE_SOURCE: 100,
+    RevisionAction.REQUALIFY_ENTITY: 90,
+    RevisionAction.CORRECT_TEMPORAL: 80,
+    RevisionAction.REPLACE_NUMERICAL: 70,
+    RevisionAction.DOWNGRADE_CAUSAL: 60,
+    RevisionAction.CLARIFY_DEFINITION: 50,
+    RevisionAction.RETRACT: 40,
+    RevisionAction.QUALIFY_UNCERTAINTY: 30,
+    RevisionAction.KEEP: 0,
+}
 
 
 def _detector(config: dict[str, Any]) -> Any:
@@ -28,6 +41,22 @@ def _detector(config: dict[str, Any]) -> Any:
     if name == "vera":
         return VeraConflictDetector(config)
     raise ValueError(f"unsupported conflict detector: {name}")
+
+
+def _primary_trace(traces: tuple[RevisionTrace, ...]) -> RevisionTrace:
+    """Select the strongest sample-level control while retaining the full trace."""
+
+    changed = tuple(trace for trace in traces if trace.changed)
+    if not changed:
+        return traces[0]
+    return max(
+        changed,
+        key=lambda trace: (
+            trace.confidence,
+            _PRIMARY_ACTION_PRIORITY[trace.action],
+            -len(trace.conflict_types),
+        ),
+    )
 
 
 def run(
@@ -87,8 +116,9 @@ def run(
                 for conflict in claim_conflicts
             )
         )
-        changed = next((trace for trace in result.revision_trace if trace.changed), None)
-        action = changed.action.value if changed else result.revision_trace[0].action.value
+        primary_trace = _primary_trace(result.revision_trace)
+        primary_conflicts = tuple(item.value for item in primary_trace.conflict_types)
+        action = primary_trace.action.value
         writer.append(
             {
                 "sample_id": sample["id"],
@@ -99,6 +129,8 @@ def run(
                 "revision_action": action,
                 "metadata": {
                     "elapsed_seconds": time.perf_counter() - started,
+                    "primary_conflict_types": list(primary_conflicts),
+                    "primary_revision_trace": primary_trace.to_dict(),
                     "claim_graph": result.claim_graph.to_dict(),
                     "revision_trace": [item.to_dict() for item in result.revision_trace],
                     "retrieval_trace": [item.to_dict() for item in result.retrieval_trace],

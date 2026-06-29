@@ -96,8 +96,11 @@ adjudication, reported Cohen's kappa, and an externally held blind test. See
 - [`docs/EVALUATION.md`](docs/EVALUATION.md): metric and inference definitions
 - [`docs/AUTO_ANNOTATION.md`](docs/AUTO_ANNOTATION.md): DeepSeek/LLM preannotation workflow
 - [`docs/EXPERIMENT_PLAN.md`](docs/EXPERIMENT_PLAN.md): model/baseline/ablation matrix
+- [`docs/DEVELOPMENT_LOG.md`](docs/DEVELOPMENT_LOG.md): frozen dev-only tuning decisions and hashes
 - [`docs/PROPOSAL_TRACEABILITY.md`](docs/PROPOSAL_TRACEABILITY.md): proposal-to-evidence audit
+- [`docs/COMPLETION_AUDIT.md`](docs/COMPLETION_AUDIT.md): requirement-by-requirement submission gates
 - [`paper/main.tex`](paper/main.tex): anonymous AAAI-27 draft using the official kit
+- [`paper/aaai27/ReproducibilityChecklist.tex`](paper/aaai27/ReproducibilityChecklist.tex): evidence-based AAAI checklist
 
 ## License
 

@@ -1,7 +1,7 @@
 # Experiment Matrix and Gates
 
 Run FAR, five baselines, and four ablations on train/dev before touching test.
-Target backends are DeepSeek Chat, Qwen Plus, and local Qwen 2.5 7B; record exact
+Target backends are DeepSeek V4-Flash, Qwen3.7 Plus (2026-05-26), and local Qwen 3.5 9B; record exact
 service/model identifiers and immutable local model hashes where possible.
 Use `falsirag-suite` for the default run path so every prediction bundle is
 evaluated, validated, fingerprinted, and converted into tables/figures from the

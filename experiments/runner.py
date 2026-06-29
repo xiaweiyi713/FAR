@@ -11,6 +11,8 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+from urllib.error import HTTPError, URLError
+from urllib.request import Request, urlopen
 
 import yaml
 
@@ -158,6 +160,55 @@ def _package_version(name: str) -> str | None:
         return None
 
 
+def _ollama_model_identity(base_url: str, model: str) -> dict[str, Any]:
+    """Resolve a mutable Ollama tag to the immutable digest used by this run."""
+
+    request = Request(f"{base_url.rstrip('/')}/api/tags", method="GET")
+    try:
+        with urlopen(request, timeout=5) as response:
+            payload = json.loads(response.read().decode("utf-8"))
+    except (HTTPError, URLError, TimeoutError, json.JSONDecodeError) as exc:
+        raise RuntimeError(
+            f"could not inspect Ollama model {model!r} at {base_url!r}; "
+            "start Ollama and pull the configured model before a formal run"
+        ) from exc
+    models = payload.get("models") if isinstance(payload, dict) else None
+    if not isinstance(models, list):
+        raise RuntimeError("Ollama /api/tags returned an invalid models payload")
+    for item in models:
+        if not isinstance(item, dict) or model not in {item.get("name"), item.get("model")}:
+            continue
+        digest = str(item.get("digest", "")).strip()
+        if not digest:
+            raise RuntimeError(f"Ollama model {model!r} did not expose an immutable digest")
+        details = item.get("details") if isinstance(item.get("details"), dict) else {}
+        return {
+            "model": model,
+            "digest": digest,
+            "size": item.get("size"),
+            "modified_at": item.get("modified_at"),
+            "details": details,
+        }
+    raise RuntimeError(
+        f"configured Ollama model {model!r} is not installed; run `ollama pull {model}` first"
+    )
+
+
+def _llm_runtime_identity(config: dict[str, Any]) -> dict[str, Any]:
+    llm = config.get("llm", {})
+    if not isinstance(llm, dict) or not llm.get("enabled", False):
+        return {"enabled": False}
+    provider = str(llm.get("provider", ""))
+    model = str(llm.get("model", ""))
+    identity: dict[str, Any] = {"enabled": True, "provider": provider, "model": model}
+    if provider == "ollama":
+        identity["ollama_model"] = _ollama_model_identity(
+            str(llm.get("base_url", "http://localhost:11434")),
+            model,
+        )
+    return identity
+
+
 def build_run_identity(
     config_path: Path,
     config: dict[str, Any],
@@ -183,6 +234,7 @@ def build_run_identity(
         "corpus_sha256": sha256_file(data_dir / "corpus.jsonl"),
         "implementation_sha256": _implementation_sha256(),
         "llm": config.get("llm", {}),
+        "llm_runtime": _llm_runtime_identity(config),
         "retrieval": config.get("retrieval", {}),
     }
     encoded = json.dumps(stable, sort_keys=True, separators=(",", ":")).encode()

@@ -172,8 +172,8 @@ class HeuristicConflictDetector:
             if re.fullmatch(r"[A-Z][A-Za-z0-9_-]{2,}", entity)
             and entity.lower() not in cls._TOPIC_STOP
         ]
-        if named_entities:
-            return any(entity.lower() in lowered for entity in named_entities)
+        if named_entities and any(entity.lower() in lowered for entity in named_entities):
+            return True
         claim_terms = cls._topic_terms(claim.text)
         shared = claim_terms & cls._topic_terms(text)
         required = 1 if len(claim_terms) <= 3 else max(2, round(len(claim_terms) * 0.35))
@@ -415,6 +415,7 @@ class VeraConflictDetector:
             ],
         )
         evidence_claim_to_document: dict[str, str] = {}
+        evidence_claim_text: dict[str, str] = {}
         vera_evidence = [claim_evidence]
         for item in evidence:
             parsed_evidence = self.decomposer.decompose(item.text).claims
@@ -423,6 +424,7 @@ class VeraConflictDetector:
             for index, evidence_claim in enumerate(parsed_evidence, start=1):
                 evidence_claim_id = f"far-evidence:{item.evidence_id}:{index}"
                 evidence_claim_to_document[evidence_claim_id] = item.evidence_id
+                evidence_claim_text[evidence_claim_id] = evidence_claim.text
                 vera_claims.append(
                     Claim(
                         claim_id=evidence_claim_id,
@@ -469,9 +471,10 @@ class VeraConflictDetector:
                 continue
             evidence_claim_id = next(iter(evidence_claim_ids))
             evidence_id = evidence_claim_to_document[evidence_claim_id]
+            edge_evidence_text = evidence_claim_text[evidence_claim_id]
             if not HeuristicConflictDetector._topically_aligned(
                 claim,
-                evidence_by_id[evidence_id].text,
+                edge_evidence_text,
             ):
                 continue
             fallback_conflicts = fallback_by_evidence[evidence_id]
@@ -486,12 +489,17 @@ class VeraConflictDetector:
                         ClaimType.TEMPORAL: EvidenceType.TEMPORAL,
                         ClaimType.DEFINITIONAL: EvidenceType.DEFINITION,
                     }.get(claim.claim_type, EvidenceType.COUNTER_EVIDENCE)
+            if conflict_type is EvidenceType.NUMERICAL and self._looks_temporal_numeric_conflict(
+                claim,
+                edge_evidence_text,
+            ):
+                conflict_type = EvidenceType.TEMPORAL
             if (
                 raw_conflict_type == "granularity_conflict"
                 and claim.claim_type in {ClaimType.FACTUAL, ClaimType.TEMPORAL}
                 and any(
                     re.fullmatch(r"[A-Z][A-Za-z0-9_-]{2,}", entity)
-                    and entity.lower() in evidence_by_id[evidence_id].text.lower()
+                    and entity.lower() in edge_evidence_text.lower()
                     for entity in claim.entities
                 )
             ):
@@ -547,3 +555,36 @@ class VeraConflictDetector:
                     )
                 )
         return tuple(conflicts)
+
+    def _looks_temporal_numeric_conflict(self, claim: ClaimNode, evidence_text: str) -> bool:
+        """Treat year-only numeric graph edges as temporal control signals."""
+
+        if not claim.time_expressions:
+            return False
+        parsed = self.decomposer.decompose(evidence_text)
+        evidence_times = {
+            time_expression
+            for evidence_claim in parsed.claims
+            for time_expression in evidence_claim.time_expressions
+        }
+        if not evidence_times or evidence_times == set(claim.time_expressions):
+            return False
+
+        def non_time_numbers(numbers: tuple[str, ...], times: set[str]) -> set[str]:
+            return {
+                number
+                for number in numbers
+                if number not in times and not re.fullmatch(r"(?:19|20)\d{2}", number)
+            }
+
+        evidence_numbers = {
+            number for evidence_claim in parsed.claims for number in evidence_claim.numbers
+        }
+        claim_numbers = non_time_numbers(claim.numbers, set(claim.time_expressions))
+        comparable_numbers = non_time_numbers(tuple(evidence_numbers), evidence_times)
+        if claim_numbers and comparable_numbers:
+            overlap = claim_numbers & comparable_numbers
+            return len(overlap) >= max(
+                1, round(min(len(claim_numbers), len(comparable_numbers)) * 0.5)
+            )
+        return True

@@ -1,8 +1,10 @@
 # FAR 项目企划：Falsification-Augmented Retrieval
 
 > **Ask What Could Be Wrong: Falsification-Guided Retrieval for Self-Correcting Language Agents**
-> 目标会议：**AAAI-27 主会**（按你给的 deadline：摘要 2026-07-21 / 全文 2026-07-28 / 补充 2026-07-31，主文 ≤7 页）
+> 目标会议：**AAAI-27 主会**（[官方 CFP，2026-06-29 核验](https://aaai.org/conference/aaai/aaai-27/main-technical-track-call/)：摘要 2026-07-21 / 全文 2026-07-28 / 补充 2026-07-31；正文最多 7 页、含参考文献最多 9 页）
 > 本文是 FAR 的完整项目企划：研究问题 / 方法 / 目录结构 / 技术栈 / 基准 / 实验 / 时间线 / **VeraRAG 复用映射（精确到文件）** / 风险对冲。
+
+> **执行状态**：企划到实现的逐项证据见 [`docs/PROPOSAL_TRACEABILITY.md`](docs/PROPOSAL_TRACEABILITY.md)。代码、候选基准、运行器、统计和论文骨架已实现；独立双标注/仲裁、外部保管的盲测以及冻结的多模型结果仍是不可由机器结果替代的投稿门槛。
 
 ---
 
@@ -12,7 +14,7 @@
 
 > **核心机制（论文的真贡献）**：*Typed evidence conflict as a control signal that drives counterfactual (falsifying) retrieval and typed answer revision.*
 
-这条定位同时满足两点：① 是"新问题 + 通用方法"，不是窄应用 SOTA（AAAI 友好）；② 它的骨架在 VeraRAG 里已有约 60–70%，4–5 周可冲刺。
+这条定位同时满足两点：① 是"新问题 + 通用方法"，不是窄应用 SOTA（AAAI 友好）；② 它的骨架在 VeraRAG 里已有约 60–70%，使当前 29 天冲刺仍有执行可能。
 
 ---
 
@@ -191,7 +193,7 @@ FAR/
 ## 8. 实验设计
 
 ### 模型（2–3 个就够，证明不绑单模型）
-DeepSeek（主）+ 1 个闭源（GPT-4o-mini/Qwen-Plus）+ 1 个开源（Qwen-open，本地）。Embedding：BGE/E5；检索：BM25+dense hybrid +可选 rerank。
+冻结后的主矩阵使用 DeepSeek V4-Flash（主）+ Qwen3.7 Plus 2026-05-26（闭源快照）+ Qwen 3.5 9B（开放权重、本地）。Embedding：固定版本 BGE；检索：BM25+dense hybrid + CrossEncoder rerank。滚动 API 别名不用于正式结果。
 
 ### 基线（横向）
 1. Naive/Vanilla RAG ·2. Multi-query RAG ·3. Self-RAG/Reflective ·4. CRAG ·5. Iterative agentic RAG。
@@ -219,17 +221,17 @@ DeepSeek（主）+ 1 个闭源（GPT-4o-mini/Qwen-Plus）+ 1 个开源（Qwen-op
 
 ---
 
-## 9. 项目规划（5 周倒排到 AAAI-27 全文 2026-07-28）
+## 9. 项目规划（自 2026-06-29 起四周倒排到 AAAI-27 全文）
 
-> ⚠️ **现实提醒**：单人 4–5 周做"新基准 + 新方法 + 多模型多基线 + 7 页论文"是**极限冲刺**；VeraRAG 的高复用是它从"不可能"变"可冲刺"的唯一原因。长杆是 **FalsiRAG-Bench 构造与人工标注**。每周设 Go/No-Go，做不动就降级目标（见 §11）。
+> ⚠️ **现实提醒**：从 2026-06-29 到正文截止只有 29 天。工程脚手架和 300 条候选集已经完成，剩余长杆是**独立标注、冻结的多模型实验、typed 消融和外部盲测**。每周设 Go/No-Go；未通过就收缩论文主张，而不是用诊断结果补表。
 
-| 周 | 目标 | 产出 / Go-No-Go |
+| 日期 | 目标 | 产出 / Go-No-Go |
 |---|---|---|
-| **W1** | 立项收敛 + 脚手架 + 基准 v0 | `far/` 跑通 4 步 demo（复用 VeraRAG）；FalsiRAG-Bench **100 题**(每类 20) 含 counter_evidence；**关口：FAR 在 demo 上确实能找到反证并修正** |
-| **W2** | 基准扩到 300–400 + 留盲 split + 小规模双标注 | 基准冻结+指纹；IAA κ；**关口：反证可检索率达标，否则改造语料** |
-| **W3** | 主实验：FAR vs 基线 ×（2–3 模型），带 CI | 主表 v1；**关口：FAR 是否显著优于 vanilla/reflective** |
-| **W4** | 消融（typed/refutation/boundary）+ case study + 人工校验 | **关口：typed > untyped 是否显著**（不显著则论文要重写卖点） |
-| **W5** | 写作 + 图表 + 复现包 + 内部预审 | 7 页初稿 + 补充材料；找人模拟审稿 |
+| **06-29--07-05** | 冻结开发协议 + 启动标注 | 完成形式栈 dev 诊断；生成 DeepSeek 预标注与 Label Studio 包；两位标注者开始独立复核；**关口：反证召回和数据校验继续达标** |
+| **07-06--07-12** | 冻结 gold/dev + 多模型主实验 | 完成仲裁和 IAA；跑 DeepSeek V4-Flash、Qwen3.7 Plus、Qwen3.5 9B 的 FAR 与主要基线；**关口：FAR 是否优于 vanilla/reflective** |
+| **07-13--07-20** | 四项消融 + 统计 + 论文主表 | 完成 paired CI/McNemar、类别分析和 case study；**关口：typed > untyped 是否成立；不成立则在摘要前改写为诊断/负结果** |
+| **07-21--07-28** | 摘要提交 + 外部盲测 + 正文收口 | 07-21 前冻结标题/摘要；外部保管人一次性跑 test；填正式表图，完成人工政策审查和模拟审稿；07-28 交正文 |
+| **07-29--07-31** | 补充材料与代码归档 | 复现包、SBOM/指纹、最终 checklist、补充材料和代码归档；07-31 提交 |
 
 > 摘要 07-21 前必须有主表雏形；07-28 交全文；07-31 交补充/代码。
 
@@ -253,25 +255,26 @@ DeepSeek（主）+ 1 个闭源（GPT-4o-mini/Qwen-Plus）+ 1 个开源（Qwen-op
 
 | 风险 | 严重度 | 对冲 |
 |---|---|---|
-| **时间不够（4–5 周）** | 高 | 最大化复用 VeraRAG；基准砍到 300、模型砍到 2–3；W1/W2 设硬关口；**降级方案见下** |
+| **时间不够（29 天）** | 高 | 最大化复用 VeraRAG；基准固定 300、模型固定 3 个；每周设硬关口；**降级方案见下** |
 | **新意被质疑（vs CRAG/CoVe）** | 高 | 主打 typed-conflict-as-control-signal + 基准 + typed 消融；Related 逐一区分 |
-| **typed 消融不显著** | 高 | 若 typed 无增益→论文卖点垮；W4 早验，不行就转写成"分型诊断/负结果"或延期 |
+| **typed 消融不显著** | 高 | 07-20 前完成；若 typed 无增益，转写成"分型诊断/负结果"或延期，不接触 test 调参 |
 | **反证检索不到** | 中高 | 基准语料**强制植入可检索反证**；报反证召回率 |
 | **自建基准自指/tuning-to-test** | 中 | 留盲 test + 至少 1 个外部 slice（可借 FEVER pair 改造） |
 | **官方 Self-RAG/CRAG 难复现** | 中 | 用诚实近似并标注，或减少基线数量、用更强的 vanilla/multi-query |
 
 **降级方案（做不动 AAAI-27 时）**：
-- 退 **EMNLP-26（~5–6 月 deadline）** 或 **AAAI-27 后续/其它 A 会**；
-- 或先投 **workshop**（TrustNLP/KnowledgeNLP/RAG）占坑，再扩成主会；
+- 不用不完整标注或本地 test 冒充正式证据；保留完整 artifact，转投后续主会周期（届时重新核验官方 deadline）；
+- 或先投仍开放且主题匹配的 workshop（提交前核验征稿与双投政策），再扩成主会；
 - 或回到 VeraRAG 的 **NeurIPS D&B** 路线（`VeraRAG/docs/PUBLICATION_PLAN.md`）——FAR 与之共享基准/基建，不浪费。
 
 ---
 
-## 12. 立即开始（W1 第一步）
+## 12. 当前执行入口
 
-1. `pip install -e /Users/xuwenyao/VeraRAG`，在 `far/adapters/` 薄封装 LLM/检索/冲突。
-2. 写 `far/counterfactual.py` 的 **support/refutation/boundary** 三类 typed query 生成器（方法核心，优先）。
-3. `bench/build/extend_from_verabench.py`：从 VeraBench 抽 temporal/conflict/misleading/numerical 题，加 `counter_evidence`/`expected_revision` 两字段，先做 **100 题 demo 集**。
-4. 跑 FAR vs Vanilla 的 10 题 smoke，确认"能找到反证→正确修正"这条主链路通——**这是整个项目的 Go/No-Go**。
+1. 完成并冻结形式检索/冲突栈的 60 条 dev 诊断；把 top-k、模型版本和失败分析记录到开发日志。
+2. 用户在本机安全导出一个**轮换后的** `DEEPSEEK_API_KEY`，运行 `falsirag-auto-annotate` 生成 300 条非金标建议，再导入 Label Studio 供人工修正。
+3. 两位标注者独立完成盲包、仲裁并冻结 benchmark；机器建议只用于提速，不能计作独立人工标签。
+4. 在同一冻结检索栈上跑 DeepSeek V4-Flash、Qwen3.7 Plus 快照和本地 Qwen3.5 9B；需要本地 GPU 推理或训练时使用已约定的 `windows-gpu` + `tmux` 流程。
+5. 先在 dev 完成主比较与四项消融；只有代码、配置、gold 和主张全部冻结后，才把 gold-free test bundle 交给外部保管人一次性执行。
 
 > 一句话收尾：**FAR 的成败不在工程量（VeraRAG 已给你 70%），而在两点——(1) typed counterfactual query 真能检索到反证并带来可测增益；(2) typed 消融显著。把 W1–W4 的关口卡死，跑出这两点，就是一篇像样的 AAAI 投稿。**

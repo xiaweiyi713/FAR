@@ -79,9 +79,26 @@ the required environment variable. Re-run the identical command to resume;
 changing code, data, config, split, or limit requires a new output directory.
 The held-out test requires `--allow-test`.
 
+The DeepSeek config names `deepseek-v4-flash` explicitly. The provider's
+[2026-04-24 change log](https://api-docs.deepseek.com/updates/) states that the
+legacy `deepseek-chat` alias is retired on 2026-07-24, so it is not suitable for
+a run that must remain reproducible through the AAAI-27 deadline.
+The DashScope config likewise pins
+[`qwen3.7-plus-2026-05-26`](https://help.aliyun.com/en/model-studio/text-generation-model/)
+instead of the rolling `qwen-plus` alias.
+The open model uses Ollama's official
+[`qwen3.5:9b`](https://ollama.com/library/qwen3.5) tag. Record the local Ollama
+model digest before freezing results. The runner queries `/api/tags`, includes
+the digest in the run signature, and fails before inference if the configured
+tag is missing or has no immutable digest.
+
 The three formal API configs share BM25+BGE hybrid RRF and a pinned BGE
 CrossEncoder reranker, so model comparisons do not confound the generator with
 a different retriever.
+They retain the top two reranked documents per typed query. On the frozen
+development split, increasing this cutoff from two to five did not improve
+counter-evidence recall (both were 0.95) and reduced mean evidence precision
+from 0.169 to 0.056; the held-out test remains untouched.
 Install the complete optional retrieval stack before a formal run:
 
 ```bash

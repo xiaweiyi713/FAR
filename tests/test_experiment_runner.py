@@ -2,17 +2,25 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
 from bench.build.build_blind_bundle import build as build_blind_bundle
 from eval.run_eval import evaluate
 from experiments.build_artifacts import _load_plotting_backend
-from experiments.run_far import run
+from experiments.run_far import _primary_trace, run
 from experiments.run_suite import run_suite
-from experiments.runner import ROOT, load_benchmark, load_config, select_samples
+from experiments.runner import (
+    ROOT,
+    _ollama_model_identity,
+    load_benchmark,
+    load_config,
+    select_samples,
+)
 from experiments.validate_results import validate_result_bundle
+from far.evidence_types import EvidenceType
+from far.revision import RevisionAction, RevisionTrace
 
 
 def test_sample_limit_is_category_balanced_and_test_is_guarded() -> None:
@@ -54,6 +62,77 @@ def test_formal_configs_pin_one_shared_retrieval_and_conflict_stack() -> None:
     assert conflict["enable_granularity_conflict"] is True
 
 
+def test_ollama_identity_resolves_the_tag_to_a_digest() -> None:
+    response = MagicMock()
+    response.read.return_value = json.dumps(
+        {
+            "models": [
+                {
+                    "name": "qwen3.5:9b",
+                    "digest": "sha256:fixed-model",
+                    "size": 123,
+                    "modified_at": "2026-06-01T00:00:00Z",
+                    "details": {"parameter_size": "9B", "quantization_level": "Q4_K_M"},
+                }
+            ]
+        }
+    ).encode()
+    response.__enter__.return_value = response
+    with patch("experiments.runner.urlopen", return_value=response):
+        identity = _ollama_model_identity("http://localhost:11434", "qwen3.5:9b")
+    assert identity["digest"] == "sha256:fixed-model"
+    assert identity["details"]["quantization_level"] == "Q4_K_M"
+
+
+def test_ollama_identity_fails_closed_for_a_missing_model() -> None:
+    response = MagicMock()
+    response.read.return_value = b'{"models": []}'
+    response.__enter__.return_value = response
+    with (
+        patch("experiments.runner.urlopen", return_value=response),
+        pytest.raises(RuntimeError, match="is not installed"),
+    ):
+        _ollama_model_identity("http://localhost:11434", "qwen3.5:9b")
+
+
+def test_primary_trace_uses_confidence_then_specific_action_tiebreak() -> None:
+    numeric = RevisionTrace(
+        claim_id="C1",
+        before="Revenue was 20 million",
+        after="The reported value conflicts with retrieved measurements: Revenue was 20 million",
+        action=RevisionAction.REPLACE_NUMERICAL,
+        conflict_types=(EvidenceType.NUMERICAL,),
+        evidence_ids=("E1",),
+        rationale="values differ",
+        confidence=0.8,
+    )
+    source = RevisionTrace(
+        claim_id="C2",
+        before="A low reliability claim",
+        after=(
+            "Lower-reliability sources disagree with authoritative evidence: "
+            "A low reliability claim"
+        ),
+        action=RevisionAction.PREFER_RELIABLE_SOURCE,
+        conflict_types=(EvidenceType.SOURCE_RELIABILITY, EvidenceType.NUMERICAL),
+        evidence_ids=("E2",),
+        rationale="low source conflicts with official evidence",
+        confidence=0.9,
+    )
+    causal = RevisionTrace(
+        claim_id="C3",
+        before="这一结果完全由该因素导致",
+        after="这一结果与该因素相关，但现有证据不足以确认因果关系",
+        action=RevisionAction.DOWNGRADE_CAUSAL,
+        conflict_types=(EvidenceType.CAUSAL,),
+        evidence_ids=("E3",),
+        rationale="association only",
+        confidence=0.9,
+    )
+    assert _primary_trace((numeric, source)) is source
+    assert _primary_trace((source, causal)) is source
+
+
 def test_runner_resumes_without_duplicates_and_evaluation_is_bound(tmp_path: Path) -> None:
     run_dir = tmp_path / "run"
     config = ROOT / "experiments/configs/offline_smoke.yaml"
@@ -61,6 +140,12 @@ def test_runner_resumes_without_duplicates_and_evaluation_is_bound(tmp_path: Pat
     second = run(config, ROOT / "bench", run_dir, limit=5)
     assert first["predictions_sha256"] == second["predictions_sha256"]
     assert first["completed"] == 5
+    prediction = json.loads(
+        (run_dir / "predictions.jsonl").read_text(encoding="utf-8").splitlines()[0]
+    )
+    assert set(prediction["metadata"]["primary_conflict_types"]) <= set(
+        prediction["predicted_conflict_types"]
+    )
     identity = json.loads((run_dir / "run_identity.json").read_text(encoding="utf-8"))
     assert {
         "faiss-cpu",
