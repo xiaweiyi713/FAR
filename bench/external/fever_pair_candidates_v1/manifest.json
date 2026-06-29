@@ -1,0 +1,31 @@
+{
+  "counts": {
+    "documents": 200,
+    "questions": 100
+  },
+  "dataset_id": "fever-pair-candidates-v1",
+  "fingerprints": {
+    "corpus_sha256": "0f6c9848405aff6915cc0e1930c08b33de5c81c3065a937a196b444e0df9da3d",
+    "questions_sha256": "ec95969eaaa26c1c74519eead85228723e97e8e4c5044ac9fd740bc097715cad",
+    "upstream_manifest_sha256": "69c13e062c6a4a64c12d015f1d6aa0449d7157456d73a1be515662dac3ae525c"
+  },
+  "licenses": [
+    "CC-BY-SA-3.0",
+    "GPL-3.0"
+  ],
+  "promotion_contract": {
+    "adjudication_required": true,
+    "minimum_annotators": 2,
+    "minimum_binary_kappa": 0.6
+  },
+  "publication_gold": false,
+  "schema_version": "falsirag-external-slice-v1",
+  "status": "candidate_pending_independent_annotation",
+  "upstream": {
+    "commit": "a6b8d891d393e97a4efac791afffb2d7de5e57c6",
+    "fever_project": "https://fever.ai/",
+    "file": "valid.jsonl",
+    "repository": "https://huggingface.co/datasets/copenlu/fever_gold_evidence",
+    "sha256": "5da0ccc0ccf77f974611de13f8aac6f78c6bba6293912835099eb6029baa85d9"
+  }
+}

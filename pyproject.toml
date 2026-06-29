@@ -1,0 +1,78 @@
+[build-system]
+requires = ["setuptools>=77", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "falsification-augmented-retrieval"
+version = "0.1.0"
+description = "Typed falsification-guided retrieval for self-correcting language agents"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+authors = [{name = "FAR contributors"}]
+keywords = ["rag", "falsification", "retrieval", "verification", "nlp"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Science/Research",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+  "numpy>=1.24",
+  "PyYAML>=6.0",
+  "rank-bm25>=0.2.2",
+]
+
+[project.optional-dependencies]
+eval = ["matplotlib>=3.7"]
+dev = [
+  "build>=1.2",
+  "mypy>=1.10",
+  "pytest>=8.0",
+  "pytest-cov>=5.0",
+  "ruff>=0.5",
+]
+
+[project.scripts]
+far-run = "experiments.run_far:main"
+far-baselines = "experiments.run_baselines:main"
+far-eval = "eval.run_eval:main"
+far-validate-bench = "bench.build.validate_bench:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["far*", "bench*", "baselines*", "eval*", "experiments*"]
+
+[tool.setuptools.package-data]
+bench = [
+  "*.json",
+  "*.jsonl",
+  "*.md",
+  "splits/*.jsonl",
+]
+experiments = ["configs/*.yaml"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q --strict-markers"
+
+[tool.ruff]
+target-version = "py310"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
+allowed-confusables = ["％", "，", "；", "！", "？"]
+
+[tool.mypy]
+python_version = "3.12"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+no_implicit_optional = true
+ignore_missing_imports = true
+exclude = ["paper/"]

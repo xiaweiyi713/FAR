@@ -1,0 +1,120 @@
+\documentclass[letterpaper]{article}
+\usepackage[submission]{aaai2027}
+\usepackage[hyphens]{url}
+\usepackage{graphicx}
+\urlstyle{rm}
+\def\UrlFont{\rm}
+\usepackage{natbib}
+\usepackage{caption}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\frenchspacing
+\pdfinfo{/TemplateVersion (2027.1)}
+\setcounter{secnumdepth}{0}
+
+\title{Ask What Could Be Wrong: Falsification-Guided Retrieval for Self-Correcting Language Agents}
+\author{Anonymous Submission}
+\affiliations{}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Retrieval-augmented language agents typically search for evidence that supports an emerging answer, while reflection remains weakly grounded in retrievable counter-evidence. We introduce Falsification-Augmented Retrieval (FAR), a control framework that decomposes an initial answer into dependent claims, assigns typed evidence requirements, retrieves support, refutation, and boundary evidence, and revises each claim according to temporal, entity, numerical, causal, source-reliability, definition, or counter-evidence conflicts. FAR exposes the claim-evidence map and a before/after revision trace. We also define FalsiRAG-Bench, a controlled evaluation protocol in which falsifying evidence is present in the corpus and revision actions are annotated. The current artifact contains a balanced 300-item machine-seeded candidate set, strict promotion to double-annotated and adjudicated gold, five transparent baselines, four component ablations, and paired statistical inference. This draft states the method and evaluation contract; final performance claims are intentionally withheld until independent annotation and frozen multi-model experiments are complete.
+\end{abstract}
+
+\section{Introduction}
+Retrieval-augmented generation (RAG) grounds language models in external memory \cite{lewis2020rag}, but its default control loop is asymmetric: a query retrieves relevant passages, and generation accumulates passages that support an answer. Even iterative systems often ask whether more information is useful rather than what observation would falsify a particular claim. This asymmetry matters when the first answer has the wrong date, confuses a subsidiary with its parent, repeats an obsolete number, or upgrades correlation to causation.
+
+We study \emph{falsification-guided retrieval}: given an initial answer, actively formulate retrievable evidence needs that could show where it is wrong. The central hypothesis is not merely that counter-evidence helps. It is that a \emph{typed evidence conflict} can serve as a control signal for both the next query and the revision action. A temporal conflict asks for version boundaries and repairs a timeline; a numerical conflict asks for alternative measurements and replaces or qualifies a value; a causal conflict seeks confounding or association-only evidence and downgrades the causal claim.
+
+FAR makes this loop explicit. It (1) builds a claim dependency graph, (2) assigns positive typed evidence requirements, (3) generates support, refutation, and boundary queries, and (4) applies a typed revision with an auditable trace. We contribute an evaluation protocol, FalsiRAG-Bench, that places counter-evidence inside the retrieval corpus and scores whether it is found and used correctly. Our intended contributions are:
+\begin{itemize}
+    \item a general falsification-guided RAG task and end-to-end FAR framework;
+    \item typed conflict as a shared retrieval and revision control signal; and
+    \item a benchmark and evaluation contract isolating counter-evidence retrieval and revision.
+\end{itemize}
+The empirical contribution remains conditional on the preregistered typed-versus-untyped ablation. We withhold that claim until the frozen experiments are complete.
+
+\section{Related Work}
+Self-RAG trains reflection tokens to decide when to retrieve and critique generations \cite{asai2024selfrag}. CRAG evaluates retrieval quality and triggers corrective retrieval, including web search \cite{yan2024crag}. Chain-of-Verification drafts verification questions and answers them independently before revision \cite{dhuliawala2024cove}. RQ-RAG learns query rewriting, decomposition, and disambiguation \cite{chan2024rqrag}. These methods motivate adaptive retrieval and self-correction, but do not jointly use a shared ontology of evidence conflicts to select both falsifying query tactics and claim-specific revision policies. FAR is complementary: its control object is the typed incompatibility between a claim and retrieved evidence. FEVER provides large-scale claim verification data \cite{thorne2018fever}; our external slice uses FEVER only as separately licensed annotation candidates and does not promote machine seeds to gold.
+
+\section{Falsification-Augmented Retrieval}
+Let an initial answer $A_0$ be decomposed into claims $C=\{c_i\}_{i=1}^{n}$ and dependency edges $D$. FAR produces a revised answer $A_1$, evidence map $M$, typed conflicts $K$, and revision trace $T$.
+
+\subsection{Claim Graph}
+Each node stores text, claim type, entities, numbers, time expressions, confidence, and verifiability. An edge $(c_j,c_i)\in D$ means that $c_i$ depends on $c_j$. The implementation rejects missing dependencies and cycles and processes nodes in topological order. Structured model decomposition is accepted only if it forms a valid graph and preserves at least 80 percent of source content tokens; otherwise a conservative deterministic decomposition is used.
+
+\subsection{Typed Evidence Requirements}
+For claim $c_i$, an assigner emits requirements $R_i$. The primary requirement follows claim semantics (temporal, entity, numerical, causal, or definition), while source reliability and counter-evidence are always considered. This is a forward retrieval contract, not a label attached after retrieval.
+
+\subsection{Three-Way Counterfactual Queries}
+For each primary type $t_i$, FAR generates
+\begin{equation}
+Q_i=\{q_i^{+},q_i^{-},q_i^{\partial}\},
+\end{equation}
+where $q_i^{+}$ seeks corroboration, $q_i^{-}$ seeks an observation incompatible with the claim, and $q_i^{\partial}$ seeks scope, time, unit, definition, or comparability boundaries. Tactics depend on $t_i$: numerical refutation searches for revised values and methodologies; causal refutation searches for association-only findings, confounders, and alternative causes. Model-generated queries must contain every enabled family; invalid output falls back to deterministic typed templates.
+
+\subsection{Typed Conflict and Revision}
+Retrieved passages are compared with the claim using high-precision rules or the layered VeraRAG conflict graph. FAR maps detected relations to seven control types. A fixed priority policy chooses an action: correct time, requalify entity, replace number, downgrade causality, prefer reliable source, clarify definition, retract, or qualify uncertainty. An optional language model realizes the selected action but cannot select a different policy. Every trace records before and after text, action, conflict types, evidence IDs, rationale, and confidence. No retrieved counter-evidence is treated as absence of a detected conflict, not proof of the claim.
+
+\section{FalsiRAG-Bench}
+The benchmark schema contains question, erroneous initial answer, atomic claims and dependencies, gold evidence, counter-evidence with the refuted claim, typed conflict, expected revision, split, provenance, and annotation status.
+
+\begin{table}[t]
+\centering
+\small
+\begin{tabular}{lr}
+\toprule
+Candidate category & Count \\
+\midrule
+Temporal shift & 60 \\
+Numerical conflict & 60 \\
+Entity confusion & 60 \\
+Causal overclaim & 60 \\
+Multi-source conflict & 60 \\
+\bottomrule
+\end{tabular}
+\caption{The deterministic v0.1 candidate build. Counts are construction facts, not human-validated gold statistics.}
+\label{tab:data}
+\end{table}
+
+The current build derives evidence-backed candidates from VeraBench v1.1.2, with controlled perturbations and explicitly marked synthetic causal-boundary or low-reliability passages. It contains 175 documents, including 120 controlled synthetic documents. A source-document dependency group is assigned wholly to train, development, or test; the realization is 182/60/58 and has zero group leakage. The operational test view hides gold fields, although genuine blindness still requires an external custodian.
+
+All 300 labels are \texttt{machine\_seeded}. Two independent annotators must label conflict presence/type, revision action, and answer acceptability before adjudication. Promotion requires complete adjudication and reported Cohen's $\kappa$ for conflict presence, type, and action. The current construction check obtains 0.93 lexical counter-evidence recall@10 when pooling all three query families. This only verifies that counter-evidence is retrievable; it is not a FAR performance result.
+
+\section{Experimental Design}
+We will evaluate DeepSeek Chat, Qwen Plus, and a locally hashed open Qwen model with matched retrieval settings. Baselines are Vanilla RAG, Multi-query RAG, Reflective RAG, a closed-corpus CRAG-style reproduction, and a Self-RAG-style inference approximation. The latter two names explicitly avoid claiming equivalence to official trained systems.
+
+Ablations remove typed conflict (untyped contradiction and generic queries), refutation queries, boundary queries, or typed revision. The primary gate compares typed and untyped FAR on aligned examples. Metrics are answer soft F1, unsupported claim rate, evidence precision, typed conflict F1, revision accuracy, overclaim reduction, and counter-evidence recall. We report category-stratified bootstrap confidence intervals, dependency-group sensitivity intervals, paired bootstrap differences, and exact McNemar tests for revision success.
+
+\begin{table*}[t]
+\centering
+\small
+\begin{tabular}{lcccccc}
+\toprule
+Method & Answer & Typed F1 & Revision & Overclaim & Counter Recall & Unsupported \\
+\midrule
+Vanilla RAG & \multicolumn{6}{c}{PENDING-EMPIRICAL-RUN} \\
+Multi-query RAG & \multicolumn{6}{c}{PENDING-EMPIRICAL-RUN} \\
+Reflective RAG & \multicolumn{6}{c}{PENDING-EMPIRICAL-RUN} \\
+CRAG-style reproduction & \multicolumn{6}{c}{PENDING-EMPIRICAL-RUN} \\
+Self-RAG-style reproduction & \multicolumn{6}{c}{PENDING-EMPIRICAL-RUN} \\
+FAR & \multicolumn{6}{c}{PENDING-EMPIRICAL-RUN} \\
+\bottomrule
+\end{tabular}
+\caption{Preregistered main table. Values will be populated only from validated, complete, frozen test reports.}
+\label{tab:main}
+\end{table*}
+
+\section{Analysis Protocol}
+Before test access, we will inspect development retrieval recall, typed-conflict errors, and revision traces by category. The required analysis includes the main table, component ablation table, category gain plot, revision-trace case, and counter-evidence recall plot. The artifact builder accepts only fingerprint-bound reports; partial inputs mark every output diagnostic. If typed conflict does not outperform untyped control under paired inference, we will not preserve the central positive claim: the paper becomes a diagnostic or negative result.
+
+\section{Limitations and Responsible Use}
+The candidate set reuses a small controlled source corpus, includes synthetic passages, and has correlated variants. Its current labels are not human gold, and its local test is frozen rather than externally blind. Rule conflict detectors are high precision but incomplete; model detectors inherit calibration and domain-shift risk. Retrieval failure can hide a true counterexample, while spurious low-quality contradictions can induce over-correction. The benchmark is not current factual advice and is unsuitable for medical, legal, financial, or policy decisions. Final authors remain responsible for checking all text, citations, experiments, and AAAI disclosure requirements.
+
+\section{Conclusion}
+FAR turns ``what could make this answer wrong?'' into a typed, retrievable control protocol. Its value depends on two empirical facts still to be established: falsifying queries must recover useful counter-evidence, and typed control must improve revision over an untyped alternative. The released artifact makes those claims directly testable and prevents incomplete annotation or diagnostic runs from masquerading as final evidence.
+
+\bibliography{references}
+\end{document}

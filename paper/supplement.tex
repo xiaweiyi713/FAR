@@ -1,0 +1,56 @@
+\documentclass[letterpaper]{article}
+\usepackage[submission]{aaai2027}
+\usepackage[hyphens]{url}
+\usepackage{graphicx}
+\urlstyle{rm}
+\def\UrlFont{\rm}
+\usepackage{natbib}
+\usepackage{caption}
+\usepackage{booktabs}
+\frenchspacing
+\pdfinfo{/TemplateVersion (2027.1)}
+\setcounter{secnumdepth}{0}
+\title{FAR Supplementary Material}
+\author{Anonymous Submission}
+\affiliations{}
+\begin{document}
+\maketitle
+
+\section{Schema and Promotion Contract}
+We provide the full machine-readable schema, deterministic build scripts,
+source/corpus fingerprints, source-document-group split manifest, and masked
+test inputs. Machine seeds are never considered publication gold. Promotion
+requires two independent complete annotation files, adjudication of all items,
+and reported agreement for conflict presence, conflict type, and revision
+action. The compiler preserves a false publication-readiness flag until an
+externally held blind test is established.
+
+\section{Implementation and Failure Handling}
+Every run signature covers YAML configuration, benchmark, corpus, and Python
+implementation hashes. A checkpoint is flushed and synchronized after each
+sample. Resume rejects signature drift. Structured LLM decomposition and query
+generation are schema-validated and fall back only for malformed content;
+provider failures remain errors. The typed revision policy is deterministic;
+the model may realize, but not replace, its selected action.
+
+\section{Baseline Scope}
+The CRAG-style baseline grades closed-corpus retrieval and issues a corrective
+query; it does not perform the original web-search extension. The Self-RAG-style
+baseline approximates retrieve/relevance/support reflection at inference time
+and does not use a reflection-token-trained model. Results retain these names.
+
+\section{Statistical Protocol}
+Primary intervals use 2,000 category-stratified percentile bootstrap samples
+with seed 1729. System differences use paired stratified resampling over
+identical IDs. Exact two-sided McNemar tests compare binary revision success.
+Because candidates share source contexts, final reporting also resamples
+source-document dependency groups. Undefined overclaim scores are excluded,
+not treated as zeros.
+
+\section{Reproducibility Checklist Status}
+Code, configurations, package lock, deterministic seeds, fingerprints, metric
+definitions, and smoke tests are present. Compute cost, final model identifiers,
+human demographics/training, agreement values, and full results remain pending
+the corresponding real processes and will be added before submission.
+
+\end{document}

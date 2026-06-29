@@ -1,0 +1,19 @@
+run:
+  split: dev
+  top_k_per_query: 5
+  conflict_detector: vera
+retrieval:
+  backend: vera_bm25
+llm:
+  enabled: true
+  provider: deepseek
+  model: deepseek-chat
+  api_key_env: DEEPSEEK_API_KEY
+  temperature: 0.0
+  max_tokens: 1200
+  cache_enabled: true
+  cache_path: outputs/cache/deepseek.sqlite3
+  cache_namespace: far-deepseek-v1
+statistics:
+  bootstrap_resamples: 2000
+  bootstrap_seed: 1729

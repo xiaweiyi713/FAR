@@ -1,0 +1,200 @@
+"""Build the two required tables and three required figures from recorded reports only."""
+
+from __future__ import annotations
+
+import argparse
+import csv
+import json
+from pathlib import Path
+from typing import Any
+
+from bench.build.common import read_jsonl, sha256_file, write_json
+
+
+def _mapping(values: list[str]) -> dict[str, Path]:
+    result: dict[str, Path] = {}
+    for value in values:
+        if "=" not in value:
+            raise ValueError("inputs must use LABEL=/path/to/file")
+        label, raw_path = value.split("=", 1)
+        result[label] = Path(raw_path)
+    return result
+
+
+def _validated_reports(paths: dict[str, Path]) -> dict[str, dict[str, Any]]:
+    reports = {}
+    for label, path in paths.items():
+        report = json.loads(path.read_text(encoding="utf-8"))
+        if report.get("schema_version") != "falsirag-evaluation-report-v1":
+            raise ValueError(f"{path}: unsupported report schema")
+        scores_path = path.parent / "scores.jsonl"
+        if report.get("provenance", {}).get("scores_sha256") != sha256_file(scores_path):
+            raise ValueError(f"{path}: scores fingerprint mismatch")
+        reports[label] = report
+    return reports
+
+
+def _table_rows(reports: dict[str, dict[str, Any]], labels: list[str]) -> list[dict[str, Any]]:
+    rows = []
+    for label in labels:
+        report = reports[label]
+        metrics = report["aggregate"]["metrics"]
+        row: dict[str, Any] = {"method": label, "samples": report["samples"]}
+        for metric in (
+            "answer_correctness",
+            "typed_conflict_f1",
+            "revision_accuracy",
+            "overclaim_reduction",
+            "counter_evidence_recall",
+            "unsupported_claim_rate",
+        ):
+            row[metric] = metrics.get(metric, 0.0)
+            interval = report.get("confidence_intervals", {}).get(metric)
+            row[f"{metric}_ci"] = (
+                f"[{interval['lower']:.4f}, {interval['upper']:.4f}]" if interval else "n/a"
+            )
+        rows.append(row)
+    return rows
+
+
+def _write_csv(path: Path, rows: list[dict[str, Any]]) -> None:
+    if not rows:
+        return
+    with path.open("w", encoding="utf-8", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=list(rows[0]))
+        writer.writeheader()
+        writer.writerows(rows)
+
+
+def _write_latex(path: Path, rows: list[dict[str, Any]]) -> None:
+    lines = [
+        r"\begin{tabular}{lrrrr}",
+        r"\toprule",
+        r"Method & Answer & Typed F1 & Revision & Counter Recall \\",
+        r"\midrule",
+    ]
+    for row in rows:
+        method = str(row["method"]).replace("_", "\\_")
+        lines.append(
+            f"{method} & {row['answer_correctness']:.3f} & "
+            f"{row['typed_conflict_f1']:.3f} & {row['revision_accuracy']:.3f} & "
+            f"{row['counter_evidence_recall']:.3f} \\\\"
+        )
+    lines.extend([r"\bottomrule", r"\end{tabular}"])
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+def build(
+    report_paths: dict[str, Path],
+    prediction_paths: dict[str, Path],
+    output_dir: Path,
+) -> dict[str, Any]:
+    import matplotlib.pyplot as plt
+    import numpy as np
+    from matplotlib import font_manager
+
+    unicode_font = Path("/System/Library/Fonts/Supplemental/Arial Unicode.ttf")
+    if unicode_font.exists():
+        font_manager.fontManager.addfont(unicode_font)
+        plt.rcParams["font.family"] = font_manager.FontProperties(fname=unicode_font).get_name()
+
+    reports = _validated_reports(report_paths)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    main_labels = [label for label in reports if "minus_" not in label]
+    ablation_labels = [label for label in reports if label == "far" or "minus_" in label]
+    if not main_labels or len(ablation_labels) < 2:
+        raise ValueError("artifact build requires main methods and FAR plus at least one ablation")
+    main_rows = _table_rows(reports, main_labels)
+    ablation_rows = _table_rows(reports, ablation_labels)
+    _write_csv(output_dir / "main_results.csv", main_rows)
+    _write_csv(output_dir / "ablation_results.csv", ablation_rows)
+    _write_latex(output_dir / "main_results.tex", main_rows)
+    _write_latex(output_dir / "ablation_results.tex", ablation_rows)
+
+    categories = sorted(next(iter(reports.values()))["aggregate"]["by_category"])
+    x = np.arange(len(categories))
+    width = 0.8 / len(main_labels)
+    fig, axis = plt.subplots(figsize=(10, 4.8))
+    for index, label in enumerate(main_labels):
+        values = [
+            reports[label]["aggregate"]["by_category"][category]["revision_accuracy"]
+            for category in categories
+        ]
+        axis.bar(x + (index - (len(main_labels) - 1) / 2) * width, values, width, label=label)
+    axis.set_xticks(x, [item.replace("_", "\n") for item in categories])
+    axis.set_ylabel("Revision accuracy")
+    axis.set_ylim(0, 1)
+    axis.legend(fontsize=7)
+    fig.tight_layout()
+    fig.savefig(output_dir / "typed_conflict_breakdown.png", dpi=200)
+    plt.close(fig)
+
+    fig, axis = plt.subplots(figsize=(8, 4.5))
+    recall = [
+        reports[label]["aggregate"]["metrics"]["counter_evidence_recall"] for label in main_labels
+    ]
+    axis.bar(main_labels, recall)
+    axis.set_ylabel("Counter-evidence recall")
+    axis.set_ylim(0, 1)
+    axis.tick_params(axis="x", rotation=25)
+    fig.tight_layout()
+    fig.savefig(output_dir / "counter_evidence_recall.png", dpi=200)
+    plt.close(fig)
+
+    far_predictions_path = prediction_paths.get("far")
+    if far_predictions_path is None:
+        raise ValueError("revision trace figure requires --prediction far=/path/predictions.jsonl")
+    predictions = read_jsonl(far_predictions_path)
+    selected = next(
+        (
+            row
+            for row in predictions
+            if any(
+                trace.get("changed") for trace in row.get("metadata", {}).get("revision_trace", [])
+            )
+        ),
+        None,
+    )
+    if selected is None:
+        raise ValueError("recorded FAR predictions contain no changed revision trace")
+    trace = next(item for item in selected["metadata"]["revision_trace"] if item.get("changed"))
+    fig, axis = plt.subplots(figsize=(11, 4.5))
+    axis.axis("off")
+    text = (
+        f"Sample {selected['sample_id']} — {trace['action']}\n\n"
+        f"BEFORE\n{trace['before']}\n\nAFTER\n{trace['after']}\n\n"
+        f"CONFLICT\n{', '.join(trace['conflict_types'])}\n{trace['rationale']}"
+    )
+    axis.text(0.02, 0.98, text, va="top", wrap=True, fontsize=10)
+    fig.tight_layout()
+    fig.savefig(output_dir / "revision_trace_case.png", dpi=200)
+    plt.close(fig)
+
+    outputs = (
+        sorted(output_dir.glob("*.csv"))
+        + sorted(output_dir.glob("*.tex"))
+        + sorted(output_dir.glob("*.png"))
+    )
+    manifest = {
+        "schema_version": "far-artifact-manifest-v1",
+        "diagnostic_only": any(bool(report.get("partial")) for report in reports.values()),
+        "reports": {label: sha256_file(path) for label, path in report_paths.items()},
+        "predictions": {label: sha256_file(path) for label, path in prediction_paths.items()},
+        "outputs": {path.name: sha256_file(path) for path in outputs},
+    }
+    write_json(output_dir / "artifact_manifest.json", manifest)
+    return manifest
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--report", action="append", required=True)
+    parser.add_argument("--prediction", action="append", default=[])
+    parser.add_argument("--output-dir", type=Path, required=True)
+    args = parser.parse_args()
+    manifest = build(_mapping(args.report), _mapping(args.prediction), args.output_dir)
+    print(json.dumps(manifest, ensure_ascii=False, indent=2, sort_keys=True))
+
+
+if __name__ == "__main__":
+    main()

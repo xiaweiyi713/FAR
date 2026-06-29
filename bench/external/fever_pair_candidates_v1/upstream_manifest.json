@@ -1,0 +1,39 @@
+{
+  "annotation_protocol": {
+    "machine_seed_is_gold": false,
+    "minimum_annotators_per_pair": 2,
+    "required": "external-conflict-pair-packet-v1"
+  },
+  "dataset_id": "fever-pair-candidates-v1",
+  "fingerprints": {
+    "corpus_sha256": "0f6c9848405aff6915cc0e1930c08b33de5c81c3065a937a196b444e0df9da3d",
+    "questions_sha256": "ec95969eaaa26c1c74519eead85228723e97e8e4c5044ac9fd740bc097715cad"
+  },
+  "intended_use": "Blind pair annotation candidate set. Machine-seeded labels are not publication gold.",
+  "language": "en",
+  "license": [
+    "CC-BY-SA-3.0",
+    "GPL-3.0"
+  ],
+  "sampling": {
+    "conflict_type_counts": {
+      "definitional_conflict": 10,
+      "numeric_conflict": 10,
+      "source_disagreement": 10,
+      "temporal_conflict": 10
+    },
+    "negative_pairs": 60,
+    "per_conflict_type": 10,
+    "strategy": "stable-sha256-stratified-v1",
+    "total_pairs": 100
+  },
+  "schema_version": "external-conflict-candidate-v1",
+  "source": "copenlu/fever_gold_evidence validation",
+  "upstream": {
+    "commit": "a6b8d891d393e97a4efac791afffb2d7de5e57c6",
+    "fever_project": "https://fever.ai/",
+    "file": "valid.jsonl",
+    "repository": "https://huggingface.co/datasets/copenlu/fever_gold_evidence",
+    "sha256": "5da0ccc0ccf77f974611de13f8aac6f78c6bba6293912835099eb6029baa85d9"
+  }
+}

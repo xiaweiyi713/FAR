@@ -1,0 +1,11 @@
+run:
+  split: dev
+  top_k_per_query: 5
+  conflict_detector: heuristic
+retrieval:
+  backend: lexical
+llm:
+  enabled: false
+statistics:
+  bootstrap_resamples: 200
+  bootstrap_seed: 1729

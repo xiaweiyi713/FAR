@@ -1,0 +1,19 @@
+run:
+  split: dev
+  top_k_per_query: 5
+  conflict_detector: vera
+retrieval:
+  backend: vera_bm25
+llm:
+  enabled: true
+  provider: ollama
+  model: qwen2.5:7b
+  base_url: http://localhost:11434
+  temperature: 0.0
+  max_tokens: 1200
+  cache_enabled: true
+  cache_path: outputs/cache/qwen_open.sqlite3
+  cache_namespace: far-qwen-open-v1
+statistics:
+  bootstrap_resamples: 2000
+  bootstrap_seed: 1729
