@@ -87,6 +87,10 @@ Qwen3.5 thinking-aware compatibility path. This is necessary because the current
 local Qwen3.5/Ollama response can put JSON in the `thinking` field while leaving
 the standard `response` field empty.
 
+For interrupted long runs, reuse the same command with `--resume` instead of
+`--overwrite`; FAR skips already written sample IDs and appends the remaining
+machine preannotations.
+
 Detach with `Ctrl+B`, then `D`. Reattach with:
 
 ```bash

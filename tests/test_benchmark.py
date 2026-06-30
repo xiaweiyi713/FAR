@@ -145,6 +145,64 @@ def test_llm_preannotation_fallback_stays_review_only(tmp_path: Path) -> None:
     assert row["preannotation"]["needs_human_review"] is True
 
 
+def test_llm_preannotation_resume_skips_existing_rows(tmp_path: Path) -> None:
+    calls: list[str] = []
+
+    class FakeGenerator:
+        def complete(self, prompt: str, **kwargs: object) -> str:
+            del kwargs
+            calls.append(prompt)
+            return json.dumps(
+                {
+                    "conflict_present": True,
+                    "conflict_type": "numerical",
+                    "revision_action": "replace_numerical",
+                    "revised_answer_acceptable": True,
+                    "suggested_revised_answer": "Use the evidence-backed number.",
+                    "rationale": "The evidence snippets contain a different number.",
+                    "confidence": 0.72,
+                }
+            )
+
+    packet = tmp_path / "packet"
+    build_annotation_packet(ROOT / "bench", packet, ["alice", "bob"])
+    output = tmp_path / "preannotations"
+    generate_preannotations(
+        packet,
+        output,
+        generator=FakeGenerator(),
+        preannotator_id="resume_llm",
+        limit=1,
+    )
+    manifest = generate_preannotations(
+        packet,
+        output,
+        generator=FakeGenerator(),
+        preannotator_id="resume_llm",
+        limit=3,
+        resume=True,
+    )
+    rows = (output / "preannotations_resume_llm.jsonl").read_text().splitlines()
+    assert len(rows) == 3
+    assert len(calls) == 3
+    assert manifest["samples"] == 3
+    assert manifest["resumed_existing_samples"] == 1
+
+
+def test_llm_preannotation_rejects_resume_with_overwrite(tmp_path: Path) -> None:
+    packet = tmp_path / "packet"
+    build_annotation_packet(ROOT / "bench", packet, ["alice", "bob"])
+    with pytest.raises(ValueError, match="overwrite and resume"):
+        generate_preannotations(
+            packet,
+            tmp_path / "preannotations",
+            generator=None,
+            preannotator_id="invalid",
+            overwrite=True,
+            resume=True,
+        )
+
+
 def test_machine_review_draft_requires_explicit_human_review(tmp_path: Path) -> None:
     class FakeGenerator:
         def complete(self, prompt: str, **kwargs: object) -> str:

@@ -156,6 +156,7 @@ def generate_preannotations(
     preannotator_id: str,
     limit: int | None = None,
     overwrite: bool = False,
+    resume: bool = False,
     model_name: str = "",
 ) -> dict[str, Any]:
     manifest_path = packet_dir / "packet_manifest.json"
@@ -165,18 +166,44 @@ def generate_preannotations(
         if limit < 1:
             raise ValueError("limit must be positive")
         source_rows = source_rows[:limit]
-    if output_dir.exists():
-        if not overwrite:
-            raise FileExistsError(f"{output_dir} exists; pass --overwrite to replace it")
-        shutil.rmtree(output_dir)
-    output_dir.mkdir(parents=True)
-
     filename = f"preannotations_{preannotator_id}.jsonl"
     output_path = output_dir / filename
-    completed = 0
+    if overwrite and resume:
+        raise ValueError("overwrite and resume cannot both be true")
+    if output_dir.exists():
+        if not overwrite and not resume:
+            raise FileExistsError(f"{output_dir} exists; pass --overwrite to replace it")
+        if overwrite:
+            shutil.rmtree(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    source_ids = {str(row["sample_id"]) for row in source_rows}
+    existing_sample_ids: set[str] = set()
     failures = 0
-    with output_path.open("w", encoding="utf-8") as handle:
+    if resume and output_path.exists():
+        for existing in read_jsonl(output_path):
+            sample_id = str(existing.get("sample_id", ""))
+            if sample_id not in source_ids:
+                raise ValueError(f"{sample_id}: resume file does not match selected samples")
+            if sample_id in existing_sample_ids:
+                raise ValueError(f"{sample_id}: duplicate sample in resume file")
+            if existing.get("preannotator_id") != preannotator_id:
+                raise ValueError(f"{sample_id}: resume file uses a different preannotator_id")
+            if existing.get("publication_gold") is not False:
+                raise ValueError(f"{sample_id}: resume file must be non-gold")
+            existing_sample_ids.add(sample_id)
+            preannotation = existing.get("preannotation", {})
+            if isinstance(preannotation, dict) and str(
+                preannotation.get("rationale", "")
+            ).startswith("Automatic fallback;"):
+                failures += 1
+    completed = 0
+    file_mode = "a" if resume and output_path.exists() else "w"
+    with output_path.open(file_mode, encoding="utf-8") as handle:
         for row in source_rows:
+            if str(row["sample_id"]) in existing_sample_ids:
+                completed += 1
+                continue
             try:
                 if generator is None:
                     raise RuntimeError("no LLM generator configured")
@@ -226,6 +253,7 @@ def generate_preannotations(
         "model_name": model_name,
         "preannotation_file": filename,
         "llm_failures": failures,
+        "resumed_existing_samples": len(existing_sample_ids),
         "publication_gold": False,
         "can_satisfy_human_annotation_gate": False,
         "required_next_step": (
@@ -609,6 +637,7 @@ def main() -> None:
     generate_parser.add_argument("--preannotator-id", default="llm_preannotator")
     generate_parser.add_argument("--limit", type=int)
     generate_parser.add_argument("--overwrite", action="store_true")
+    generate_parser.add_argument("--resume", action="store_true")
     draft_parser = subparsers.add_parser("draft")
     draft_parser.add_argument("--packet-dir", type=Path, required=True)
     draft_parser.add_argument("--preannotation-dir", type=Path, required=True)
@@ -633,6 +662,7 @@ def main() -> None:
     parser.add_argument("--preannotator-id", default="llm_preannotator")
     parser.add_argument("--limit", type=int)
     parser.add_argument("--overwrite", action="store_true")
+    parser.add_argument("--resume", action="store_true")
     args = parser.parse_args()
 
     if args.command == "draft":
@@ -685,6 +715,7 @@ def main() -> None:
         preannotator_id=args.preannotator_id,
         limit=args.limit,
         overwrite=args.overwrite,
+        resume=args.resume,
         model_name=model_name,
     )
     print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))

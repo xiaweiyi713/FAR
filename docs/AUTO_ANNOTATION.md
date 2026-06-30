@@ -47,6 +47,17 @@ uses Ollama's normal `response` field when present and falls back to the
 GPU host passed with `llm_failures: 0` after this compatibility layer.
 Generation writes the preannotation JSONL incrementally, so long runs can be
 monitored with `wc -l /mnt/d/FAR-outputs/qwen35_preannotations/*.jsonl`.
+If Windows sleeps, restarts, or the tmux job is killed after some rows have been
+written, restart without discarding completed rows:
+
+```bash
+falsirag-auto-annotate generate \
+  --packet-dir /mnt/d/FAR-outputs/falsirag_annotation_packet \
+  --output-dir /mnt/d/FAR-outputs/qwen35_preannotations \
+  --config experiments/configs/qwen_open.yaml \
+  --preannotator-id qwen35_9b_ollama_thinkingfix_machine_weak \
+  --resume
+```
 
 This is the recommended no-human fallback for development. It is still not
 publication gold. See `docs/MACHINE_ANNOTATION_FALLBACK.md` for the researched
