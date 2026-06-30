@@ -10,8 +10,8 @@
 | Six-provider LLM; BM25/dense/FAISS/hybrid/rerank reuse | `far/adapters/`, API configs, adapter tests | Implemented; strict hybrid configs require optional Vera dense install |
 | 300--400 benchmark, five categories | 300 rows in `bench/falsirag_bench.jsonl` | Candidate complete |
 | In-corpus counter-evidence | `bench/corpus.jsonl`, validator recall 0.91 | Implemented |
-| Frozen held-out split/no leakage | `bench/split_manifest.json`, gold-free bundle builder, blind-suite test | Technically isolated; external custodian/execution pending |
-| Double annotation and IAA | `bench/annotations.py` | Tooling complete; humans pending |
+| Frozen held-out split/no leakage | `bench/split_manifest.json`, gold-free bundle builder, blind-suite test, `docs/BLIND_TEST_HANDOFF.md` | Technically isolated; external custodian/execution pending |
+| Double annotation and IAA | `bench/annotations.py`, `docs/HUMAN_ANNOTATION_PROTOCOL.md` | Tooling and SOP complete; humans pending |
 | External FEVER slice | `bench/external/fever_pair_candidates_v1/` | Candidate imported; annotation pending |
 | Five baselines | `baselines/` | Implemented; style reproductions labeled |
 | Four ablations | `experiments/ablations.py`; untyped wrapper preserves batched graph construction | Implemented; corrected matched bundles pending |

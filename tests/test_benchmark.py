@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 import pytest
@@ -18,10 +19,29 @@ from bench.build.build_blind_bundle import build as build_blind_bundle
 from bench.build.extend_from_verabench import build
 from bench.build.import_fever_slice import import_slice
 from bench.build.validate_bench import validate
+from bench.schema import VALID_CONFLICT_TYPES, VALID_REVISION_ACTIONS
 
 ROOT = Path(__file__).resolve().parents[1]
 VERA_BENCH = Path("/Users/xuwenyao/VeraRAG/data/verabench")
 FEVER = Path("/Users/xuwenyao/VeraRAG/data/external/fever_pair_candidates_v1")
+
+
+def test_human_annotation_protocol_mentions_only_valid_labels() -> None:
+    text = (ROOT / "docs" / "HUMAN_ANNOTATION_PROTOCOL.md").read_text(encoding="utf-8")
+    action_section = text.split("## Revision action guidance", maxsplit=1)[1].split(
+        "## Freeze reviewer files",
+        maxsplit=1,
+    )[0]
+    action_labels = set(re.findall(r"-> `([^`]+)`", action_section))
+    assert action_labels <= VALID_REVISION_ACTIONS
+    assert action_labels >= VALID_REVISION_ACTIONS
+
+    conflict_section = text.split("## Conflict type guidance", maxsplit=1)[1].split(
+        "## Revision action guidance",
+        maxsplit=1,
+    )[0]
+    conflict_labels = set(re.findall(r"`([^`]+)`", conflict_section))
+    assert conflict_labels == VALID_CONFLICT_TYPES
 
 
 def test_tracked_benchmark_is_balanced_traceable_and_retrievable() -> None:
