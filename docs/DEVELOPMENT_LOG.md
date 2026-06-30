@@ -111,3 +111,26 @@ site (72 MiB), after which all nine experiment-runner tests passed. The artifact
 builder now selects and fingerprints a cross-platform CJK font; the WSL plotting
 test passes with UserWarnings promoted to errors by using the already installed
 Windows font rather than placing another font on C:.
+
+## 2026-06-30: Machine-only annotation fallback made executable
+
+The no-human annotation fallback now uses the local Qwen3.5/Ollama runtime
+instead of requiring a cloud API key. The first 3-sample pilot reached the
+remote GPU but failed validation (`llm_failures: 3/3`) because Qwen3.5 is a
+thinking model: Ollama returned the generated JSON in its `thinking` field while
+leaving the standard `response` field empty. FAR's Ollama adapter now has a
+small thinking-aware compatibility path: it returns `response` when present and
+falls back to `thinking` only when `response` is empty.
+
+After the fix, a 3-sample pilot succeeded:
+
+- output: `/mnt/d/FAR-outputs/qwen35_preannotations_pilot3_thinkingfix`;
+- model: `qwen3.5:9b`;
+- preannotator: `qwen35_9b_ollama_thinkingfix_machine_weak`;
+- samples: 3; and
+- `llm_failures: 0`.
+
+The full 300-sample machine preannotation run was then launched in tmux session
+`far-auto-label`, writing to `/mnt/d/FAR-outputs/qwen35_preannotations`. These
+outputs remain non-gold reviewer aids: they cannot close the independent human
+annotation or Cohen's kappa gates.

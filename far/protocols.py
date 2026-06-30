@@ -13,4 +13,5 @@ class TextGenerator(Protocol):
         system_prompt: str | None = None,
         temperature: float = 0.0,
         max_tokens: int = 1000,
+        response_format: str | None = None,
     ) -> str: ...

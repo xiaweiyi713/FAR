@@ -186,6 +186,7 @@ def generate_preannotations(
                     ),
                     temperature=0.0,
                     max_tokens=900,
+                    response_format="json",
                 )
             )
             prediction = _normalise_prediction(raw, str(row["sample_id"]))

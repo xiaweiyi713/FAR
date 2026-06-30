@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import importlib.util
-from types import SimpleNamespace
+import sys
+from types import ModuleType, SimpleNamespace
 from unittest.mock import patch
 
 import pytest
@@ -12,13 +13,70 @@ from far.models import EvidenceDocument
 
 
 class _FakeLLMClient:
+    def __init__(self) -> None:
+        self.calls: list[dict[str, object]] = []
+
     def generate(self, prompt: str, **kwargs: object) -> str:
+        self.calls.append({"prompt": prompt, **kwargs})
         return f"generated:{prompt}:{kwargs['temperature']}"
 
 
 def test_llm_adapter_maps_the_stable_far_interface() -> None:
     adapter = VeraLLMAdapter(client=_FakeLLMClient())
     assert adapter.complete("claim", temperature=0.0) == "generated:claim:0.0"
+
+
+def test_llm_adapter_forwards_json_response_format() -> None:
+    client = _FakeLLMClient()
+    adapter = VeraLLMAdapter(client=client)
+
+    assert (
+        adapter.complete("claim", temperature=0.0, response_format="json") == "generated:claim:0.0"
+    )
+    assert client.calls == [
+        {
+            "prompt": "claim",
+            "system_prompt": None,
+            "temperature": 0.0,
+            "max_tokens": 1000,
+            "response_format": "json",
+        }
+    ]
+
+
+def test_ollama_adapter_uses_thinking_when_response_is_empty(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    fake_module = ModuleType("ollama")
+    calls: list[dict[str, object]] = []
+
+    class FakeOllamaClient:
+        def __init__(self, host: str) -> None:
+            calls.append({"host": host})
+
+        def generate(self, **kwargs: object) -> dict[str, object]:
+            calls.append(kwargs)
+            return {"response": "", "thinking": '{"ok": true}'}
+
+    fake_module.Client = FakeOllamaClient  # type: ignore[attr-defined]
+    monkeypatch.setitem(sys.modules, "ollama", fake_module)
+
+    adapter = VeraLLMAdapter(
+        provider="ollama",
+        model="qwen3.5:9b",
+        base_url="http://ollama.local:11434",
+    )
+
+    assert adapter.complete("json please", response_format="json") == '{"ok": true}'
+    assert calls == [
+        {"host": "http://ollama.local:11434"},
+        {
+            "model": "qwen3.5:9b",
+            "prompt": "json please",
+            "options": {"num_predict": 1000, "temperature": 0.0},
+            "format": "json",
+        },
+    ]
 
 
 def test_llm_adapter_rejects_unknown_provider_before_import() -> None:

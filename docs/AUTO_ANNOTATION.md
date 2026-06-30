@@ -37,9 +37,14 @@ falsirag-auto-annotate generate \
   --packet-dir /mnt/d/FAR-outputs/falsirag_annotation_packet \
   --output-dir /mnt/d/FAR-outputs/qwen35_preannotations \
   --config experiments/configs/qwen_open.yaml \
-  --preannotator-id qwen35_9b_ollama_machine_weak \
+  --preannotator-id qwen35_9b_ollama_thinkingfix_machine_weak \
   --overwrite
 ```
+
+FAR's Ollama adapter is thinking-aware: for Qwen3.5-style thinking models, it
+uses Ollama's normal `response` field when present and falls back to the
+`thinking` field only when `response` is empty. A 3-sample pilot on the Windows
+GPU host passed with `llm_failures: 0` after this compatibility layer.
 
 This is the recommended no-human fallback for development. It is still not
 publication gold. See `docs/MACHINE_ANNOTATION_FALLBACK.md` for the researched

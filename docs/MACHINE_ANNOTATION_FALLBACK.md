@@ -78,9 +78,14 @@ falsirag-auto-annotate generate \
   --packet-dir /mnt/d/FAR-outputs/falsirag_annotation_packet \
   --output-dir /mnt/d/FAR-outputs/qwen35_preannotations \
   --config experiments/configs/qwen_open.yaml \
-  --preannotator-id qwen35_9b_ollama_machine_weak \
+  --preannotator-id qwen35_9b_ollama_thinkingfix_machine_weak \
   --overwrite
 ```
+
+The `thinkingfix` identifier records that FAR's Ollama adapter is using the
+Qwen3.5 thinking-aware compatibility path. This is necessary because the current
+local Qwen3.5/Ollama response can put JSON in the `thinking` field while leaving
+the standard `response` field empty.
 
 Detach with `Ctrl+B`, then `D`. Reattach with:
 
