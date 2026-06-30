@@ -104,6 +104,27 @@ This is the recommended no-human fallback for development. It is still not
 publication gold. See `docs/MACHINE_ANNOTATION_FALLBACK.md` for the researched
 open-source alternatives and the paper wording constraints.
 
+## Rule-based weak labels
+
+For a second machine-only signal that does not call an LLM or cloud API, run the
+deterministic weak-supervision labeler on the same blind packet:
+
+```bash
+uv run falsirag-weak-label \
+  --packet-dir outputs/falsirag_annotation_packet \
+  --output-dir outputs/rules_weak_labels \
+  --overwrite
+```
+
+It writes `weak_annotations.jsonl` and `weak_annotation_manifest.json` with
+`publication_gold: false`. The labeler uses conservative date/number/entity,
+source-reliability, causal-language, and definition/scope rules. Rows where no
+rule fires are marked `abstained: true`; this means "no weak signal", not "no
+conflict".
+
+Use these weak labels to compare against LLM preannotations or to prioritize
+human review. Do not report them as independent human labels or Cohen's kappa.
+
 ## Optional DeepSeek workflow
 
 Create a blind packet first:

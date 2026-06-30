@@ -16,7 +16,7 @@ close an empirical gate.
 | 300--400 candidate benchmark in five classes | 300 rows, 60 per class | Candidate complete | Benchmark validator and fingerprints pass |
 | Counter-evidence in the corpus | Frozen corpus; lexical recall@10 = 0.91 | Construction gate passed | Validator report remains bound to frozen corpus |
 | No dependency-group split leakage | `bench/split_manifest.json` (182/60/58) | Implemented | Validator reports zero leakage |
-| Automatic labeling assistance | Qwen2.5 machine preannotations 300/300 with 1 fallback after retry; Label Studio export 300/300 predictions | Implemented, non-gold | Preannotations remain `publication_gold: false` |
+| Automatic labeling assistance | Qwen2.5 machine preannotations 300/300 with 1 fallback after retry; Label Studio export 300/300 predictions; deterministic weak-label CLI for a second machine-only signal | Implemented, non-gold | Preannotations and weak labels remain `publication_gold: false` |
 | Independent annotation and IAA | Blind packets, compiler, adjudicator, human annotation protocol | External work pending | Two independent completed files, adjudication, and reported kappa |
 | External FEVER slice | Fingerprinted candidate import | Candidate complete | Human annotation and separate reporting |
 | Five transparent baselines | `baselines/` | Implemented | Complete matched prediction bundles |

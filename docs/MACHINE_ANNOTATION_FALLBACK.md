@@ -10,8 +10,8 @@ the original double-human annotation protocol.
 ## Recommendation
 
 Use FAR's built-in LLM preannotator with the local open-weight Qwen/Ollama
-runtime as the primary automatic labeler, then optionally add rule-based weak
-supervision with Snorkel-style labeling functions for audit signals.
+runtime as the primary automatic labeler, then add FAR's deterministic
+rule-based weak-supervision labeler as a second non-gold machine signal.
 
 Why this is the best fit:
 
@@ -20,8 +20,9 @@ Why this is the best fit:
   Windows GPU host's D: drive.
 - Label Studio can display FAR's predictions as preannotations if a reviewer
   later becomes available.
-- Weak-supervision tools can provide an independent deterministic signal for
-  date, number, entity, source-reliability, and definition-conflict cases.
+- The built-in weak labeler provides an independent deterministic signal for
+  date, number, entity, source-reliability, causal-language, and
+  definition/scope cases without introducing another service.
 
 What it cannot do:
 
@@ -125,8 +126,23 @@ The resulting files are explicitly non-gold:
 
 ## Weak-supervision layer
 
-If we need a second automatic signal without another LLM, implement lightweight
-labeling functions rather than a full service:
+Generate a second automatic signal without another LLM:
+
+```bash
+uv run falsirag-weak-label \
+  --packet-dir /mnt/d/FAR-outputs/falsirag_annotation_packet \
+  --output-dir /mnt/d/FAR-outputs/rules_weak_labels \
+  --overwrite
+```
+
+The command writes:
+
+- `weak_annotations.jsonl`
+- `weak_annotation_manifest.json`
+
+Both files explicitly set `publication_gold: false` and
+`can_satisfy_human_annotation_gate: false`. The labeler uses lightweight
+labeling functions:
 
 - temporal mismatch: years/dates in answer vs evidence disagree;
 - numerical mismatch: normalized numbers, percentages, or ranges disagree;
@@ -138,9 +154,10 @@ labeling functions rather than a full service:
 - definition/scope mismatch: answer uses a broader/narrower definition than the
   evidence.
 
-These functions can be aggregated with a simple majority/abstain report first.
-If the rule set grows, Snorkel's label model is the most appropriate open-source
-aggregator.
+Rows where no function fires are marked `abstained: true`. Treat this as "no
+machine signal", not as a negative label. If the rule set grows beyond this
+simple majority/abstain design, Snorkel's label model remains the most
+appropriate open-source aggregator.
 
 Report these outputs as machine agreement, not as human IAA.
 

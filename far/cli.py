@@ -57,6 +57,13 @@ def auto_annotate_main() -> None:
     main()
 
 
+def weak_label_main() -> None:
+    _prefer_far_repo()
+    from bench.build.weak_label import main
+
+    main()
+
+
 def run_suite_main() -> None:
     _prefer_far_repo()
     from experiments.run_suite import main

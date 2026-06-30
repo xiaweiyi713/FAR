@@ -19,6 +19,7 @@ from bench.build.build_blind_bundle import build as build_blind_bundle
 from bench.build.extend_from_verabench import build
 from bench.build.import_fever_slice import import_slice
 from bench.build.validate_bench import validate
+from bench.build.weak_label import generate_weak_labels, weak_label_row
 from bench.schema import VALID_CONFLICT_TYPES, VALID_REVISION_ACTIONS
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -143,6 +144,43 @@ def test_llm_preannotations_are_non_gold_review_aids(tmp_path: Path) -> None:
     assert rows[0]["publication_gold"] is False
     assert rows[0]["preannotation"]["needs_human_review"] is True
     assert rows[0]["preannotation"]["conflict_type"] == "numerical"
+
+
+def test_weak_labels_are_non_gold_review_aids(tmp_path: Path) -> None:
+    packet = tmp_path / "packet"
+    build_annotation_packet(ROOT / "bench", packet, ["alice", "bob"])
+    output = tmp_path / "weak"
+    manifest = generate_weak_labels(packet, output, limit=12)
+    assert manifest["publication_gold"] is False
+    assert manifest["can_satisfy_human_annotation_gate"] is False
+    assert manifest["samples"] == 12
+    assert manifest["non_abstained"] > 0
+    rows = [
+        json.loads(line) for line in (output / "weak_annotations.jsonl").read_text().splitlines()
+    ]
+    assert rows[0]["publication_gold"] is False
+    assert rows[0]["weak_annotation"]["needs_human_review"] is True
+    assert rows[0]["weak_annotation"]["conflict_type"] in VALID_CONFLICT_TYPES | {"no_conflict"}
+
+
+def test_weak_label_row_detects_temporal_and_source_signals() -> None:
+    row = {
+        "sample_id": "W1",
+        "question": "When did the policy start?",
+        "initial_answer": "An unverified secondary summary reports: 2024年8月15日。",
+        "claims": [{"claim_id": "C1", "claim": "2024年8月15日。"}],
+        "evidence": [
+            {
+                "evidence_id": "EVIDENCE_A",
+                "text": "2023年8月15日，《生成式人工智能服务管理暂行办法》正式施行。",
+            }
+        ],
+    }
+    annotation = weak_label_row(row)
+    signal_names = {signal["name"] for signal in annotation["signals"]}
+    assert annotation["conflict_present"] is True
+    assert annotation["conflict_type"] == "temporal"
+    assert {"year_mismatch", "unverified_source_phrase"} <= signal_names
 
 
 def test_llm_preannotation_fallback_stays_review_only(tmp_path: Path) -> None:
