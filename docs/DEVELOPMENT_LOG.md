@@ -233,3 +233,41 @@ The complete release check passed locally. It produced a 3-page paper, 1-page
 supplement, and 2-page checklist. This closes repository-controlled release
 mechanics, not the human annotation, cloud-model, external blind-test, author,
 or policy-review gates.
+
+## 2026-06-30: Qwen3.5 dev main run and claim-contract audit
+
+The complete open-model FAR development run finished 60/60 with zero errors:
+
+- output: `/mnt/d/FAR-outputs/qwen_open_dev`;
+- run signature:
+  `d87dfa21ff6f1cdd52de181747611ebce5d5915501ca5ec0f5f4ae327939658d`;
+- implementation SHA-256:
+  `f8d227580d468b2382b71fdbf3988444e1a07e11abfd94fcb2f1e0955fa1d4f9`;
+- prediction SHA-256:
+  `aa0661ee137858e0800555a94795a8a0d3b1369a53dbb4c93b10abe6f9887a74`;
+- elapsed time: 2.50 hours; and
+- output QA: 60 unique rows, no empty answers, and no reasoning leakage.
+
+The latest evaluator correctly marks the report `publication_ready: false`:
+the benchmark is still machine-seeded and all 60 dev rows lack adjudicated
+human labels. The diagnostic metrics therefore remain development evidence:
+counter-evidence recall 0.983, evidence precision 0.113, typed conflict F1
+0.288, revision-action accuracy 0.283, revision accuracy 0.150, and answer
+correctness 0.692.
+
+Category analysis found a concrete failure rather than a retrieval bottleneck:
+entity-confusion typed accuracy was 0/12 even though the relevant counter
+document was usually retrieved. Accepted LLM decompositions created
+`ClaimNode`s without deterministic entity/number/time fields, and the source
+coverage check permitted claims that added novel vocabulary while retaining
+80% of source vocabulary. The local next revision now reparses every accepted
+LLM claim for typed attributes and requires exact bidirectional source-token
+coverage; otherwise it falls back to the deterministic decomposer. Regression
+tests cover both missing typed attributes and the observed alternative-insertion
+failure. The full 79-test suite passes. This correction was derived from dev
+only; the held-out test bundle remains untouched. A fresh matched dev rerun is
+required before attributing any metric change to it.
+
+The original frozen-code suite continues independently on Windows. Its results
+remain the valid matched comparison for the completed Qwen main run; the local
+correction is intentionally not synchronized into the live process.

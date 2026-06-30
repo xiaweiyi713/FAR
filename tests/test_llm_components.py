@@ -24,6 +24,8 @@ def test_llm_claim_decomposition_and_query_generation_are_validated() -> None:
     )
     graph = decomposer.decompose("Revenue was 20 million")
     assert graph.claims[0].claim_type is ClaimType.NUMERICAL
+    assert graph.claims[0].entities == ("Revenue",)
+    assert graph.claims[0].numbers == ("20",)
     query_generator = LLMTypedQueryGenerator(
         _QueueGenerator(
             '{"support":"official revenue 20 million",'
@@ -49,6 +51,52 @@ def test_invalid_llm_structure_falls_back_without_losing_query_families() -> Non
     )
     assert {item.kind for item in queries} == set(QueryKind)
     assert not any(item.tactic.startswith("llm:") for item in queries)
+
+
+def test_llm_claims_receive_deterministic_typed_attributes() -> None:
+    decomposer = LLMClaimDecomposer(
+        _QueueGenerator(
+            '{"claims":[{"claim_id":"C1","claim":"Agent 于 2023 年离职",'
+            '"type":"temporal","depends_on":[]}]}'
+        )
+    )
+    claim = decomposer.decompose("Agent 于 2023 年离职").claims[0]
+    assert "Agent" in claim.entities
+    assert claim.time_expressions == ("2023",)
+
+
+def test_llm_claim_decomposition_rejects_novel_vocabulary() -> None:
+    answer = "碳中和有潜力。目前量子计算仍处于研究阶段。"
+    decomposer = LLMClaimDecomposer(
+        _QueueGenerator(
+            '{"claims":[{"claim_id":"C1","claim":"碳中和(或量子计算)有潜力",'
+            '"type":"factual","depends_on":[]},{"claim_id":"C2",'
+            '"claim":"目前量子计算仍处于研究阶段","type":"factual",'
+            '"depends_on":[]}]}'
+        )
+    )
+    graph = decomposer.decompose(answer)
+    assert [claim.text for claim in graph.claims] == [
+        "碳中和有潜力",
+        "目前量子计算仍处于研究阶段",
+    ]
+
+
+def test_llm_claim_decomposition_rejects_cross_clause_substitution() -> None:
+    answer = "碳中和有潜力。目前量子计算仍处于研究阶段。"
+    decomposer = LLMClaimDecomposer(
+        _QueueGenerator(
+            '{"claims":[{"claim_id":"C1","claim":"量子计算有潜力",'
+            '"type":"factual","depends_on":[]},{"claim_id":"C2",'
+            '"claim":"目前碳中和仍处于研究阶段","type":"factual",'
+            '"depends_on":[]}]}'
+        )
+    )
+    graph = decomposer.decompose(answer)
+    assert [claim.text for claim in graph.claims] == [
+        "碳中和有潜力",
+        "目前量子计算仍处于研究阶段",
+    ]
 
 
 def test_llm_revision_realizes_deterministically_selected_action() -> None:

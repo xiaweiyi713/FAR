@@ -278,15 +278,36 @@ class LLMClaimDecomposer:
             raise ValueError("claim decomposition must be a JSON object with a claims list")
         return value
 
-    @staticmethod
-    def _claim(row: Any) -> ClaimNode:
+    def _claim(self, row: Any) -> ClaimNode:
         if not isinstance(row, dict):
             raise ValueError("claim rows must be objects")
+        text = str(row["claim"])
+        # The LLM is responsible for atomic boundaries and dependencies, but
+        # downstream typed retrieval/conflict logic must never depend on it
+        # remembering to emit fields that are not part of the JSON contract.
+        # Reparse every accepted claim deterministically and aggregate all
+        # fragments defensively in case a provider returns a multi-sentence
+        # claim despite the atomicity instruction.
+        parsed = RuleBasedClaimDecomposer().decompose(text)
         return ClaimNode(
             claim_id=str(row["claim_id"]),
-            text=str(row["claim"]),
+            text=text,
             claim_type=ClaimType(str(row["type"])),
             depends_on=tuple(str(item) for item in row.get("depends_on", [])),
+            entities=tuple(
+                dict.fromkeys(entity for claim in parsed.claims for entity in claim.entities)
+            ),
+            numbers=tuple(
+                dict.fromkeys(number for claim in parsed.claims for number in claim.numbers)
+            ),
+            time_expressions=tuple(
+                dict.fromkeys(
+                    expression
+                    for claim in parsed.claims
+                    for expression in claim.time_expressions
+                )
+            ),
+            verifiable=all(claim.verifiable for claim in parsed.claims),
             source_reliability=str(row.get("source_reliability", "unknown")),
         )
 
@@ -300,4 +321,17 @@ class LLMClaimDecomposer:
                 " ".join(claim.text for claim in graph.claims).lower(),
             )
         )
-        return bool(source_tokens) and len(source_tokens & claim_tokens) / len(source_tokens) >= 0.8
+        # Claim decomposition may split and reorder text, but it may neither
+        # omit source vocabulary nor introduce vocabulary that was not present
+        # in the answer. A weaker recall-only threshold allowed the decomposer
+        # to smuggle alternatives into a claim while still covering most of the
+        # source, changing the proposition before falsification even started.
+        compact_source = re.sub(r"[\W_]+", "", answer.lower())
+        compact_claims = [
+            re.sub(r"[\W_]+", "", claim.text.lower()) for claim in graph.claims
+        ]
+        claims_are_source_spans = all(
+            bool(compact_claim) and compact_claim in compact_source
+            for compact_claim in compact_claims
+        )
+        return bool(source_tokens) and claim_tokens == source_tokens and claims_are_source_spans
