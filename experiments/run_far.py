@@ -20,6 +20,7 @@ from experiments.runner import (
     select_samples,
 )
 from far.adapters import HeuristicConflictDetector, VeraConflictDetector
+from far.models import EvidenceDocument
 from far.revision import RevisionAction, RevisionTrace
 
 _PRIMARY_ACTION_PRIORITY = {
@@ -35,12 +36,20 @@ _PRIMARY_ACTION_PRIORITY = {
 }
 
 
-def _detector(config: dict[str, Any]) -> Any:
+def _detector(config: dict[str, Any], documents: list[EvidenceDocument]) -> Any:
     name = config.get("run", {}).get("conflict_detector", "heuristic")
     if name == "heuristic":
         return HeuristicConflictDetector()
     if name == "vera":
-        return VeraConflictDetector(config)
+        entity_lexicon = tuple(
+            dict.fromkeys(
+                str(entity)
+                for document in documents
+                for entity in document.metadata.get("entities", [])
+                if str(entity).strip()
+            )
+        )
+        return VeraConflictDetector(config, entity_lexicon=entity_lexicon)
     raise ValueError(f"unsupported conflict detector: {name}")
 
 
@@ -94,7 +103,7 @@ def run(
     pipeline = build_ablation(
         ablation,
         retriever,
-        conflict_detector=_detector(config),
+        conflict_detector=_detector(config, documents),
         text_generator=generator,
         top_k_per_query=int(config.get("run", {}).get("top_k_per_query", 5)),
     )

@@ -5,7 +5,7 @@
 | Claim graph with dependency edges and source-faithful LLM decomposition | `far/claims.py`, deterministic typed-attribute and no-rewrite regression tests | Implemented; corrected dev failure requires matched rerun |
 | Positive typed evidence requirements | `far/evidence_types.py` | Implemented |
 | Typed support/refutation/boundary queries | `far/counterfactual.py` | Implemented |
-| Typed conflict controls and VeraRAG reuse | enriched graph adapter, strict-NLI formal configs, real integration tests | Implemented with detector provenance |
+| Typed conflict controls and VeraRAG reuse | enriched graph adapter, strict-NLI formal configs, fingerprinted corpus-entity fallback, real integration tests | Implemented with detector provenance; corrected dev stack requires matched rerun |
 | Typed revision and before/after trace | `far/revision.py` | Implemented |
 | Six-provider LLM; BM25/dense/FAISS/hybrid/rerank reuse | `far/adapters/`, API configs, adapter tests | Implemented; strict hybrid configs require optional Vera dense install |
 | 300--400 benchmark, five categories | 300 rows in `bench/falsirag_bench.jsonl` | Candidate complete |
@@ -14,7 +14,7 @@
 | Double annotation and IAA | `bench/annotations.py` | Tooling complete; humans pending |
 | External FEVER slice | `bench/external/fever_pair_candidates_v1/` | Candidate imported; annotation pending |
 | Five baselines | `baselines/` | Implemented; style reproductions labeled |
-| Four ablations | `experiments/ablations.py` | Implemented |
+| Four ablations | `experiments/ablations.py`; untyped wrapper preserves batched graph construction | Implemented; corrected matched bundles pending |
 | Six metrics, CI, McNemar | `eval/` | Implemented |
 | Checkpoint/signature/result validation | `experiments/runner.py`, validation tests | Implemented |
 | Two tables and three figures | `experiments/build_artifacts.py` | Implemented; final inputs pending |

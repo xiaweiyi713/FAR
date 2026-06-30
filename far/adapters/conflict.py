@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Iterable
+from difflib import SequenceMatcher
 from typing import Any, ClassVar, Protocol
 
 from ..claims import ClaimNode, ClaimType, RuleBasedClaimDecomposer
@@ -16,6 +18,8 @@ class ConflictDetector(Protocol):
         self,
         claim: ClaimNode,
         evidence: EvidenceDocument,
+        *,
+        question: str = "",
     ) -> tuple[TypedConflict, ...]: ...
 
 
@@ -77,7 +81,10 @@ class HeuristicConflictDetector:
         self,
         claim: ClaimNode,
         evidence: EvidenceDocument,
+        *,
+        question: str = "",
     ) -> tuple[TypedConflict, ...]:
+        del question
         if self.allow_oracle_metadata:
             seeded = self._from_metadata(claim, evidence)
             if seeded is not None:
@@ -290,10 +297,31 @@ class VeraConflictDetector:
         config: dict[str, Any] | None = None,
         builder: Any | None = None,
         fallback: ConflictDetector | None = None,
+        entity_lexicon: Iterable[str] = (),
     ) -> None:
         safe_config = dict(config or {})
         conflict_config = dict(safe_config.get("conflict_graph", {}))
         self.require_nli = bool(conflict_config.get("require_nli", False))
+        self.enable_entity_lexicon_conflict = bool(
+            conflict_config.get("enable_entity_lexicon_conflict", False)
+        )
+        self.entity_lexicon_similarity = float(
+            conflict_config.get("entity_lexicon_similarity", 0.55)
+        )
+        if not 0.0 <= self.entity_lexicon_similarity <= 1.0:
+            raise ValueError("conflict_graph.entity_lexicon_similarity must be in [0, 1]")
+        self.entity_lexicon = tuple(
+            sorted(
+                dict.fromkeys(
+                    entity.strip() for entity in entity_lexicon if entity.strip()
+                ),
+                key=lambda entity: (-len(entity), entity.lower()),
+            )
+        )
+        if self.enable_entity_lexicon_conflict and not self.entity_lexicon:
+            raise ValueError(
+                "conflict_graph.enable_entity_lexicon_conflict requires a corpus entity lexicon"
+            )
         if conflict_config.get("nli_model"):
             conflict_config["nli_model"] = resolve_huggingface_snapshot(
                 str(conflict_config["nli_model"]),
@@ -349,17 +377,156 @@ class VeraConflictDetector:
     def _merge(*groups: tuple[str, ...]) -> list[str]:
         return list(dict.fromkeys(item for group in groups for item in group))
 
+    @staticmethod
+    def _contains_entity(text: str, entity: str) -> bool:
+        if (
+            len(entity) >= 4
+            and any(character.islower() for character in entity)
+            and entity in text
+        ):
+            # Preserve exact mixed-case lexicon matches even when generated
+            # text omits whitespace at a script/role boundary (for example,
+            # ``CTOAgent``). Longest-first matching prevents a shorter alias
+            # from displacing a more specific entity.
+            return True
+        if re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9 ._\-/]*", entity):
+            return bool(
+                re.search(
+                    rf"(?<![A-Za-z0-9]){re.escape(entity)}(?![A-Za-z0-9])",
+                    text,
+                    re.I,
+                )
+            )
+        return entity.casefold() in text.casefold()
+
+    def _known_entities(self, text: str) -> tuple[str, ...]:
+        matched: list[str] = []
+        for entity in self.entity_lexicon:
+            if not self._contains_entity(text, entity):
+                continue
+            if any(self._contains_entity(existing, entity) for existing in matched):
+                continue
+            matched.append(entity)
+        return tuple(matched)
+
+    @staticmethod
+    def _lexical_similarity(left: str, right: str) -> float:
+        left = left.casefold()
+        right = right.casefold()
+        ratio = SequenceMatcher(None, left, right).ratio()
+        left_bigrams = {left[index : index + 2] for index in range(len(left) - 1)}
+        right_bigrams = {right[index : index + 2] for index in range(len(right) - 1)}
+        if not left_bigrams or not right_bigrams:
+            return ratio
+        jaccard = len(left_bigrams & right_bigrams) / len(
+            left_bigrams | right_bigrams
+        )
+        return max(ratio, jaccard)
+
+    def _entity_lexicon_conflicts(
+        self,
+        claim: ClaimNode,
+        evidence: tuple[EvidenceDocument, ...],
+        *,
+        question: str = "",
+    ) -> tuple[TypedConflict, ...]:
+        """Find high-precision corpus-entity substitutions without gold labels.
+
+        Corpus entity lists are ordinary retriever metadata and are already
+        fingerprinted with the corpus. A conflict requires a known entity in
+        the claim that is absent from every retrieved passage, a different
+        corpus entity anchoring the claim to one passage, and a near-duplicate
+        sentence in that passage. The final condition avoids treating ordinary
+        multi-entity answers as contradictions merely because one document
+        covers only part of the answer.
+        """
+
+        if not self.enable_entity_lexicon_conflict:
+            return ()
+        claim_entities = self._known_entities(claim.text)
+        if not claim_entities:
+            return ()
+        all_evidence_text = "\n".join(item.text for item in evidence)
+        unsupported = tuple(
+            entity
+            for entity in claim_entities
+            if not self._contains_entity(all_evidence_text, entity)
+            and not self._contains_entity(question, entity)
+        )
+        if not unsupported:
+            return ()
+
+        conflicts: list[TypedConflict] = []
+        for document in evidence:
+            raw_entities = document.metadata.get("entities", [])
+            if not isinstance(raw_entities, (list, tuple)):
+                continue
+            document_entities = tuple(
+                str(entity).strip() for entity in raw_entities if str(entity).strip()
+            )
+            anchors = tuple(
+                entity
+                for entity in document_entities
+                if self._contains_entity(claim.text, entity)
+                or self._contains_entity(question, entity)
+            )
+            alternatives = tuple(
+                entity
+                for entity in document_entities
+                if not self._contains_entity(claim.text, entity)
+            )
+            if not anchors or not alternatives:
+                continue
+            sentences = tuple(
+                segment.strip()
+                for segment in re.split(r"[。！？!?；;\n]+", document.text)
+                if segment.strip()
+            )
+            similarity = max(
+                (self._lexical_similarity(claim.text, sentence) for sentence in sentences),
+                default=0.0,
+            )
+            if similarity < self.entity_lexicon_similarity:
+                continue
+            confidence = min(0.9, 0.55 + similarity * 0.4)
+            conflicts.append(
+                TypedConflict(
+                    claim_id=claim.claim_id,
+                    evidence_id=document.evidence_id,
+                    conflict_type=EvidenceType.ENTITY,
+                    confidence=confidence,
+                    rationale=(
+                        "A corpus-known entity in the claim is absent from all retrieved "
+                        "passages while a lexically aligned passage supplies a different "
+                        "entity value."
+                    ),
+                    strength="strong" if confidence >= 0.85 else "weak",
+                    metadata={
+                        "detector": "corpus_entity_lexicon",
+                        "unsupported_entities": list(unsupported),
+                        "anchor_entities": list(anchors),
+                        "candidate_entities": list(alternatives[:8]),
+                        "lexical_similarity": similarity,
+                    },
+                )
+            )
+        return tuple(conflicts)
+
     def detect(
         self,
         claim: ClaimNode,
         evidence: EvidenceDocument,
+        *,
+        question: str = "",
     ) -> tuple[TypedConflict, ...]:
-        return self.detect_many(claim, (evidence,))
+        return self.detect_many(claim, (evidence,), question=question)
 
     def detect_many(
         self,
         claim: ClaimNode,
         evidence: tuple[EvidenceDocument, ...],
+        *,
+        question: str = "",
     ) -> tuple[TypedConflict, ...]:
         if not evidence:
             return ()
@@ -532,6 +699,16 @@ class VeraConflictDetector:
                 )
             )
         graph_keys = {(item.evidence_id, item.conflict_type) for item in conflicts}
+        for lexicon_conflict in self._entity_lexicon_conflicts(
+            claim,
+            evidence,
+            question=question,
+        ):
+            key = (lexicon_conflict.evidence_id, lexicon_conflict.conflict_type)
+            if key in graph_keys:
+                continue
+            conflicts.append(lexicon_conflict)
+            graph_keys.add(key)
         for document_conflicts in fallback_by_evidence.values():
             for fallback_conflict in document_conflicts:
                 if (

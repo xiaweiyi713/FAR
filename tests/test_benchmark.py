@@ -62,6 +62,7 @@ def test_blind_bundle_contains_only_operational_inputs(tmp_path: Path) -> None:
     ]
     assert all("metadata" not in row and "source_doc_id" not in row for row in corpus_rows)
     assert all(set(row) <= set(manifest["public_corpus_fields"]) for row in corpus_rows)
+    assert any(row.get("entities") for row in corpus_rows)
 
 
 @pytest.mark.skipif(not VERA_BENCH.exists(), reason="local VeraRAG fixture unavailable")

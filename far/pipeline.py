@@ -125,12 +125,16 @@ class FARPipeline:
             seen_conflicts: set[tuple[str, str]] = set()
             detect_many = getattr(self.conflict_detector, "detect_many", None)
             candidate_conflicts = (
-                detect_many(claim, evidence)
+                detect_many(claim, evidence, question=question)
                 if callable(detect_many)
                 else tuple(
                     conflict
                     for item in evidence
-                    for conflict in self.conflict_detector.detect(claim, item)
+                    for conflict in self.conflict_detector.detect(
+                        claim,
+                        item,
+                        question=question,
+                    )
                 )
             )
             for conflict in candidate_conflicts:

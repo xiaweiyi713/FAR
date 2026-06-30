@@ -271,3 +271,52 @@ required before attributing any metric change to it.
 The original frozen-code suite continues independently on Windows. Its results
 remain the valid matched comparison for the completed Qwen main run; the local
 correction is intentionally not synchronized into the live process.
+
+## 2026-06-30: Corpus-entity metadata restored to the typed detector
+
+The entity failure audit found a second independent implementation gap. The
+benchmark constructor selected entity substitutions from the public `entities`
+lists already present in `bench/corpus.jsonl`, but `experiments/runner.py`
+dropped those lists while constructing runtime `EvidenceDocument`s. As a
+result, the VeraRAG adapter could not use the same non-gold entity information
+available to retrieval and benchmark construction.
+
+The corrected runtime now preserves corpus entities and builds a frozen global
+entity lexicon for the detector. Formal configs explicitly enable a
+high-precision fallback at lexical similarity 0.55. It emits an entity control
+only when a corpus-known claim entity is absent from every retrieved passage,
+a different public corpus entity anchors a near-duplicate passage to the claim
+or question, and the threshold is met. Trace metadata records the detector,
+unsupported/anchor/candidate entities, and similarity. The blind bundle now
+retains only this public entity list in addition to its existing public corpus
+fields; it still excludes labels, expected revisions, counter-evidence links,
+dependency groups, and construction metadata.
+
+The threshold audit used only train+dev labels and directly supplied each
+sample's annotated counter-document to isolate detector precision from
+retrieval. The fallback identified 20/48 entity substitutions and 0/194
+non-entity samples. This is a conservative component audit, not an end-to-end
+metric or paper result. A real retrieval/NLI replay of dev sample `F0161`
+retrieved `D011` and emitted the new `corpus_entity_lexicon` signal for the
+`Agent`/former-CTO claim. A balanced five-sample formal-stack smoke completed
+5/5 with zero errors and passed result validation:
+
+- output: `outputs/entity_lexicon_pilot` (diagnostic and partial);
+- run signature:
+  `cd12f7db199682901ecfb980bb8cc6bc146ff11c84bca10e9a428e15aa5e013f`;
+- prediction SHA-256:
+  `933c473c909198fef7aa7f5e9c828abe4b9cef7cf3afd4f93e260156a24b9a1e`; and
+- repository validation: ruff, mypy across 49 sources, and 81 tests pass.
+
+The held-out test labels were not inspected. The correction changes formal run
+signatures and therefore requires a fresh matched dev suite after the original
+frozen-code comparison finishes.
+
+The same audit also found that `UntypedConflictDetector` exposed only the
+single-document `detect` method. `FARPipeline` therefore used VeraRAG's batched
+graph for the full method but silently rebuilt one graph per document for
+`minus_typed_conflict`. The wrapper now delegates `detect_many` and changes only
+the conflict labels/query typing as intended. A regression test fails if the
+untyped wrapper falls back to per-document detection. Consequently, the
+already-running frozen-code untyped result remains useful for diagnosis but is
+not an admissible C2 ablation; the corrected matched suite is mandatory.

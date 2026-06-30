@@ -20,14 +20,24 @@ class _BatchOnlyDetector:
     def __init__(self) -> None:
         self.batch_sizes: list[int] = []
 
-    def detect(self, claim: object, evidence: object) -> tuple[object, ...]:
-        del claim, evidence
+    def detect(
+        self,
+        claim: object,
+        evidence: object,
+        *,
+        question: str = "",
+    ) -> tuple[object, ...]:
+        del claim, evidence, question
         raise AssertionError("pipeline should use detect_many when available")
 
     def detect_many(
-        self, claim: object, evidence: tuple[EvidenceDocument, ...]
+        self,
+        claim: object,
+        evidence: tuple[EvidenceDocument, ...],
+        *,
+        question: str = "",
     ) -> tuple[object, ...]:
-        del claim
+        del claim, question
         self.batch_sizes.append(len(evidence))
         return ()
 

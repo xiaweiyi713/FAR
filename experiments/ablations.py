@@ -37,6 +37,39 @@ class UntypedConflictDetector:
         self,
         claim: ClaimNode,
         evidence: EvidenceDocument,
+        *,
+        question: str = "",
+    ) -> tuple[TypedConflict, ...]:
+        return self._as_untyped(
+            self.detector.detect(claim, evidence, question=question)
+        )
+
+    def detect_many(
+        self,
+        claim: ClaimNode,
+        evidence: tuple[EvidenceDocument, ...],
+        *,
+        question: str = "",
+    ) -> tuple[TypedConflict, ...]:
+        detect_many = getattr(self.detector, "detect_many", None)
+        conflicts = (
+            detect_many(claim, evidence, question=question)
+            if callable(detect_many)
+            else tuple(
+                conflict
+                for document in evidence
+                for conflict in self.detector.detect(
+                    claim,
+                    document,
+                    question=question,
+                )
+            )
+        )
+        return self._as_untyped(conflicts)
+
+    @staticmethod
+    def _as_untyped(
+        conflicts: tuple[TypedConflict, ...],
     ) -> tuple[TypedConflict, ...]:
         return tuple(
             replace(
@@ -45,7 +78,7 @@ class UntypedConflictDetector:
                 rationale=f"Untyped contradiction: {conflict.rationale}",
                 suggested_revision=None,
             )
-            for conflict in self.detector.detect(claim, evidence)
+            for conflict in conflicts
         )
 
 

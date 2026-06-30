@@ -370,3 +370,53 @@ def test_vera_conflict_adapter_fails_closed_when_required_nli_is_unavailable() -
             ClaimNode("C1", "A claim.", ClaimType.FACTUAL),
             EvidenceDocument("E1", "Contrary evidence."),
         )
+
+
+@pytest.mark.skipif(importlib.util.find_spec("src") is None, reason="VeraRAG is not installed")
+def test_vera_conflict_adapter_detects_high_precision_corpus_entity_substitution() -> None:
+    class _EmptyGraphBuilder:
+        _nli_tried = False
+        _nli_available = True
+
+        def build_graph(self, evidence: object, use_llm: bool) -> SimpleNamespace:
+            del evidence, use_llm
+            return SimpleNamespace(get_conflicts=lambda: [])
+
+    detector = VeraConflictDetector(
+        {
+            "conflict_graph": {
+                "enable_nli": False,
+                "enable_entity_lexicon_conflict": True,
+                "entity_lexicon_similarity": 0.55,
+            }
+        },
+        builder=_EmptyGraphBuilder(),
+        entity_lexicon=("Rapidus", "chiplet", "2nm"),
+    )
+    conflicts = detector.detect(
+        ClaimNode(
+            "C1",
+            "Rapidus的目标是量产chiplet先进制程芯片，计划2027年开始量产",
+            ClaimType.FACTUAL,
+        ),
+        EvidenceDocument(
+            "E1",
+            "Rapidus计划2027年开始量产2nm芯片。",
+            source="official",
+            metadata={"entities": ["Rapidus", "2nm"]},
+        ),
+    )
+    assert conflicts[0].conflict_type.value == "entity"
+    assert conflicts[0].metadata["detector"] == "corpus_entity_lexicon"
+    assert conflicts[0].metadata["unsupported_entities"] == ["chiplet"]
+
+    unrelated = detector.detect(
+        ClaimNode("C2", "Rapidus获得政府资金支持", ClaimType.FACTUAL),
+        EvidenceDocument(
+            "E2",
+            "Rapidus计划2027年开始量产2nm芯片。",
+            source="official",
+            metadata={"entities": ["Rapidus", "2nm"]},
+        ),
+    )
+    assert unrelated == ()

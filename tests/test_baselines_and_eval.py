@@ -19,6 +19,7 @@ from eval.stats import (
 )
 from experiments.ablations import build_ablation
 from far.adapters import HeuristicConflictDetector, InMemoryRetriever
+from far.claims import ClaimNode, ClaimType
 from far.models import EvidenceDocument
 
 
@@ -206,3 +207,47 @@ def test_ablation_removes_query_families_and_typed_control() -> None:
         conflict_detector=detector,
     ).run("What was revenue?", "Revenue was 20 million.")
     assert untyped.conflicts["C1"][0].conflict_type.value == "counter_evidence"
+
+
+def test_untyped_ablation_preserves_batched_conflict_detection() -> None:
+    class _BatchProbe:
+        def __init__(self) -> None:
+            self.batch_sizes: list[int] = []
+
+        def detect(
+            self,
+            claim: ClaimNode,
+            evidence: EvidenceDocument,
+            *,
+            question: str = "",
+        ) -> tuple[object, ...]:
+            del claim, evidence, question
+            raise AssertionError("the untyped wrapper must preserve detect_many")
+
+        def detect_many(
+            self,
+            claim: ClaimNode,
+            evidence: tuple[EvidenceDocument, ...],
+            *,
+            question: str = "",
+        ) -> tuple[object, ...]:
+            del claim, question
+            self.batch_sizes.append(len(evidence))
+            return ()
+
+    probe = _BatchProbe()
+    pipeline = build_ablation(
+        "minus_typed_conflict",
+        _retriever(),
+        conflict_detector=probe,  # type: ignore[arg-type]
+    )
+    detector = pipeline.conflict_detector
+    detector.detect_many(  # type: ignore[attr-defined]
+        ClaimNode("C1", "Revenue was 20 million.", ClaimType.NUMERICAL),
+        (
+            EvidenceDocument("D1", "Revenue was 18 million."),
+            EvidenceDocument("D2", "Revenue was 19 million."),
+        ),
+        question="What was revenue?",
+    )
+    assert probe.batch_sizes == [2]

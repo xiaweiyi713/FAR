@@ -10,7 +10,7 @@ close an empirical gate.
 | Claim graph, dependency, and source-faithfulness validation | `far/claims.py`; typed-attribute/no-rewrite tests | Implemented | Full suite passes; rerun matched dev after the dev-derived correction |
 | Typed evidence requirements | `far/evidence_types.py` | Implemented | Assignment tests pass |
 | Support/refutation/boundary query protocol | `far/counterfactual.py` | Implemented | Three-family schema and fallback tests pass |
-| Typed VeraRAG conflict control | `far/adapters/conflict.py`, pinned NLI config, detector provenance | Implemented | Real graph integration and fail-closed NLI tests pass |
+| Typed VeraRAG conflict control | `far/adapters/conflict.py`, pinned NLI config, corpus-entity metadata path, detector provenance | Implemented | Graph/NLI/lexicon integration tests pass; rerun matched dev after the dev-derived correction |
 | Typed revision and before/after trace | `far/revision.py` | Implemented | Action/trace tests pass |
 | VeraRAG LLM and retrieval reuse | `far/adapters/`, editable local dependency | Implemented | Six-provider and BM25/dense/FAISS/hybrid/rerank adapter tests pass |
 | 300--400 candidate benchmark in five classes | 300 rows, 60 per class | Candidate complete | Benchmark validator and fingerprints pass |
@@ -20,7 +20,7 @@ close an empirical gate.
 | Independent annotation and IAA | Blind packets, compiler, adjudicator | External work pending | Two independent completed files, adjudication, and reported kappa |
 | External FEVER slice | Fingerprinted candidate import | Candidate complete | Human annotation and separate reporting |
 | Five transparent baselines | `baselines/` | Implemented | Complete matched prediction bundles |
-| Four component ablations | `experiments/ablations.py` | Implemented | Complete paired bundles, especially typed vs untyped |
+| Four component ablations | `experiments/ablations.py`; batched-detector parity regression | Implemented | Fresh complete paired bundles, especially corrected typed vs untyped |
 | Metrics, confidence intervals, McNemar | `eval/`; reports bind benchmark-manifest readiness and annotation statuses | Implemented | Validated complete reports on frozen, adjudicated predictions |
 | Versioned model matrix | DeepSeek V4-Flash, Qwen3.7 Plus 2026-05-26, Qwen3.5 9B; local digest recorded; Qwen FAR dev completed 60/60 with run/prediction hashes and `publication_ready: false`; matched suite running | Qwen diagnostic in progress; clean, memory-bounded runtime verified | Complete matched Qwen suite and corrected-code rerun; cloud credentials/runs; exact provider provenance |
 | Windows GPU execution | D:-backed Ollama/HF caches and outputs; CUDA and Qwen end-to-end smokes | Host gate passed | Recheck free space and environment before each formal run |

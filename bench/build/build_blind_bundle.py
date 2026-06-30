@@ -42,6 +42,7 @@ def build(data_dir: Path, output_dir: Path) -> dict[str, Any]:
         "author",
         "url",
         "license",
+        "entities",
     )
     blind_corpus = [
         {field: row[field] for field in public_corpus_fields if field in row} for row in corpus_rows

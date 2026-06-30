@@ -42,6 +42,7 @@ def _load_documents(data_dir: Path) -> list[EvidenceDocument]:
             source=row["source"],
             date=row.get("date"),
             url=row.get("url"),
+            metadata={"entities": list(row.get("entities", []))},
         )
         for row in read_jsonl(data_dir / "corpus.jsonl")
     ]

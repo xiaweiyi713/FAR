@@ -25,7 +25,8 @@ from far.revision import RevisionAction, RevisionTrace
 
 
 def test_sample_limit_is_category_balanced_and_test_is_guarded() -> None:
-    samples, _ = load_benchmark(ROOT / "bench")
+    samples, documents = load_benchmark(ROOT / "bench")
+    assert any(document.metadata.get("entities") for document in documents)
     selected = select_samples(samples, "dev", limit=10, allow_test=False)
     assert {row["category"] for row in selected} == {
         "temporal_shift",
@@ -83,6 +84,8 @@ def test_formal_configs_pin_one_shared_retrieval_and_conflict_stack() -> None:
     assert conflict["enable_source_reliability_conflict"] is True
     assert conflict["enable_scope_conflict"] is True
     assert conflict["enable_granularity_conflict"] is True
+    assert conflict["enable_entity_lexicon_conflict"] is True
+    assert conflict["entity_lexicon_similarity"] == 0.55
 
 
 def test_ollama_identity_resolves_the_tag_to_a_digest() -> None:
