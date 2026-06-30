@@ -22,7 +22,8 @@ close an empirical gate.
 | Five transparent baselines | `baselines/` | Implemented | Complete matched prediction bundles |
 | Four component ablations | `experiments/ablations.py` | Implemented | Complete paired bundles, especially typed vs untyped |
 | Metrics, confidence intervals, McNemar | `eval/` | Implemented | Validated complete reports on frozen predictions |
-| Versioned model matrix | DeepSeek V4-Flash, Qwen3.7 Plus 2026-05-26, Qwen3.5 9B | Configured | Credentials/runtime, complete dev runs, exact provider/local provenance |
+| Versioned model matrix | DeepSeek V4-Flash, Qwen3.7 Plus 2026-05-26, Qwen3.5 9B; local digest recorded | Configured; local runtime verified | Cloud credentials, complete dev runs, exact provider provenance |
+| Windows GPU execution | D:-backed Ollama/HF caches and outputs; CUDA and Qwen end-to-end smokes | Host gate passed | Recheck free space and environment before each formal run |
 | Externally blind test | Gold-free bundle and unscored runner | Technical path implemented | Independent custodian and one-shot returned predictions |
 | Tables and figures | Artifact builder and diagnostic smoke artifacts | Implemented, final inputs pending | Build only from validated complete reports |
 | AAAI-27 paper and supplement | Official template, paper sources, filled checklist | Draft complete | Replace pending cells, add final compute/annotation details, human policy review |

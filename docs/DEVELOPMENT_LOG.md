@@ -61,3 +61,53 @@ After this diagnostic, the runner added Ollama digest capture to the run
 signature. That provenance-only change does not alter retrieval, conflict, or
 revision behavior; the final repository gates include a fresh smoke run on the
 post-change implementation.
+
+## 2026-06-30: Windows GPU and D-drive execution contract
+
+The configured WSL host has an RTX 4060 Laptop GPU with 8,188 MiB VRAM. Its C:
+drive had only 16 GiB free, so no FAR model, runtime, checkout, or generated
+experiment output was intentionally placed there. The verified D:-backed
+layout is:
+
+- `/mnt/d/FAR-workspace/{FAR,VeraRAG}` for working trees;
+- `/mnt/d/FAR-models/{huggingface,ollama}` for pinned model assets;
+- `/mnt/d/FAR-runtime/ollama` for the Ollama 0.30.11 runtime;
+- `/mnt/d/FAR-runtime/python/site-packages` for missing optional Python wheels;
+  and
+- `/mnt/d/FAR-outputs` for logs, checkpoints, and result bundles.
+
+`scripts/windows_gpu_env.sh` establishes these paths. Three Hugging Face
+snapshots were copied from the existing Mac cache and verified readable at the
+revisions in the formal configs. Qwen3.5 was pulled to D: and resolved to:
+
+- tag: `qwen3.5:9b`;
+- digest: `6488c96fa5faab64bb65cbd30d4289e20e6130ef535a93ef9a49f42eda893ea7`;
+- reported parameters/quantization: 9.7B, Q4_K_M; and
+- stored size: 6,594,474,711 bytes.
+
+Because Qwen occupied about 7.2/8.2 GiB in a real generation, the open-model
+config keeps dense retrieval, reranking, and NLI in a CPU-only FAR process while
+the independently started Ollama server retains 100% GPU placement. Cloud-model
+configs can use CUDA for retrieval because no local generator competes for
+VRAM. This is an execution placement decision; model identities and retrieval
+semantics remain shared.
+
+Two diagnostics closed the host setup gate without creating paper results:
+
+| Diagnostic | Result | Run/prediction identity |
+|---|---|---|
+| Formal CUDA retrieval/conflict stack, LLM disabled | complete, 5/5, 0 errors | run `f8ab8c37b126b85c46f326f892320a4b9ce68a6eab0a80eda2a7c82b90d0c544`; predictions `c650eb6381803b04c1978990484413862369a7a85dc67998927c39cb14194863` |
+| Qwen3.5 end-to-end FAR | complete, 1/1, 0 errors, two revision traces | run `a02fc4573ac583a1ed738f5a7a102395834bea9b10ef4737d5f786f000236548`; predictions `6b6e7b775ec221337c7e3cee425d1b5164653ac392cb868aba82a23c8d520599` |
+
+The first synchronization attempt deliberately surfaced a reproducibility
+hazard: an unanchored rsync exclusion named `build` removed `bench/build` on the
+remote host. The documented command now anchors repository-root exclusions
+(`/build`, `/dist`) and the rerun passed. Neither diagnostic is eligible for a
+paper table because both used `--limit` on the development split.
+
+The remote suite check also exposed a missing plotting extra. Matplotlib 3.11.0
+and only its missing dependencies were installed into the D:-backed Python
+site (72 MiB), after which all nine experiment-runner tests passed. The artifact
+builder now selects and fingerprints a cross-platform CJK font; the WSL plotting
+test passes with UserWarnings promoted to errors by using the already installed
+Windows font rather than placing another font on C:.

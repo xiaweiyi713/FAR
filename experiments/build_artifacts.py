@@ -6,6 +6,7 @@ import argparse
 import csv
 import importlib
 import json
+import os
 from pathlib import Path
 from typing import Any
 
@@ -99,17 +100,40 @@ def _load_plotting_backend() -> tuple[Any, Any]:
         ) from exc
 
 
+def _configure_unicode_font(plt: Any, font_manager: Any) -> Path | None:
+    """Select a CJK-capable font reproducibly across Mac, WSL, and Linux."""
+
+    configured = os.environ.get("FAR_UNICODE_FONT")
+    candidates = [Path(configured).expanduser()] if configured else []
+    candidates.extend(
+        [
+            Path("/System/Library/Fonts/Supplemental/Arial Unicode.ttf"),
+            Path("/mnt/c/Windows/Fonts/msyh.ttc"),
+            Path("/mnt/c/Windows/Fonts/simhei.ttf"),
+            Path("/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc"),
+            Path("/usr/share/fonts/opentype/noto/NotoSansCJKsc-Regular.otf"),
+        ]
+    )
+    for font_path in candidates:
+        if not font_path.is_file():
+            continue
+        try:
+            font_manager.fontManager.addfont(font_path)
+            family = font_manager.FontProperties(fname=font_path).get_name()
+        except (OSError, RuntimeError, ValueError):
+            continue
+        plt.rcParams["font.family"] = family
+        return font_path
+    return None
+
+
 def build(
     report_paths: dict[str, Path],
     prediction_paths: dict[str, Path],
     output_dir: Path,
 ) -> dict[str, Any]:
     plt, font_manager = _load_plotting_backend()
-
-    unicode_font = Path("/System/Library/Fonts/Supplemental/Arial Unicode.ttf")
-    if unicode_font.exists():
-        font_manager.fontManager.addfont(unicode_font)
-        plt.rcParams["font.family"] = font_manager.FontProperties(fname=unicode_font).get_name()
+    unicode_font = _configure_unicode_font(plt, font_manager)
 
     reports = _validated_reports(report_paths)
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -194,6 +218,11 @@ def build(
         "diagnostic_only": any(bool(report.get("partial")) for report in reports.values()),
         "reports": {label: sha256_file(path) for label, path in report_paths.items()},
         "predictions": {label: sha256_file(path) for label, path in prediction_paths.items()},
+        "unicode_font": (
+            {"path": str(unicode_font), "sha256": sha256_file(unicode_font)}
+            if unicode_font is not None
+            else None
+        ),
         "outputs": {path.name: sha256_file(path) for path in outputs},
     }
     write_json(output_dir / "artifact_manifest.json", manifest)

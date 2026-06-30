@@ -37,15 +37,7 @@ retrieval:
     preserve_base_top_k: 1
     local_files_only: true
 llm:
-  enabled: true
-  provider: dashscope
-  model: qwen3.7-plus-2026-05-26
-  api_key_env: DASHSCOPE_API_KEY
-  temperature: 0.0
-  max_tokens: 1200
-  cache_enabled: true
-  cache_path: outputs/cache/qwen_plus.sqlite3
-  cache_namespace: far-qwen3.7-plus-2026-05-26-v1
+  enabled: false
 statistics:
-  bootstrap_resamples: 2000
+  bootstrap_resamples: 200
   bootstrap_seed: 1729

@@ -40,17 +40,37 @@ def test_sample_limit_is_category_balanced_and_test_is_guarded() -> None:
 def test_formal_configs_pin_one_shared_retrieval_and_conflict_stack() -> None:
     configs = [
         load_config(ROOT / f"experiments/configs/{name}.yaml")
-        for name in ("deepseek", "qwen_plus", "qwen_open", "formal_stack_smoke")
+        for name in (
+            "deepseek",
+            "qwen_plus",
+            "qwen_open",
+            "formal_stack_smoke",
+            "formal_stack_cuda_smoke",
+        )
     ]
-    assert all(config["retrieval"] == configs[0]["retrieval"] for config in configs)
     assert all(config["conflict_graph"] == configs[0]["conflict_graph"] for config in configs)
     retrieval = configs[0]["retrieval"]
+    semantic_retrievals = [json.loads(json.dumps(config["retrieval"])) for config in configs]
+    for stack in semantic_retrievals:
+        stack["dense"].pop("device")
+        stack["rerank"].pop("device")
+    assert all(stack == semantic_retrievals[0] for stack in semantic_retrievals)
     conflict = configs[0]["conflict_graph"]
     assert retrieval["backend"] == "vera_hybrid"
     assert retrieval["allow_dense_fallback"] is False
     assert retrieval["dense"]["local_files_only"] is True
+    assert retrieval["dense"]["device"] == "cuda"
+    assert configs[1]["retrieval"]["dense"]["device"] == "cuda"
+    assert configs[2]["retrieval"]["dense"]["device"] == "cpu"
+    assert configs[3]["retrieval"]["dense"]["device"] == "cpu"
+    assert configs[4]["retrieval"]["dense"]["device"] == "cuda"
     assert len(retrieval["dense"]["revision"]) == 40
     assert retrieval["rerank"]["local_files_only"] is True
+    assert retrieval["rerank"]["device"] == "cuda"
+    assert configs[1]["retrieval"]["rerank"]["device"] == "cuda"
+    assert configs[2]["retrieval"]["rerank"]["device"] == "cpu"
+    assert configs[3]["retrieval"]["rerank"]["device"] == "cpu"
+    assert configs[4]["retrieval"]["rerank"]["device"] == "cuda"
     assert len(retrieval["rerank"]["revision"]) == 40
     assert conflict["enable_nli"] is True
     assert conflict["require_nli"] is True

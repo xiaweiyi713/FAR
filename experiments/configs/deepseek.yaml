@@ -22,7 +22,7 @@ retrieval:
   dense:
     model_name: BAAI/bge-base-en-v1.5
     revision: a5beb1e3e68b9ab74eb54cfd186867f64f240e1a
-    device: cpu
+    device: cuda
     batch_size: 32
     local_files_only: true
   sparse_weight: 0.4
@@ -31,7 +31,7 @@ retrieval:
     enabled: true
     model_name: BAAI/bge-reranker-base
     revision: 2cfc18c9415c912f9d8155881c133215df768a70
-    device: cpu
+    device: cuda
     batch_size: 16
     candidate_k: 20
     preserve_base_top_k: 1

@@ -99,6 +99,14 @@ They retain the top two reranked documents per typed query. On the frozen
 development split, increasing this cutoff from two to five did not improve
 counter-evidence recall (both were 0.95) and reduced mean evidence precision
 from 0.169 to 0.056; the held-out test remains untouched.
+The cloud-backed DeepSeek and Qwen Plus configs target CUDA for dense retrieval
+and reranking. On the 8 GB Windows GPU, `qwen_open.yaml` keeps those components
+on CPU so Ollama's 9B generator can retain the GPU without competing for VRAM.
+This changes only execution placement: all formal configs retain identical
+models, revisions, weights, cutoffs, and conflict settings.
+`formal_stack_smoke.yaml` is the portable CPU systems check, while
+`formal_stack_cuda_smoke.yaml` validates the same retrieval stack on CUDA with
+LLM calls disabled.
 Install the complete optional retrieval stack before a formal run:
 
 ```bash
@@ -126,6 +134,92 @@ uv run falsirag-run \
 
 This diagnostic uses the formal retriever and conflict stack with LLM calls
 disabled. It is a systems check, not a paper result.
+
+On the Windows host, use the CUDA variant before a cloud-backed formal run:
+
+```bash
+falsirag-run \
+  --config experiments/configs/formal_stack_cuda_smoke.yaml \
+  --output-dir /mnt/d/FAR-outputs/formal_stack_cuda_smoke \
+  --limit 5
+```
+
+## Windows GPU / WSL storage-safe setup
+
+The configured GPU host has limited C: space. Keep code, model caches, runtimes,
+and outputs on D: rather than under the WSL home directory:
+
+From the Mac, synchronize only the working tree. Anchor top-level build/output
+exclusions with a leading slash: an unanchored `--exclude 'build'` would also
+remove the required `bench/build` Python package.
+
+```bash
+rsync -az --delete \
+  --exclude '/.git' --exclude '/.venv' --exclude '__pycache__' \
+  --exclude '/.pytest_cache' --exclude '/.mypy_cache' --exclude '/.ruff_cache' \
+  --exclude '/outputs' --exclude '/output' --exclude '/build' --exclude '/dist' \
+  /Users/xuwenyao/FAR/ windows-gpu:/mnt/d/FAR-workspace/FAR/
+```
+
+Then enter the D:-backed checkout:
+
+```bash
+ssh windows-gpu
+source ~/miniconda3/etc/profile.d/conda.sh
+conda activate train
+source /mnt/d/FAR-workspace/FAR/scripts/windows_gpu_env.sh
+cd /mnt/d/FAR-workspace/FAR
+```
+
+The environment file sets Hugging Face caches to `/mnt/d/FAR-models/huggingface`,
+Ollama weights to `/mnt/d/FAR-models/ollama`, the user-level Ollama runtime to
+`/mnt/d/FAR-runtime/ollama`, optional Python packages to
+`/mnt/d/FAR-runtime/python/site-packages`, and experiment outputs to
+`/mnt/d/FAR-outputs`. Install a missing optional package without growing C: via:
+
+```bash
+python -m pip install --target "$FAR_PYTHON_SITE" <package>
+```
+
+Check those values before any large download:
+
+```bash
+env | grep -E '^(HF_HOME|HUGGINGFACE_HUB_CACHE|OLLAMA_MODELS|FAR_OUTPUT_ROOT)='
+df -h /mnt/c /mnt/d
+```
+
+Start the model server in a detached tmux session:
+
+```bash
+tmux new -s far-ollama
+source ~/miniconda3/etc/profile.d/conda.sh
+conda activate train
+source /mnt/d/FAR-workspace/FAR/scripts/windows_gpu_env.sh
+ollama serve
+# Ctrl+B, then D
+```
+
+Pull and run the fixed open model from a second session. The model digest is
+captured automatically in FAR's run signature:
+
+```bash
+source /mnt/d/FAR-workspace/FAR/scripts/windows_gpu_env.sh
+ollama pull qwen3.5:9b
+CUDA_VISIBLE_DEVICES="" falsirag-run \
+  --config experiments/configs/qwen_open.yaml \
+  --data-dir bench \
+  --output-dir /mnt/d/FAR-outputs/qwen_open_dev \
+  --split dev
+```
+
+`CUDA_VISIBLE_DEVICES=""` applies only to the FAR client process. The already
+running Ollama server remains on the GPU, while BGE and NLI remain on CPU and
+cannot exhaust the 8 GB device alongside Qwen. Do not set it on `ollama serve`.
+
+The artifact builder checks `FAR_UNICODE_FONT` first, then standard macOS,
+WSL/Windows, and Linux Noto locations. It records the selected font path and
+SHA-256 in `artifact_manifest.json`; on this host it can read the existing
+Windows CJK font without copying another font onto C:.
 
 Supported `retrieval.backend` values are `lexical` (offline diagnostics),
 `vera_bm25`, `vera_dense`, `vera_faiss`, and `vera_hybrid`; any Vera backend can
