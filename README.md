@@ -98,7 +98,7 @@ adjudication, reported Cohen's kappa, and an externally held blind test. See
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md): components and VeraRAG boundary
 - [`docs/REPRODUCING.md`](docs/REPRODUCING.md): benchmark, runs, resume, and paper
 - [`docs/EVALUATION.md`](docs/EVALUATION.md): metric and inference definitions
-- [`docs/AUTO_ANNOTATION.md`](docs/AUTO_ANNOTATION.md): DeepSeek/LLM preannotation workflow
+- [`docs/AUTO_ANNOTATION.md`](docs/AUTO_ANNOTATION.md): local Qwen, weak-label, and optional DeepSeek preannotation workflow
 - [`docs/HUMAN_ANNOTATION_PROTOCOL.md`](docs/HUMAN_ANNOTATION_PROTOCOL.md): independent reviewer and adjudication SOP
 - [`docs/BLIND_TEST_HANDOFF.md`](docs/BLIND_TEST_HANDOFF.md): external gold-free test custody SOP
 - [`docs/EXPERIMENT_PLAN.md`](docs/EXPERIMENT_PLAN.md): model/baseline/ablation matrix
