@@ -6,6 +6,13 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "${ROOT}"
 
+git diff --check
+if [[ -n "$(git status --porcelain --untracked-files=all)" ]]; then
+  echo "release checks require a clean Git worktree" >&2
+  git status --short >&2
+  exit 2
+fi
+
 mkdir -p build/release
 
 uv run ruff format --check .

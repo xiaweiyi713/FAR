@@ -51,6 +51,7 @@ def test_release_checksums_cover_package_and_sbom(tmp_path: Path) -> None:
         "wheel",
         "cyclonedx_sbom",
     }
+    assert manifest["source_revision"] == {"git_commit": None, "git_dirty": None}
 
 
 def test_release_checksums_reject_modified_artifact(tmp_path: Path) -> None:

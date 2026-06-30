@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -40,6 +41,27 @@ def _sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
+def _git_revision(root: Path) -> dict[str, Any]:
+    try:
+        commit = subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            cwd=root,
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout.strip()
+        status = subprocess.run(
+            ["git", "status", "--porcelain", "--untracked-files=all"],
+            cwd=root,
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout
+    except (OSError, subprocess.CalledProcessError):
+        return {"git_commit": None, "git_dirty": None}
+    return {"git_commit": commit, "git_dirty": bool(status.strip())}
+
+
 def _entry(path: Path, *, role: str, root: Path) -> dict[str, Any]:
     resolved_root = root.resolve()
     resolved = (path if path.is_absolute() else resolved_root / path).resolve()
@@ -72,6 +94,7 @@ def build_checksum_manifest(
     return {
         "schema_version": "far-release-checksums-v1",
         "project": {"name": name, "version": version},
+        "source_revision": _git_revision(root),
         "generator": "experiments.generate_release_checksums",
         "artifacts": [
             _entry(
@@ -114,13 +137,22 @@ def validate_checksum_manifest(
     errors: list[str] = []
     if not isinstance(manifest, dict):
         return ChecksumAudit(False, ("manifest must be a JSON object",), str(path), 0)
+    root = Path(project_root).resolve()
     if manifest.get("schema_version") != "far-release-checksums-v1":
         errors.append("unsupported release checksum schema")
+    recorded_revision = manifest.get("source_revision")
+    current_revision = _git_revision(root)
+    if not isinstance(recorded_revision, dict):
+        errors.append("manifest source_revision is missing")
+    elif recorded_revision.get("git_commit") is not None:
+        if recorded_revision != current_revision:
+            errors.append("release source revision no longer matches the working tree")
+        if recorded_revision.get("git_dirty") is not False:
+            errors.append("release source revision must be a clean Git worktree")
     artifacts = manifest.get("artifacts")
     if not isinstance(artifacts, list) or not artifacts:
         errors.append("manifest artifacts must be a non-empty list")
         artifacts = []
-    root = Path(project_root).resolve()
     roles: set[str] = set()
     paths: set[str] = set()
     for index, item in enumerate(artifacts):

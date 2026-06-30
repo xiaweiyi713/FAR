@@ -23,7 +23,9 @@ bash scripts/release_check.sh
 
 It executes formatting/lint/type/tests, benchmark validation, the redacting
 secret scan, SBOM generation, wheel/sdist build, release checksums, and PDF
-compilation for the paper, supplement, and reproducibility checklist. Human
+compilation for the paper, supplement, and reproducibility checklist. It first
+requires a clean Git worktree, and the checksum manifest records the exact
+commit. Human
 annotation, external blind custody, author metadata, and policy review remain
 separate governance gates and are not falsely automated by this script.
 
