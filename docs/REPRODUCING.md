@@ -347,6 +347,13 @@ when intentionally starting a separate run. Check progress later with:
 ssh windows-gpu 'bash /mnt/d/FAR-workspace/FAR/scripts/check_windows_qwen_suite.sh'
 ```
 
+The status helper reports checkpoint counts, the age of the newest checkpoint,
+run manifests, process/GPU/disk state, and an explicit warning when another
+generation client is sharing the host. Override the default 30-minute stale
+threshold for a shorter diagnostic window with, for example,
+`STALE_SECONDS=300`; a stale warning means no new checkpoint was written in the
+window, not by itself that the live process should be killed.
+
 The artifact builder checks `FAR_UNICODE_FONT` first, then standard macOS,
 WSL/Windows, and Linux Noto locations. It records the selected font path and
 SHA-256 in `artifact_manifest.json`; on this host it can read the existing

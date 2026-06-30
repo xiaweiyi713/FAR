@@ -9,6 +9,7 @@ set -euo pipefail
 OUTPUT_ROOT="${OUTPUT_ROOT:-/mnt/d/FAR-outputs}"
 LATEST_PATH_FILE="${LATEST_PATH_FILE:-${OUTPUT_ROOT}/latest_far_corrected_suite_path.txt}"
 TAIL_LINES="${TAIL_LINES:-80}"
+STALE_SECONDS="${STALE_SECONDS:-1800}"
 PYTHON_BIN="${PYTHON_BIN:-}"
 
 if [[ -z "${PYTHON_BIN}" ]]; then
@@ -45,6 +46,35 @@ pgrep -af "[f]alsirag-suite|[o]llama" || true
 echo
 echo "checkpoint counts:"
 find "${RUN_ROOT}/runs" -name checkpoint.jsonl -print -exec wc -l {} \; 2>/dev/null || true
+
+echo
+echo "checkpoint freshness:"
+LATEST_CHECKPOINT="$(
+  find "${RUN_ROOT}/runs" -name checkpoint.jsonl -printf '%T@ %p\n' 2>/dev/null |
+    sort -nr | head -n 1 | cut -d' ' -f2-
+)"
+if [[ -n "${LATEST_CHECKPOINT}" && -f "${LATEST_CHECKPOINT}" ]]; then
+  CHECKPOINT_MTIME="$(stat -c %Y "${LATEST_CHECKPOINT}")"
+  CHECKPOINT_AGE="$(( $(date +%s) - CHECKPOINT_MTIME ))"
+  echo "latest_checkpoint: ${LATEST_CHECKPOINT}"
+  echo "checkpoint_age_seconds: ${CHECKPOINT_AGE}"
+  if (( CHECKPOINT_AGE >= STALE_SECONDS )); then
+    echo "warning: no checkpoint update for at least ${STALE_SECONDS}s" >&2
+  fi
+else
+  echo "no checkpoint found"
+fi
+
+echo
+echo "contention check:"
+FAR_SUITE_PIDS="$(pgrep -f '[f]alsirag-suite' || true)"
+OTHER_GENERATION_PIDS="$(pgrep -f '[r]un_baselines.py|[r]un_experiment.py' || true)"
+if [[ -n "${FAR_SUITE_PIDS}" && -n "${OTHER_GENERATION_PIDS}" ]]; then
+  echo "warning: FAR suite and another generation job are sharing this host" >&2
+  pgrep -af '[f]alsirag-suite|[r]un_baselines.py|[r]un_experiment.py' || true
+else
+  echo "no competing generation client detected"
+fi
 
 echo
 echo "run manifests:"

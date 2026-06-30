@@ -523,3 +523,11 @@ better than the original pre-correction dev run, but the corrections were
 derived from dev and the paired untyped run is still incomplete. They therefore
 remain debugging evidence, not a paper claim or a substitute for adjudicated
 labels.
+
+The remote status helper was extended after the observed contention. It now
+reports the newest checkpoint path and age, warns after a configurable
+`STALE_SECONDS` interval, and explicitly lists competing generation clients
+when they coexist with `falsirag-suite`. A live remote test with
+`STALE_SECONDS=300` reported the 47-row untyped checkpoint as 778 seconds old
+and identified the concurrent VeraRAG `run_baselines.py` process. The warning is
+diagnostic only and never stops or reprioritizes a process.
