@@ -354,6 +354,22 @@ threshold for a shorter diagnostic window with, for example,
 `STALE_SECONDS=300`; a stale warning means no new checkpoint was written in the
 window, not by itself that the live process should be killed.
 
+Once both corrected FAR and `minus_typed_conflict` are complete, collect and
+score the core pair from the Mac with:
+
+```bash
+bash scripts/sync_qwen_core_comparison.sh
+```
+
+The collector reads the remote latest-path marker, requires both manifests to
+be complete 60/60 with zero errors and `partial: false`, then rsyncs only those
+two run bundles into ignored local outputs. It validates each bundle, evaluates
+FAR, evaluates untyped FAR against the fingerprint-bound FAR score rows, and
+writes the paired bootstrap/McNemar report. It exits before rsync if either run
+is partial or missing. Override `REMOTE_HOST`, `REMOTE_LATEST_PATH_FILE`,
+`LOCAL_ROOT`, `RESAMPLES`, or `SEED` only for an intentionally different
+frozen comparison.
+
 The artifact builder checks `FAR_UNICODE_FONT` first, then standard macOS,
 WSL/Windows, and Linux Noto locations. It records the selected font path and
 SHA-256 in `artifact_manifest.json`; on this host it can read the existing

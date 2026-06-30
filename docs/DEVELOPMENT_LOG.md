@@ -531,3 +531,13 @@ when they coexist with `falsirag-suite`. A live remote test with
 `STALE_SECONDS=300` reported the 47-row untyped checkpoint as 778 seconds old
 and identified the concurrent VeraRAG `run_baselines.py` process. The warning is
 diagnostic only and never stops or reprioritizes a process.
+
+`scripts/sync_qwen_core_comparison.sh` now automates the first admissible
+post-run action for the central typed-control diagnostic. It reads the remote
+suite marker and refuses to copy anything unless both FAR and
+`minus_typed_conflict` have complete 60/60, zero-error, non-partial manifests.
+Only then does it rsync the two bundles, validate them, evaluate FAR, evaluate
+untyped FAR against fingerprint-bound FAR score rows, and emit paired bootstrap
+and McNemar evidence. A live fail-closed test saw the complete FAR manifest and
+the still-missing untyped manifest, exited nonzero, and created no local target
+directory.
