@@ -131,6 +131,8 @@ After the fix, a 3-sample pilot succeeded:
 - `llm_failures: 0`.
 
 The full 300-sample machine preannotation run was then launched in tmux session
-`far-auto-label`, writing to `/mnt/d/FAR-outputs/qwen35_preannotations`. These
-outputs remain non-gold reviewer aids: they cannot close the independent human
-annotation or Cohen's kappa gates.
+`far-auto-label`, writing to `/mnt/d/FAR-outputs/qwen35_preannotations`.
+Preannotation JSONL is now flushed incrementally so the long run exposes
+line-count progress and preserves completed rows if the remote host is
+interrupted. These outputs remain non-gold reviewer aids: they cannot close the
+independent human annotation or Cohen's kappa gates.

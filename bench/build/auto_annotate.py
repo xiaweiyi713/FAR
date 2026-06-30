@@ -171,51 +171,57 @@ def generate_preannotations(
         shutil.rmtree(output_dir)
     output_dir.mkdir(parents=True)
 
-    rows = []
-    failures = 0
-    for row in source_rows:
-        try:
-            if generator is None:
-                raise RuntimeError("no LLM generator configured")
-            raw = _extract_json_object(
-                generator.complete(
-                    _prompt(row),
-                    system_prompt=(
-                        "You produce conservative, schema-valid JSON preannotations. "
-                        "Do not claim human certainty."
-                    ),
-                    temperature=0.0,
-                    max_tokens=900,
-                    response_format="json",
-                )
-            )
-            prediction = _normalise_prediction(raw, str(row["sample_id"]))
-        except Exception as exc:
-            failures += 1
-            prediction = _fallback_prediction(exc)
-        rows.append(
-            {
-                "schema_version": AUTO_PACKET_VERSION,
-                "sample_id": row["sample_id"],
-                "question": row["question"],
-                "initial_answer": row["initial_answer"],
-                "claims": row["claims"],
-                "evidence": row["evidence"],
-                "preannotator_id": preannotator_id,
-                "preannotation": prediction,
-                "publication_gold": False,
-            }
-        )
-
     filename = f"preannotations_{preannotator_id}.jsonl"
     output_path = output_dir / filename
-    write_jsonl(output_path, rows)
+    completed = 0
+    failures = 0
+    with output_path.open("w", encoding="utf-8") as handle:
+        for row in source_rows:
+            try:
+                if generator is None:
+                    raise RuntimeError("no LLM generator configured")
+                raw = _extract_json_object(
+                    generator.complete(
+                        _prompt(row),
+                        system_prompt=(
+                            "You produce conservative, schema-valid JSON preannotations. "
+                            "Do not claim human certainty."
+                        ),
+                        temperature=0.0,
+                        max_tokens=900,
+                        response_format="json",
+                    )
+                )
+                prediction = _normalise_prediction(raw, str(row["sample_id"]))
+            except Exception as exc:
+                failures += 1
+                prediction = _fallback_prediction(exc)
+            handle.write(
+                json.dumps(
+                    {
+                        "schema_version": AUTO_PACKET_VERSION,
+                        "sample_id": row["sample_id"],
+                        "question": row["question"],
+                        "initial_answer": row["initial_answer"],
+                        "claims": row["claims"],
+                        "evidence": row["evidence"],
+                        "preannotator_id": preannotator_id,
+                        "preannotation": prediction,
+                        "publication_gold": False,
+                    },
+                    ensure_ascii=False,
+                    sort_keys=True,
+                )
+                + "\n"
+            )
+            handle.flush()
+            completed += 1
     result = {
         "schema_version": AUTO_PACKET_VERSION,
         "created_at": datetime.now(timezone.utc).isoformat(),
         "source_packet_sha256": sha256_file(manifest_path),
         "source_fingerprints": packet_manifest["source_fingerprints"],
-        "samples": len(rows),
+        "samples": completed,
         "preannotator_id": preannotator_id,
         "model_name": model_name,
         "preannotation_file": filename,
