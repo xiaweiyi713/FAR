@@ -20,7 +20,7 @@
 | Two tables and three figures | `experiments/build_artifacts.py` | Implemented; final inputs pending |
 | Reproducible archive, SBOM, fingerprints | build metadata, lockfile, SBOM and release-checksum generators | Implemented; regenerate on submission commit |
 | AAAI-27 paper and supplement | `paper/` | Draft complete; empirical cells pending |
-| Multi-model main/test results | Versioned DeepSeek V4-Flash, Qwen3.7 Plus (2026-05-26), and local Qwen3.5 9B configs and runners; Qwen FAR dev completed 60/60 under run `d87dfa21...`, output QA passed, and the matched 5-baseline/4-ablation suite is running D:-backed | Qwen FAR dev diagnostic complete; matched suite, cloud credentials/runs, adjudicated labels, and test custodian pending |
+| Multi-model main/test results | Versioned DeepSeek V4-Flash, Qwen3.7 Plus (2026-05-26), and local Qwen3.5 9B configs/runners; original Qwen FAR dev completed 60/60 under `d87dfa21...`; invalid old untyped queue preserved at 44/60; corrected full suite `b4c32c2...` is running D:-backed | Original Qwen diagnostic complete; corrected matched suite, cloud credentials/runs, adjudicated labels, and test custodian pending |
 
 “Pending” items are external evidence, not missing code. They must not be marked
 complete or replaced with synthetic values.

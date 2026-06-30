@@ -320,3 +320,21 @@ the conflict labels/query typing as intended. A regression test fails if the
 untyped wrapper falls back to per-document detection. Consequently, the
 already-running frozen-code untyped result remains useful for diagnosis but is
 not an admissible C2 ablation; the corrected matched suite is mandatory.
+
+The invalid comparison was stopped after 44/60 untyped checkpoints and
+preserved without deletion at
+`/mnt/d/FAR-outputs/qwen_open_dev_suite_frozen_diagnostic_20260630_96e32b7`.
+Commit `96e32b7` was then synchronized to `/mnt/d/FAR-workspace/FAR`; the remote
+host passed 81 tests, ruff, and mypy over 49 source files. A fresh full suite was
+started in tmux session `far-qwen-suite-v2`, writing only to:
+
+- suite: `/mnt/d/FAR-outputs/qwen_open_dev_suite_corrected_96e32b7`;
+- log: `/mnt/d/FAR-outputs/qwen_open_dev_suite_corrected_96e32b7.log`;
+- FAR run signature:
+  `b4c32c2d4397251a6473125533312f0614f9f726642a252aaaaa494463351780`; and
+- implementation SHA-256:
+  `a98aca43b0cb494417df098d92569a6841b5f22146f2f27b7b2008d11d8aba28`.
+
+The local and remote implementation fingerprints match. This suite reruns FAR,
+all four corrected ablations, and all five baselines before evaluation; it does
+not reuse the old FAR prediction symlink.
