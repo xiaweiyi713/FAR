@@ -414,3 +414,21 @@ the corrected FAR rerun:
 Only the status helper script was synchronized while the suite was active. It
 now selects `python3` or `python` automatically for manifest summaries, so
 remote status checks no longer depend on a shell-level `python` alias.
+
+The local release gate was rerun after commit
+`3e9cbf475b57722fc19baa27e0610546de471d39` and passed end to end: formatting,
+ruff, mypy across 63 source files, 85 tests, benchmark validation, SBOM
+validation, package build, release checksums, secret scan, and the paper,
+supplement, and reproducibility-checklist LaTeX builds. The regenerated release
+checksum manifest was clean (`git_dirty: false`) and recorded:
+
+- source distribution SHA-256:
+  `fd3d2824971f9ee0d6d8b38aa68f4a9b0c932b2b48490923c5caddef8b27b684`;
+- wheel SHA-256:
+  `040b45df2e759449235d789da93c1665381e12efc9928fbb55c82578b3b956a9`; and
+- CycloneDX SBOM SHA-256:
+  `3c0dc30f7fc0ac0952cfcc96c8912cb921464a7cddf27acb77d83659ba9b4d89`.
+
+As before, this closes repository-controlled release mechanics only. It does
+not close the human annotation, cloud-model, externally blind test, author, or
+policy-review gates.
