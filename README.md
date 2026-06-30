@@ -8,7 +8,7 @@ type-specific revision with a claim-level audit trace.
 
 The repository is a complete research scaffold for the AAAI-27 project in
 [`PROJECT_PROPOSAL.md`](PROJECT_PROPOSAL.md). It includes the method, a
-300-candidate FalsiRAG-Bench build, annotation/adjudication tools, five baselines,
+300-candidate FalsiRAG-Bench build, annotation/adjudication tools, six baselines,
 four ablations, statistical inference, checkpointed runners, paper sources, and
 artifact validation. It does **not** claim completed human annotation or final
 multi-model results; those require independent annotators and model credentials.

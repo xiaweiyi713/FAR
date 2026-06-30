@@ -20,7 +20,7 @@
 \maketitle
 
 \begin{abstract}
-Retrieval-augmented language agents typically search for evidence that supports an emerging answer, while reflection remains weakly grounded in retrievable counter-evidence. We introduce Falsification-Augmented Retrieval (FAR), a control framework that decomposes an initial answer into dependent claims, assigns typed evidence requirements, retrieves support, refutation, and boundary evidence, and revises each claim according to temporal, entity, numerical, causal, source-reliability, definition, or counter-evidence conflicts. FAR exposes the claim-evidence map and a before/after revision trace. We also define FalsiRAG-Bench, a controlled evaluation protocol in which falsifying evidence is present in the corpus and revision actions are annotated. The current artifact contains a balanced 300-item machine-seeded candidate set, strict promotion to double-annotated and adjudicated gold, five transparent baselines, four component ablations, and paired statistical inference. This draft states the method and evaluation contract; final performance claims are intentionally withheld until independent annotation and frozen multi-model experiments are complete.
+Retrieval-augmented language agents typically search for evidence that supports an emerging answer, while reflection remains weakly grounded in retrievable counter-evidence. We introduce Falsification-Augmented Retrieval (FAR), a control framework that decomposes an initial answer into dependent claims, assigns typed evidence requirements, retrieves support, refutation, and boundary evidence, and revises each claim according to temporal, entity, numerical, causal, source-reliability, definition, or counter-evidence conflicts. FAR exposes the claim-evidence map and a before/after revision trace. We also define FalsiRAG-Bench, a controlled evaluation protocol in which falsifying evidence is present in the corpus and revision actions are annotated. The current artifact contains a balanced 300-item machine-seeded candidate set, strict promotion to double-annotated and adjudicated gold, six transparent baselines, four component ablations, and paired statistical inference. This draft states the method and evaluation contract; final performance claims are intentionally withheld until independent annotation and frozen multi-model experiments are complete.
 \end{abstract}
 
 \section{Introduction}
@@ -86,7 +86,7 @@ The current build derives evidence-backed candidates from VeraBench v1.1.2, with
 All 300 labels are \texttt{machine\_seeded}. Two independent annotators must label conflict presence/type, revision action, and answer acceptability before adjudication. Promotion requires complete adjudication and reported Cohen's $\kappa$ for conflict presence, type, and action. The current construction check obtains 0.91 lexical counter-evidence recall@10 when pooling all three query families. This only verifies that counter-evidence is retrievable; it is not a FAR performance result.
 
 \section{Experimental Design}
-We will evaluate DeepSeek V4-Flash, Qwen3.7 Plus (2026-05-26), and a locally hashed Qwen3.5 9B model with matched retrieval settings. Baselines are Vanilla RAG, Multi-query RAG, Reflective RAG, a closed-corpus CRAG-style reproduction, and a Self-RAG-style inference approximation. The latter two names explicitly avoid claiming equivalence to official trained systems.
+We will evaluate DeepSeek V4-Flash, Qwen3.7 Plus (2026-05-26), and a locally hashed Qwen3.5 9B model with matched retrieval settings. Baselines are Vanilla RAG, Multi-query RAG, Reflective RAG, closed-corpus CRAG-style and CounterRefine-style reproductions, and a Self-RAG-style inference approximation. The three style names explicitly avoid claiming equivalence to official trained or web-retrieval systems.
 
 Ablations remove typed conflict (untyped contradiction and generic queries), refutation queries, boundary queries, or typed revision. The primary gate compares typed and untyped FAR on aligned examples. Metrics are answer soft F1, unsupported claim rate, evidence precision, typed conflict F1, revision accuracy, overclaim reduction, and counter-evidence recall. We report category-stratified bootstrap confidence intervals, dependency-group sensitivity intervals, paired bootstrap differences, and exact McNemar tests for revision success.
 
@@ -102,6 +102,7 @@ Multi-query RAG & \multicolumn{6}{c}{PENDING-EMPIRICAL-RUN} \\
 Reflective RAG & \multicolumn{6}{c}{PENDING-EMPIRICAL-RUN} \\
 CRAG-style reproduction & \multicolumn{6}{c}{PENDING-EMPIRICAL-RUN} \\
 Self-RAG-style reproduction & \multicolumn{6}{c}{PENDING-EMPIRICAL-RUN} \\
+CounterRefine-style reproduction & \multicolumn{6}{c}{PENDING-EMPIRICAL-RUN} \\
 FAR & \multicolumn{6}{c}{PENDING-EMPIRICAL-RUN} \\
 \bottomrule
 \end{tabular}

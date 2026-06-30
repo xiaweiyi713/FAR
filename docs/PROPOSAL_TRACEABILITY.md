@@ -13,7 +13,7 @@
 | Frozen held-out split/no leakage | `bench/split_manifest.json`, gold-free bundle builder, blind-suite test, `docs/BLIND_TEST_HANDOFF.md` | Technically isolated; external custodian/execution pending |
 | Double annotation and IAA | `bench/annotations.py`, `docs/HUMAN_ANNOTATION_PROTOCOL.md` | Tooling and SOP complete; humans pending |
 | External FEVER slice | `bench/external/fever_pair_candidates_v1/` | Candidate imported; annotation pending |
-| Five baselines | `baselines/` | Implemented; style reproductions labeled |
+| Six baselines, including closest-neighbor CounterRefine control | `baselines/` | Implemented; CRAG, Self-RAG, and CounterRefine style reproductions explicitly labeled; matched bundles pending |
 | Four ablations | `experiments/ablations.py`; untyped wrapper preserves batched graph construction | Implemented; corrected matched bundles pending |
 | Six metrics, CI, McNemar | `eval/` | Implemented |
 | Checkpoint/signature/result validation | `experiments/runner.py`, validation tests | Implemented |

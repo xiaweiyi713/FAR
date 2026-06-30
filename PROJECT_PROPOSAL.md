@@ -196,7 +196,12 @@ FAR/
 冻结后的主矩阵使用 DeepSeek V4-Flash（主）+ Qwen3.7 Plus 2026-05-26（闭源快照）+ Qwen 3.5 9B（开放权重、本地）。Embedding：固定版本 BGE；检索：BM25+dense hybrid + CrossEncoder rerank。滚动 API 别名不用于正式结果。
 
 ### 基线（横向）
-1. Naive/Vanilla RAG ·2. Multi-query RAG ·3. Self-RAG/Reflective ·4. CRAG ·5. Iterative agentic RAG。
+1. Naive/Vanilla RAG；
+2. Multi-query RAG；
+3. Reflective RAG（iterative retrieval + reflect）；
+4. CRAG-style reproduction（closed corpus，无官方 web search）；
+5. Self-RAG-style reproduction（inference-time approximation，无 reflection-token training）；
+6. **CounterRefine-style reproduction**：初始 draft → answer-conditioned 二次检索 → 确定性验证的 KEEP/REVISE；明确标注为 closed-corpus adaptation，不冒充其官方 web-retrieval 实现。
 
 ### 消融（纵向，**证明 FAR 各部件有用**——审稿人最看重）
 - FAR − typed conflict（退化成 untyped contradiction）→ 证明 **C2 typed 有用**
@@ -243,7 +248,7 @@ FAR/
 2. Related：RAG/agentic RAG、self-correction(CRAG/CoVe/Self-RAG)、contradiction/NLI、selective prediction——**逐一点明缺口，明确 FAR 的差异 = typed conflict 控制信号**。
 3. Method：FAR 四步（重点 Step3 typed counterfactual query + Step2/4 typed conflict→revision）。
 4. FalsiRAG-Bench：5 类、含反证语料、留盲、IAA（精简 datasheet）。
-5. Experiments：主表（FAR vs 5 基线 × 模型，带 CI）+ **消融表（typed/refutation/boundary）** + 指标。
+5. Experiments：主表（FAR vs 6 基线 × 模型，带 CI）+ **消融表（typed/refutation/boundary）** + 指标。
 6. Analysis：分型增益来自哪、失败案例、何时无效。
 7. Limitations & Conclusion：诚实写局限（规模、检索上限、自建基准）。
 
@@ -274,7 +279,7 @@ FAR/
 1. **已完成**形式检索/冲突栈的 60 条 CPU dev 诊断并冻结 top-k、模型版本和失败分析；结果仅用于开发，不填投稿主表。
 2. **已完成**本地 Qwen2.5 的 300/300 非金标预标注与 Label Studio 预测包（重试后仅 1 条保守 fallback）；另已生成 300/300 规则弱标注和机器一致性审计，标出 127 条优先人工复核样本。这些产物明确为 `publication_gold: false`，只能用于提速复核，不能替代双人标注。曾在对话中暴露的 API key 不写入仓库，必须轮换后才可用于云模型。
 3. **外部待办**：两位标注者独立完成盲包、仲裁并冻结 benchmark；机器建议只用于提速，不能计作独立人工标签或 Cohen's κ。
-4. **进行中**：本地 Qwen3.5 9B 已通过 D:-backed、关闭思考、按样本卸载的真实管线验收；原始 60 条 dev 主方法已无错误完成并被门禁标为非投稿诊断结果。实体类 dev 失败分析已修复两个独立缺口：LLM claim 缺少确定性 typed 属性/允许新增词汇，以及运行器丢弃语料公开实体元数据；后者新增的高精度 fallback 在 train+dev 隔离审计中为 20/48 实体、0/194 非实体误报。另已修复 untyped 包装器逐文档检测、未保持 FAR 批量冲突图的消融公平性缺口；旧 untyped 队列在 44/60 停止并完整保留，提交 `96e32b7` 的修正版 FAR + 5 基线 + 4 消融全套已在 Windows GPU 上从零重跑。首次 corrected-suite 尝试因远端 Ollama/tmux 停止而在首条样本前后退出且未产生 checkpoint，已保留事故目录；当前已用 D:-backed Ollama runtime 重启新 suite，并以 `/mnt/d/FAR-outputs/latest_far_corrected_suite_path.txt` 记录最新输出路径；其中 corrected FAR 主方法已完成 60/60、零错误，预测 SHA 为 `992a4cf027db5491feef2a57210d8a9395be61798c0ff84b29760d495bc96b56`，消融和基线仍在继续。隔离审计、事故目录和旧队列均不作为论文结果；DeepSeek V4-Flash 与 Qwen3.7 Plus 仍需轮换后的云凭据。
+4. **进行中**：本地 Qwen3.5 9B 已通过 D:-backed、关闭思考、按样本卸载的真实管线验收；原始 60 条 dev 主方法已无错误完成并被门禁标为非投稿诊断结果。实体类 dev 失败分析已修复两个独立缺口：LLM claim 缺少确定性 typed 属性/允许新增词汇，以及运行器丢弃语料公开实体元数据；后者新增的高精度 fallback 在 train+dev 隔离审计中为 20/48 实体、0/194 非实体误报。另已修复 untyped 包装器逐文档检测、未保持 FAR 批量冲突图的消融公平性缺口；旧 untyped 队列在 44/60 停止并完整保留，提交 `96e32b7` 的修正版 FAR + 当时冻结的 5 基线 + 4 消融全套已在 Windows GPU 上从零重跑。首次 corrected-suite 尝试因远端 Ollama/tmux 停止而在首条样本前后退出且未产生 checkpoint，已保留事故目录；当前已用 D:-backed Ollama runtime 重启新 suite，并以 `/mnt/d/FAR-outputs/latest_far_corrected_suite_path.txt` 记录最新输出路径；其中 corrected FAR 主方法已完成 60/60、零错误，预测 SHA 为 `992a4cf027db5491feef2a57210d8a9395be61798c0ff84b29760d495bc96b56`，消融和原 5 基线仍在继续。直接近邻审计后新增的第 6 个 CounterRefine-style reproduction 已实现并通过离线门禁测试；它将在当前 suite 后按同一 config/60 条 dev 单独补跑，再用 reports-only 合并，不能追溯声称为当前进程的一部分。隔离审计、事故目录和旧队列均不作为论文结果；DeepSeek V4-Flash 与 Qwen3.7 Plus 仍需轮换后的云凭据。
 5. **已完成盲测交接技术演练**：从当前 machine-seeded benchmark 生成并审计了 58 条 test、175 篇净化语料的 gold-free dry-run bundle；包内仅含三份允许文件，test 严格五字段，未发现 gold、expected revision、反证角色、依赖组、构造元数据或冲突/修订标签字段，文件指纹已记录在 `docs/BLIND_TEST_HANDOFF.md`。这只关闭技术路径，不关闭真实盲测：只有 dev 比较、四项消融、代码、配置、人工 gold 和主张全部冻结后，才从 adjudicated 数据重建新包并交给外部保管人一次性执行；机器种子或本地 test 绝不升级为投稿证据。
 
 > 一句话收尾：**FAR 的成败不在工程量（VeraRAG 已给你 70%），而在两点——(1) typed counterfactual query 真能检索到反证并带来可测增益；(2) typed 消融显著。把 W1–W4 的关口卡死，跑出这两点，就是一篇像样的 AAAI 投稿。**

@@ -399,7 +399,7 @@ uv run falsirag-suite \
   --ablation minus_refutation_query
 ```
 
-Omit the repeated `--baseline` and `--ablation` flags to run all five baselines
+Omit the repeated `--baseline` and `--ablation` flags to run all six baselines
 and all four FAR ablations. Use `--limit` only for diagnostic smoke runs; suite
 manifests and built artifacts then remain marked `diagnostic_only`.
 Full-length runs are also forced to `diagnostic_only` while
@@ -424,10 +424,28 @@ tmux new -d -s far-qwen-suite \
 
 The queue waits for `far-qwen-dev`, requires its complete non-partial dev
 manifest, links that immutable run into the suite, and then executes all four
-ablations, all five baselines, evaluation, validation, and artifact generation.
+ablations, all six baselines, evaluation, validation, and artifact generation.
 Both the suite and its log stay on D:. Override `WAIT_FOR_SESSION`, `FAR_ROOT`,
 `UPSTREAM_FAR_RUN`, or `SUITE_ROOT` only when intentionally using different
 paths.
+
+If a five-baseline Qwen suite was already frozen before the closest-neighbor
+CounterRefine control was added, queue only that sixth baseline and the final
+reports-only merge:
+
+```bash
+tmux new -d -s far-qwen-counterrefine \
+  'bash /mnt/d/FAR-workspace/FAR/scripts/queue_qwen_counterrefine.sh \
+  > /mnt/d/FAR-outputs/qwen_counterrefine_queue.log 2>&1'
+```
+
+The queue waits for `far-qwen-suite-v3` by default. It then requires complete
+60/60 manifests for FAR, four ablations, and the original five baselines before
+running `counterrefine_style_reproduction` under the same Qwen config. It
+finally invokes the suite's fingerprint-checking `--reports-only` path, which
+rebuilds evaluations and artifacts for all six baselines without another model
+call for any existing run. Override `WAIT_FOR_SESSION`, `SUITE_ROOT`, or
+`POLL_SECONDS` only when intentionally recovering a differently named suite.
 
 ## Externally held blind test
 

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from baselines import (
+    CounterRefineStyleBaseline,
     CRAGStyleBaseline,
     MultiQueryRAG,
     ReflectiveRAG,
@@ -18,6 +19,7 @@ from eval.stats import (
     stratified_typed_conflict_f1_ci,
 )
 from experiments.ablations import build_ablation
+from experiments.run_baselines import BASELINE_NAMES, _build
 from far.adapters import HeuristicConflictDetector, InMemoryRetriever
 from far.claims import ClaimNode, ClaimType
 from far.models import EvidenceDocument
@@ -41,6 +43,9 @@ def test_all_baselines_run_offline_and_style_reproductions_are_labeled() -> None
         SelfRAGStyleBaseline(_retriever()).run(
             "F1", "What was revenue?", "Revenue was 20 million."
         ),
+        CounterRefineStyleBaseline(_retriever()).run(
+            "F1", "What was revenue?", "Revenue was 20 million."
+        ),
     ]
     assert {prediction.method for prediction in predictions} == {
         "vanilla_rag",
@@ -48,9 +53,38 @@ def test_all_baselines_run_offline_and_style_reproductions_are_labeled() -> None
         "reflective_rag",
         "crag_style_reproduction",
         "self_rag_style_reproduction",
+        "counterrefine_style_reproduction",
     }
-    styled = predictions[-2:]
+    styled = predictions[-3:]
     assert all(prediction.metadata["official_implementation"] is False for prediction in styled)
+    assert set(BASELINE_NAMES) == {prediction.method for prediction in predictions}
+    assert all(_build(name, _retriever(), None, 5).name == name for name in BASELINE_NAMES)
+
+
+def test_counterrefine_style_accepts_only_grounded_well_typed_revision() -> None:
+    class Generator:
+        def __init__(self, refinement: str) -> None:
+            self.responses = ["Revenue was 20 million.", refinement]
+
+        def complete(self, prompt: str, **kwargs: object) -> str:
+            del prompt, kwargs
+            return self.responses.pop(0)
+
+    accepted = CounterRefineStyleBaseline(
+        _retriever(),
+        Generator('{"decision":"REVISE","answer":"Revenue was 18 million.","evidence_id":"D1"}'),
+    ).run("F1", "How much was revenue?", "Revenue was 20 million.")
+    assert accepted.answer == "Revenue was 18 million."
+    assert accepted.trace[-1]["decision"] == "REVISE"
+    assert accepted.trace[-1]["validation"] == "accepted"
+
+    rejected = CounterRefineStyleBaseline(
+        _retriever(),
+        Generator('{"decision":"REVISE","answer":"Revenue was 99 million.","evidence_id":"D1"}'),
+    ).run("F1", "How much was revenue?", "Revenue was 20 million.")
+    assert rejected.answer == "Revenue was 20 million."
+    assert rejected.trace[-1]["decision"] == "KEEP"
+    assert rejected.trace[-1]["validation"] == "unanchored_numeric_or_temporal_marker"
 
 
 def test_metrics_cover_revision_conflict_evidence_and_overclaim() -> None:

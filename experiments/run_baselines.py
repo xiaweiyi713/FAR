@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from baselines import (
+    CounterRefineStyleBaseline,
     CRAGStyleBaseline,
     MultiQueryRAG,
     ReflectiveRAG,
@@ -32,6 +33,7 @@ BASELINE_NAMES = (
     "reflective_rag",
     "crag_style_reproduction",
     "self_rag_style_reproduction",
+    "counterrefine_style_reproduction",
 )
 
 
@@ -42,6 +44,7 @@ def _build(name: str, retriever: Any, generator: Any, top_k: int) -> Any:
         "reflective_rag": ReflectiveRAG,
         "crag_style_reproduction": CRAGStyleBaseline,
         "self_rag_style_reproduction": SelfRAGStyleBaseline,
+        "counterrefine_style_reproduction": CounterRefineStyleBaseline,
     }
     return classes[name](retriever, generator, top_k)
 

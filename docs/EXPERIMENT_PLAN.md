@@ -1,6 +1,6 @@
 # Experiment Matrix and Gates
 
-Run FAR, five baselines, and four ablations on train/dev before touching test.
+Run FAR, six baselines, and four ablations on train/dev before touching test.
 Target backends are DeepSeek V4-Flash, Qwen3.7 Plus (2026-05-26), and local Qwen 3.5 9B; record exact
 service/model identifiers and immutable local model hashes where possible.
 Use `falsirag-suite` for the default run path so every prediction bundle is
@@ -8,7 +8,11 @@ evaluated, validated, fingerprinted, and converted into tables/figures from the
 same recorded reports.
 
 Baselines are Vanilla RAG, Multi-query RAG, Reflective RAG, a closed-corpus
-CRAG-style reproduction, and an inference-time Self-RAG-style reproduction.
+CRAG-style reproduction, an inference-time Self-RAG-style reproduction, and a
+closed-corpus CounterRefine-style reproduction. The last one uses a
+retrieval-grounded draft, answer-conditioned second-pass queries, and a
+deterministically validated KEEP/REVISE gate; it is not the authors' official
+web-retrieval implementation.
 The latter two are not the official trained systems and must retain those labels
 in every table.
 

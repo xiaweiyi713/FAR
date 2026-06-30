@@ -592,3 +592,27 @@ claim-specific revision over a dependency graph, and FalsiRAG-Bench plus the
 preregistered typed-versus-untyped ablation tests that mechanism. FLARE, RARR,
 CounterRefine, and RAMDocs/MADAM-RAG were added to the paper bibliography and
 the closest-neighbor comparison is explicit in Related Work.
+
+The direct-neighbor audit also changed the experimental contract. A sixth,
+explicitly labeled `counterrefine_style_reproduction` baseline now implements a
+retrieval-grounded draft, answer-conditioned second-pass retrieval, and a
+conservative JSON KEEP/REVISE gate. Proposed revisions are rejected unless the
+evidence ID exists, the answer shape matches the inferred question type, and
+numeric or temporal markers plus lexical content are anchored in that cited
+passage. It does not use FAR's typed conflict ontology, typed query tactics, or
+typed revision policy. Its metadata states that it is a closed-corpus
+adaptation using the supplied initial answer, not the authors' web-retrieval
+implementation.
+
+The active corrected Qwen suite imported its baseline list before this sixth
+control existed and therefore still contains the original five. It will not be
+misreported as a six-baseline run. After that suite finishes, the new baseline
+must be run separately on the same 60 dev IDs/config and then incorporated via
+the fingerprint-checking reports-only path.
+
+`scripts/queue_qwen_counterrefine.sh` makes that recovery autonomous on the
+Windows host. It waits for the already-running suite session, refuses a non-D:
+suite root, and requires 60/60 non-partial manifests for FAR, four ablations,
+and all original baselines before making a model call. It then runs only the
+new control and requires its complete, zero-error manifest before rebuilding
+the six-baseline reports and artifacts through `--reports-only`.
