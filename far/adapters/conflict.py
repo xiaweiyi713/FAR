@@ -312,9 +312,7 @@ class VeraConflictDetector:
             raise ValueError("conflict_graph.entity_lexicon_similarity must be in [0, 1]")
         self.entity_lexicon = tuple(
             sorted(
-                dict.fromkeys(
-                    entity.strip() for entity in entity_lexicon if entity.strip()
-                ),
+                dict.fromkeys(entity.strip() for entity in entity_lexicon if entity.strip()),
                 key=lambda entity: (-len(entity), entity.lower()),
             )
         )
@@ -379,11 +377,7 @@ class VeraConflictDetector:
 
     @staticmethod
     def _contains_entity(text: str, entity: str) -> bool:
-        if (
-            len(entity) >= 4
-            and any(character.islower() for character in entity)
-            and entity in text
-        ):
+        if len(entity) >= 4 and any(character.islower() for character in entity) and entity in text:
             # Preserve exact mixed-case lexicon matches even when generated
             # text omits whitespace at a script/role boundary (for example,
             # ``CTOAgent``). Longest-first matching prevents a shorter alias
@@ -418,9 +412,7 @@ class VeraConflictDetector:
         right_bigrams = {right[index : index + 2] for index in range(len(right) - 1)}
         if not left_bigrams or not right_bigrams:
             return ratio
-        jaccard = len(left_bigrams & right_bigrams) / len(
-            left_bigrams | right_bigrams
-        )
+        jaccard = len(left_bigrams & right_bigrams) / len(left_bigrams | right_bigrams)
         return max(ratio, jaccard)
 
     def _entity_lexicon_conflicts(

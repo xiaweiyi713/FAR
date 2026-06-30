@@ -302,9 +302,7 @@ class LLMClaimDecomposer:
             ),
             time_expressions=tuple(
                 dict.fromkeys(
-                    expression
-                    for claim in parsed.claims
-                    for expression in claim.time_expressions
+                    expression for claim in parsed.claims for expression in claim.time_expressions
                 )
             ),
             verifiable=all(claim.verifiable for claim in parsed.claims),
@@ -327,9 +325,7 @@ class LLMClaimDecomposer:
         # to smuggle alternatives into a claim while still covering most of the
         # source, changing the proposition before falsification even started.
         compact_source = re.sub(r"[\W_]+", "", answer.lower())
-        compact_claims = [
-            re.sub(r"[\W_]+", "", claim.text.lower()) for claim in graph.claims
-        ]
+        compact_claims = [re.sub(r"[\W_]+", "", claim.text.lower()) for claim in graph.claims]
         claims_are_source_spans = all(
             bool(compact_claim) and compact_claim in compact_source
             for compact_claim in compact_claims

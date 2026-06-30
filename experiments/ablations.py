@@ -40,9 +40,7 @@ class UntypedConflictDetector:
         *,
         question: str = "",
     ) -> tuple[TypedConflict, ...]:
-        return self._as_untyped(
-            self.detector.detect(claim, evidence, question=question)
-        )
+        return self._as_untyped(self.detector.detect(claim, evidence, question=question))
 
     def detect_many(
         self,
