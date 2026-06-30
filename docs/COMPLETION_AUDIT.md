@@ -27,7 +27,7 @@ close an empirical gate.
 | Externally blind test | Gold-free bundle and unscored runner | Technical path implemented | Independent custodian and one-shot returned predictions |
 | Tables and figures | Artifact builder and diagnostic smoke artifacts | Implemented, final inputs pending | Build only from validated complete reports |
 | AAAI-27 paper and supplement | Official template, paper sources, filled checklist | Draft complete | Replace pending cells, add final compute/annotation details, human policy review |
-| Reproducible package | Lockfile, wheel/sdist, CycloneDX SBOM, release checksums, redacting secret scanner, checks | Implemented | Final all-gates/secret scan and fresh SBOM/checksum manifest on the submission commit |
+| Reproducible package | Lockfile, wheel/sdist, CycloneDX SBOM, release checksums, redacting secret scanner, `scripts/release_check.sh` | Implemented | Run the single release gate on the submission commit after final evidence is frozen |
 
 ## Completion rule
 

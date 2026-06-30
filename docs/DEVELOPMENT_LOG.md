@@ -214,3 +214,22 @@ The clean 60-sample dev run was restarted in `far-qwen-dev` with signature
 `far-qwen-suite` waits behind it and will verify the complete upstream manifest
 before running all four ablations, all five baselines, evaluation, validation,
 and artifact construction under `/mnt/d/FAR-outputs/qwen_open_dev_suite`.
+
+## 2026-06-30: Submission artifact gates made executable
+
+The proposal's final SBOM/fingerprint/check requirement is now backed by
+repository commands adapted from VeraRAG's MIT-licensed release tooling:
+
+- `falsirag-generate-sbom` generated and validated a CycloneDX 1.5 SBOM with
+  14 deduplicated required/optional dependency components;
+- `falsirag-release-checksums` bound the wheel, source distribution, and SBOM
+  paths, byte sizes, and SHA-256 hashes in a three-artifact manifest;
+- `falsirag-scan-secrets` scanned tracked and unignored text with redacted
+  high-confidence rules and returned zero findings; and
+- `scripts/release_check.sh` combined those gates with benchmark validation,
+  ruff, mypy, 76 tests, package builds, and all three LaTeX compilations.
+
+The complete release check passed locally. It produced a 3-page paper, 1-page
+supplement, and 2-page checklist. This closes repository-controlled release
+mechanics, not the human annotation, cloud-model, external blind-test, author,
+or policy-review gates.
