@@ -17,6 +17,12 @@ from far.protocols import TextGenerator
 
 AUTO_PACKET_VERSION = "falsirag-auto-annotation-v1"
 LABEL_STUDIO_EXPORT_VERSION = "falsirag-label-studio-export-v1"
+REVISION_ACTION_ALIASES = {
+    "none": "qualify_uncertainty",
+    "no_action": "qualify_uncertainty",
+    "no_revision": "qualify_uncertainty",
+    "no_change": "qualify_uncertainty",
+}
 
 LABEL_STUDIO_CONFIG = """<View>
   <Style>
@@ -86,6 +92,7 @@ def _normalise_prediction(raw: dict[str, Any], sample_id: str) -> dict[str, Any]
     elif conflict_type not in VALID_CONFLICT_TYPES:
         raise ValueError(f"{sample_id}: invalid conflict_type {conflict_type!r}")
     action = str(raw.get("revision_action", "")).strip()
+    action = REVISION_ACTION_ALIASES.get(action.lower(), action)
     if action not in VALID_REVISION_ACTIONS:
         raise ValueError(f"{sample_id}: invalid revision_action {action!r}")
     acceptable = raw.get("revised_answer_acceptable")
@@ -263,6 +270,93 @@ def generate_preannotations(
         ),
     }
     write_json(output_dir / "preannotation_manifest.json", result)
+    return result
+
+
+def _resolve_preannotation_file(preannotation_dir: Path) -> tuple[Path, dict[str, Any] | None]:
+    manifest_path = preannotation_dir / "preannotation_manifest.json"
+    if manifest_path.exists():
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        return preannotation_dir / str(manifest["preannotation_file"]), manifest
+    candidates = sorted(preannotation_dir.glob("preannotations_*.jsonl"))
+    if not candidates:
+        raise FileNotFoundError(f"{preannotation_dir} contains no preannotation JSONL file")
+    if len(candidates) > 1:
+        names = ", ".join(path.name for path in candidates[:5])
+        raise ValueError(f"{preannotation_dir} contains multiple preannotation files: {names}")
+    return candidates[0], None
+
+
+def summarize_preannotations(
+    preannotation_dir: Path,
+    *,
+    packet_dir: Path | None = None,
+    output_path: Path | None = None,
+) -> dict[str, Any]:
+    preannotation_file, manifest = _resolve_preannotation_file(preannotation_dir)
+    rows = read_jsonl(preannotation_file)
+    sample_ids = [str(row.get("sample_id", "")) for row in rows]
+    seen: set[str] = set()
+    duplicate_ids: list[str] = []
+    for sample_id in sample_ids:
+        if sample_id in seen and sample_id not in duplicate_ids:
+            duplicate_ids.append(sample_id)
+        seen.add(sample_id)
+    fallback_ids = [
+        str(row.get("sample_id", ""))
+        for row in rows
+        if str(row.get("preannotation", {}).get("rationale", "")).startswith("Automatic fallback;")
+    ]
+    packet_samples: int | None = None
+    missing_packet_ids: list[str] = []
+    extra_sample_ids: list[str] = []
+    source_packet_sha256 = ""
+    if packet_dir is not None:
+        packet_manifest_path = packet_dir / "packet_manifest.json"
+        packet_manifest = json.loads(packet_manifest_path.read_text(encoding="utf-8"))
+        source_packet_sha256 = sha256_file(packet_manifest_path)
+        packet_rows = read_jsonl(packet_dir / packet_manifest["adjudication_file"])
+        packet_ids = {str(row["sample_id"]) for row in packet_rows}
+        packet_samples = len(packet_ids)
+        row_id_set = set(sample_ids)
+        missing_packet_ids = sorted(packet_ids - row_id_set)
+        extra_sample_ids = sorted(row_id_set - packet_ids)
+    manifest_samples = manifest.get("samples") if isinstance(manifest, dict) else None
+    manifest_failures = manifest.get("llm_failures") if isinstance(manifest, dict) else None
+    result = {
+        "schema_version": "falsirag-preannotation-summary-v1",
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "preannotation_file": preannotation_file.name,
+        "preannotation_sha256": sha256_file(preannotation_file),
+        "rows": len(rows),
+        "unique_samples": len(set(sample_ids)),
+        "duplicate_sample_ids": duplicate_ids,
+        "publication_gold_false_rows": sum(row.get("publication_gold") is False for row in rows),
+        "needs_human_review_rows": sum(
+            row.get("preannotation", {}).get("needs_human_review") is True for row in rows
+        ),
+        "preannotator_ids": sorted({str(row.get("preannotator_id", "")) for row in rows}),
+        "fallback_failures": len(fallback_ids),
+        "fallback_sample_ids": fallback_ids,
+        "manifest_present": manifest is not None,
+        "manifest_samples": manifest_samples,
+        "manifest_llm_failures": manifest_failures,
+        "source_packet_sha256": source_packet_sha256,
+        "packet_samples": packet_samples,
+        "missing_packet_samples": len(missing_packet_ids),
+        "missing_packet_sample_ids_preview": missing_packet_ids[:20],
+        "extra_sample_ids": extra_sample_ids,
+        "matches_packet_complete": (
+            packet_samples is not None
+            and len(rows) == packet_samples
+            and not duplicate_ids
+            and not missing_packet_ids
+            and not extra_sample_ids
+        ),
+        "publication_gold": False,
+        "can_satisfy_human_annotation_gate": False,
+    }
+    write_json(output_path or (preannotation_dir / "preannotation_summary.json"), result)
     return result
 
 
@@ -655,6 +749,10 @@ def main() -> None:
     label_studio_import_parser.add_argument("--output-dir", type=Path, required=True)
     label_studio_import_parser.add_argument("--reviewer-id", required=True)
     label_studio_import_parser.add_argument("--overwrite", action="store_true")
+    summarize_parser = subparsers.add_parser("summarize")
+    summarize_parser.add_argument("--preannotation-dir", type=Path, required=True)
+    summarize_parser.add_argument("--packet-dir", type=Path)
+    summarize_parser.add_argument("--output", type=Path)
     # Backward-compatible direct mode from v0.1.0: no subcommand means generate.
     parser.add_argument("--packet-dir", type=Path)
     parser.add_argument("--output-dir", type=Path)
@@ -691,6 +789,14 @@ def main() -> None:
             args.output_dir,
             reviewer_id=args.reviewer_id,
             overwrite=args.overwrite,
+        )
+        print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
+        return
+    if args.command == "summarize":
+        result = summarize_preannotations(
+            args.preannotation_dir,
+            packet_dir=args.packet_dir,
+            output_path=args.output,
         )
         print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
         return

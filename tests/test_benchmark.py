@@ -12,6 +12,7 @@ from bench.build.auto_annotate import (
     export_label_studio,
     generate_preannotations,
     import_label_studio,
+    summarize_preannotations,
 )
 from bench.build.build_blind_bundle import build as build_blind_bundle
 from bench.build.extend_from_verabench import build
@@ -145,6 +146,38 @@ def test_llm_preannotation_fallback_stays_review_only(tmp_path: Path) -> None:
     assert row["preannotation"]["needs_human_review"] is True
 
 
+def test_llm_preannotation_normalises_no_action_alias(tmp_path: Path) -> None:
+    class AliasGenerator:
+        def complete(self, prompt: str, **kwargs: object) -> str:
+            del prompt, kwargs
+            return json.dumps(
+                {
+                    "conflict_present": False,
+                    "conflict_type": "no_conflict",
+                    "revision_action": "none",
+                    "revised_answer_acceptable": True,
+                    "suggested_revised_answer": "",
+                    "rationale": "No evidence conflict found.",
+                    "confidence": 0.61,
+                }
+            )
+
+    packet = tmp_path / "packet"
+    build_annotation_packet(ROOT / "bench", packet, ["alice", "bob"])
+    output = tmp_path / "preannotations"
+    manifest = generate_preannotations(
+        packet,
+        output,
+        generator=AliasGenerator(),
+        preannotator_id="alias_llm",
+        limit=1,
+    )
+
+    row = json.loads((output / "preannotations_alias_llm.jsonl").read_text().splitlines()[0])
+    assert manifest["llm_failures"] == 0
+    assert row["preannotation"]["revision_action"] == "qualify_uncertainty"
+
+
 def test_llm_preannotation_resume_skips_existing_rows(tmp_path: Path) -> None:
     calls: list[str] = []
 
@@ -201,6 +234,37 @@ def test_llm_preannotation_rejects_resume_with_overwrite(tmp_path: Path) -> None
             overwrite=True,
             resume=True,
         )
+
+
+def test_preannotation_summary_audits_in_progress_outputs(tmp_path: Path) -> None:
+    class BadGenerator:
+        def complete(self, prompt: str, **kwargs: object) -> str:
+            del prompt, kwargs
+            return "not json"
+
+    packet = tmp_path / "packet"
+    build_annotation_packet(ROOT / "bench", packet, ["alice", "bob"])
+    output = tmp_path / "preannotations"
+    generate_preannotations(
+        packet,
+        output,
+        generator=BadGenerator(),
+        preannotator_id="summary_llm",
+        limit=2,
+    )
+    (output / "preannotation_manifest.json").unlink()
+
+    summary = summarize_preannotations(output, packet_dir=packet)
+
+    assert summary["rows"] == 2
+    assert summary["unique_samples"] == 2
+    assert summary["fallback_failures"] == 2
+    assert summary["publication_gold_false_rows"] == 2
+    assert summary["needs_human_review_rows"] == 2
+    assert summary["packet_samples"] == 300
+    assert summary["missing_packet_samples"] == 298
+    assert summary["matches_packet_complete"] is False
+    assert (output / "preannotation_summary.json").exists()
 
 
 def test_machine_review_draft_requires_explicit_human_review(tmp_path: Path) -> None:

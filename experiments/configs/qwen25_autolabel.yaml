@@ -1,0 +1,8 @@
+llm:
+  enabled: true
+  provider: ollama
+  model: qwen2.5:7b
+  base_url: http://localhost:11434
+  temperature: 0.0
+  max_tokens: 700
+  cache_enabled: false

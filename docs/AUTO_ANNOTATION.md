@@ -47,6 +47,23 @@ uses Ollama's normal `response` field when present and falls back to the
 GPU host passed with `llm_failures: 0` after this compatibility layer.
 Generation writes the preannotation JSONL incrementally, so long runs can be
 monitored with `wc -l /mnt/d/FAR-outputs/qwen35_preannotations/*.jsonl`.
+
+The first full Qwen3.5 run completed 300/300 rows but produced many schema
+fallbacks. For stricter JSON preannotation, pilot the non-thinking local
+Qwen2.5 helper config before scaling:
+
+```bash
+falsirag-auto-annotate generate \
+  --packet-dir /mnt/d/FAR-outputs/falsirag_annotation_packet \
+  --output-dir /mnt/d/FAR-outputs/qwen25_preannotations_pilot \
+  --config experiments/configs/qwen25_autolabel.yaml \
+  --preannotator-id qwen25_7b_ollama_machine_weak \
+  --limit 10 \
+  --overwrite
+```
+
+`experiments/configs/qwen25_autolabel.yaml` is an annotation-helper config, not
+part of the formal model-comparison matrix.
 If Windows sleeps, restarts, or the tmux job is killed after some rows have been
 written, restart without discarding completed rows:
 
@@ -58,6 +75,17 @@ falsirag-auto-annotate generate \
   --preannotator-id qwen35_9b_ollama_thinkingfix_machine_weak \
   --resume
 ```
+
+At any point, summarize the in-progress or completed output:
+
+```bash
+falsirag-auto-annotate summarize \
+  --preannotation-dir /mnt/d/FAR-outputs/qwen35_preannotations \
+  --packet-dir /mnt/d/FAR-outputs/falsirag_annotation_packet
+```
+
+The summary reports rows, duplicate IDs, fallback failures, non-gold guards, and
+whether the output fully matches the packet.
 
 This is the recommended no-human fallback for development. It is still not
 publication gold. See `docs/MACHINE_ANNOTATION_FALLBACK.md` for the researched

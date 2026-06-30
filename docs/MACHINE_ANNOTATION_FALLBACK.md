@@ -91,6 +91,11 @@ For interrupted long runs, reuse the same command with `--resume` instead of
 `--overwrite`; FAR skips already written sample IDs and appends the remaining
 machine preannotations.
 
+The first full Qwen3.5 run completed all 300 rows but had a high fallback rate,
+so it should be treated as a rough review bundle. For cleaner strict-JSON
+machine drafts, use the non-thinking `qwen2.5:7b` annotation-helper config
+(`experiments/configs/qwen25_autolabel.yaml`) for a pilot before scaling.
+
 Detach with `Ctrl+B`, then `D`. Reattach with:
 
 ```bash
