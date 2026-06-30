@@ -20,6 +20,7 @@ uv sync --extra dev --extra eval
 uv pip install --no-deps -e /Users/xuwenyao/VeraRAG  # optional adapters
 uv run python examples/offline_demo.py
 uv run falsirag-validate-bench
+uv run falsirag-generate-sbom --check
 uv run python -m pytest
 ```
 
@@ -47,7 +48,8 @@ formal retrieval/NLI stack without API calls using
 
 The `test` split is rejected unless `--allow-test` is supplied. Limited runs are
 marked `partial`, and any tables/figures built from them are marked
-`diagnostic_only`.
+`diagnostic_only`. Full runs remain diagnostic while the benchmark manifest is
+not publication-ready or scored rows have not been adjudicated.
 
 For final test execution, first use `falsirag-build-blind-bundle`; test runners
 then consume only sanitized operational inputs and emit unscored prediction

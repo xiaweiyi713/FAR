@@ -15,6 +15,19 @@ uv run python -m pytest
 
 before publishing or replacing paper numbers.
 
+Generate and validate the declared-dependency CycloneDX 1.5 SBOM before a
+release build:
+
+```bash
+uv run falsirag-generate-sbom \
+  --output build/sbom/far-sbom.cdx.json --check --json
+```
+
+The generator is adapted from VeraRAG's MIT-licensed release tooling. It binds
+the project name/version and every required or optional dependency group from
+`pyproject.toml`; validation rejects stale, missing, duplicated, or malformed
+components.
+
 ## Build and validate data
 
 ```bash

@@ -76,3 +76,10 @@ def build_blind_bundle_main() -> None:
     from bench.build.build_blind_bundle import main
 
     main()
+
+
+def generate_sbom_main() -> None:
+    _prefer_far_repo()
+    from experiments.generate_sbom import main
+
+    main()
