@@ -23,6 +23,7 @@ uv run falsirag-validate-bench
 uv run falsirag-generate-sbom --check
 uv run falsirag-weak-label --help
 uv run falsirag-machine-label-audit --help
+bash scripts/check_cloud_run_readiness.sh
 uv run python -m pytest
 ```
 

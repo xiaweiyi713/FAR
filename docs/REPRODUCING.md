@@ -130,6 +130,34 @@ the required environment variable. Re-run the identical command to resume;
 changing code, data, config, split, or limit requires a new output directory.
 The held-out test requires `--allow-test`.
 
+Before spending cloud API budget, run the non-secret readiness preflight:
+
+```bash
+bash scripts/check_cloud_run_readiness.sh
+```
+
+This verifies that the DeepSeek and Qwen Plus configs still point to the pinned
+provider/model names, require dense/NLI local snapshots, keep caches under the
+ignored `outputs/` tree, and use environment variables for keys. It does not
+print or persist secret values. By default it also rejects tracked worktree
+changes, because a formal run should bind to a committed source revision; use
+`--allow-dirty` only for local diagnostics. When rotated credentials are ready,
+require the environment variables explicitly:
+
+```bash
+export DEEPSEEK_API_KEY="<rotated key>"
+export DASHSCOPE_API_KEY="<rotated key>"
+bash scripts/check_cloud_run_readiness.sh --require-keys
+```
+
+On the Windows GPU host, keep result bundles on D::
+
+```bash
+bash scripts/check_cloud_run_readiness.sh \
+  --output-root /mnt/d/FAR-outputs/cloud_suites \
+  --require-keys
+```
+
 The DeepSeek config names `deepseek-v4-flash` explicitly. The provider's
 [2026-04-24 change log](https://api-docs.deepseek.com/updates/) states that the
 legacy `deepseek-chat` alias is retired on 2026-07-24, so it is not suitable for

@@ -15,6 +15,8 @@ fi
 
 mkdir -p build/release
 
+bash -n scripts/*.sh
+bash scripts/check_cloud_run_readiness.sh
 uv run ruff format --check .
 uv run ruff check .
 uv run mypy far bench baselines eval experiments tests

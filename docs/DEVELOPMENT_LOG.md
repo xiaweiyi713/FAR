@@ -432,3 +432,25 @@ checksum manifest was clean (`git_dirty: false`) and recorded:
 As before, this closes repository-controlled release mechanics only. It does
 not close the human annotation, cloud-model, externally blind test, author, or
 policy-review gates.
+
+## 2026-06-30: Cloud-run preflight added before credentialed experiments
+
+The DeepSeek and Qwen Plus formal configs still require rotated cloud
+credentials before any publication-relevant run. To make the next credentialed
+step fail closed, `scripts/check_cloud_run_readiness.sh` now verifies the
+cloud-backed configuration without printing or persisting secrets:
+
+- `experiments/configs/deepseek.yaml` must use provider `deepseek`, model
+  `deepseek-v4-flash`, and environment variable `DEEPSEEK_API_KEY`;
+- `experiments/configs/qwen_plus.yaml` must use provider `dashscope`, model
+  `qwen3.7-plus-2026-05-26`, and environment variable `DASHSCOPE_API_KEY`;
+- both configs must retain `vera_hybrid`, `allow_dense_fallback: false`, local
+  dense/reranker snapshots, `require_nli: true`, and local NLI loading;
+- default local output roots must stay under ignored `outputs/`, and Windows
+  absolute output roots must stay off C:; and
+- `--require-keys` upgrades missing environment variables from warnings to
+  failures immediately before spending API budget.
+
+The repository release gate now runs shell syntax checks and this no-key
+preflight. This closes a configuration-readiness risk only; it does not create
+cloud model results and does not make the previously exposed key safe to use.
