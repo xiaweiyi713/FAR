@@ -140,6 +140,26 @@ The audit writes `machine_label_audit.json` and
 `machine_label_comparison.jsonl`. Use its priority-review sample list to focus
 scarce human review time. Machine-machine agreement is not human IAA.
 
+The current full-packet machine-only audit was generated locally from the
+Windows GPU Qwen2.5 preannotation bundle after copying the remote artifacts into
+the ignored `outputs/remote_machine_annotation/` directory:
+
+- weak-label rows: 300/300;
+- non-abstained weak signals: 211/300; abstentions: 89/300;
+- weak-label SHA-256:
+  `f31f2422d5c3471002675db57b2b5104ee1ee71bb14b170477c95aa02296f8a1`;
+- Qwen2.5 preannotation SHA-256:
+  `6796d46aa84e7c0a0ff32083e9257aa5fc6c7e5c3a9236735f4dfc659aa34caa`;
+- machine-audit shared samples: 300/300; missing packet samples: 0;
+- priority human-review samples from machine disagreement: 127;
+- weak-non-abstained agreement: conflict-present 0.863, conflict-type 0.403,
+  revision-action 0.398; and
+- audit guard: `publication_gold: false`,
+  `can_satisfy_human_annotation_gate: false`.
+
+These numbers are useful for reviewer triage and quality-control planning only.
+They must not be reported as human inter-annotator agreement.
+
 ## Optional DeepSeek workflow
 
 Create a blind packet first:

@@ -9,6 +9,17 @@ set -euo pipefail
 OUTPUT_ROOT="${OUTPUT_ROOT:-/mnt/d/FAR-outputs}"
 LATEST_PATH_FILE="${LATEST_PATH_FILE:-${OUTPUT_ROOT}/latest_far_corrected_suite_path.txt}"
 TAIL_LINES="${TAIL_LINES:-80}"
+PYTHON_BIN="${PYTHON_BIN:-}"
+
+if [[ -z "${PYTHON_BIN}" ]]; then
+  if command -v python3 >/dev/null 2>&1; then
+    PYTHON_BIN="$(command -v python3)"
+  elif command -v python >/dev/null 2>&1; then
+    PYTHON_BIN="$(command -v python)"
+  else
+    PYTHON_BIN=""
+  fi
+fi
 
 if [[ -n "${SUITE_ROOT:-}" ]]; then
   RUN_ROOT="${SUITE_ROOT}"
@@ -37,9 +48,12 @@ find "${RUN_ROOT}/runs" -name checkpoint.jsonl -print -exec wc -l {} \; 2>/dev/n
 
 echo
 echo "run manifests:"
-find "${RUN_ROOT}/runs" -maxdepth 2 -name run_manifest.json -print0 2>/dev/null |
-  while IFS= read -r -d '' manifest; do
-    python - "${manifest}" <<'PY'
+if [[ -z "${PYTHON_BIN}" ]]; then
+  echo "python3/python not found; skipping run_manifest summaries"
+else
+  find "${RUN_ROOT}/runs" -maxdepth 2 -name run_manifest.json -print0 2>/dev/null |
+    while IFS= read -r -d '' manifest; do
+      "${PYTHON_BIN}" - "${manifest}" <<'PY'
 import json
 import sys
 from pathlib import Path
@@ -59,7 +73,8 @@ summary = {
 }
 print(json.dumps(summary, ensure_ascii=False, sort_keys=True))
 PY
-  done
+    done
+fi
 
 echo
 echo "latest log tail:"

@@ -369,3 +369,48 @@ corrected suite was then launched in tmux session `far-qwen-suite-v3`:
 procedure so a later recovery does not depend on shell history. The script
 starts Ollama if needed, refuses to collide with an existing suite session, and
 records the timestamped suite root under `/mnt/d/FAR-outputs`.
+
+## 2026-06-30: Machine weak-label audit and corrected FAR rerun status
+
+The completed Qwen2.5 machine preannotation bundle and its blind packet were
+copied back from the Windows GPU host into the local ignored
+`outputs/remote_machine_annotation/` directory. A deterministic rule weak-label
+pass and machine-vs-machine audit were generated from those copied artifacts,
+without modifying the running remote suite:
+
+- packet samples: 300;
+- Qwen2.5 preannotation samples: 300, SHA-256
+  `6796d46aa84e7c0a0ff32083e9257aa5fc6c7e5c3a9236735f4dfc659aa34caa`;
+- rule weak-label samples: 300;
+- weak-label SHA-256:
+  `f31f2422d5c3471002675db57b2b5104ee1ee71bb14b170477c95aa02296f8a1`;
+- non-abstained weak labels: 211; abstentions: 89;
+- weak conflict-type counts: temporal 118, numerical 30,
+  source-reliability 29, entity 20, causal 10, definition 4;
+- audit shared samples: 300; missing packet samples: 0;
+- all-shared agreement: conflict-present 0.687, conflict-type 0.363,
+  revision-action 0.370;
+- weak-non-abstained agreement: conflict-present 0.863, conflict-type 0.403,
+  revision-action 0.398; and
+- priority review samples: 127.
+
+These outputs are explicitly non-gold machine aids. They are useful for
+ordering scarce review time and catching cases where the LLM and deterministic
+rules disagree, but they do not satisfy the two-annotator requirement and cannot
+be used as Cohen's kappa evidence.
+
+During the same checkpoint, the D:-backed corrected Qwen suite had completed
+the corrected FAR rerun:
+
+- suite:
+  `/mnt/d/FAR-outputs/qwen_open_dev_suite_corrected_96e32b7_restart_20260630_172643`;
+- method: FAR;
+- split: dev;
+- status: complete, 60/60, zero errors, `partial: false`;
+- prediction SHA-256:
+  `992a4cf027db5491feef2a57210d8a9395be61798c0ff84b29760d495bc96b56`; and
+- next suite step observed in the log: `far_minus_typed_conflict`.
+
+Only the status helper script was synchronized while the suite was active. It
+now selects `python3` or `python` automatically for manifest summaries, so
+remote status checks no longer depend on a shell-level `python` alias.

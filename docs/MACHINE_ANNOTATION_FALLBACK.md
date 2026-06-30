@@ -37,6 +37,13 @@ human-annotation gate listed as a limitation.
 
 ## Open-source tools checked
 
+The fallback research focused on open-source systems that can either import
+machine predictions for review or generate weak/pseudo labels from rules and
+LLM judges. The practical decision is to keep FAR's own JSONL schema as the
+source of truth, use Label Studio only as a review UI, and add a deterministic
+weak-label layer rather than introducing another labeling service before the
+300-sample benchmark is adjudicated.
+
 | Tool | Status | FAR fit | Decision |
 |---|---|---|---|
 | FAR built-in preannotator + Qwen/Ollama | Project-local, open-weight model runtime | Directly emits FAR JSONL and Label Studio predictions | Use first |
@@ -175,6 +182,28 @@ uv run falsirag-machine-label-audit \
 Prioritize rows where the audit reports conflict-type or revision-action
 disagreement. This is a triage device, not an agreement statistic for the
 paper.
+
+The full-packet audit has now been run from the completed Qwen2.5 bundle:
+
+- packet: 300 samples, copied from `/mnt/d/FAR-outputs/falsirag_annotation_packet`;
+- Qwen2.5 preannotations: 300 samples, SHA-256
+  `6796d46aa84e7c0a0ff32083e9257aa5fc6c7e5c3a9236735f4dfc659aa34caa`;
+- deterministic weak labels: 300 samples, 211 non-abstained, 89 abstained,
+  SHA-256
+  `f31f2422d5c3471002675db57b2b5104ee1ee71bb14b170477c95aa02296f8a1`;
+- weak-label conflict counts: temporal 118, numerical 30,
+  source-reliability 29, entity 20, causal 10, definition 4;
+- audit shared samples: 300/300, missing packet samples: 0;
+- agreement across all shared rows: conflict-present 0.687, conflict-type
+  0.363, revision-action 0.370;
+- agreement on weak-non-abstained rows: conflict-present 0.863,
+  conflict-type 0.403, revision-action 0.398; and
+- priority human-review list: 127 samples.
+
+The relatively low conflict-type/action agreement is expected: the rule layer is
+intentionally high-bias and sparse, while the LLM preannotator attempts the full
+schema. The disagreements are therefore useful as a review queue, not as a
+negative result or a replacement for two human annotators.
 
 ## References
 
