@@ -160,7 +160,9 @@ bash scripts/check_cloud_run_readiness.sh \
 
 After the preflight passes and no local-Qwen suite is active, start a
 cloud-backed suite in tmux without exposing the key in the visible command
-string:
+string. The starter removes the temporary tmux-global key immediately after
+the new session inherits it, so unrelated future sessions cannot inherit the
+credential:
 
 ```bash
 ssh windows-gpu

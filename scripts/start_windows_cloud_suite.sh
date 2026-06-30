@@ -86,6 +86,10 @@ printf '%s\n' "${SUITE_ROOT}" > "${LATEST_PATH_FILE}"
 # client shell. Set only the required redacted-at-output key in tmux's private
 # environment instead of embedding it in the visible command string.
 tmux start-server
+cleanup_tmux_key() {
+  tmux set-environment -gu "${REQUIRED_ENV}" 2>/dev/null || true
+}
+trap cleanup_tmux_key EXIT
 tmux set-environment -g "${REQUIRED_ENV}" "${!REQUIRED_ENV}"
 
 echo "starting cloud suite in tmux session: ${SUITE_SESSION}"
@@ -101,6 +105,11 @@ fi
 
 tmux new-session -d -s "${SUITE_SESSION}" \
   "bash -lc 'source ~/miniconda3/etc/profile.d/conda.sh; conda activate train; cd ${FAR_ROOT}; source scripts/windows_gpu_env.sh; echo FAR_CLOUD_SUITE_START \$(date -Is) output=${SUITE_ROOT} config=${CONFIG}; ${PREFLIGHT_CMD}; falsirag-suite --config ${CONFIG} --data-dir ${DATA_DIR} --output-dir ${SUITE_ROOT} --split ${SPLIT}' >> '${SUITE_LOG}' 2>&1"
+
+# The new session has already inherited the key. Remove the global tmux copy so
+# unrelated future sessions do not inherit the credential.
+cleanup_tmux_key
+trap - EXIT
 
 tmux list-sessions
 echo "latest cloud path file: ${LATEST_PATH_FILE}"

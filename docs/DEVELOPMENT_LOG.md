@@ -460,8 +460,9 @@ starter for the credentialed DeepSeek and Qwen Plus suites. It runs the same
 preflight for the selected config, requires only that config's environment
 variable, writes result bundles and latest-path markers under `/mnt/d/FAR-outputs`,
 passes the key to tmux's private environment without embedding it in the visible
-command string, and refuses to overlap with an active `falsirag-suite` or
-Ollama `llama-server` unless `ALLOW_CONCURRENT=1` is explicitly set. It keeps
+command string, removes the tmux-global copy immediately after the new session
+inherits it, and refuses to overlap with an active `falsirag-suite` or Ollama
+`llama-server` unless `ALLOW_CONCURRENT=1` is explicitly set. It keeps
 the clean-worktree preflight by default; `ALLOW_DIRTY=1` exists only for a
 recorded rsync copy whose `.git` metadata is stale because `.git` was excluded.
 This is startup hygiene only; the cloud result gate remains open until rotated
