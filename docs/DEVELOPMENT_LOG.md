@@ -542,3 +542,34 @@ untyped FAR against fingerprint-bound FAR score rows, and emit paired bootstrap
 and McNemar evidence. A live fail-closed test saw the complete FAR manifest and
 the still-missing untyped manifest, exited nonzero, and created no local target
 directory.
+
+## 2026-06-30: Full gold-free blind-handoff dry run audited
+
+While the corrected untyped Qwen run remained incomplete, the external-test
+data path was exercised end to end without scoring or model calls. The builder
+created the ignored technical bundle
+`outputs/handoff/falsirag_blind_test_technical_v1/` from the current benchmark.
+This is explicitly a machine-seeded dry run, not a final custodian package and
+not publication evidence.
+
+The package contains exactly three files: its manifest, sanitized corpus, and
+test inputs. An independent structural audit confirmed 58 unique test rows,
+175 corpus documents, test-only split values, exact five-field test records,
+public-only corpus keys, and no recursive keys for gold labels, expected
+revisions, counter-evidence roles, dependency groups, construction metadata,
+conflict labels, or revision labels. The fingerprints are:
+
+- bundle manifest:
+  `70f6c28c4809d82822fc75596061d07284edf94ef24af6790836571fe24f7c86`;
+- sanitized corpus:
+  `97fb3ecff5e76fc521434182204479179b7c02422864850b60867c6d91838e12`;
+- test inputs:
+  `1ce8ed27a4db9c1793d9d9342418b82826c5e31d9b5ae754e012fb1f12454016`;
+  and
+- source corpus:
+  `cca5f62db0fbb51e1bae8111ea85fe169fba7be5a8e63847a9c1c048cdae25cd`.
+
+The final gate remains open. After two-person annotation and adjudication, a
+new empty bundle must be rebuilt from the frozen adjudicated directory and
+given to an independent custodian for one authorized run. The technical dry
+run must never be renamed or substituted for that package.

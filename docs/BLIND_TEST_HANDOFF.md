@@ -52,6 +52,33 @@ manifest. It excludes:
 The builder refuses to write into a non-empty output directory. Keep that
 behavior: stale files in a handoff bundle are a blindness risk.
 
+### Technical dry-run bundle
+
+A full technical dry run was built on 2026-06-30 from the current
+machine-seeded benchmark at
+`outputs/handoff/falsirag_blind_test_technical_v1/`. It is deliberately ignored
+by Git and is **not** the final custodian package: the source benchmark is still
+`publication_ready: false`, and no independent human adjudication has occurred.
+The dry run proves only that the handoff path can produce and audit a complete
+gold-free package before the external gate.
+
+The audited bundle contains exactly 58 unique test inputs and 175 sanitized
+corpus documents. Every test row has exactly `id`, `category`, `split`,
+`question`, and `initial_answer`; every split value is `test`. Recursive key
+inspection found none of the gold, expected-revision, counter-evidence-role,
+dependency-group, construction-metadata, conflict-label, or revision-label
+fields. Its frozen fingerprints are:
+
+- manifest: `70f6c28c4809d82822fc75596061d07284edf94ef24af6790836571fe24f7c86`;
+- sanitized corpus: `97fb3ecff5e76fc521434182204479179b7c02422864850b60867c6d91838e12`;
+- test inputs: `1ce8ed27a4db9c1793d9d9342418b82826c5e31d9b5ae754e012fb1f12454016`;
+  and
+- source corpus: `cca5f62db0fbb51e1bae8111ea85fe169fba7be5a8e63847a9c1c048cdae25cd`.
+
+After adjudication, build a new empty `falsirag_blind_test_v1` directory from
+the frozen adjudicated data and repeat the same structural and fingerprint
+audit. Do not rename or hand off the technical dry-run directory.
+
 ## Handoff package contents
 
 Send the custodian:
