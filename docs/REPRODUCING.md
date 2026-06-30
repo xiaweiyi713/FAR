@@ -158,6 +158,31 @@ bash scripts/check_cloud_run_readiness.sh \
   --require-keys
 ```
 
+After the preflight passes and no local-Qwen suite is active, start a
+cloud-backed suite in tmux without exposing the key in the visible command
+string:
+
+```bash
+ssh windows-gpu
+source ~/miniconda3/etc/profile.d/conda.sh
+conda activate train
+cd /mnt/d/FAR-workspace/FAR
+source scripts/windows_gpu_env.sh
+export DEEPSEEK_API_KEY="<rotated key>"
+CONFIG=experiments/configs/deepseek.yaml \
+  bash scripts/start_windows_cloud_suite.sh
+```
+
+For Qwen Plus, export `DASHSCOPE_API_KEY` and set
+`CONFIG=experiments/configs/qwen_plus.yaml`. The starter writes outputs under
+`/mnt/d/FAR-outputs`, records the latest path in
+`/mnt/d/FAR-outputs/latest_far_cloud_suite_path.txt`, and refuses to overlap
+with an active `falsirag-suite` or Ollama `llama-server` unless
+`ALLOW_CONCURRENT=1` is set intentionally. It also inherits the preflight's
+clean-worktree requirement; if the remote tree is known to be a deliberate
+rsync copy whose `.git` metadata is stale because `.git` was excluded, set
+`ALLOW_DIRTY=1` only after recording the local commit used for the sync.
+
 The DeepSeek config names `deepseek-v4-flash` explicitly. The provider's
 [2026-04-24 change log](https://api-docs.deepseek.com/updates/) states that the
 legacy `deepseek-chat` alias is retired on 2026-07-24, so it is not suitable for

@@ -454,3 +454,15 @@ cloud-backed configuration without printing or persisting secrets:
 The repository release gate now runs shell syntax checks and this no-key
 preflight. This closes a configuration-readiness risk only; it does not create
 cloud model results and does not make the previously exposed key safe to use.
+
+`scripts/start_windows_cloud_suite.sh` now provides the matching D:-backed tmux
+starter for the credentialed DeepSeek and Qwen Plus suites. It runs the same
+preflight for the selected config, requires only that config's environment
+variable, writes result bundles and latest-path markers under `/mnt/d/FAR-outputs`,
+passes the key to tmux's private environment without embedding it in the visible
+command string, and refuses to overlap with an active `falsirag-suite` or
+Ollama `llama-server` unless `ALLOW_CONCURRENT=1` is explicitly set. It keeps
+the clean-worktree preflight by default; `ALLOW_DIRTY=1` exists only for a
+recorded rsync copy whose `.git` metadata is stale because `.git` was excluded.
+This is startup hygiene only; the cloud result gate remains open until rotated
+credentials are supplied and complete validated suites exist.

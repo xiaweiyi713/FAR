@@ -4,14 +4,20 @@
 # Usage:
 #   bash scripts/check_cloud_run_readiness.sh
 #   bash scripts/check_cloud_run_readiness.sh --require-keys
+#   bash scripts/check_cloud_run_readiness.sh --config experiments/configs/deepseek.yaml --require-keys
 #   bash scripts/check_cloud_run_readiness.sh --output-root /mnt/d/FAR-outputs --require-keys
 
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 OUTPUT_ROOT="${OUTPUT_ROOT:-outputs/suites}"
+VERARAG_PATH="${VERARAG_PATH:-/Users/xuwenyao/VeraRAG}"
+if [[ ! -d "${VERARAG_PATH}" && -d /mnt/d/FAR-workspace/VeraRAG ]]; then
+  VERARAG_PATH=/mnt/d/FAR-workspace/VeraRAG
+fi
 REQUIRE_KEYS=0
 ALLOW_DIRTY=0
+CONFIGS=()
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -22,6 +28,14 @@ while [[ $# -gt 0 ]]; do
     --require-keys)
       REQUIRE_KEYS=1
       shift
+      ;;
+    --config)
+      if [[ $# -lt 2 ]]; then
+        echo "--config requires a value" >&2
+        exit 2
+      fi
+      CONFIGS+=("$2")
+      shift 2
       ;;
     --output-root)
       if [[ $# -lt 2 ]]; then
@@ -67,25 +81,30 @@ else
   check_ok "tracked worktree is clean"
 fi
 
-if [[ ! -d /Users/xuwenyao/VeraRAG ]]; then
-  check_warn "VeraRAG checkout not found at /Users/xuwenyao/VeraRAG on this host"
+if [[ ! -d "${VERARAG_PATH}" ]]; then
+  check_warn "VeraRAG checkout not found at ${VERARAG_PATH} on this host"
 else
-  check_ok "VeraRAG checkout is present"
+  check_ok "VeraRAG checkout is present at ${VERARAG_PATH}"
 fi
 
-for config in experiments/configs/deepseek.yaml experiments/configs/qwen_plus.yaml; do
+if [[ "${#CONFIGS[@]}" -eq 0 ]]; then
+  CONFIGS=(experiments/configs/deepseek.yaml experiments/configs/qwen_plus.yaml)
+fi
+
+for config in "${CONFIGS[@]}"; do
   if [[ ! -f "${config}" ]]; then
     check_fail "missing config: ${config}"
   fi
 done
 
-python3 - "$REQUIRE_KEYS" "$OUTPUT_ROOT" <<'PY'
+python3 - "$REQUIRE_KEYS" "$OUTPUT_ROOT" "${CONFIGS[@]}" <<'PY'
 import os
 import sys
 from pathlib import Path
 
 require_keys = bool(int(sys.argv[1]))
 output_root = Path(sys.argv[2])
+requested_configs = set(sys.argv[3:])
 
 expected = {
     "experiments/configs/deepseek.yaml": {
@@ -103,6 +122,11 @@ expected = {
 }
 
 status = 0
+unknown_configs = sorted(requested_configs - set(expected))
+if unknown_configs:
+    for path in unknown_configs:
+        print(f"fail: unsupported cloud preflight config: {path}", file=sys.stderr)
+    raise SystemExit(1)
 
 
 def ok(message: str) -> None:
@@ -120,6 +144,8 @@ def fail(message: str) -> None:
 
 
 for path, checks in expected.items():
+    if requested_configs and path not in requested_configs:
+        continue
     data = {}
     current = None
     nested = None
