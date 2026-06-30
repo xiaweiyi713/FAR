@@ -291,10 +291,7 @@ Override `SUITE_SESSION`, `SUITE_ROOT`, `CONFIG`, `DATA_DIR`, or `SPLIT` only
 when intentionally starting a separate run. Check progress later with:
 
 ```bash
-RUN_ROOT=$(cat /mnt/d/FAR-outputs/latest_far_corrected_suite_path.txt)
-tmux ls
-find "$RUN_ROOT/runs" -name checkpoint.jsonl -print -exec wc -l {} \;
-tail -n 80 "$RUN_ROOT.log"
+ssh windows-gpu 'bash /mnt/d/FAR-workspace/FAR/scripts/check_windows_qwen_suite.sh'
 ```
 
 The artifact builder checks `FAR_UNICODE_FONT` first, then standard macOS,
