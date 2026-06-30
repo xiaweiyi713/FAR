@@ -5,7 +5,47 @@ is useful when no human annotators are immediately available, but it does not
 satisfy the publication annotation gate. The output is deliberately named
 `preannotations_*.jsonl` and carries `publication_gold: false`.
 
-## Recommended DeepSeek workflow
+## Recommended local open-source workflow
+
+When no human annotators are available, use the local Qwen/Ollama path first.
+It requires no cloud key and keeps the generated artifacts on the Windows GPU
+host's D: drive:
+
+```bash
+ssh windows-gpu
+source ~/miniconda3/etc/profile.d/conda.sh
+conda activate train
+source /mnt/d/FAR-workspace/FAR/scripts/windows_gpu_env.sh
+cd /mnt/d/FAR-workspace/FAR
+```
+
+Create a blind packet:
+
+```bash
+uv run python -m bench.build.annotate_packet build \
+  --data-dir bench \
+  --output-dir /mnt/d/FAR-outputs/falsirag_annotation_packet \
+  --annotator machine_qwen \
+  --annotator machine_rules \
+  --overwrite
+```
+
+Generate schema-valid machine suggestions with the pinned local Qwen config:
+
+```bash
+falsirag-auto-annotate generate \
+  --packet-dir /mnt/d/FAR-outputs/falsirag_annotation_packet \
+  --output-dir /mnt/d/FAR-outputs/qwen35_preannotations \
+  --config experiments/configs/qwen_open.yaml \
+  --preannotator-id qwen35_9b_ollama_machine_weak \
+  --overwrite
+```
+
+This is the recommended no-human fallback for development. It is still not
+publication gold. See `docs/MACHINE_ANNOTATION_FALLBACK.md` for the researched
+open-source alternatives and the paper wording constraints.
+
+## Optional DeepSeek workflow
 
 Create a blind packet first:
 
