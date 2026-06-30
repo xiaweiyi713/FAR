@@ -19,7 +19,7 @@
 | Checkpoint/signature/result validation | `experiments/runner.py`, validation tests | Implemented |
 | Two tables and three figures | `experiments/build_artifacts.py` | Implemented; final inputs pending |
 | AAAI-27 paper and supplement | `paper/` | Draft complete; empirical cells pending |
-| Multi-model main/test results | Versioned DeepSeek V4-Flash, Qwen3.7 Plus (2026-05-26), and local Qwen3.5 9B configs and runners; D:-backed Qwen runtime verified | Local runtime ready; blocked on cloud credentials, complete formal runs, and test custodian |
+| Multi-model main/test results | Versioned DeepSeek V4-Flash, Qwen3.7 Plus (2026-05-26), and local Qwen3.5 9B configs and runners; D:-backed, thinking-disabled, per-sample-unload Qwen pilot verified and clean full dev suite queued | Local runtime ready; cloud credentials, completed formal runs, and test custodian pending |
 
 “Pending” items are external evidence, not missing code. They must not be marked
 complete or replaced with synthetic values.

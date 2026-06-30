@@ -8,6 +8,7 @@ import json
 import os
 import platform
 import sys
+from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -133,6 +134,9 @@ def build_generator(config: dict[str, Any]) -> TextGenerator | None:
             "cache_enabled",
             "cache_path",
             "cache_namespace",
+            "think",
+            "keep_alive",
+            "unload_after_sample",
         }
     }
     api_env = llm.get("api_key_env")
@@ -142,6 +146,24 @@ def build_generator(config: dict[str, Any]) -> TextGenerator | None:
             raise RuntimeError(f"required API key environment variable is unset: {api_env}")
         options["api_key"] = api_key
     return VeraLLMAdapter(**options)
+
+
+def release_generator(generator: TextGenerator | None) -> None:
+    if generator is None:
+        return
+    release = getattr(generator, "release", None)
+    if callable(release):
+        release()
+
+
+@contextmanager
+def generator_sample_scope(generator: TextGenerator | None) -> Any:
+    """Clear provider-local state after all LLM calls for one sample."""
+
+    try:
+        yield
+    finally:
+        release_generator(generator)
 
 
 def _implementation_sha256() -> str:

@@ -72,6 +72,8 @@ def test_formal_configs_pin_one_shared_retrieval_and_conflict_stack() -> None:
     assert configs[3]["retrieval"]["rerank"]["device"] == "cpu"
     assert configs[4]["retrieval"]["rerank"]["device"] == "cuda"
     assert len(retrieval["rerank"]["revision"]) == 40
+    assert configs[2]["llm"]["think"] is False
+    assert configs[2]["llm"]["unload_after_sample"] is True
     assert conflict["enable_nli"] is True
     assert conflict["require_nli"] is True
     assert conflict["nli_local_files_only"] is True
@@ -183,6 +185,18 @@ def test_runner_resumes_without_duplicates_and_evaluation_is_bound(tmp_path: Pat
         resamples=20,
     )
     assert validate_result_bundle(run_dir, evaluation_dir)["valid"] is True
+
+    prediction_rows = [
+        json.loads(line)
+        for line in (run_dir / "predictions.jsonl").read_text(encoding="utf-8").splitlines()
+    ]
+    prediction_rows[0]["answer"] += " Thinking Process: hidden reasoning"
+    (run_dir / "predictions.jsonl").write_text(
+        "".join(json.dumps(row, ensure_ascii=False) + "\n" for row in prediction_rows),
+        encoding="utf-8",
+    )
+    invalid = validate_result_bundle(run_dir, evaluation_dir)
+    assert any("leaked model reasoning" in error for error in invalid["errors"])
 
 
 def test_suite_runs_far_baseline_ablation_and_artifacts(tmp_path: Path) -> None:

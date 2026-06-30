@@ -44,7 +44,7 @@ def test_llm_adapter_forwards_json_response_format() -> None:
     ]
 
 
-def test_ollama_adapter_uses_thinking_when_response_is_empty(
+def test_ollama_adapter_disables_thinking_for_publication_run(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     fake_module = ModuleType("ollama")
@@ -56,7 +56,7 @@ def test_ollama_adapter_uses_thinking_when_response_is_empty(
 
         def generate(self, **kwargs: object) -> dict[str, object]:
             calls.append(kwargs)
-            return {"response": "", "thinking": '{"ok": true}'}
+            return {"response": '{"ok": true}', "thinking": ""}
 
     fake_module.Client = FakeOllamaClient  # type: ignore[attr-defined]
     monkeypatch.setitem(sys.modules, "ollama", fake_module)
@@ -65,6 +65,8 @@ def test_ollama_adapter_uses_thinking_when_response_is_empty(
         provider="ollama",
         model="qwen3.5:9b",
         base_url="http://ollama.local:11434",
+        think=False,
+        unload_after_sample=True,
     )
 
     assert adapter.complete("json please", response_format="json") == '{"ok": true}'
@@ -74,9 +76,38 @@ def test_ollama_adapter_uses_thinking_when_response_is_empty(
             "model": "qwen3.5:9b",
             "prompt": "json please",
             "options": {"num_predict": 1000, "temperature": 0.0},
+            "think": False,
             "format": "json",
         },
     ]
+    adapter.release()
+    assert calls[-1] == {"model": "qwen3.5:9b", "prompt": "", "keep_alive": 0}
+
+
+def test_ollama_adapter_rejects_thinking_without_final_response(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    fake_module = ModuleType("ollama")
+
+    class FakeOllamaClient:
+        def __init__(self, host: str) -> None:
+            del host
+
+        def generate(self, **kwargs: object) -> dict[str, object]:
+            del kwargs
+            return {"response": "", "thinking": "unfinished reasoning"}
+
+    fake_module.Client = FakeOllamaClient  # type: ignore[attr-defined]
+    monkeypatch.setitem(sys.modules, "ollama", fake_module)
+    adapter = VeraLLMAdapter(provider="ollama", model="qwen3.5:9b")
+
+    with pytest.raises(RuntimeError, match="thinking text without a final response"):
+        adapter.complete("answer")
+
+
+def test_llm_adapter_rejects_invalid_release_configuration() -> None:
+    with pytest.raises(TypeError, match="unload_after_sample"):
+        VeraLLMAdapter(client=_FakeLLMClient(), unload_after_sample="yes")
 
 
 def test_llm_adapter_rejects_unknown_provider_before_import() -> None:

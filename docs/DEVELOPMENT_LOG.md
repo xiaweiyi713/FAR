@@ -156,3 +156,61 @@ added and run on the same D:-backed Windows GPU host. The Qwen2.5 pilot passed
 The Qwen2.5 bundle is the preferred no-human machine draft. It remains
 `publication_gold: false` and cannot be reported as independent human
 annotation or Cohen's kappa evidence.
+
+## 2026-06-30: Qwen formal-run thinking leak rejected and corrected
+
+The first unbounded Qwen3.5 dev attempt was stopped at 6/60 after output QA
+showed that five answers contained `Thinking Process` text; one answer was
+9,034 characters. That attempt is invalid for scoring and was preserved at
+`/mnt/d/FAR-outputs/qwen_open_dev_invalid_thinking_20260630-111454` rather than
+silently overwritten. Its waiting suite was cancelled as well.
+
+The earlier annotation-only thinking fallback is now superseded for experiment
+runs. `qwen_open.yaml` explicitly sets `think: false`, the setting is bound into
+the run signature, and the Ollama adapter fails closed instead of returning the
+`thinking` field when the final `response` is empty. Result-bundle validation
+also rejects answers containing known leaked-reasoning markers.
+
+A real D:-backed Windows pilot then passed:
+
+- output: `/mnt/d/FAR-outputs/qwen_open_thinkoff_pilot1`;
+- run signature:
+  `d12456ebe9b49c0b2fd2356e4c064fcdde909e19bb1281e87425ca39c11ed53a`;
+- model digest:
+  `6488c96fa5faab64bb65cbd30d4289e20e6130ef535a93ef9a49f42eda893ea7`;
+- manifest: complete 1/1, zero errors, diagnostic/partial;
+- output: four claims, twelve retrieval traces, four revision traces, a
+  130-character final answer, and no thinking marker; and
+- prediction SHA-256:
+  `eb9312e7e71e89ef5926cf01a1f044452e6d14c3bcd9c4fc45a32a8ece5170f7`.
+
+The first thinking-disabled 60-sample restart, signature
+`ea5ef918caf8f4b358e5f64fdfa5d587d61a62d6ad362add3c0f9e62cc72deb2`,
+then exposed a separate host-memory failure before its first checkpoint.
+Ollama 0.30.11 accumulated about 6.85 GiB of prompt checkpoints while the WSL
+VM had only 7.6 GiB RAM; the kernel killed `llama-server` when FAR's CPU
+retrieval/NLI models were resident. The failed attempt is preserved under the
+`qwen_open_dev_oom_20260630-112331` prefix.
+
+The formal config now uses `unload_after_sample: true`: all LLM calls for one
+sample share a loaded model, and the runner then sends Ollama an explicit
+`keep_alive=0` unload request. This clears the cross-request cache once per
+sample instead of paying the roughly 50-second D:-drive reload before every
+claim/query/revision call. The memory-safe pilot passed with:
+
+- output: `/mnt/d/FAR-outputs/qwen_open_sample_unload_pilot1`;
+- run signature:
+  `eb92f0c55866db13824b7f52dd2cdd20036cb2d93288a6433525edf6c5e18fc1`;
+- manifest: complete 1/1, zero errors, diagnostic/partial;
+- elapsed time: 94.4 seconds;
+- prediction SHA-256:
+  `caff3a4bc540088e253eb17a437c4cf66670b861dedf2203b0f061653f728a44`;
+- no thinking marker; and
+- Ollama `/api/ps` empty after the sample, with host available memory restored
+  from at least 4.2 GiB during inference to 6.7 GiB after unload.
+
+The clean 60-sample dev run was restarted in `far-qwen-dev` with signature
+`d87dfa21ff6f1cdd52de181747611ebce5d5915501ca5ec0f5f4ae327939658d`.
+`far-qwen-suite` waits behind it and will verify the complete upstream manifest
+before running all four ablations, all five baselines, evaluation, validation,
+and artifact construction under `/mnt/d/FAR-outputs/qwen_open_dev_suite`.

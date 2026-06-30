@@ -95,10 +95,10 @@ If fallback rows remain after a run, add `--retry-fallbacks` to remove those
 fallback rows and regenerate only the failed/missing sample IDs.
 
 The first full Qwen3.5 run completed all 300 rows but had a high fallback rate,
-so it should be treated as a rough review bundle. FAR still keeps a Qwen3.5
-thinking-aware compatibility path because the local Qwen3.5/Ollama response can
-put JSON in the `thinking` field while leaving the standard `response` field
-empty.
+so it should be treated as a rough review bundle. It used the earlier
+thinking-field compatibility path. That path is no longer accepted for formal
+experiments: current FAR either disables thinking explicitly or fails closed
+when no final `response` is returned.
 
 Detach with `Ctrl+B`, then `D`. Reattach with:
 

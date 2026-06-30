@@ -10,7 +10,7 @@ __all__ = ["TextGenerator", "VeraLLMAdapter"]
 
 
 class _OllamaGenerateClient:
-    """Small Ollama client shim for thinking models that leave ``response`` empty."""
+    """Small Ollama client shim with explicit thinking-mode control."""
 
     def __init__(self, **client_options: Any) -> None:
         try:
@@ -20,6 +20,12 @@ class _OllamaGenerateClient:
                 "The ollama Python package is required for the local Ollama provider."
             ) from exc
         self.model = str(client_options.get("model", "qwen3.5:9b"))
+        self.think = client_options.get("think")
+        if self.think is not None and not isinstance(self.think, bool):
+            raise TypeError("Ollama 'think' must be true, false, or omitted")
+        self.keep_alive = client_options.get("keep_alive")
+        if self.keep_alive is not None and not isinstance(self.keep_alive, int | float | str):
+            raise TypeError("Ollama 'keep_alive' must be a number, string, or omitted")
         self.client = ollama.Client(host=client_options.get("base_url") or "http://localhost:11434")
 
     @staticmethod
@@ -47,6 +53,10 @@ class _OllamaGenerateClient:
         }
         if system_prompt:
             kwargs["system"] = system_prompt
+        if self.think is not None:
+            kwargs["think"] = self.think
+        if self.keep_alive is not None:
+            kwargs["keep_alive"] = self.keep_alive
         if response_format == "json":
             kwargs["format"] = "json"
         response = self.client.generate(**kwargs)
@@ -54,9 +64,17 @@ class _OllamaGenerateClient:
         if isinstance(text, str) and text.strip():
             return text
         thinking = self._response_field(response, "thinking")
-        if isinstance(thinking, str):
-            return thinking
-        return "" if text is None else str(text)
+        if isinstance(thinking, str) and thinking.strip():
+            raise RuntimeError(
+                "Ollama returned thinking text without a final response; set llm.think=false "
+                "for publication runs or increase the generation budget"
+            )
+        raise RuntimeError("Ollama returned an empty final response")
+
+    def unload(self) -> None:
+        """Unload the model and clear Ollama's cross-request prompt cache."""
+
+        self.client.generate(model=self.model, prompt="", keep_alive=0)
 
 
 class VeraLLMAdapter:
@@ -72,6 +90,10 @@ class VeraLLMAdapter:
     )
 
     def __init__(self, client: Any | None = None, **client_options: Any) -> None:
+        unload_after_sample = client_options.pop("unload_after_sample", False)
+        if not isinstance(unload_after_sample, bool):
+            raise TypeError("'unload_after_sample' must be true or false")
+        self.unload_after_sample = unload_after_sample
         if client is None:
             provider = str(client_options.get("provider", "ollama")).strip().lower()
             if provider not in self.SUPPORTED_PROVIDERS:
@@ -93,6 +115,15 @@ class VeraLLMAdapter:
                 ) from exc
             client = LLMClient(**client_options)
         self.client = client
+
+    def release(self) -> None:
+        """Release local model state at the configured sample boundary."""
+
+        if not self.unload_after_sample:
+            return
+        unload = getattr(self.client, "unload", None)
+        if callable(unload):
+            unload()
 
     def complete(
         self,

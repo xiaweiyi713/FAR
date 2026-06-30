@@ -43,6 +43,8 @@ llm:
   base_url: http://localhost:11434
   temperature: 0.0
   max_tokens: 1200
+  think: false
+  unload_after_sample: true
   cache_enabled: true
   cache_path: outputs/cache/qwen_open.sqlite3
   cache_namespace: far-qwen3.5-9b-v1

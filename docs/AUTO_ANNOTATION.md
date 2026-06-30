@@ -53,10 +53,11 @@ part of the formal model-comparison matrix. The completed Windows GPU run wrote
 - Label Studio export: `/mnt/d/FAR-outputs/label_studio_qwen25`, 300 tasks with
   300 machine predictions.
 
-FAR's Ollama adapter is thinking-aware: for Qwen3.5-style thinking models, it
-uses Ollama's normal `response` field when present and falls back to the
-`thinking` field only when `response` is empty. A 3-sample pilot on the Windows
-GPU host passed with `llm_failures: 0` after this compatibility layer.
+FAR's Ollama adapter accepts an explicit `think` option. Formal Qwen3.5 runs set
+it to `false` and fail closed when Ollama returns thinking text without a final
+response; internal reasoning must never be scored as the answer. The earlier
+Qwen3.5 rough annotation bundle was produced with a compatibility fallback and
+is retained only as historical, non-gold reviewer assistance.
 Generation writes the preannotation JSONL incrementally, so long runs can be
 monitored with `wc -l /mnt/d/FAR-outputs/qwen25_preannotations/*.jsonl`.
 

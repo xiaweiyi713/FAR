@@ -10,6 +10,8 @@ from typing import Any
 
 from bench.build.common import read_jsonl, sha256_file, write_json
 
+_LEAKED_REASONING_MARKERS = ("thinking process:", "<think>", "</think>")
+
 
 def _finite(value: Any) -> bool:
     if isinstance(value, bool | str) or value is None:
@@ -21,6 +23,15 @@ def _finite(value: Any) -> bool:
     if isinstance(value, list):
         return all(_finite(item) for item in value)
     return True
+
+
+def _leaked_reasoning_ids(predictions: list[dict[str, Any]]) -> list[str]:
+    leaked = []
+    for row in predictions:
+        answer = str(row.get("answer", "")).lower()
+        if any(marker in answer for marker in _LEAKED_REASONING_MARKERS):
+            leaked.append(str(row.get("sample_id", "<unknown>")))
+    return sorted(leaked)
 
 
 def validate_result_bundle(run_dir: Path, evaluation_dir: Path | None = None) -> dict[str, Any]:
@@ -41,6 +52,11 @@ def validate_result_bundle(run_dir: Path, evaluation_dir: Path | None = None) ->
         errors.append("duplicate prediction IDs")
     if any(not _finite(row) for row in predictions):
         errors.append("predictions contain non-finite values")
+    leaked_reasoning = _leaked_reasoning_ids(predictions)
+    if leaked_reasoning:
+        errors.append(
+            "predictions contain leaked model reasoning in answer: " + ", ".join(leaked_reasoning)
+        )
     report_summary = None
     if evaluation_dir is not None:
         report_path = evaluation_dir / "report.json"

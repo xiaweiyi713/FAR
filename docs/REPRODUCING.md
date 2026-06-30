@@ -90,7 +90,16 @@ The open model uses Ollama's official
 [`qwen3.5:9b`](https://ollama.com/library/qwen3.5) tag. Record the local Ollama
 model digest before freezing results. The runner queries `/api/tags`, includes
 the digest in the run signature, and fails before inference if the configured
-tag is missing or has no immutable digest.
+tag is missing or has no immutable digest. `qwen_open.yaml` also sets
+`think: false`: the experiment needs parseable final answers, not hidden
+reasoning text. The adapter fails closed if Ollama returns thinking without a
+final response, preventing an incomplete chain of thought from being scored as
+the model answer. On the 8 GiB WSL host it also sets
+`unload_after_sample: true`. Ollama 0.30.11 otherwise retained a multi-gigabyte
+cross-request prompt cache until Linux killed the model process. FAR keeps the
+model resident for all calls within one sample, then explicitly unloads it to
+clear that cache; this bounds host memory while avoiding a reload before every
+claim/query/revision call.
 
 The three formal API configs share BM25+BGE hybrid RRF and a pinned BGE
 CrossEncoder reranker, so model comparisons do not confound the generator with
@@ -246,6 +255,22 @@ uv run falsirag-suite \
 Omit the repeated `--baseline` and `--ablation` flags to run all five baselines
 and all four FAR ablations. Use `--limit` only for diagnostic smoke runs; suite
 manifests and built artifacts then remain marked `diagnostic_only`.
+
+If a standalone Qwen FAR dev run is already active on the Windows GPU, queue the
+remaining matched suite without repeating those 60 FAR predictions:
+
+```bash
+tmux new -d -s far-qwen-suite \
+  'bash /mnt/d/FAR-workspace/FAR/scripts/queue_qwen_dev_suite.sh \
+  > /mnt/d/FAR-outputs/qwen_open_dev_suite.log 2>&1'
+```
+
+The queue waits for `far-qwen-dev`, requires its complete non-partial dev
+manifest, links that immutable run into the suite, and then executes all four
+ablations, all five baselines, evaluation, validation, and artifact generation.
+Both the suite and its log stay on D:. Override `WAIT_FOR_SESSION`, `FAR_ROOT`,
+`UPSTREAM_FAR_RUN`, or `SUITE_ROOT` only when intentionally using different
+paths.
 
 ## Externally held blind test
 

@@ -14,6 +14,7 @@ from experiments.runner import (
     build_generator,
     build_retriever,
     build_run_identity,
+    generator_sample_scope,
     load_config,
     load_run_inputs,
     select_samples,
@@ -103,7 +104,8 @@ def run(
             continue
         print(f"{method}: start {sample['id']}", flush=True)
         started = time.perf_counter()
-        result = pipeline.run(sample["question"], sample["initial_answer"])
+        with generator_sample_scope(generator):
+            result = pipeline.run(sample["question"], sample["initial_answer"])
         evidence_ids = tuple(
             dict.fromkeys(
                 item.evidence_id

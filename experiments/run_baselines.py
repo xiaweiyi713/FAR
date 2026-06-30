@@ -20,6 +20,7 @@ from experiments.runner import (
     build_generator,
     build_retriever,
     build_run_identity,
+    generator_sample_scope,
     load_config,
     load_run_inputs,
     select_samples,
@@ -89,7 +90,10 @@ def run(
             if sample["id"] in writer.completed_ids:
                 continue
             started = time.perf_counter()
-            prediction = baseline.run(sample["id"], sample["question"], sample["initial_answer"])
+            with generator_sample_scope(generator):
+                prediction = baseline.run(
+                    sample["id"], sample["question"], sample["initial_answer"]
+                )
             row = prediction.to_dict()
             row["metadata"] = {
                 **row["metadata"],
