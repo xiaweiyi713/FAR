@@ -90,3 +90,10 @@ def generate_release_checksums_main() -> None:
     from experiments.generate_release_checksums import main
 
     main()
+
+
+def scan_secrets_main() -> None:
+    _prefer_far_repo()
+    from experiments.scan_secrets import main
+
+    main()

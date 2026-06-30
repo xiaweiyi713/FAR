@@ -41,6 +41,17 @@ uv run falsirag-release-checksums \
 The checksum manifest requires exactly the source distribution, wheel, and
 CycloneDX SBOM roles and validates their paths, byte sizes, and SHA-256 hashes.
 
+Scan tracked and unignored text files before every commit or release:
+
+```bash
+uv run falsirag-scan-secrets --json
+```
+
+The scanner recognizes high-confidence OpenAI/DeepSeek, Anthropic, GitHub, AWS,
+private-key, and literal secret-assignment patterns, skips documented
+placeholders, and prints only redacted findings. Use `--include-ignored` for a
+local workstation audit that also covers ignored `.env` files.
+
 ## Build and validate data
 
 ```bash
