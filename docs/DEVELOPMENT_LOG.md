@@ -482,3 +482,44 @@ At that checkpoint, the corrected FAR suite had reached 47/60 on
 the same Ollama/GPU host, and several FAR samples slowed from roughly minutes to
 6--20 minutes. Both jobs remained live; no process was stopped or reprioritized.
 The cloud starter's default concurrency refusal is therefore retained.
+
+The already-complete corrected FAR run was copied back independently to the
+ignored local `outputs/remote_qwen_corrected_suite/` directory while the
+remaining suite continued. `experiments.validate_results` passed both before
+and after evaluation: the run is complete 60/60 with zero errors, no duplicate
+IDs, finite values, matching identity/manifest signatures, a matching
+prediction fingerprint, and no leaked reasoning markers. Its frozen identity
+is:
+
+- run signature:
+  `b4c32c2d4397251a6473125533312f0614f9f726642a252aaaaa494463351780`;
+- implementation SHA-256:
+  `a98aca43b0cb494417df098d92569a6841b5f22146f2f27b7b2008d11d8aba28`;
+- benchmark SHA-256:
+  `c5bd988f60646bde33d62f654ddb456d2c2c1279175bee92ef503f362addbd8f`;
+- corpus SHA-256:
+  `cca5f62db0fbb51e1bae8111ea85fe169fba7be5a8e63847a9c1c048cdae25cd`;
+- config SHA-256:
+  `a8da92080d9750b7d097b05f8e8ee5ea8f84f2e05432be3e26f13004b3cbb4ea`;
+- Qwen3.5 9B Ollama digest:
+  `6488c96fa5faab64bb65cbd30d4289e20e6130ef535a93ef9a49f42eda893ea7`;
+- prediction SHA-256:
+  `992a4cf027db5491feef2a57210d8a9395be61798c0ff84b29760d495bc96b56`;
+- evaluation report SHA-256:
+  `3c5b5248544a1b24aa7ff294ed4cd578b7c4ee946e38e8d52f75028e354e2fd5`;
+- score-row SHA-256:
+  `6ecfa5d4afacd6b5c40688d485328dde1ef76b9566abd9e061f3dc86d6a77e43`;
+  and
+- result-validation SHA-256:
+  `69669cfb7629e7eab248a363e56d4f777a998f56686d272c34eb629dbd3cfc28`.
+
+The current evaluator was run against the full benchmark path so its report is
+bound to `bench/manifest.json`, while scoring only the 60 returned dev IDs. It
+correctly records 60 `machine_seeded` rows and `publication_ready: false`.
+Diagnostic aggregate values are: counter-evidence recall 0.983, evidence
+precision 0.122, typed conflict F1 0.420, revision-action accuracy 0.367,
+revision accuracy 0.217, and answer correctness 0.797. These are directionally
+better than the original pre-correction dev run, but the corrections were
+derived from dev and the paired untyped run is still incomplete. They therefore
+remain debugging evidence, not a paper claim or a substitute for adjudicated
+labels.
