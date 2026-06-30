@@ -276,6 +276,27 @@ CUDA_VISIBLE_DEVICES="" falsirag-run \
 running Ollama server remains on the GPU, while BGE and NLI remain on CPU and
 cannot exhaust the 8 GB device alongside Qwen. Do not set it on `ollama serve`.
 
+For the complete open-model suite on the configured Windows GPU host, prefer
+the guarded starter. It starts Ollama from the D:-backed runtime if the API is
+not already reachable, refuses to collide with an existing suite tmux session,
+creates a timestamped output directory under `/mnt/d/FAR-outputs`, and records
+that directory in `/mnt/d/FAR-outputs/latest_far_corrected_suite_path.txt`:
+
+```bash
+ssh windows-gpu
+bash /mnt/d/FAR-workspace/FAR/scripts/start_windows_qwen_suite.sh
+```
+
+Override `SUITE_SESSION`, `SUITE_ROOT`, `CONFIG`, `DATA_DIR`, or `SPLIT` only
+when intentionally starting a separate run. Check progress later with:
+
+```bash
+RUN_ROOT=$(cat /mnt/d/FAR-outputs/latest_far_corrected_suite_path.txt)
+tmux ls
+find "$RUN_ROOT/runs" -name checkpoint.jsonl -print -exec wc -l {} \;
+tail -n 80 "$RUN_ROOT.log"
+```
+
 The artifact builder checks `FAR_UNICODE_FONT` first, then standard macOS,
 WSL/Windows, and Linux Noto locations. It records the selected font path and
 SHA-256 in `artifact_manifest.json`; on this host it can read the existing

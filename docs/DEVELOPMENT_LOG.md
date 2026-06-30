@@ -338,3 +338,34 @@ started in tmux session `far-qwen-suite-v2`, writing only to:
 The local and remote implementation fingerprints match. This suite reruns FAR,
 all four corrected ablations, and all five baselines before evaluation; it does
 not reuse the old FAR prediction symlink.
+
+That first corrected-suite attempt did not produce any checkpoint. The WSL tmux
+server and Ollama service were no longer running when it was inspected, and the
+suite failed at dev item `F0004` while unloading because the Ollama API was not
+reachable. The failed directory was preserved as an incident record rather than
+overwritten:
+
+- failed suite root:
+  `/mnt/d/FAR-outputs/qwen_open_dev_suite_corrected_96e32b7`;
+- only written file:
+  `runs/far/run_identity.json`; and
+- failure mode: `ConnectionError: Failed to connect to Ollama`.
+
+Ollama was restarted from the D:-backed runtime
+`/mnt/d/FAR-runtime/ollama/bin/ollama` in tmux session `far-ollama`, with
+models still resolved from `/mnt/d/FAR-models/ollama`. A clean replacement
+corrected suite was then launched in tmux session `far-qwen-suite-v3`:
+
+- suite:
+  `/mnt/d/FAR-outputs/qwen_open_dev_suite_corrected_96e32b7_restart_20260630_172643`;
+- log:
+  `/mnt/d/FAR-outputs/qwen_open_dev_suite_corrected_96e32b7_restart_20260630_172643.log`;
+- latest-path marker:
+  `/mnt/d/FAR-outputs/latest_far_corrected_suite_path.txt`; and
+- start state: Ollama and `falsirag-suite` both live, GPU inference active on
+  `F0004`.
+
+`scripts/start_windows_qwen_suite.sh` now captures this D:-backed restart
+procedure so a later recovery does not depend on shell history. The script
+starts Ollama if needed, refuses to collide with an existing suite session, and
+records the timestamped suite root under `/mnt/d/FAR-outputs`.
