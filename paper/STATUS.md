@@ -10,7 +10,9 @@ The following cannot be truthfully completed by code generation:
 
 1. two independent annotations and adjudication for 300 candidate items;
 2. an externally held blind test;
-3. full DeepSeek V4-Flash, Qwen3.7 Plus (2026-05-26), and local Qwen3.5 9B runs;
+3. the remaining matched Qwen3.5 baselines/ablations and corrected-code rerun,
+   plus full DeepSeek V4-Flash and Qwen3.7 Plus (2026-05-26) runs (the original
+   Qwen FAR dev method finished 60/60 but is diagnostic-only);
 4. final paired confidence intervals, McNemar values, and typed-ablation claim;
 5. named authors, affiliations, and the human-required AAAI policy review.
 
