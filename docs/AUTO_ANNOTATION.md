@@ -30,49 +30,48 @@ uv run python -m bench.build.annotate_packet build \
   --overwrite
 ```
 
-Generate schema-valid machine suggestions with the pinned local Qwen config:
+Generate schema-valid machine suggestions with the local non-thinking Qwen2.5
+annotation-helper config:
 
 ```bash
 falsirag-auto-annotate generate \
   --packet-dir /mnt/d/FAR-outputs/falsirag_annotation_packet \
-  --output-dir /mnt/d/FAR-outputs/qwen35_preannotations \
-  --config experiments/configs/qwen_open.yaml \
-  --preannotator-id qwen35_9b_ollama_thinkingfix_machine_weak \
+  --output-dir /mnt/d/FAR-outputs/qwen25_preannotations \
+  --config experiments/configs/qwen25_autolabel.yaml \
+  --preannotator-id qwen25_7b_ollama_machine_weak \
   --overwrite
 ```
+
+`experiments/configs/qwen25_autolabel.yaml` is an annotation-helper config, not
+part of the formal model-comparison matrix. The completed Windows GPU run wrote
+300/300 rows with one conservative fallback after retry:
+
+- preannotation SHA-256:
+  `6796d46aa84e7c0a0ff32083e9257aa5fc6c7e5c3a9236735f4dfc659aa34caa`;
+- summary: 300 rows, 300 unique samples, 1 fallback (`F0138`), 0 missing packet
+  samples, `publication_gold: false`;
+- Label Studio export: `/mnt/d/FAR-outputs/label_studio_qwen25`, 300 tasks with
+  300 machine predictions.
 
 FAR's Ollama adapter is thinking-aware: for Qwen3.5-style thinking models, it
 uses Ollama's normal `response` field when present and falls back to the
 `thinking` field only when `response` is empty. A 3-sample pilot on the Windows
 GPU host passed with `llm_failures: 0` after this compatibility layer.
 Generation writes the preannotation JSONL incrementally, so long runs can be
-monitored with `wc -l /mnt/d/FAR-outputs/qwen35_preannotations/*.jsonl`.
+monitored with `wc -l /mnt/d/FAR-outputs/qwen25_preannotations/*.jsonl`.
 
 The first full Qwen3.5 run completed 300/300 rows but produced many schema
-fallbacks. For stricter JSON preannotation, pilot the non-thinking local
-Qwen2.5 helper config before scaling:
-
-```bash
-falsirag-auto-annotate generate \
-  --packet-dir /mnt/d/FAR-outputs/falsirag_annotation_packet \
-  --output-dir /mnt/d/FAR-outputs/qwen25_preannotations_pilot \
-  --config experiments/configs/qwen25_autolabel.yaml \
-  --preannotator-id qwen25_7b_ollama_machine_weak \
-  --limit 10 \
-  --overwrite
-```
-
-`experiments/configs/qwen25_autolabel.yaml` is an annotation-helper config, not
-part of the formal model-comparison matrix.
+fallbacks, so it remains a rough review bundle rather than the preferred
+machine draft.
 If Windows sleeps, restarts, or the tmux job is killed after some rows have been
 written, restart without discarding completed rows:
 
 ```bash
 falsirag-auto-annotate generate \
   --packet-dir /mnt/d/FAR-outputs/falsirag_annotation_packet \
-  --output-dir /mnt/d/FAR-outputs/qwen35_preannotations \
-  --config experiments/configs/qwen_open.yaml \
-  --preannotator-id qwen35_9b_ollama_thinkingfix_machine_weak \
+  --output-dir /mnt/d/FAR-outputs/qwen25_preannotations \
+  --config experiments/configs/qwen25_autolabel.yaml \
+  --preannotator-id qwen25_7b_ollama_machine_weak \
   --resume
 ```
 
@@ -93,7 +92,7 @@ At any point, summarize the in-progress or completed output:
 
 ```bash
 falsirag-auto-annotate summarize \
-  --preannotation-dir /mnt/d/FAR-outputs/qwen35_preannotations \
+  --preannotation-dir /mnt/d/FAR-outputs/qwen25_preannotations \
   --packet-dir /mnt/d/FAR-outputs/falsirag_annotation_packet
 ```
 

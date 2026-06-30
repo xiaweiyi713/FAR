@@ -70,22 +70,23 @@ uv run python -m bench.build.annotate_packet build \
   --overwrite
 ```
 
-Start the local Qwen/Ollama preannotation run in `tmux`:
+Start the local Qwen/Ollama preannotation run in `tmux` with the preferred
+non-thinking Qwen2.5 annotation-helper config:
 
 ```bash
 tmux new -s far-auto-label
 falsirag-auto-annotate generate \
   --packet-dir /mnt/d/FAR-outputs/falsirag_annotation_packet \
-  --output-dir /mnt/d/FAR-outputs/qwen35_preannotations \
-  --config experiments/configs/qwen_open.yaml \
-  --preannotator-id qwen35_9b_ollama_thinkingfix_machine_weak \
+  --output-dir /mnt/d/FAR-outputs/qwen25_preannotations \
+  --config experiments/configs/qwen25_autolabel.yaml \
+  --preannotator-id qwen25_7b_ollama_machine_weak \
   --overwrite
 ```
 
-The `thinkingfix` identifier records that FAR's Ollama adapter is using the
-Qwen3.5 thinking-aware compatibility path. This is necessary because the current
-local Qwen3.5/Ollama response can put JSON in the `thinking` field while leaving
-the standard `response` field empty.
+The completed Qwen2.5 run produced 300/300 rows with one conservative fallback
+after retry. Its preannotation SHA-256 is
+`6796d46aa84e7c0a0ff32083e9257aa5fc6c7e5c3a9236735f4dfc659aa34caa`, and the
+Label Studio review bundle is `/mnt/d/FAR-outputs/label_studio_qwen25`.
 
 For interrupted long runs, reuse the same command with `--resume` instead of
 `--overwrite`; FAR skips already written sample IDs and appends the remaining
@@ -94,9 +95,10 @@ If fallback rows remain after a run, add `--retry-fallbacks` to remove those
 fallback rows and regenerate only the failed/missing sample IDs.
 
 The first full Qwen3.5 run completed all 300 rows but had a high fallback rate,
-so it should be treated as a rough review bundle. For cleaner strict-JSON
-machine drafts, use the non-thinking `qwen2.5:7b` annotation-helper config
-(`experiments/configs/qwen25_autolabel.yaml`) for a pilot before scaling.
+so it should be treated as a rough review bundle. FAR still keeps a Qwen3.5
+thinking-aware compatibility path because the local Qwen3.5/Ollama response can
+put JSON in the `thinking` field while leaving the standard `response` field
+empty.
 
 Detach with `Ctrl+B`, then `D`. Reattach with:
 
@@ -109,8 +111,8 @@ To export the predictions for a future reviewer:
 ```bash
 falsirag-auto-annotate label-studio \
   --packet-dir /mnt/d/FAR-outputs/falsirag_annotation_packet \
-  --preannotation-dir /mnt/d/FAR-outputs/qwen35_preannotations \
-  --output-dir /mnt/d/FAR-outputs/label_studio_qwen35 \
+  --preannotation-dir /mnt/d/FAR-outputs/qwen25_preannotations \
+  --output-dir /mnt/d/FAR-outputs/label_studio_qwen25 \
   --overwrite
 ```
 

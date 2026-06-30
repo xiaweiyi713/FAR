@@ -136,3 +136,23 @@ Preannotation JSONL is now flushed incrementally so the long run exposes
 line-count progress and preserves completed rows if the remote host is
 interrupted. These outputs remain non-gold reviewer aids: they cannot close the
 independent human annotation or Cohen's kappa gates.
+
+The full Qwen3.5 run completed 300/300 rows but produced 219 schema fallbacks,
+so it was retained only as a rough review bundle. A non-thinking Qwen2.5
+annotation-helper config (`experiments/configs/qwen25_autolabel.yaml`) was then
+added and run on the same D:-backed Windows GPU host. The Qwen2.5 pilot passed
+10/10 after normalising common no-action aliases, and the full run completed:
+
+- output: `/mnt/d/FAR-outputs/qwen25_preannotations`;
+- model: `qwen2.5:7b`;
+- preannotator: `qwen25_7b_ollama_machine_weak`;
+- rows: 300/300, 300 unique samples, no duplicate or extra sample IDs;
+- fallbacks after one targeted `--resume --retry-fallbacks` pass: 1 (`F0138`);
+- preannotation SHA-256:
+  `6796d46aa84e7c0a0ff32083e9257aa5fc6c7e5c3a9236735f4dfc659aa34caa`; and
+- Label Studio review bundle:
+  `/mnt/d/FAR-outputs/label_studio_qwen25`, 300 tasks with 300 predictions.
+
+The Qwen2.5 bundle is the preferred no-human machine draft. It remains
+`publication_gold: false` and cannot be reported as independent human
+annotation or Cohen's kappa evidence.
