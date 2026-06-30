@@ -28,6 +28,19 @@ the project name/version and every required or optional dependency group from
 `pyproject.toml`; validation rejects stale, missing, duplicated, or malformed
 components.
 
+After building the wheel and source distribution, fingerprint the complete
+release set:
+
+```bash
+uv build
+uv run falsirag-release-checksums \
+  --sbom build/sbom/far-sbom.cdx.json \
+  --output build/release-checksums.json --check --json
+```
+
+The checksum manifest requires exactly the source distribution, wheel, and
+CycloneDX SBOM roles and validates their paths, byte sizes, and SHA-256 hashes.
+
 ## Build and validate data
 
 ```bash

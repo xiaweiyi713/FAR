@@ -18,7 +18,7 @@
 | Six metrics, CI, McNemar | `eval/` | Implemented |
 | Checkpoint/signature/result validation | `experiments/runner.py`, validation tests | Implemented |
 | Two tables and three figures | `experiments/build_artifacts.py` | Implemented; final inputs pending |
-| Reproducible archive and SBOM | build metadata, lockfile, `experiments/generate_sbom.py` | Implemented; regenerate on submission commit |
+| Reproducible archive, SBOM, fingerprints | build metadata, lockfile, SBOM and release-checksum generators | Implemented; regenerate on submission commit |
 | AAAI-27 paper and supplement | `paper/` | Draft complete; empirical cells pending |
 | Multi-model main/test results | Versioned DeepSeek V4-Flash, Qwen3.7 Plus (2026-05-26), and local Qwen3.5 9B configs and runners; D:-backed, thinking-disabled, per-sample-unload Qwen pilot verified and clean full dev suite queued | Local runtime ready; cloud credentials, completed formal runs, and test custodian pending |
 

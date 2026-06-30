@@ -83,3 +83,10 @@ def generate_sbom_main() -> None:
     from experiments.generate_sbom import main
 
     main()
+
+
+def generate_release_checksums_main() -> None:
+    _prefer_far_repo()
+    from experiments.generate_release_checksums import main
+
+    main()
