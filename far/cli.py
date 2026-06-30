@@ -64,6 +64,13 @@ def weak_label_main() -> None:
     main()
 
 
+def machine_label_audit_main() -> None:
+    _prefer_far_repo()
+    from bench.build.machine_label_audit import main
+
+    main()
+
+
 def run_suite_main() -> None:
     _prefer_far_repo()
     from experiments.run_suite import main

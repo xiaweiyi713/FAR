@@ -18,6 +18,7 @@ from bench.build.auto_annotate import (
 from bench.build.build_blind_bundle import build as build_blind_bundle
 from bench.build.extend_from_verabench import build
 from bench.build.import_fever_slice import import_slice
+from bench.build.machine_label_audit import audit_machine_labels
 from bench.build.validate_bench import validate
 from bench.build.weak_label import generate_weak_labels, weak_label_row
 from bench.schema import VALID_CONFLICT_TYPES, VALID_REVISION_ACTIONS
@@ -181,6 +182,43 @@ def test_weak_label_row_detects_temporal_and_source_signals() -> None:
     assert annotation["conflict_present"] is True
     assert annotation["conflict_type"] == "temporal"
     assert {"year_mismatch", "unverified_source_phrase"} <= signal_names
+
+
+def test_machine_label_audit_prioritizes_disagreements(tmp_path: Path) -> None:
+    class TemporalGenerator:
+        def complete(self, prompt: str, **kwargs: object) -> str:
+            del prompt, kwargs
+            return json.dumps(
+                {
+                    "conflict_present": True,
+                    "conflict_type": "temporal",
+                    "revision_action": "correct_temporal",
+                    "revised_answer_acceptable": True,
+                    "suggested_revised_answer": "",
+                    "rationale": "The year differs.",
+                    "confidence": 0.8,
+                }
+            )
+
+    packet = tmp_path / "packet"
+    build_annotation_packet(ROOT / "bench", packet, ["alice", "bob"])
+    preannotations = tmp_path / "preannotations"
+    generate_preannotations(
+        packet,
+        preannotations,
+        generator=TemporalGenerator(),
+        preannotator_id="temporal_llm",
+        limit=6,
+    )
+    weak = tmp_path / "weak"
+    generate_weak_labels(packet, weak, limit=6)
+    audit_dir = tmp_path / "audit"
+    report = audit_machine_labels(preannotations, weak, audit_dir, packet_dir=packet)
+    assert report["publication_gold"] is False
+    assert report["can_satisfy_human_annotation_gate"] is False
+    assert report["shared_samples"] == 6
+    assert report["priority_review_samples"] >= 0
+    assert (audit_dir / "machine_label_comparison.jsonl").exists()
 
 
 def test_llm_preannotation_fallback_stays_review_only(tmp_path: Path) -> None:

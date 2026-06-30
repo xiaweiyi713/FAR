@@ -161,6 +161,21 @@ appropriate open-source aggregator.
 
 Report these outputs as machine agreement, not as human IAA.
 
+To audit LLM-vs-rule agreement:
+
+```bash
+uv run falsirag-machine-label-audit \
+  --preannotation-dir /mnt/d/FAR-outputs/qwen25_preannotations \
+  --weak-label-dir /mnt/d/FAR-outputs/rules_weak_labels \
+  --packet-dir /mnt/d/FAR-outputs/falsirag_annotation_packet \
+  --output-dir /mnt/d/FAR-outputs/machine_label_audit \
+  --overwrite
+```
+
+Prioritize rows where the audit reports conflict-type or revision-action
+disagreement. This is a triage device, not an agreement statistic for the
+paper.
+
 ## References
 
 - Label Studio prediction imports:

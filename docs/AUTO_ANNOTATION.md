@@ -125,6 +125,21 @@ conflict".
 Use these weak labels to compare against LLM preannotations or to prioritize
 human review. Do not report them as independent human labels or Cohen's kappa.
 
+To compare the LLM suggestions and rule weak labels, run:
+
+```bash
+uv run falsirag-machine-label-audit \
+  --preannotation-dir outputs/deepseek_preannotations_pilot \
+  --weak-label-dir outputs/rules_weak_labels \
+  --packet-dir outputs/falsirag_annotation_packet \
+  --output-dir outputs/machine_label_audit \
+  --overwrite
+```
+
+The audit writes `machine_label_audit.json` and
+`machine_label_comparison.jsonl`. Use its priority-review sample list to focus
+scarce human review time. Machine-machine agreement is not human IAA.
+
 ## Optional DeepSeek workflow
 
 Create a blind packet first:

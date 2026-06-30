@@ -22,6 +22,7 @@ uv run python examples/offline_demo.py
 uv run falsirag-validate-bench
 uv run falsirag-generate-sbom --check
 uv run falsirag-weak-label --help
+uv run falsirag-machine-label-audit --help
 uv run python -m pytest
 ```
 
