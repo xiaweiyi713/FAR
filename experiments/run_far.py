@@ -99,7 +99,9 @@ def run(
     )
     for sample in selected:
         if sample["id"] in writer.completed_ids:
+            print(f"{method}: skip completed {sample['id']}", flush=True)
             continue
+        print(f"{method}: start {sample['id']}", flush=True)
         started = time.perf_counter()
         result = pipeline.run(sample["question"], sample["initial_answer"])
         evidence_ids = tuple(
@@ -136,6 +138,10 @@ def run(
                     "retrieval_trace": [item.to_dict() for item in result.retrieval_trace],
                 },
             }
+        )
+        print(
+            f"{method}: completed {sample['id']} in {time.perf_counter() - started:.2f}s",
+            flush=True,
         )
     return writer.finalize(
         {sample["id"] for sample in selected},
