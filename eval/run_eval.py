@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+from collections import Counter
 from pathlib import Path
 from typing import Any
 
@@ -40,6 +41,38 @@ BINARY_SUCCESS_METRICS = (
     "revision_action_correct",
     "revision_accuracy",
 )
+
+
+def _publication_context(
+    benchmark_path: Path,
+    samples: dict[str, dict[str, Any]],
+    predictions: list[PredictionRecord],
+) -> dict[str, Any]:
+    manifest_path = benchmark_path.parent / "manifest.json"
+    manifest = (
+        json.loads(manifest_path.read_text(encoding="utf-8")) if manifest_path.exists() else None
+    )
+    annotation_counts = Counter(
+        str(samples[item.sample_id].get("annotation_status", "missing")) for item in predictions
+    )
+    manifest_ready = bool(manifest and manifest.get("publication_ready"))
+    rows_adjudicated = bool(annotation_counts) and set(annotation_counts) == {"adjudicated"}
+    reasons = []
+    if manifest is None:
+        reasons.append("benchmark manifest is missing")
+    elif not manifest_ready:
+        reasons.append("benchmark manifest is not publication-ready")
+    if not rows_adjudicated:
+        reasons.append("scored rows are not all adjudicated")
+    return {
+        "ready": manifest_ready and rows_adjudicated,
+        "benchmark_manifest": str(manifest_path) if manifest_path.exists() else None,
+        "benchmark_manifest_sha256": (
+            sha256_file(manifest_path) if manifest_path.exists() else None
+        ),
+        "annotation_status_counts": dict(sorted(annotation_counts.items())),
+        "reasons": reasons,
+    }
 
 
 def _validate_comparison_input(
@@ -101,6 +134,7 @@ def evaluate(
     if len(methods) != 1:
         raise ValueError("one evaluation report may contain exactly one method")
     scores = [score_sample(samples[item.sample_id], item) for item in predictions]
+    publication = _publication_context(benchmark_path, samples, predictions)
     aggregate = aggregate_scores(scores)
     intervals = {
         metric: stratified_bootstrap_ci(
@@ -199,12 +233,15 @@ def evaluate(
         "split_counts": aggregate.get("by_category")
         and {key: sum(row["split"] == key for row in scores) for key in ("train", "dev", "test")},
         "partial": bool(run_manifest and run_manifest.get("partial")),
+        "publication_ready": publication["ready"],
+        "publication": publication,
         "aggregate": aggregate,
         "confidence_intervals": intervals,
         "dependency_cluster_intervals": dependency_intervals,
         "comparison": comparison,
         "provenance": {
             "benchmark_sha256": sha256_file(benchmark_path),
+            "benchmark_manifest_sha256": publication["benchmark_manifest_sha256"],
             "predictions_sha256": sha256_file(predictions_path),
             "scores_sha256": sha256_file(scores_path),
             "run_signature": run_manifest.get("run_signature") if run_manifest else None,

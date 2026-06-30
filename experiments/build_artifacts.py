@@ -215,7 +215,13 @@ def build(
     )
     manifest = {
         "schema_version": "far-artifact-manifest-v1",
-        "diagnostic_only": any(bool(report.get("partial")) for report in reports.values()),
+        "diagnostic_only": any(
+            bool(report.get("partial")) or not bool(report.get("publication_ready"))
+            for report in reports.values()
+        ),
+        "publication_ready": all(
+            bool(report.get("publication_ready")) for report in reports.values()
+        ),
         "reports": {label: sha256_file(path) for label, path in report_paths.items()},
         "predictions": {label: sha256_file(path) for label, path in prediction_paths.items()},
         "unicode_font": (

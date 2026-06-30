@@ -255,6 +255,10 @@ uv run falsirag-suite \
 Omit the repeated `--baseline` and `--ablation` flags to run all five baselines
 and all four FAR ablations. Use `--limit` only for diagnostic smoke runs; suite
 manifests and built artifacts then remain marked `diagnostic_only`.
+Full-length runs are also forced to `diagnostic_only` while
+`bench/manifest.json` has `publication_ready: false` or any scored row is not
+`adjudicated`. Completing all 60 dev predictions therefore does not silently
+promote machine-seeded labels into paper evidence.
 
 If a standalone Qwen FAR dev run is already active on the Windows GPU, queue the
 remaining matched suite without repeating those 60 FAR predictions:

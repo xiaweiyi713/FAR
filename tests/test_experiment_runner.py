@@ -178,12 +178,15 @@ def test_runner_resumes_without_duplicates_and_evaluation_is_bound(tmp_path: Pat
         "verarag",
     } <= set(identity["environment"]["packages"])
     evaluation_dir = tmp_path / "evaluation"
-    evaluate(
+    evaluation = evaluate(
         ROOT / "bench/falsirag_bench.jsonl",
         run_dir / "predictions.jsonl",
         evaluation_dir,
         resamples=20,
     )
+    assert evaluation["publication_ready"] is False
+    assert evaluation["publication"]["annotation_status_counts"] == {"machine_seeded": 5}
+    assert "benchmark manifest is not publication-ready" in evaluation["publication"]["reasons"]
     assert validate_result_bundle(run_dir, evaluation_dir)["valid"] is True
 
     prediction_rows = [
@@ -214,6 +217,10 @@ def test_suite_runs_far_baseline_ablation_and_artifacts(tmp_path: Path) -> None:
     assert (tmp_path / "suite" / "suite_manifest.json").exists()
     assert (tmp_path / "suite" / "artifacts" / "main_results.csv").exists()
     assert (tmp_path / "suite" / "artifacts" / "ablation_results.csv").exists()
+    artifact_manifest = json.loads(
+        (tmp_path / "suite/artifacts/artifact_manifest.json").read_text(encoding="utf-8")
+    )
+    assert artifact_manifest["publication_ready"] is False
     far_report = json.loads(
         (tmp_path / "suite/evaluations/far/report.json").read_text(encoding="utf-8")
     )

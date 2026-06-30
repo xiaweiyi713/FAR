@@ -21,7 +21,7 @@ close an empirical gate.
 | External FEVER slice | Fingerprinted candidate import | Candidate complete | Human annotation and separate reporting |
 | Five transparent baselines | `baselines/` | Implemented | Complete matched prediction bundles |
 | Four component ablations | `experiments/ablations.py` | Implemented | Complete paired bundles, especially typed vs untyped |
-| Metrics, confidence intervals, McNemar | `eval/` | Implemented | Validated complete reports on frozen predictions |
+| Metrics, confidence intervals, McNemar | `eval/`; reports bind benchmark-manifest readiness and annotation statuses | Implemented | Validated complete reports on frozen, adjudicated predictions |
 | Versioned model matrix | DeepSeek V4-Flash, Qwen3.7 Plus 2026-05-26, Qwen3.5 9B; local digest recorded; thinking-disabled, per-sample-unload pilot passed and full dev suite queued | Configured; clean, memory-bounded local runtime verified | Cloud credentials, complete dev runs, exact provider provenance |
 | Windows GPU execution | D:-backed Ollama/HF caches and outputs; CUDA and Qwen end-to-end smokes | Host gate passed | Recheck free space and environment before each formal run |
 | Externally blind test | Gold-free bundle and unscored runner | Technical path implemented | Independent custodian and one-shot returned predictions |
