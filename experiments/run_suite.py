@@ -21,6 +21,43 @@ from experiments.validate_results import validate_result_bundle
 DEFAULT_ABLATIONS = tuple(name for name in ABLATION_NAMES if name != "full")
 
 
+def _load_existing_run(
+    run_dir: Path,
+    *,
+    expected_method: str,
+    config_path: Path,
+    data_dir: Path,
+    split: str | None,
+    limit: int | None,
+) -> dict[str, Any]:
+    manifest_path = run_dir / "run_manifest.json"
+    identity_path = run_dir / "run_identity.json"
+    if not manifest_path.is_file() or not identity_path.is_file():
+        raise FileNotFoundError(f"reports-only run is incomplete: {run_dir}")
+    manifest: dict[str, Any] = json.loads(manifest_path.read_text(encoding="utf-8"))
+    identity: dict[str, Any] = json.loads(identity_path.read_text(encoding="utf-8"))
+    expected_split = split or str(manifest.get("split", ""))
+    checks = {
+        "status": manifest.get("status") == "complete",
+        "method": manifest.get("method") == expected_method == identity.get("method"),
+        "split": manifest.get("split") == expected_split == identity.get("split"),
+        "limit": identity.get("limit") == limit,
+        "partial": bool(manifest.get("partial")) == (limit is not None),
+        "signature": manifest.get("run_signature") == identity.get("run_signature"),
+        "config": identity.get("config_sha256") == sha256_file(config_path),
+        "benchmark": identity.get("benchmark_input_sha256")
+        == sha256_file(
+            data_dir
+            / ("splits/test_inputs.jsonl" if expected_split == "test" else "falsirag_bench.jsonl")
+        ),
+        "corpus": identity.get("corpus_sha256") == sha256_file(data_dir / "corpus.jsonl"),
+    }
+    failed = sorted(key for key, passed in checks.items() if not passed)
+    if failed:
+        raise ValueError(f"reports-only run identity mismatch for {run_dir}: {failed}")
+    return manifest
+
+
 def _evaluate_and_validate(
     benchmark_path: Path,
     run_dir: Path,
@@ -56,44 +93,78 @@ def run_suite(
     ablations: tuple[str, ...] = DEFAULT_ABLATIONS,
     resamples: int = 2000,
     seed: int = 1729,
+    reports_only: bool = False,
 ) -> dict[str, Any]:
     output_dir.mkdir(parents=True, exist_ok=True)
     benchmark_path = data_dir / "falsirag_bench.jsonl"
     runs_dir = output_dir / "runs"
     evaluations_dir = output_dir / "evaluations"
 
-    far_manifest = run_far(
-        config_path,
-        data_dir,
-        runs_dir / "far",
-        split=split,
-        limit=limit,
-        allow_test=allow_test,
-    )
-    run_manifests: dict[str, dict[str, Any]] = {"far": far_manifest}
-    for ablation in ablations:
-        if ablation == "full":
-            continue
-        manifest = run_far(
+    if reports_only:
+        far_manifest = _load_existing_run(
+            runs_dir / "far",
+            expected_method="far",
+            config_path=config_path,
+            data_dir=data_dir,
+            split=split,
+            limit=limit,
+        )
+        run_manifests: dict[str, dict[str, Any]] = {"far": far_manifest}
+        for ablation in ablations:
+            if ablation == "full":
+                continue
+            run_manifests[ablation] = _load_existing_run(
+                runs_dir / ablation,
+                expected_method=f"far_{ablation}",
+                config_path=config_path,
+                data_dir=data_dir,
+                split=split,
+                limit=limit,
+            )
+        baseline_manifests = [
+            _load_existing_run(
+                runs_dir / "baselines" / baseline,
+                expected_method=baseline,
+                config_path=config_path,
+                data_dir=data_dir,
+                split=split,
+                limit=limit,
+            )
+            for baseline in baselines
+        ]
+    else:
+        far_manifest = run_far(
             config_path,
             data_dir,
-            runs_dir / ablation,
-            ablation=ablation,
+            runs_dir / "far",
             split=split,
             limit=limit,
             allow_test=allow_test,
         )
-        run_manifests[ablation] = manifest
+        run_manifests = {"far": far_manifest}
+        for ablation in ablations:
+            if ablation == "full":
+                continue
+            manifest = run_far(
+                config_path,
+                data_dir,
+                runs_dir / ablation,
+                ablation=ablation,
+                split=split,
+                limit=limit,
+                allow_test=allow_test,
+            )
+            run_manifests[ablation] = manifest
 
-    baseline_manifests = run_baselines(
-        config_path,
-        data_dir,
-        runs_dir / "baselines",
-        methods=baselines,
-        split=split,
-        limit=limit,
-        allow_test=allow_test,
-    )
+        baseline_manifests = run_baselines(
+            config_path,
+            data_dir,
+            runs_dir / "baselines",
+            methods=baselines,
+            split=split,
+            limit=limit,
+            allow_test=allow_test,
+        )
     for manifest in baseline_manifests:
         run_manifests[str(manifest["method"])] = manifest
 
@@ -112,6 +183,7 @@ def run_suite(
             "unscored": True,
             "gold_loaded": False,
             "diagnostic_only": limit is not None,
+            "reports_only": reports_only,
             "methods": sorted(run_manifests),
             "run_manifests": {
                 label: {
@@ -205,6 +277,7 @@ def run_suite(
         "limit": limit,
         "allow_test": allow_test,
         "diagnostic_only": bool(limit is not None) or bool(artifact_manifest["diagnostic_only"]),
+        "reports_only": reports_only,
         "methods": sorted(reports),
         "run_manifests": {
             label: {
@@ -240,6 +313,11 @@ def main() -> None:
     parser.add_argument("--ablation", choices=ABLATION_NAMES, action="append")
     parser.add_argument("--resamples", type=int, default=2000)
     parser.add_argument("--seed", type=int, default=1729)
+    parser.add_argument(
+        "--reports-only",
+        action="store_true",
+        help="validate existing prediction runs and rebuild reports/artifacts without inference",
+    )
     args = parser.parse_args()
     selected_ablations = tuple(args.ablation or DEFAULT_ABLATIONS)
     selected_baselines = tuple(args.baseline or BASELINE_NAMES)
@@ -254,6 +332,7 @@ def main() -> None:
         ablations=selected_ablations,
         resamples=args.resamples,
         seed=args.seed,
+        reports_only=args.reports_only,
     )
     print(json.dumps(manifest, ensure_ascii=False, indent=2, sort_keys=True))
 

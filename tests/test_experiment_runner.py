@@ -7,6 +7,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from bench.build.build_blind_bundle import build as build_blind_bundle
+from bench.build.common import sha256_file
 from eval.run_eval import evaluate
 from experiments.build_artifacts import _load_plotting_backend
 from experiments.run_far import _primary_trace, run
@@ -235,6 +236,22 @@ def test_suite_runs_far_baseline_ablation_and_artifacts(tmp_path: Path) -> None:
     assert ablation_report["comparison"]["candidate_method"] == "far_minus_typed_conflict"
     assert "typed_conflict_f1" in ablation_report["comparison"]["metrics"]
     assert "typed_conflict_f1" in ablation_report["confidence_intervals"]
+
+    far_predictions = tmp_path / "suite/runs/far/predictions.jsonl"
+    prediction_fingerprint = sha256_file(far_predictions)
+    rebuilt = run_suite(
+        ROOT / "experiments/configs/offline_smoke.yaml",
+        ROOT / "bench",
+        tmp_path / "suite",
+        limit=5,
+        baselines=("vanilla_rag",),
+        ablations=("minus_typed_conflict",),
+        resamples=20,
+        reports_only=True,
+    )
+    assert rebuilt["reports_only"] is True
+    assert rebuilt["diagnostic_only"] is True
+    assert sha256_file(far_predictions) == prediction_fingerprint
 
 
 def test_blind_test_suite_runs_without_loading_or_scoring_gold(tmp_path: Path) -> None:

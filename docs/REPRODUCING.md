@@ -260,6 +260,12 @@ Full-length runs are also forced to `diagnostic_only` while
 `adjudicated`. Completing all 60 dev predictions therefore does not silently
 promote machine-seeded labels into paper evidence.
 
+To rebuild reports after evaluation or publication gates change without
+calling any model again, rerun the same suite command with `--reports-only`.
+It requires every selected run to be complete and verifies method, split,
+limit, config, benchmark, corpus, signature, and prediction fingerprints before
+overwriting reports and artifacts.
+
 If a standalone Qwen FAR dev run is already active on the Windows GPU, queue the
 remaining matched suite without repeating those 60 FAR predictions:
 
