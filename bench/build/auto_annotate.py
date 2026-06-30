@@ -164,6 +164,7 @@ def generate_preannotations(
     limit: int | None = None,
     overwrite: bool = False,
     resume: bool = False,
+    retry_fallbacks: bool = False,
     model_name: str = "",
 ) -> dict[str, Any]:
     manifest_path = packet_dir / "packet_manifest.json"
@@ -177,6 +178,8 @@ def generate_preannotations(
     output_path = output_dir / filename
     if overwrite and resume:
         raise ValueError("overwrite and resume cannot both be true")
+    if retry_fallbacks and not resume:
+        raise ValueError("retry_fallbacks requires resume")
     if output_dir.exists():
         if not overwrite and not resume:
             raise FileExistsError(f"{output_dir} exists; pass --overwrite to replace it")
@@ -188,6 +191,7 @@ def generate_preannotations(
     existing_sample_ids: set[str] = set()
     failures = 0
     if resume and output_path.exists():
+        kept_existing_rows: list[dict[str, Any]] = []
         for existing in read_jsonl(output_path):
             sample_id = str(existing.get("sample_id", ""))
             if sample_id not in source_ids:
@@ -198,12 +202,18 @@ def generate_preannotations(
                 raise ValueError(f"{sample_id}: resume file uses a different preannotator_id")
             if existing.get("publication_gold") is not False:
                 raise ValueError(f"{sample_id}: resume file must be non-gold")
-            existing_sample_ids.add(sample_id)
             preannotation = existing.get("preannotation", {})
-            if isinstance(preannotation, dict) and str(
+            is_fallback = isinstance(preannotation, dict) and str(
                 preannotation.get("rationale", "")
-            ).startswith("Automatic fallback;"):
+            ).startswith("Automatic fallback;")
+            if is_fallback and retry_fallbacks:
+                continue
+            existing_sample_ids.add(sample_id)
+            kept_existing_rows.append(existing)
+            if is_fallback:
                 failures += 1
+        if retry_fallbacks:
+            write_jsonl(output_path, kept_existing_rows)
     completed = 0
     file_mode = "a" if resume and output_path.exists() else "w"
     with output_path.open(file_mode, encoding="utf-8") as handle:
@@ -732,6 +742,7 @@ def main() -> None:
     generate_parser.add_argument("--limit", type=int)
     generate_parser.add_argument("--overwrite", action="store_true")
     generate_parser.add_argument("--resume", action="store_true")
+    generate_parser.add_argument("--retry-fallbacks", action="store_true")
     draft_parser = subparsers.add_parser("draft")
     draft_parser.add_argument("--packet-dir", type=Path, required=True)
     draft_parser.add_argument("--preannotation-dir", type=Path, required=True)
@@ -761,6 +772,7 @@ def main() -> None:
     parser.add_argument("--limit", type=int)
     parser.add_argument("--overwrite", action="store_true")
     parser.add_argument("--resume", action="store_true")
+    parser.add_argument("--retry-fallbacks", action="store_true")
     args = parser.parse_args()
 
     if args.command == "draft":
@@ -822,6 +834,7 @@ def main() -> None:
         limit=args.limit,
         overwrite=args.overwrite,
         resume=args.resume,
+        retry_fallbacks=args.retry_fallbacks,
         model_name=model_name,
     )
     print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))

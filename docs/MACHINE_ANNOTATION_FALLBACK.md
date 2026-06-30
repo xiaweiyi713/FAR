@@ -90,6 +90,8 @@ the standard `response` field empty.
 For interrupted long runs, reuse the same command with `--resume` instead of
 `--overwrite`; FAR skips already written sample IDs and appends the remaining
 machine preannotations.
+If fallback rows remain after a run, add `--retry-fallbacks` to remove those
+fallback rows and regenerate only the failed/missing sample IDs.
 
 The first full Qwen3.5 run completed all 300 rows but had a high fallback rate,
 so it should be treated as a rough review bundle. For cleaner strict-JSON

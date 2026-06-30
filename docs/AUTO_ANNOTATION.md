@@ -76,6 +76,19 @@ falsirag-auto-annotate generate \
   --resume
 ```
 
+If a completed or partial file contains fallback rows, retry only those rows
+plus any missing rows:
+
+```bash
+falsirag-auto-annotate generate \
+  --packet-dir /mnt/d/FAR-outputs/falsirag_annotation_packet \
+  --output-dir /mnt/d/FAR-outputs/qwen25_preannotations \
+  --config experiments/configs/qwen25_autolabel.yaml \
+  --preannotator-id qwen25_7b_ollama_machine_weak \
+  --resume \
+  --retry-fallbacks
+```
+
 At any point, summarize the in-progress or completed output:
 
 ```bash

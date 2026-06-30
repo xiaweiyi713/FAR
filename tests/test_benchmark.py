@@ -222,6 +222,56 @@ def test_llm_preannotation_resume_skips_existing_rows(tmp_path: Path) -> None:
     assert manifest["resumed_existing_samples"] == 1
 
 
+def test_llm_preannotation_resume_can_retry_fallback_rows(tmp_path: Path) -> None:
+    class BadGenerator:
+        def complete(self, prompt: str, **kwargs: object) -> str:
+            del prompt, kwargs
+            return "not json"
+
+    class GoodGenerator:
+        def complete(self, prompt: str, **kwargs: object) -> str:
+            del prompt, kwargs
+            return json.dumps(
+                {
+                    "conflict_present": True,
+                    "conflict_type": "numerical",
+                    "revision_action": "replace_numerical",
+                    "revised_answer_acceptable": True,
+                    "suggested_revised_answer": "Use the evidence-backed number.",
+                    "rationale": "The evidence snippets contain a different number.",
+                    "confidence": 0.72,
+                }
+            )
+
+    packet = tmp_path / "packet"
+    build_annotation_packet(ROOT / "bench", packet, ["alice", "bob"])
+    output = tmp_path / "preannotations"
+    generate_preannotations(
+        packet,
+        output,
+        generator=BadGenerator(),
+        preannotator_id="retry_llm",
+        limit=1,
+    )
+    manifest = generate_preannotations(
+        packet,
+        output,
+        generator=GoodGenerator(),
+        preannotator_id="retry_llm",
+        limit=1,
+        resume=True,
+        retry_fallbacks=True,
+    )
+    rows = [
+        json.loads(line)
+        for line in (output / "preannotations_retry_llm.jsonl").read_text().splitlines()
+    ]
+    assert len(rows) == 1
+    assert manifest["llm_failures"] == 0
+    assert manifest["resumed_existing_samples"] == 0
+    assert rows[0]["preannotation"]["confidence"] == 0.72
+
+
 def test_llm_preannotation_rejects_resume_with_overwrite(tmp_path: Path) -> None:
     packet = tmp_path / "packet"
     build_annotation_packet(ROOT / "bench", packet, ["alice", "bob"])
@@ -233,6 +283,19 @@ def test_llm_preannotation_rejects_resume_with_overwrite(tmp_path: Path) -> None
             preannotator_id="invalid",
             overwrite=True,
             resume=True,
+        )
+
+
+def test_llm_preannotation_rejects_retry_fallbacks_without_resume(tmp_path: Path) -> None:
+    packet = tmp_path / "packet"
+    build_annotation_packet(ROOT / "bench", packet, ["alice", "bob"])
+    with pytest.raises(ValueError, match="retry_fallbacks requires resume"):
+        generate_preannotations(
+            packet,
+            tmp_path / "preannotations",
+            generator=None,
+            preannotator_id="invalid",
+            retry_fallbacks=True,
         )
 
 
