@@ -31,11 +31,11 @@
 
 ## 2. 核心贡献（三条，缺一不可）
 
-- **C1（新问题 + 框架 FAR）**：提出 falsification-guided RAG 任务与 FAR 框架——claim 分解 → 类型化证据需求 → 反事实查询（support/refutation/boundary）→ 类型化冲突感知修正。
+- **C1（问题形式化 + 框架 FAR）**：把 falsification-guided RAG 形式化为可评测的 claim-level 控制任务，并提出 FAR 框架——claim 分解 → 类型化证据需求 → 反事实查询（support/refutation/boundary）→ 类型化冲突感知修正。**不把“答案后再次检索/寻找反证”本身声称为首创。**
 - **C2（方法新意：typed conflict 作为控制信号）**：冲突不是笼统 contradiction，而是 **temporal / entity / numerical / causal / source / definition / counter** 分型，且**不同类型驱动不同的反事实查询与不同的修正动作**。**消融必须证明 "typed > untyped"**，这是论文立得住的关键。
 - **C3（评测 FalsiRAG-Bench）**：一个专门隔离"证伪失败"的小而硬基准——温度变化 / 数值不一致 / 实体混淆 / 因果过度 / 多源冲突；**语料中刻意包含反证**，使"能否检索到反证"成为可测能力。
 
-> ⚠️ **新意红线（AAAI 最大被拒理由）**："主动找反证 / 自纠错检索"已有很近的邻居（**CRAG、Chain-of-Verification、Self-RAG、RQ-RAG、self-contradiction detection**）。"找反证"本身**不够新**。你能守住的只有：**(a) typed conflict 作为控制信号；(b) FalsiRAG-Bench 隔离证伪失败；(c) typed-ablation 证明分型确有增益**。论文每一节都要往这三点上钉。
+> ⚠️ **新意红线（AAAI 最大被拒理由）**："主动找反证 / 自纠错检索"已有很近的邻居（**FLARE、RARR、CRAG、Chain-of-Verification、Self-RAG、RQ-RAG**）；尤其 2026 年的 **CounterRefine** 已明确把初始答案当作待检验假设，做 answer-conditioned counterevidence retrieval，再经 KEEP/REVISE 门控修复。冲突证据基准也已有 **RAMDocs/MADAM-RAG**。因此“找反证”本身**绝不声称为新**。FAR 能守住的只有：**(a) 同一 typed-conflict ontology 同时控制 support/refutation/boundary 查询与类型化修订；(b) claim dependency graph 与可审计 trace；(c) FalsiRAG-Bench 隔离该控制机制；(d) typed-ablation 证明分型确有增益**。论文每一节都要往这四点上钉。
 
 ---
 
@@ -256,7 +256,7 @@ FAR/
 | 风险 | 严重度 | 对冲 |
 |---|---|---|
 | **时间不够（29 天）** | 高 | 最大化复用 VeraRAG；基准固定 300、模型固定 3 个；每周设硬关口；**降级方案见下** |
-| **新意被质疑（vs CRAG/CoVe）** | 高 | 主打 typed-conflict-as-control-signal + 基准 + typed 消融；Related 逐一区分 |
+| **新意被质疑（尤其 vs CounterRefine/RARR/CRAG）** | 高 | 明确不主张“反证检索”首创；只主打 shared typed-conflict control + claim graph + 专门基准 + typed 消融；Related 逐一区分 |
 | **typed 消融不显著** | 高 | 07-20 前完成；若 typed 无增益，转写成"分型诊断/负结果"或延期，不接触 test 调参 |
 | **反证检索不到** | 中高 | 基准语料**强制植入可检索反证**；报反证召回率 |
 | **自建基准自指/tuning-to-test** | 中 | 留盲 test + 至少 1 个外部 slice（可借 FEVER pair 改造） |

@@ -573,3 +573,22 @@ The final gate remains open. After two-person annotation and adjudication, a
 new empty bundle must be rebuilt from the frozen adjudicated directory and
 given to an independent custodian for one authorized run. The technical dry
 run must never be renamed or substituted for that package.
+
+## 2026-06-30: Novelty claim narrowed after direct-neighbor audit
+
+A primary-source literature check identified a direct 2026 neighbor that the
+draft had not cited. CounterRefine (arXiv v1 dated 2026-03-17, v3 dated
+2026-05-16, accepted at an ACL 2026 workshop) already frames a draft answer as
+a hypothesis, performs answer-conditioned counterevidence retrieval, and uses
+a validated KEEP/REVISE repair gate. Earlier FLARE and RARR already establish
+active retrieval and research-then-revision, while the COLM 2025
+RAMDocs/MADAM-RAG work directly evaluates conflicting retrieved evidence.
+
+The proposal and paper were corrected rather than stretching a priority claim.
+FAR no longer claims that counterevidence retrieval or answer revision alone is
+new. Its defensible empirical hypothesis is narrower: a shared typed-conflict
+ontology jointly controls support/refutation/boundary retrieval and
+claim-specific revision over a dependency graph, and FalsiRAG-Bench plus the
+preregistered typed-versus-untyped ablation tests that mechanism. FLARE, RARR,
+CounterRefine, and RAMDocs/MADAM-RAG were added to the paper bibliography and
+the closest-neighbor comparison is explicit in Related Work.
