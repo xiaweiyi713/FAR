@@ -73,12 +73,19 @@ check_warn() {
   echo "warn: $*" >&2
 }
 
-if [[ "${ALLOW_DIRTY}" -eq 0 && -n "$(git status --porcelain --untracked-files=no)" ]]; then
-  check_fail "tracked worktree is dirty; commit or stash before a formal cloud run"
-elif [[ "${ALLOW_DIRTY}" -eq 1 && -n "$(git status --porcelain --untracked-files=no)" ]]; then
-  check_warn "tracked worktree is dirty; allowed for this diagnostic preflight"
+if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  TRACKED_STATUS="$(git status --porcelain --untracked-files=no)"
+  if [[ "${ALLOW_DIRTY}" -eq 0 && -n "${TRACKED_STATUS}" ]]; then
+    check_fail "tracked worktree is dirty; commit or stash before a formal cloud run"
+  elif [[ "${ALLOW_DIRTY}" -eq 1 && -n "${TRACKED_STATUS}" ]]; then
+    check_warn "tracked worktree is dirty; allowed for this diagnostic preflight"
+  else
+    check_ok "tracked worktree is clean"
+  fi
+elif [[ "${ALLOW_DIRTY}" -eq 1 ]]; then
+  check_warn "Git metadata is unavailable; allowed only for this explicit rsync diagnostic"
 else
-  check_ok "tracked worktree is clean"
+  check_fail "Git metadata is unavailable; formal cloud runs require a recorded source revision"
 fi
 
 if [[ ! -d "${VERARAG_PATH}" ]]; then

@@ -466,3 +466,19 @@ the clean-worktree preflight by default; `ALLOW_DIRTY=1` exists only for a
 recorded rsync copy whose `.git` metadata is stale because `.git` was excluded.
 This is startup hygiene only; the cloud result gate remains open until rotated
 credentials are supplied and complete validated suites exist.
+
+The two cloud helper scripts were then copied alone to the D:-backed Windows
+workspace and checked without a key or model call. Remote shell syntax passed,
+the preflight found VeraRAG at `/mnt/d/FAR-workspace/VeraRAG`, accepted
+`/mnt/d/FAR-outputs/cloud_suites`, and verified the pinned DeepSeek config. The
+rsync workspace intentionally has no `.git` directory; the preflight now treats
+missing Git metadata as a hard failure by default rather than incorrectly
+calling the tree clean. An explicit `--allow-dirty` permits this known rsync
+diagnostic with a warning, while the strict path exits nonzero and requires a
+recorded source revision before a formal cloud run.
+
+At that checkpoint, the corrected FAR suite had reached 47/60 on
+`minus_typed_conflict`. A separate VeraRAG Qwen2.5 baseline job was also using
+the same Ollama/GPU host, and several FAR samples slowed from roughly minutes to
+6--20 minutes. Both jobs remained live; no process was stopped or reprioritized.
+The cloud starter's default concurrency refusal is therefore retained.
