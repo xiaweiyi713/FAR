@@ -616,3 +616,73 @@ suite root, and requires 60/60 non-partial manifests for FAR, four ablations,
 and all original baselines before making a model call. It then runs only the
 new control and requires its complete, zero-error manifest before rebuilding
 the six-baseline reports and artifacts through `--reports-only`.
+
+## 2026-07-01: Corrected Qwen typed-vs-untyped core pair completed
+
+The Windows GPU host was restarted after the previous user stop. The preserved
+suite root was still:
+
+`/mnt/d/FAR-outputs/qwen_open_dev_suite_corrected_96e32b7_restart_20260630_172643`.
+
+Directly resuming the suite from current `main` correctly failed with
+`output directory belongs to a different run signature`, because the current
+implementation fingerprint had changed after the CounterRefine baseline was
+added. The run identities for the existing corrected FAR and
+`minus_typed_conflict` checkpoints required implementation SHA-256
+`a98aca43b0cb494417df098d92569a6841b5f22146f2f27b7b2008d11d8aba28`. Commit
+`96e32b7` was verified locally to reproduce exactly that fingerprint, then
+temporarily synchronized to `/mnt/d/FAR-workspace/FAR` so the old checkpoint
+could be continued without corrupting run identity.
+
+During the resumed run, an unrelated VeraRAG WS2 repair process repeatedly
+restarted on the same host and sent Qwen2.5 requests to the shared Ollama
+server. A temporary tmux watchdog,
+`far-verarag-stop-watchdog`, was started to kill only the exact VeraRAG
+`outputs/remote_results/ws2` baseline command while `far-qwen-suite-v3` exists.
+It does not kill Ollama or the FAR suite and exits after the FAR suite session
+ends. This preserves the user's request to stop VeraRAG while allowing FAR to
+continue using the shared local model server.
+
+The corrected `minus_typed_conflict` run then completed 60/60 with zero errors,
+no missing IDs, and `partial:false`:
+
+- run signature:
+  `4bdf72392ff78682ebf0e5dd7e6eb73a99c2405b1dce8cae81dd958c588fa04a`;
+- prediction SHA-256:
+  `26e6ae372d54a8dea30dd8a892a68a4ba425d91bf341366b21ce309d6d928658`; and
+- paired local output:
+  `outputs/remote_qwen_core_comparison/`.
+
+`scripts/sync_qwen_core_comparison.sh` then copied only the complete FAR and
+untyped runs, validated both before scoring, evaluated FAR, evaluated untyped
+against FAR score rows, and validated both scored bundles. Important hashes:
+
+- FAR report:
+  `3c5b5248544a1b24aa7ff294ed4cd578b7c4ee946e38e8d52f75028e354e2fd5`;
+- FAR scores:
+  `6ecfa5d4afacd6b5c40688d485328dde1ef76b9566abd9e061f3dc86d6a77e43`;
+- untyped paired report:
+  `236b9d71bbdfa218e693bdcebd329b0af53bd97d01315e236cf257e7355468bb`;
+- untyped scores:
+  `42fd95c58be4b45af888737175072bf4f64a4dca157c1c6e0d01b4409bda2021`;
+- untyped post-eval validation:
+  `8ae0fa03ff184b8a8e6a838288dcdd976fa155891476297acac93bf1894d39db`.
+
+The dev diagnostic supports the preregistered typed-control hypothesis but is
+not publication-ready because the benchmark remains machine-seeded and lacks
+human adjudication. FAR versus untyped on the same 60 Qwen3.5 dev rows:
+
+- answer correctness: `0.7974` vs `0.7190` (`+0.0783`, 95% paired bootstrap
+  CI `[+0.0344, +0.1237]` for FAR over untyped after sign conversion);
+- revision accuracy: `0.2167` vs `0.0000` (`+0.2167`, McNemar
+  `p=0.000244`);
+- revision action correctness: `0.3667` vs `0.0000` (`+0.3667`, McNemar
+  `p=4.77e-7`);
+- typed conflict F1: `0.4204` vs `0.0000`; and
+- counter-evidence recall: both `0.9833`.
+
+The remaining three ablations and original five baselines are still running in
+the same legacy-fingerprint suite. After they complete, current `main` must be
+resynchronized before running the separate CounterRefine-style control and the
+six-baseline reports-only merge. Cloud DeepSeek/Qwen Plus runs, double-human
+annotation, adjudication, and external blind custody remain open gates.
