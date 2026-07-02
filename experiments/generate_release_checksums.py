@@ -16,6 +16,17 @@ from experiments.generate_sbom import build_sbom
 DEFAULT_OUTPUT = Path("build/release-checksums.json")
 DEFAULT_DIST_DIR = Path("dist")
 DEFAULT_SBOM = Path("build/sbom/far-sbom.cdx.json")
+BASE_RELEASE_ARTIFACT_ROLES = frozenset({"sdist", "wheel", "cyclonedx_sbom"})
+FINAL_RELEASE_ARTIFACT_ROLES = BASE_RELEASE_ARTIFACT_ROLES | frozenset(
+    {
+        "benchmark_validation_report",
+        "secret_scan_report",
+        "submission_evidence_snapshot",
+        "paper_main_pdf",
+        "paper_supplement_pdf",
+        "aaai_reproducibility_checklist_pdf",
+    }
+)
 
 
 @dataclass(frozen=True)
@@ -130,6 +141,7 @@ def validate_checksum_manifest(
     manifest_path: str | Path = DEFAULT_OUTPUT,
     *,
     project_root: str | Path = ".",
+    required_roles: Iterable[str] = BASE_RELEASE_ARTIFACT_ROLES,
 ) -> ChecksumAudit:
     path = Path(manifest_path)
     try:
@@ -189,7 +201,7 @@ def validate_checksum_manifest(
             errors.append(f"artifact size mismatch: {relative}")
         if item.get("sha256") != _sha256(artifact_path):
             errors.append(f"artifact sha256 mismatch: {relative}")
-    required = {"sdist", "wheel", "cyclonedx_sbom"}
+    required = set(required_roles)
     for role in sorted(required - roles):
         errors.append(f"missing required artifact role: {role}")
     return ChecksumAudit(not errors, tuple(errors), str(path), len(artifacts))

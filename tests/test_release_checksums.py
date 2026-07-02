@@ -5,12 +5,17 @@ import subprocess
 import tarfile
 from pathlib import Path
 
+import pytest
+
 from experiments.generate_release_checksums import (
+    FINAL_RELEASE_ARTIFACT_ROLES,
     build_checksum_manifest,
     validate_checksum_manifest,
     write_checksum_manifest,
 )
 from experiments.generate_sbom import build_sbom, write_sbom
+from experiments.runner import _implementation_sha256
+from experiments.submission_readiness import Gate, _release_gate
 
 
 def _release_tree(tmp_path: Path) -> tuple[Path, Path]:
@@ -85,6 +90,88 @@ def test_release_checksums_cover_extra_release_artifacts(tmp_path: Path) -> None
     assert "artifact sha256 mismatch: paper/build/release/main.pdf" in modified_audit.errors
 
 
+def test_final_release_validation_requires_all_submission_artifacts(tmp_path: Path) -> None:
+    root, sbom = _release_tree(tmp_path)
+    manifest = build_checksum_manifest(project_root=root, sbom_path=sbom)
+    output = write_checksum_manifest(manifest, root / "build/release-checksums.json")
+
+    audit = validate_checksum_manifest(
+        output,
+        project_root=root,
+        required_roles=FINAL_RELEASE_ARTIFACT_ROLES,
+    )
+
+    assert audit.valid is False
+    assert set(audit.errors) == {
+        f"missing required artifact role: {role}"
+        for role in FINAL_RELEASE_ARTIFACT_ROLES - {"sdist", "wheel", "cyclonedx_sbom"}
+    }
+
+
+def test_final_release_validation_accepts_complete_submission_set(tmp_path: Path) -> None:
+    root, sbom = _release_tree(tmp_path)
+    extra_roles = FINAL_RELEASE_ARTIFACT_ROLES - {"sdist", "wheel", "cyclonedx_sbom"}
+    extras: list[tuple[str, Path]] = []
+    for role in sorted(extra_roles):
+        artifact = root / "release" / f"{role}.artifact"
+        artifact.parent.mkdir(parents=True, exist_ok=True)
+        artifact.write_bytes(role.encode())
+        extras.append((role, artifact))
+    manifest = build_checksum_manifest(
+        project_root=root,
+        sbom_path=sbom,
+        extra_artifacts=extras,
+    )
+    output = write_checksum_manifest(manifest, root / "build/release-checksums.json")
+
+    audit = validate_checksum_manifest(
+        output,
+        project_root=root,
+        required_roles=FINAL_RELEASE_ARTIFACT_ROLES,
+    )
+
+    assert audit.valid is True
+    assert audit.artifact_count == 9
+
+
+def test_submission_release_gate_binds_exact_audited_evidence(tmp_path: Path) -> None:
+    root, sbom = _release_tree(tmp_path)
+    config = {
+        "release_checksums": "build/release-checksums.json",
+        "submission_evidence_snapshot": "submission/evidence.json",
+    }
+    evidence = root / config["submission_evidence_snapshot"]
+    evidence.parent.mkdir(parents=True)
+    evidence.write_text(json.dumps(config), encoding="utf-8")
+    extras: list[tuple[str, Path]] = [("submission_evidence_snapshot", evidence)]
+    for role in sorted(
+        FINAL_RELEASE_ARTIFACT_ROLES
+        - {"sdist", "wheel", "cyclonedx_sbom", "submission_evidence_snapshot"}
+    ):
+        artifact = root / "release" / f"{role}.artifact"
+        artifact.parent.mkdir(parents=True, exist_ok=True)
+        artifact.write_bytes(role.encode())
+        extras.append((role, artifact))
+    manifest = build_checksum_manifest(
+        project_root=root,
+        sbom_path=sbom,
+        extra_artifacts=extras,
+    )
+    write_checksum_manifest(manifest, root / config["release_checksums"])
+    dev_suites = Gate(
+        "adjudicated_dev_matrix",
+        True,
+        "ok",
+        {"implementation_sha256": _implementation_sha256()},
+    )
+
+    result = _release_gate(root, config, dev_suites)
+
+    assert result["artifacts"] == 9
+    with pytest.raises(ValueError, match="does not match the audited evidence"):
+        _release_gate(root, {**config, "unexpected": True}, dev_suites)
+
+
 def test_release_check_fingerprints_generated_audit_and_pdf_artifacts() -> None:
     script = (Path(__file__).resolve().parents[1] / "scripts/release_check.sh").read_text(
         encoding="utf-8"
@@ -92,12 +179,17 @@ def test_release_check_fingerprints_generated_audit_and_pdf_artifacts() -> None:
     for role in (
         "benchmark_validation_report",
         "secret_scan_report",
-        "submission_readiness_snapshot",
+        "submission_evidence_snapshot",
         "paper_main_pdf",
         "paper_supplement_pdf",
         "aaai_reproducibility_checklist_pdf",
     ):
         assert f"--artifact {role}=" in script
+    checksum_offset = script.index("uv run falsirag-release-checksums")
+    readiness_offset = script.index("uv run falsirag-submission-readiness")
+    assert checksum_offset < readiness_offset
+    assert "submission_readiness_snapshot" not in script
+    assert 'EVIDENCE_PATH="${FAR_SUBMISSION_EVIDENCE:-' in script
 
 
 def test_release_checksums_reject_modified_artifact(tmp_path: Path) -> None:

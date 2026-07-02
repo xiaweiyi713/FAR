@@ -14,6 +14,7 @@ if [[ -n "$(git status --porcelain --untracked-files=all)" ]]; then
 fi
 
 mkdir -p build/release
+EVIDENCE_PATH="${FAR_SUBMISSION_EVIDENCE:-submission/evidence.template.json}"
 
 bash -n scripts/*.sh
 bash scripts/check_cloud_run_readiness.sh
@@ -26,10 +27,6 @@ uv run falsirag-scan-secrets --json > build/release/secret-scan.json
 uv run falsirag-generate-sbom \
   --output build/sbom/far-sbom.cdx.json --check --json
 uv build
-uv run falsirag-submission-readiness \
-  --evidence submission/evidence.template.json \
-  --output build/release/submission-readiness-current.json \
-  --allow-incomplete > /dev/null
 
 (
   cd paper
@@ -46,10 +43,21 @@ uv run falsirag-release-checksums \
   --sbom build/sbom/far-sbom.cdx.json \
   --artifact benchmark_validation_report=build/release/benchmark-validation.json \
   --artifact secret_scan_report=build/release/secret-scan.json \
-  --artifact submission_readiness_snapshot=build/release/submission-readiness-current.json \
+  --artifact submission_evidence_snapshot="${EVIDENCE_PATH}" \
   --artifact paper_main_pdf=paper/build/release/main.pdf \
   --artifact paper_supplement_pdf=paper/build/release/supplement.pdf \
   --artifact aaai_reproducibility_checklist_pdf=paper/build/release/ReproducibilityChecklist.pdf \
   --output build/release-checksums.json --check --json
+
+if [[ "${EVIDENCE_PATH}" == *.template.json ]]; then
+  uv run falsirag-submission-readiness \
+    --evidence "${EVIDENCE_PATH}" \
+    --output build/release/submission-readiness-current.json \
+    --allow-incomplete > /dev/null
+else
+  uv run falsirag-submission-readiness \
+    --evidence "${EVIDENCE_PATH}" \
+    --output build/release/submission-readiness-current.json > /dev/null
+fi
 
 echo "FAR release checks passed."

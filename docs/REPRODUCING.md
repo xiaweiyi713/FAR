@@ -22,16 +22,20 @@ before publishing or replacing paper numbers.
 On the final submission commit, run the single fail-closed release gate:
 
 ```bash
-bash scripts/release_check.sh
+FAR_SUBMISSION_EVIDENCE=submission/evidence.json bash scripts/release_check.sh
 ```
 
 It executes formatting/lint/type/tests, benchmark validation, the redacting
 secret scan, SBOM generation, wheel/sdist build, PDF compilation for the paper,
 supplement, and reproducibility checklist, and release checksums for the package
-plus generated audit/PDF artifacts. It first requires a clean Git worktree, and
-the checksum manifest records the exact commit. Human
-annotation, external blind custody, author metadata, and policy review remain
-separate governance gates and are not falsely automated by this script.
+plus generated audit/PDF artifacts and the exact submission-evidence snapshot.
+It then runs the full submission-readiness audit against that newly generated
+manifest. It first requires a clean Git worktree, and the checksum manifest
+records the exact commit. Omitting `FAR_SUBMISSION_EVIDENCE` deliberately uses
+the template in incomplete diagnostic mode; that mode cannot claim submission
+readiness. Human annotation, external blind custody, author metadata, and policy
+review remain separate governance inputs and are not falsely automated by this
+script.
 
 Generate and validate the declared-dependency CycloneDX 1.5 SBOM before a
 release build:
@@ -60,8 +64,16 @@ uv run falsirag-release-checksums \
 The checksum manifest always requires the source distribution, wheel, and
 CycloneDX SBOM roles, and accepts additional `--artifact ROLE=PATH` entries for
 paper PDFs, benchmark validation reports, secret-scan reports, submission
-readiness snapshots, or other final release deliverables. It validates every
-recorded path, byte size, and SHA-256 hash.
+evidence snapshots, or other final release deliverables. It validates every
+recorded path, byte size, and SHA-256 hash. The standalone validator retains
+that three-role minimum for intermediate package checks; the final submission
+readiness gate is stricter and requires all nine artifacts emitted by
+`scripts/release_check.sh`: those three package artifacts, both audit reports,
+the evidence snapshot, both paper PDFs, and the reproducibility-checklist PDF.
+The readiness report is generated only after that manifest and is not hashed
+back into its own dependency graph; this avoids a circular, unsatisfiable
+checksum. The release gate also verifies that the fingerprinted evidence file
+is byte-for-byte the evidence object being audited.
 
 Scan tracked and unignored text files before every commit or release:
 

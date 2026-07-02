@@ -13,7 +13,10 @@ from typing import Any
 from bench.annotations import validate_annotation_evidence
 from bench.build.common import read_jsonl, sha256_file, write_json
 from bench.build.validate_bench import validate as validate_benchmark
-from experiments.generate_release_checksums import validate_checksum_manifest
+from experiments.generate_release_checksums import (
+    FINAL_RELEASE_ARTIFACT_ROLES,
+    validate_checksum_manifest,
+)
 from experiments.runner import _implementation_sha256
 from experiments.validate_results import validate_result_bundle
 
@@ -463,9 +466,31 @@ def _scored_tests_gate(
 
 def _release_gate(root: Path, config: dict[str, Any], dev_suites: Gate) -> dict[str, Any]:
     path = _resolve(root, config.get("release_checksums"))
-    audit = validate_checksum_manifest(path, project_root=root)
+    audit = validate_checksum_manifest(
+        path,
+        project_root=root,
+        required_roles=FINAL_RELEASE_ARTIFACT_ROLES,
+    )
     if not audit.valid:
         raise ValueError(f"release checksum audit failed: {list(audit.errors)}")
+    evidence_path = _resolve(root, config.get("submission_evidence_snapshot")).resolve()
+    try:
+        expected_evidence_path = evidence_path.relative_to(root.resolve()).as_posix()
+    except ValueError as exc:
+        raise ValueError("submission evidence snapshot must stay inside the project root") from exc
+    if _json(evidence_path) != config:
+        raise ValueError("submission evidence snapshot does not match the audited evidence")
+    manifest = _json(path)
+    evidence_artifact = next(
+        (
+            item
+            for item in manifest.get("artifacts", [])
+            if isinstance(item, dict) and item.get("role") == "submission_evidence_snapshot"
+        ),
+        None,
+    )
+    if evidence_artifact is None or evidence_artifact.get("path") != expected_evidence_path:
+        raise ValueError("release archive is not bound to the audited submission evidence")
     if not dev_suites.passed:
         raise ValueError("formal dev suites must pass before the release archive")
     if _implementation_sha256() != dev_suites.evidence["implementation_sha256"]:

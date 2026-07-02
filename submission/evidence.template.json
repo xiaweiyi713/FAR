@@ -36,6 +36,7 @@
     "all_failures_reported": false
   },
   "release_checksums": "build/release-checksums.json",
+  "submission_evidence_snapshot": "submission/evidence.template.json",
   "human_review": {
     "reviewer_id": "",
     "completed_at": "",
