@@ -87,17 +87,30 @@ gate.
 ## 3. Release and handoff owner
 
 On the frozen commit, run `bash scripts/release_check.sh`, then build a new
-gold-free bundle from adjudicated data:
+gold-free bundle from adjudicated data and package it for the custodian:
 
 ```bash
 uv run falsirag-build-blind-bundle \
   --data-dir outputs/annotations/falsirag_adjudicated_v1 \
   --output-dir outputs/handoff/falsirag_blind_test_v1
+
+uv run falsirag-build-blind-bundle audit \
+  --bundle-dir outputs/handoff/falsirag_blind_test_v1
+
+uv run falsirag-build-blind-bundle package \
+  --bundle-dir outputs/handoff/falsirag_blind_test_v1 \
+  --output-dir outputs/handoff/custodian_deepseek_handoff \
+  --config experiments/configs/deepseek.yaml \
+  --frozen-commit "$(git rev-parse HEAD)" \
+  --overwrite
 ```
 
-Never hand off `falsirag_blind_test_technical_v1`. Send the external custodian
-only the new blind bundle, frozen release/repository, configs, environment
-instructions, and credentials through environment variables.
+Never hand off `falsirag_blind_test_technical_v1`. The package command rejects
+technical dry-run bundle names by default, recursively checks for forbidden
+gold/provenance keys, and includes only the gold-free bundle, selected config,
+run sheet, and manifest. Send the external custodian only this package, the
+frozen release/repository, environment instructions, and credentials through
+environment variables.
 
 ## 4. External custodian
 

@@ -52,6 +52,34 @@ manifest. It excludes:
 The builder refuses to write into a non-empty output directory. Keep that
 behavior: stale files in a handoff bundle are a blindness risk.
 
+Before transferring files, audit and package the bundle for the custodian:
+
+```bash
+uv run falsirag-build-blind-bundle audit \
+  --bundle-dir outputs/handoff/falsirag_blind_test_v1
+
+uv run falsirag-build-blind-bundle package \
+  --bundle-dir outputs/handoff/falsirag_blind_test_v1 \
+  --output-dir outputs/handoff/custodian_deepseek_handoff \
+  --config experiments/configs/deepseek.yaml \
+  --frozen-commit "$(git rev-parse HEAD)" \
+  --overwrite
+```
+
+The package command creates a deterministic ZIP and a
+`custodian_handoff_manifest.json`. It includes only:
+
+- `blind_bundle/blind_bundle_manifest.json`;
+- `blind_bundle/corpus.jsonl`;
+- `blind_bundle/splits/test_inputs.jsonl`;
+- the explicitly selected config file(s);
+- `CUSTODIAN_RUN_SHEET.md`; and
+- the handoff manifest.
+
+It rejects forbidden gold/provenance keys, extra files in the blind bundle,
+fingerprint mismatches, and directories whose name contains `technical` unless
+`--allow-technical` is explicitly supplied for a non-final dry run.
+
 ### Technical dry-run bundle
 
 A full technical dry run was built on 2026-06-30 from the current
@@ -83,12 +111,10 @@ audit. Do not rename or hand off the technical dry-run directory.
 
 Send the custodian:
 
-1. `outputs/handoff/falsirag_blind_test_v1/`
+1. the `custodian_*_handoff.zip` package and its SHA-256 manifest;
 2. the frozen repository commit or release archive;
-3. the exact config file, e.g. `experiments/configs/deepseek.yaml`;
-4. environment instructions from `docs/REPRODUCING.md`;
-5. a short run sheet listing model credentials supplied through environment
-   variables only.
+3. environment instructions from `docs/REPRODUCING.md`;
+4. model credentials supplied through environment variables only.
 
 Do not send:
 

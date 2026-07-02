@@ -27,7 +27,13 @@ from bench.build.auto_annotate import (
     import_label_studio,
     summarize_preannotations,
 )
-from bench.build.build_blind_bundle import build as build_blind_bundle
+from bench.build.build_blind_bundle import (
+    audit_bundle,
+    package_handoff,
+)
+from bench.build.build_blind_bundle import (
+    build as build_blind_bundle,
+)
 from bench.build.extend_from_verabench import build
 from bench.build.import_fever_slice import import_slice
 from bench.build.machine_label_audit import audit_machine_labels
@@ -99,6 +105,65 @@ def test_blind_bundle_contains_only_operational_inputs(tmp_path: Path) -> None:
     assert all("metadata" not in row and "source_doc_id" not in row for row in corpus_rows)
     assert all(set(row) <= set(manifest["public_corpus_fields"]) for row in corpus_rows)
     assert any(row.get("entities") for row in corpus_rows)
+    assert audit_bundle(output_dir)["valid"] is True
+
+
+def test_blind_handoff_package_is_gold_free_and_deterministic(tmp_path: Path) -> None:
+    bundle_dir = tmp_path / "blind"
+    build_blind_bundle(ROOT / "bench", bundle_dir)
+    output_dir = tmp_path / "custodian_package"
+    manifest = package_handoff(
+        bundle_dir,
+        output_dir,
+        config_paths=[ROOT / "experiments/configs/offline_smoke.yaml"],
+        frozen_commit="abc123",
+    )
+    assert manifest["schema_version"] == "falsirag-blind-custodian-handoff-v1"
+    assert manifest["safety"]["gold_included"] is False
+    assert manifest["bundle_audit"]["samples"] == 58
+    archive = tmp_path / "custodian_package.zip"
+    assert archive.exists()
+    first_sha = manifest["archive_sha256"]
+    with zipfile.ZipFile(archive) as package:
+        names = set(package.namelist())
+    assert names == {
+        "CUSTODIAN_RUN_SHEET.md",
+        "blind_bundle/blind_bundle_manifest.json",
+        "blind_bundle/corpus.jsonl",
+        "blind_bundle/splits/test_inputs.jsonl",
+        "configs/offline_smoke.yaml",
+        "custodian_handoff_manifest.json",
+    }
+    assert not any("falsirag_bench" in name or "annotation" in name for name in names)
+    second = package_handoff(
+        bundle_dir,
+        output_dir,
+        config_paths=[ROOT / "experiments/configs/offline_smoke.yaml"],
+        frozen_commit="abc123",
+        overwrite=True,
+    )
+    assert second["archive_sha256"] == first_sha
+
+
+def test_blind_bundle_audit_rejects_technical_and_forbidden_gold_keys(tmp_path: Path) -> None:
+    technical_dir = tmp_path / "falsirag_blind_test_technical_v1"
+    build_blind_bundle(ROOT / "bench", technical_dir)
+    with pytest.raises(ValueError, match="technical dry-run"):
+        audit_bundle(technical_dir)
+
+    unsafe_dir = tmp_path / "unsafe"
+    build_blind_bundle(ROOT / "bench", unsafe_dir)
+    rows = [
+        json.loads(line)
+        for line in (unsafe_dir / "splits/test_inputs.jsonl").read_text().splitlines()
+    ]
+    rows[0]["expected_revision"] = {"action": "leaked"}
+    (unsafe_dir / "splits/test_inputs.jsonl").write_text(
+        "".join(json.dumps(row, ensure_ascii=False) + "\n" for row in rows),
+        encoding="utf-8",
+    )
+    with pytest.raises(ValueError, match="non-operational fields"):
+        audit_bundle(unsafe_dir)
 
 
 @pytest.mark.skipif(not VERA_BENCH.exists(), reason="local VeraRAG fixture unavailable")

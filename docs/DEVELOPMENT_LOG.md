@@ -897,3 +897,15 @@ The current ignored ZIP SHAs are `reviewer_a_handoff.zip`
 `reviewer_b_handoff.zip`
 `dd12819bc2592086e23f552cfb70808d66a390cea7a819d6cc7b852c3bfa5c8e`.
 They are blank handoff artifacts, not completed human annotations.
+
+The external blind-test handoff was also tightened. `falsirag-build-blind-bundle`
+now has `audit` and `package` subcommands. `audit` requires the bundle to contain
+exactly `blind_bundle_manifest.json`, `corpus.jsonl`, and
+`splits/test_inputs.jsonl`, recomputes manifest fingerprints, verifies the
+five-field test schema, recursively rejects gold/provenance keys, and refuses
+directories whose name contains `technical` unless a dry-run override is
+explicitly supplied. `package` builds a deterministic custodian ZIP containing
+only the audited blind bundle, selected config files, a run sheet, and a
+handoff manifest. This reduces the risk of accidentally sending the
+machine-seeded technical dry run, adjudicated gold, local score files, or
+credentials to the external custodian.

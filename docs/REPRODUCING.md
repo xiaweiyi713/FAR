@@ -470,20 +470,32 @@ reports-only merge.
 ## Externally held blind test
 
 Do not run the ordinary scored suite against local test gold. Before the one
-authorized final test, create a fresh gold-free handoff directory:
+authorized final test, create, audit, and package a fresh gold-free handoff:
 
 ```bash
 uv run falsirag-build-blind-bundle \
-  --data-dir bench \
+  --data-dir outputs/annotations/falsirag_adjudicated_v1 \
   --output-dir outputs/handoff/falsirag_blind_test
+
+uv run falsirag-build-blind-bundle audit \
+  --bundle-dir outputs/handoff/falsirag_blind_test
+
+uv run falsirag-build-blind-bundle package \
+  --bundle-dir outputs/handoff/falsirag_blind_test \
+  --output-dir outputs/handoff/custodian_deepseek_handoff \
+  --config experiments/configs/deepseek.yaml \
+  --frozen-commit "$(git rev-parse HEAD)" \
+  --overwrite
 ```
 
 The command writes only a sanitized corpus, the five-field test inputs, and a
 fingerprint manifest. It strips construction metadata and dependency IDs and
 refuses a non-empty output directory, preventing stale gold files from being
-left in the handoff. Transfer that directory, the frozen config, code commit,
-and environment lock to the external custodian. The custodian runs predictions
-once, without receiving `falsirag_bench.jsonl`:
+left in the handoff. The audit/package step recursively rejects forbidden
+gold/provenance keys, extra files, fingerprint mismatches, and accidental
+`technical` dry-run handoffs. Transfer the resulting custodian ZIP, frozen code
+commit/release, and environment lock to the external custodian. The custodian
+runs predictions once, without receiving `falsirag_bench.jsonl`:
 
 ```bash
 falsirag-suite \
