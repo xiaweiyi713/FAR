@@ -16,9 +16,10 @@ The following cannot be truthfully completed by code generation:
    `992a4cf027db5491feef2a57210d8a9395be61798c0ff84b29760d495bc96b56`.
    The typed-vs-untyped dev diagnostic supports typed conflict control, but the
    other ablation effects are mixed and must not be overstated. The sixth
-   CounterRefine-style closest-neighbor control is running separately under the
-   same Qwen config before a reports-only merge. Full DeepSeek V4-Flash and
-   Qwen3.7 Plus (2026-05-26) runs also remain;
+   CounterRefine-style closest-neighbor control was started separately under the
+   same Qwen config, then stopped at 9 checkpointed rows before power-off; it
+   must be resumed or rerun before a reports-only merge. Full DeepSeek V4-Flash
+   and Qwen3.7 Plus (2026-05-26) runs also remain;
 4. final validated six-baseline reports, paired confidence intervals, McNemar
    values, and any typed-ablation claim that survives adjudicated gold/test;
 5. named authors, affiliations, and the human-required AAAI policy review.

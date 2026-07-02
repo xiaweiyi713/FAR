@@ -289,13 +289,14 @@ same model biases as the FAR system being evaluated. Therefore:
 
 ## Open-source alternatives
 
-I checked the current open-source ecosystem on 2026-06-29. The practical options
+I checked the current open-source ecosystem again on 2026-07-02. The practical options
 for FAR are:
 
 | Tool | Best FAR use | Fit |
 |---|---|---|
-| [Label Studio](https://labelstud.io/guide/predictions.html) | Human review UI for blind packets with imported LLM predictions | Best immediate fit; FAR exports `label_config.xml` and `tasks.json` directly in its documented `predictions` format. |
-| [Argilla](https://docs.argilla.io/v2.1/how_to_guides/annotate/) | Collaborative feedback/annotation workflows for NLP/LLM datasets | Its Suggestions are editable pre-filled responses; useful for review records, but FAR would need a separate schema bridge. |
+| [Label Studio](https://labelstud.io/guide/predictions.html) | Human review UI for blind packets with imported LLM predictions | Best immediate fit; FAR exports `label_config.xml` and `tasks.json` directly in its documented `predictions` format. Its ML backend can wrap custom models for live auto-labeling, but static prediction import is simpler for this 300-row benchmark. |
+| [doccano auto-labeling](https://doccano.github.io/doccano/advanced/auto_labelling_config/) | Open-source text annotation UI with Web-API auto-labeling; [`auto-labeling-pipeline`](https://github.com/doccano/auto-labeling-pipeline) can annotate doccano documents automatically | Viable if the team prefers doccano, but migrating now would add schema conversion work without closing the publication gate. |
+| [Argilla](https://docs.v1.argilla.io/en/v1.3.0/guides/programmatic_labeling_with_rules.html) | Collaborative feedback/annotation workflows and weak/programmatic labeling for text classification | Useful for review records and weak supervision, but FAR would need a separate schema bridge for conflict type plus revision action. |
 | [Snorkel](https://github.com/snorkel-team/snorkel) | Weak supervision from labeling functions | Useful for deterministic rules such as number/date/entity mismatch; less useful for nuanced revision quality. |
 | [Refuel Autolabel](https://github.com/refuel-ai/autolabel) | LLM-based batch labeling from prompts | Similar role to FAR's built-in preannotator; useful if you prefer its prompt/evaluation harness. |
 | [Distilabel](https://distilabel.argilla.io/) | LLM synthetic-data and labeling pipelines | Useful for larger LLM labeling pipelines, but more machinery than FAR needs for the current paper artifact. |

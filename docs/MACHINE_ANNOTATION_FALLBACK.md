@@ -1,6 +1,6 @@
 # Machine-only annotation fallback
 
-Date checked: 2026-06-30
+Date checked: 2026-07-02
 
 This document records the fallback plan when no independent human annotators are
 available. The fallback is useful for continuing FAR development and for
@@ -47,12 +47,19 @@ weak-label layer rather than introducing another labeling service before the
 | Tool | Status | FAR fit | Decision |
 |---|---|---|---|
 | FAR built-in preannotator + Qwen/Ollama | Project-local, open-weight model runtime | Directly emits FAR JSONL and Label Studio predictions | Use first |
-| Label Studio | Open-source annotation UI with prediction imports | FAR already exports `label_config.xml` and `tasks.json` | Use as review UI, not autonomous gold |
+| Label Studio | Open-source annotation UI with prediction imports and an ML backend that can wrap custom models as a service | FAR already exports `label_config.xml` and `tasks.json`; predictions import is enough for static prelabels, while the ML backend is useful only if reviewers need live suggestions | Use as review UI, not autonomous gold |
+| doccano auto-labeling | Open-source text annotation tool with Web-API auto-labeling and a maintained `auto-labeling-pipeline` package | Good if the project moves to doccano, but FAR already has Label Studio export/import and richer revision fields | Optional alternative UI; do not migrate now |
 | Refuel Autolabel | Open-source LLM batch labeling library | Similar to FAR's preannotator but adds an external config/runtime layer | Optional, not needed immediately |
 | Distilabel | Open-source LLM synthetic-data and AI-feedback pipelines | Good for large judge/label pipelines | Optional if scaling beyond current 300 samples |
-| Snorkel | Open-source weak supervision | Strong fit for programmatic labeling functions and label-model aggregation | Good second signal |
+| Snorkel | Open-source weak supervision | Strong fit for programmatic labeling functions and label-model aggregation | Good second signal if FAR's rule layer grows beyond simple abstain/priority review |
 | skweak | Open-source weak supervision for NLP | Useful idea, but mostly spaCy/span/classification-oriented | Do not prioritize |
-| Argilla | Open-source dataset/feedback platform | Good collaborative UI and suggestions | Optional alternative to Label Studio |
+| Argilla | Open-source dataset/feedback platform with programmatic-labeling/weak-supervision workflows for text classification | Good collaborative UI and suggestions; FAR would need a schema bridge for conflict type + revision action | Optional alternative to Label Studio |
+
+Short version: the open-source tooling exists, but none of it removes FAR's
+publication need for independent human review. The recommended path is
+therefore to keep FAR's own schema-valid preannotator, use Label Studio
+prediction imports for review if humans become available, and keep rule/weak
+labels as a triage signal.
 
 ## D-drive local Qwen workflow
 
@@ -209,6 +216,14 @@ negative result or a replacement for two human annotators.
 
 - Label Studio prediction imports:
   <https://labelstud.io/guide/predictions.html>
+- Label Studio ML backend:
+  <https://labelstud.io/guide/ml>
+- doccano auto-labeling configuration:
+  <https://doccano.github.io/doccano/advanced/auto_labelling_config/>
+- doccano auto-labeling pipeline:
+  <https://github.com/doccano/auto-labeling-pipeline>
+- Argilla programmatic labeling:
+  <https://docs.v1.argilla.io/en/v1.3.0/guides/programmatic_labeling_with_rules.html>
 - Refuel Autolabel:
   <https://github.com/refuel-ai/autolabel>
 - Distilabel:

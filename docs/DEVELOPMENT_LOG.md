@@ -681,21 +681,24 @@ human adjudication. FAR versus untyped on the same 60 Qwen3.5 dev rows:
 - typed conflict F1: `0.4204` vs `0.0000`; and
 - counter-evidence recall: both `0.9833`.
 
-The remaining three ablations and original five baselines are still running in
-the same legacy-fingerprint suite. After they complete, current `main` must be
-resynchronized before running the separate CounterRefine-style control and the
-six-baseline reports-only merge. Cloud DeepSeek/Qwen Plus runs, double-human
-annotation, adjudication, and external blind custody remain open gates.
+At the time of this entry, the remaining three ablations and original five
+baselines were still running in the same legacy-fingerprint suite. Later entries
+supersede that operational status: the original five baselines completed, while
+the separate CounterRefine-style control remains pending after a stop request.
+Cloud DeepSeek/Qwen Plus runs, double-human annotation, adjudication, and
+external blind custody remain open gates.
 
 ## 2026-07-02: Four corrected Qwen ablations collected; diagnosis is mixed
 
 The legacy-fingerprint Qwen suite later completed all four ablations 60/60 with
-zero errors and `partial:false`. The still-running part of the suite is the
-final original Self-RAG-style baseline; a clean current-main finalizer was
-queued in tmux session `far-qwen-legacy-finalize` so that, after the legacy
-suite exits, it verifies FAR + four ablations + the original five baselines,
-restores current `main` from a D:-backed archive, and runs the separate
-CounterRefine-style control plus reports-only merge.
+zero errors and `partial:false`. At the time of this entry, the still-running
+part of the suite was the final original Self-RAG-style baseline; a clean
+current-main finalizer was queued in tmux session `far-qwen-legacy-finalize` so
+that, after the legacy suite exited, it would verify FAR + four ablations + the
+original five baselines, restore current `main` from a D:-backed archive, and
+run the separate CounterRefine-style control plus reports-only merge. Later
+entries supersede this status: the original five baselines completed and
+CounterRefine was stopped at 9 checkpointed rows.
 
 The complete ablation prediction hashes are:
 
@@ -738,3 +741,20 @@ driving revision accuracy/action correctness to zero. This is a useful warning
 for the paper: the defensible claim is typed conflict as an auditable control
 signal, while marginal claims about every query/revision submodule must be
 withheld or rewritten unless adjudicated gold/test evidence supports them.
+
+## 2026-07-02: Remote Qwen suite paused cleanly before local power-off
+
+After the legacy suite exited, the queued finalizer verified FAR, four
+ablations, and the original five Qwen baselines as complete 60/60 with zero
+errors, restored the current-main archive, and started the separate
+CounterRefine-style closest-neighbor control. At the user's request before
+local power-off, the remote `far-qwen-legacy-finalize` and `far-ollama` tmux
+sessions were killed, and the remaining Ollama/FAR/VeraRAG processes were
+confirmed absent on `windows-gpu`.
+
+The CounterRefine control is therefore not complete: its checkpoint file had 9
+rows when the stop request was handled. The suite outputs were left in place,
+but the six-baseline Qwen reports-only merge must wait until CounterRefine is
+resumed or rerun to 60/60. Documentation status now records the original five
+baselines as complete and the sixth baseline as pending, rather than
+misstating it as still running.
