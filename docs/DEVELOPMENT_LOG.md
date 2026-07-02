@@ -686,3 +686,55 @@ the same legacy-fingerprint suite. After they complete, current `main` must be
 resynchronized before running the separate CounterRefine-style control and the
 six-baseline reports-only merge. Cloud DeepSeek/Qwen Plus runs, double-human
 annotation, adjudication, and external blind custody remain open gates.
+
+## 2026-07-02: Four corrected Qwen ablations collected; diagnosis is mixed
+
+The legacy-fingerprint Qwen suite later completed all four ablations 60/60 with
+zero errors and `partial:false`. The still-running part of the suite is the
+final original Self-RAG-style baseline; a clean current-main finalizer was
+queued in tmux session `far-qwen-legacy-finalize` so that, after the legacy
+suite exits, it verifies FAR + four ablations + the original five baselines,
+restores current `main` from a D:-backed archive, and runs the separate
+CounterRefine-style control plus reports-only merge.
+
+The complete ablation prediction hashes are:
+
+- FAR:
+  `992a4cf027db5491feef2a57210d8a9395be61798c0ff84b29760d495bc96b56`;
+- `minus_typed_conflict`:
+  `26e6ae372d54a8dea30dd8a892a68a4ba425d91bf341366b21ce309d6d928658`;
+- `minus_refutation_query`:
+  `a789a4b6a816c47b0266d765ce7570df54dd2269b399861390bb652c68efeb3e`;
+- `minus_boundary_query`:
+  `0f3f365c23afec84fc28e8848fe908324b4f3807b9d913c9f4fb0fd38702ec72`;
+  and
+- `minus_typed_revision`:
+  `601777f8bedacd60cfe4d7a9599f3a1b92bd6e24d531784ffd6e4ad75ca5bc8c`.
+
+All five local reports and score files in
+`outputs/remote_qwen_ablation_matrix/` passed result validation. Report hashes:
+
+- FAR:
+  `3c5b5248544a1b24aa7ff294ed4cd578b7c4ee946e38e8d52f75028e354e2fd5`;
+- `minus_typed_conflict`:
+  `236b9d71bbdfa218e693bdcebd329b0af53bd97d01315e236cf257e7355468bb`;
+- `minus_refutation_query`:
+  `e0dc1d2417a6d6504e046e5dd81d8bb969cacb0ffb9869e78e2aa7da6b9fe0d2`;
+- `minus_boundary_query`:
+  `9fce3485347983504ce2bd8d4aa00556f27031e9904b19b695371f9e8ecce935`;
+  and
+- `minus_typed_revision`:
+  `200633e88cb62ad89dd7234d6497262ad3a131dc33d84c70c31bf53120138d23`.
+
+The interpretation must stay conservative because the benchmark is still
+machine-seeded and `publication_ready:false`. The corrected dev evidence
+strongly supports the typed-conflict control mechanism: relative to FAR,
+`minus_typed_conflict` drops answer correctness by `0.0783`, revision accuracy
+by `0.2167`, revision-action correctness by `0.3667`, and typed-conflict F1 by
+`0.4204`. However, the other component ablations are not monotonic on this
+diagnostic set: `minus_refutation_query` and `minus_boundary_query` do not hurt
+answer correctness, and `minus_typed_revision` raises answer correctness while
+driving revision accuracy/action correctness to zero. This is a useful warning
+for the paper: the defensible claim is typed conflict as an auditable control
+signal, while marginal claims about every query/revision submodule must be
+withheld or rewritten unless adjudicated gold/test evidence supports them.

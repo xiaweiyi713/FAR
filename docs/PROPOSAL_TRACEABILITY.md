@@ -14,7 +14,7 @@
 | Double annotation and IAA | `bench/annotations.py`, `docs/HUMAN_ANNOTATION_PROTOCOL.md` | Tooling and SOP complete; humans pending |
 | External FEVER slice | `bench/external/fever_pair_candidates_v1/` | Candidate imported; annotation pending |
 | Six baselines, including closest-neighbor CounterRefine control | `baselines/` | Implemented; CRAG, Self-RAG, and CounterRefine style reproductions explicitly labeled; baseline bundles pending |
-| Four ablations | `experiments/ablations.py`; untyped wrapper preserves batched graph construction | Core `minus_typed_conflict` bundle complete/validated; remaining three ablations running |
+| Four ablations | `experiments/ablations.py`; untyped wrapper preserves batched graph construction; complete local Qwen dev ablation reports in `outputs/remote_qwen_ablation_matrix/` | All four corrected Qwen dev ablations complete/validated; typed-vs-untyped supports typed control, other component effects are mixed and must be rechecked on adjudicated gold |
 | Six metrics, CI, McNemar | `eval/` | Implemented |
 | Checkpoint/signature/result validation | `experiments/runner.py`, validation tests | Implemented |
 | Two tables and three figures | `experiments/build_artifacts.py` | Implemented; final inputs pending |
