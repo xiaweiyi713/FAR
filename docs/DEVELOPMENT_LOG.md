@@ -758,3 +758,56 @@ but the six-baseline Qwen reports-only merge must wait until CounterRefine is
 resumed or rerun to 60/60. Documentation status now records the original five
 baselines as complete and the sixth baseline as pending, rather than
 misstating it as still running.
+
+## 2026-07-02: CounterRefine completed and six-baseline Qwen report merged
+
+The Windows GPU host was reachable again, with no residual FAR/VeraRAG/Ollama
+processes and D: storage still available. The D:-backed Ollama service was
+started in tmux session `far-ollama`, and
+`scripts/queue_qwen_counterrefine.sh` was resumed in
+`far-qwen-counterrefine` against the existing corrected suite root:
+
+`/mnt/d/FAR-outputs/qwen_open_dev_suite_corrected_96e32b7_restart_20260630_172643`
+
+The CounterRefine-style closest-neighbor baseline resumed from 9 checkpointed
+rows and completed 60/60 with zero errors and `partial:false`. The script then
+ran `falsirag-suite --reports-only`, producing an 11-method suite manifest with
+FAR, four ablations, and all six baselines. After rsync to the ignored local
+directory `outputs/remote_qwen_six_baseline_suite/`, all 11 run/evaluation
+bundles passed `experiments.validate_results`.
+
+Key fingerprints:
+
+- suite manifest:
+  `dccd854c74d3eec109fb879e0c0d1fb838763694adc655b24eb83219807c4467`;
+- CounterRefine predictions:
+  `483f08eca2c34431ac81e87dcac2277433afc5e24e858475742d5c162a6b8c57`;
+- CounterRefine report:
+  `e3c25f966e99b126aad8ff0c3e24353bdf287b85b8d42e7b14beeef94a6d4d5e`;
+- CounterRefine scores:
+  `e4aca75e72afd5878ca727e9e77f1f8b67f353e14f7d9375574f85293128c08d`.
+
+The compact machine-seeded dev metrics are:
+
+| Method | Answer correctness | Revision acc. | Typed conflict | CE recall | Unsupported |
+|---|---:|---:|---:|---:|---:|
+| FAR | 0.7974 | 0.2167 | 0.5500 | 0.9833 | 0.0167 |
+| Vanilla RAG | 0.7246 | 0.0000 | 0.0000 | 0.6667 | 0.2667 |
+| Multi-query RAG | 0.7008 | 0.0000 | 0.0000 | 0.8167 | 0.1333 |
+| Reflective RAG | 0.6778 | 0.0000 | 0.0000 | 0.7500 | 0.1833 |
+| CRAG-style | 0.7722 | 0.0000 | 0.0000 | 0.6667 | 0.2667 |
+| Self-RAG-style | 0.7510 | 0.0000 | 0.0000 | 0.8167 | 0.1500 |
+| CounterRefine-style | 0.7102 | 0.0000 | 0.0000 | 0.8833 | 0.0833 |
+
+Interpretation remains conservative. This closes the local Qwen dev
+six-baseline diagnostic, but it does not close the publication gate because the
+benchmark is still machine-seeded. FAR is above all six baselines on answer
+correctness in this diagnostic and retains the typed revision/trace advantages,
+including over CounterRefine. However, the ablation diagnosis remains mixed:
+`minus_typed_revision` has higher answer correctness while zeroing revision
+accuracy/action correctness, so the paper must keep the narrower claim that
+typed conflict is an auditable control signal rather than claim monotonic gains
+from every FAR submodule.
+
+After completion, `far-ollama` was stopped and the remote host was confirmed to
+have no FAR/VeraRAG/Ollama tmux sessions or processes.
