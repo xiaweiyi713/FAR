@@ -234,6 +234,8 @@ def test_suite_runs_far_baseline_ablation_and_artifacts(tmp_path: Path) -> None:
     )
     assert manifest["diagnostic_only"] is True
     assert manifest["methods"] == ["far", "minus_typed_conflict", "vanilla"]
+    assert manifest["suite_request"]["baselines"] == ["vanilla_rag"]
+    assert manifest["suite_request"]["ablations"] == ["minus_typed_conflict"]
     assert (tmp_path / "suite" / "suite_manifest.json").exists()
     assert (tmp_path / "suite" / "artifacts" / "main_results.csv").exists()
     assert (tmp_path / "suite" / "artifacts" / "ablation_results.csv").exists()
@@ -302,6 +304,16 @@ def test_suite_runs_far_baseline_ablation_and_artifacts(tmp_path: Path) -> None:
             tmp_path / "strict-artifacts",
             require_test_only=True,
         )
+    with pytest.raises(ValueError, match="different suite request"):
+        run_suite(
+            ROOT / "experiments/configs/offline_smoke.yaml",
+            ROOT / "bench",
+            tmp_path / "suite",
+            limit=5,
+            baselines=("multi_query_rag",),
+            ablations=("minus_typed_conflict",),
+            resamples=20,
+        )
 
     far_predictions = tmp_path / "suite/runs/far/predictions.jsonl"
     prediction_fingerprint = sha256_file(far_predictions)
@@ -363,6 +375,8 @@ def test_blind_test_suite_runs_without_loading_or_scoring_gold(tmp_path: Path) -
         resamples=20,
     )
     assert manifest["schema_version"] == "far-blind-suite-manifest-v1"
+    assert manifest["suite_request"]["split"] == "test"
+    assert manifest["suite_request"]["baselines"] == ["vanilla_rag"]
     assert manifest["unscored"] is True
     assert manifest["gold_loaded"] is False
     assert manifest["methods"] == ["far", "vanilla_rag"]

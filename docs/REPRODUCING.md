@@ -410,6 +410,10 @@ Full-length runs are also forced to `diagnostic_only` while
 `bench/manifest.json` has `publication_ready: false` or any scored row is not
 `adjudicated`. Completing all 60 dev predictions therefore does not silently
 promote machine-seeded labels into paper evidence.
+Each `suite_manifest.json` stores a `suite_request` binding the config,
+benchmark input, corpus, split, limit, test-access flag, baseline set, and
+ablation set. Reusing the same `--output-dir` with a different request fails
+before inference; choose a new directory for a different method matrix.
 
 To rebuild reports after evaluation or publication gates change without
 calling any model again, rerun the same suite command with `--reports-only`.

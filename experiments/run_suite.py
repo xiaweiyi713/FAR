@@ -15,10 +15,48 @@ from experiments.build_artifacts import build as build_artifacts
 from experiments.run_baselines import BASELINE_NAMES
 from experiments.run_baselines import run as run_baselines
 from experiments.run_far import run as run_far
-from experiments.runner import ROOT
+from experiments.runner import ROOT, load_config
 from experiments.validate_results import validate_result_bundle
 
 DEFAULT_ABLATIONS = tuple(name for name in ABLATION_NAMES if name != "full")
+
+
+def _suite_request(
+    config_path: Path,
+    data_dir: Path,
+    *,
+    split: str,
+    limit: int | None,
+    allow_test: bool,
+    baselines: tuple[str, ...],
+    ablations: tuple[str, ...],
+) -> dict[str, Any]:
+    benchmark_input = data_dir / (
+        "splits/test_inputs.jsonl" if split == "test" else "falsirag_bench.jsonl"
+    )
+    return {
+        "schema_version": "far-suite-request-v1",
+        "config_sha256": sha256_file(config_path),
+        "benchmark_input_sha256": sha256_file(benchmark_input),
+        "corpus_sha256": sha256_file(data_dir / "corpus.jsonl"),
+        "split": split,
+        "limit": limit,
+        "allow_test": allow_test,
+        "baselines": sorted(baselines),
+        "ablations": sorted(ablation for ablation in ablations if ablation != "full"),
+    }
+
+
+def _check_existing_suite_request(output_dir: Path, expected: dict[str, Any]) -> None:
+    manifest_path = output_dir / "suite_manifest.json"
+    if not manifest_path.exists():
+        return
+    existing = json.loads(manifest_path.read_text(encoding="utf-8"))
+    existing_request = existing.get("suite_request")
+    if existing_request is None:
+        return
+    if existing_request != expected:
+        raise ValueError("suite output directory belongs to a different suite request")
 
 
 def _load_existing_run(
@@ -95,6 +133,21 @@ def run_suite(
     seed: int = 1729,
     reports_only: bool = False,
 ) -> dict[str, Any]:
+    config_path = config_path.resolve()
+    data_dir = data_dir.resolve()
+    selected_split = split
+    if selected_split is None:
+        selected_split = str(load_config(config_path).get("run", {}).get("split", "dev"))
+    request = _suite_request(
+        config_path,
+        data_dir,
+        split=selected_split,
+        limit=limit,
+        allow_test=allow_test,
+        baselines=baselines,
+        ablations=ablations,
+    )
+    _check_existing_suite_request(output_dir, request)
     output_dir.mkdir(parents=True, exist_ok=True)
     benchmark_path = data_dir / "falsirag_bench.jsonl"
     runs_dir = output_dir / "runs"
@@ -173,6 +226,7 @@ def run_suite(
         manifest = {
             "schema_version": "far-blind-suite-manifest-v1",
             "created_at": datetime.now(timezone.utc).isoformat(),
+            "suite_request": request,
             "config": str(config_path),
             "config_sha256": sha256_file(config_path),
             "blind_input_sha256": sha256_file(blind_input_path),
@@ -271,6 +325,7 @@ def run_suite(
     manifest = {
         "schema_version": "far-suite-manifest-v1",
         "created_at": datetime.now(timezone.utc).isoformat(),
+        "suite_request": request,
         "config": str(config_path),
         "config_sha256": sha256_file(config_path),
         "benchmark_sha256": sha256_file(benchmark_path),
