@@ -65,6 +65,7 @@ fi
 
 tmux new-session -d -s "${FINALIZE_SESSION}" bash -lc "
 set -euo pipefail
+exec >> '${REMOTE_LOG}' 2>&1
 echo FINALIZER_START \$(date -Is)
 echo archive=${ARCHIVE_PATH}
 echo waiting_for=${WAIT_FOR_SESSION}
