@@ -199,3 +199,13 @@ def test_external_blind_return_can_be_scored_with_bound_attestation(tmp_path: Pa
     assert far_report["publication_ready"] is True
     assert far_report["publication"]["phase"] == "test"
     assert far_report["comparison"]["baseline_method"] == "vanilla_rag"
+    artifact_manifest = json.loads(
+        (output / "artifacts/artifact_manifest.json").read_text(encoding="utf-8")
+    )
+    assert artifact_manifest["publication_ready"] is True
+    assert artifact_manifest["test_only"] is True
+    assert artifact_manifest["scored_splits"] == ["test"]
+    assert artifact_manifest["strict_requirements"] == {
+        "publication_ready": True,
+        "test_only": True,
+    }

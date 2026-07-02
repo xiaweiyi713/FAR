@@ -142,7 +142,11 @@ Repeat with model IDs `qwen_3_7_plus` and `qwen_3_5_9b`. The scorer verifies
 gold-free execution, all 11 methods, full test IDs, prediction and identity
 fingerprints, clean/frozen commit provenance, role separation, and one-shot
 attestation before producing paired reports and final tables/figures. The output
-directory must be empty, preventing silent replacement of an earlier score.
+directory must be empty, preventing silent replacement of an earlier score. The
+generated `artifact_manifest.json` must report `publication_ready:true`,
+`test_only:true`, and strict requirements for both publication-ready and
+test-only inputs; `falsirag-submission-readiness` rejects final artifacts that
+were rebuilt from dev, partial, diagnostic, or mixed-split reports.
 
 ## 6. Paper and final gate owner
 

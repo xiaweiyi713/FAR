@@ -540,6 +540,25 @@ uv run falsirag-build-artifacts \
   --output-dir outputs/artifacts
 ```
 
+For final submission figures, use only reports produced by
+`falsirag-score-blind-return` and require strict provenance:
+
+```bash
+uv run falsirag-build-artifacts \
+  --report far=outputs/final/qwen_open_test_scored/evaluations/far/report.json \
+  --report vanilla=outputs/final/qwen_open_test_scored/evaluations/vanilla/report.json \
+  --report minus_typed_conflict=outputs/final/qwen_open_test_scored/evaluations/minus_typed_conflict/report.json \
+  --prediction far=outputs/returned/qwen_open_test_suite/runs/far/predictions.jsonl \
+  --output-dir outputs/final/qwen_open_test_scored/artifacts \
+  --require-publication-ready \
+  --require-test-only
+```
+
+The trusted scorer already uses these strict requirements. The generated
+`artifact_manifest.json` records `publication_ready`, `test_only`, phases,
+scored splits, and per-report publication summaries; the final submission gate
+rejects artifacts that were not built in strict test-only mode.
+
 ## Paper
 
 ```bash

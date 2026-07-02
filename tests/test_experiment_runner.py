@@ -10,6 +10,7 @@ from bench.build.build_blind_bundle import build as build_blind_bundle
 from bench.build.common import sha256_file
 from eval.run_eval import evaluate
 from experiments.build_artifacts import _load_plotting_backend
+from experiments.build_artifacts import build as build_artifacts
 from experiments.run_far import _primary_trace, run
 from experiments.run_suite import run_suite
 from experiments.runner import (
@@ -240,6 +241,12 @@ def test_suite_runs_far_baseline_ablation_and_artifacts(tmp_path: Path) -> None:
         (tmp_path / "suite/artifacts/artifact_manifest.json").read_text(encoding="utf-8")
     )
     assert artifact_manifest["publication_ready"] is False
+    assert artifact_manifest["test_only"] is False
+    assert artifact_manifest["scored_splits"] == ["dev"]
+    assert artifact_manifest["strict_requirements"] == {
+        "publication_ready": False,
+        "test_only": False,
+    }
     far_report = json.loads(
         (tmp_path / "suite/evaluations/far/report.json").read_text(encoding="utf-8")
     )
@@ -254,6 +261,19 @@ def test_suite_runs_far_baseline_ablation_and_artifacts(tmp_path: Path) -> None:
     assert ablation_report["comparison"]["candidate_method"] == "far_minus_typed_conflict"
     assert "typed_conflict_f1" in ablation_report["comparison"]["metrics"]
     assert "typed_conflict_f1" in ablation_report["confidence_intervals"]
+    with pytest.raises(ValueError, match="test-only"):
+        build_artifacts(
+            {
+                "far": tmp_path / "suite/evaluations/far/report.json",
+                "vanilla": tmp_path / "suite/evaluations/vanilla_rag/report.json",
+                "minus_typed_conflict": (
+                    tmp_path / "suite/evaluations/minus_typed_conflict/report.json"
+                ),
+            },
+            {"far": tmp_path / "suite/runs/far/predictions.jsonl"},
+            tmp_path / "strict-artifacts",
+            require_test_only=True,
+        )
 
     far_predictions = tmp_path / "suite/runs/far/predictions.jsonl"
     prediction_fingerprint = sha256_file(far_predictions)

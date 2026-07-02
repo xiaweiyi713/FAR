@@ -424,8 +424,18 @@ def _scored_tests_gate(
         artifact_path = suite / "artifacts" / "artifact_manifest.json"
         if manifest.get("artifact_manifest_sha256") != sha256_file(artifact_path):
             raise ValueError(f"{model}: artifact manifest fingerprint mismatch")
-        if _json(artifact_path).get("publication_ready") is not True:
+        artifact = _json(artifact_path)
+        if artifact.get("publication_ready") is not True:
             raise ValueError(f"{model}: final artifacts are not publication-ready")
+        if artifact.get("test_only") is not True or set(artifact.get("scored_splits", [])) != {
+            "test"
+        }:
+            raise ValueError(f"{model}: final artifacts are not bound to test-only reports")
+        if artifact.get("strict_requirements") != {
+            "publication_ready": True,
+            "test_only": True,
+        }:
+            raise ValueError(f"{model}: final artifacts were not built in strict mode")
         output[model] = {
             "suite": str(suite),
             "manifest_sha256": sha256_file(manifest_path),

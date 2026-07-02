@@ -242,6 +242,8 @@ def score(
         report_paths,
         {"far": far_run / "predictions.jsonl"},
         output_dir / "artifacts",
+        require_publication_ready=True,
+        require_test_only=True,
     )
     if artifact_manifest.get("publication_ready") is not True:
         raise RuntimeError("scored blind-test artifacts are not publication-ready")

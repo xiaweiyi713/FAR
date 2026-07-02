@@ -36,6 +36,49 @@ def _validated_reports(paths: dict[str, Path]) -> dict[str, dict[str, Any]]:
     return reports
 
 
+def _report_publication_summary(report: dict[str, Any]) -> dict[str, Any]:
+    publication = report.get("publication", {})
+    if not isinstance(publication, dict):
+        publication = {}
+    scored_splits = publication.get("scored_splits", [])
+    if not isinstance(scored_splits, list):
+        scored_splits = []
+    return {
+        "publication_ready": bool(report.get("publication_ready")),
+        "partial": bool(report.get("partial")),
+        "phase": publication.get("phase"),
+        "scored_splits": sorted(map(str, scored_splits)),
+    }
+
+
+def _validate_artifact_publication_scope(
+    reports: dict[str, dict[str, Any]],
+    *,
+    require_publication_ready: bool,
+    require_test_only: bool,
+) -> dict[str, dict[str, Any]]:
+    summary = {
+        label: _report_publication_summary(report) for label, report in sorted(reports.items())
+    }
+    if require_publication_ready:
+        not_ready = [
+            label
+            for label, item in summary.items()
+            if item["partial"] or not item["publication_ready"]
+        ]
+        if not_ready:
+            raise ValueError(f"publication artifacts require ready reports: {not_ready}")
+    if require_test_only:
+        non_test = [
+            label
+            for label, item in summary.items()
+            if item["phase"] != "test" or set(item["scored_splits"]) != {"test"}
+        ]
+        if non_test:
+            raise ValueError(f"publication artifacts require test-only reports: {non_test}")
+    return summary
+
+
 def _table_rows(reports: dict[str, dict[str, Any]], labels: list[str]) -> list[dict[str, Any]]:
     rows = []
     for label in labels:
@@ -131,11 +174,19 @@ def build(
     report_paths: dict[str, Path],
     prediction_paths: dict[str, Path],
     output_dir: Path,
+    *,
+    require_publication_ready: bool = False,
+    require_test_only: bool = False,
 ) -> dict[str, Any]:
+    reports = _validated_reports(report_paths)
+    publication_summary = _validate_artifact_publication_scope(
+        reports,
+        require_publication_ready=require_publication_ready,
+        require_test_only=require_test_only,
+    )
     plt, font_manager = _load_plotting_backend()
     unicode_font = _configure_unicode_font(plt, font_manager)
 
-    reports = _validated_reports(report_paths)
     output_dir.mkdir(parents=True, exist_ok=True)
     main_labels = [label for label in reports if "minus_" not in label]
     ablation_labels = [label for label in reports if label == "far" or "minus_" in label]
@@ -222,6 +273,21 @@ def build(
         "publication_ready": all(
             bool(report.get("publication_ready")) for report in reports.values()
         ),
+        "test_only": all(
+            item["phase"] == "test" and set(item["scored_splits"]) == {"test"}
+            for item in publication_summary.values()
+        ),
+        "phases": sorted(
+            {str(item["phase"]) for item in publication_summary.values() if item["phase"]}
+        ),
+        "scored_splits": sorted(
+            {split for item in publication_summary.values() for split in item["scored_splits"]}
+        ),
+        "strict_requirements": {
+            "publication_ready": require_publication_ready,
+            "test_only": require_test_only,
+        },
+        "publication": publication_summary,
         "reports": {label: sha256_file(path) for label, path in report_paths.items()},
         "predictions": {label: sha256_file(path) for label, path in prediction_paths.items()},
         "unicode_font": (
@@ -240,8 +306,24 @@ def main() -> None:
     parser.add_argument("--report", action="append", required=True)
     parser.add_argument("--prediction", action="append", default=[])
     parser.add_argument("--output-dir", type=Path, required=True)
+    parser.add_argument(
+        "--require-publication-ready",
+        action="store_true",
+        help="fail unless every input report is complete and publication-ready",
+    )
+    parser.add_argument(
+        "--require-test-only",
+        action="store_true",
+        help="fail unless every input report scores only the externally blind test split",
+    )
     args = parser.parse_args()
-    manifest = build(_mapping(args.report), _mapping(args.prediction), args.output_dir)
+    manifest = build(
+        _mapping(args.report),
+        _mapping(args.prediction),
+        args.output_dir,
+        require_publication_ready=args.require_publication_ready,
+        require_test_only=args.require_test_only,
+    )
     print(json.dumps(manifest, ensure_ascii=False, indent=2, sort_keys=True))
 
 
