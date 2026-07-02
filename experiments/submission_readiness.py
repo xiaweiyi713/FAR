@@ -75,6 +75,14 @@ def _reject_template_path(path: Path, label: str) -> None:
         raise ValueError(f"{label} must be copied to a real ignored JSON file before use: {path}")
 
 
+def _reject_template_evidence_path(path: Path, *, allow_incomplete: bool) -> None:
+    if path.name.endswith(".template.json") and not allow_incomplete:
+        raise ValueError(
+            "submission evidence template may only be used with --allow-incomplete; "
+            f"copy it to a real ignored JSON file before final readiness: {path}"
+        )
+
+
 def _run_dir(suite: Path, label: str) -> Path:
     if label in REPORT_METHODS - {"far", "vanilla"} and not label.startswith("minus_"):
         return suite / "runs" / "baselines" / label
@@ -640,6 +648,10 @@ def main() -> None:
         return
     if args.evidence is None:
         parser.error("--evidence is required unless --print-paper-fingerprints is used")
+    try:
+        _reject_template_evidence_path(args.evidence, allow_incomplete=args.allow_incomplete)
+    except ValueError as exc:
+        parser.error(str(exc))
     report = audit(args.project_root.resolve(), _json(args.evidence))
     rendered = json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True)
     print(rendered)

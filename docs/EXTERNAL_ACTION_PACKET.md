@@ -157,6 +157,8 @@ mixed-split, or cross-benchmark reports.
 Copy `submission/evidence.template.json` to an ignored working file, replace
 every path and attestation field with the real artifacts, fill the final paper
 cells, and have a human review AAAI policy, authorship, and empirical claims.
+Do not fill the tracked template itself: without `--allow-incomplete`,
+`falsirag-submission-readiness` rejects `*.template.json` evidence paths.
 After the review, bind it to the exact reviewed paper sources:
 
 ```bash

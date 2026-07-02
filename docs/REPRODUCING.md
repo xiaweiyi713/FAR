@@ -590,4 +590,6 @@ submission evidence file. Any later paper edit invalidates the review and must
 be rechecked by a human. The final readiness gate also requires the paper
 reviewer to be independent from the annotators, adjudicator, external blind
 custodian, and trusted scorer recorded elsewhere in the same evidence file. The
+tracked `submission/evidence.template.json` is only for `--allow-incomplete`
+status snapshots; final readiness rejects `*.template.json` evidence paths.
 paper draft deliberately contains no fabricated score or IAA value.

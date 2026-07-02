@@ -15,6 +15,7 @@ from experiments.submission_readiness import (
     Gate,
     _attestation_gate,
     _paper_gate,
+    _reject_template_evidence_path,
     audit,
     paper_source_fingerprints,
 )
@@ -218,6 +219,14 @@ def test_attestation_gate_rejects_template_file_path(tmp_path: Path) -> None:
             returns,
             bundle,
         )
+
+
+def test_final_readiness_rejects_evidence_template_path() -> None:
+    template_path = Path("submission/evidence.template.json")
+    with pytest.raises(ValueError, match="only be used with --allow-incomplete"):
+        _reject_template_evidence_path(template_path, allow_incomplete=False)
+    _reject_template_evidence_path(template_path, allow_incomplete=True)
+    _reject_template_evidence_path(Path("submission/evidence.json"), allow_incomplete=False)
 
 
 def test_external_blind_return_can_be_scored_with_bound_attestation(tmp_path: Path) -> None:
