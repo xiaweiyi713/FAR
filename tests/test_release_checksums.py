@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+import subprocess
+import tarfile
 from pathlib import Path
 
 from experiments.generate_release_checksums import (
@@ -70,4 +72,41 @@ def test_release_checksums_reject_modified_artifact(tmp_path: Path) -> None:
 
 def test_source_archive_includes_submission_evidence_templates() -> None:
     manifest = (Path(__file__).resolve().parents[1] / "MANIFEST.in").read_text(encoding="utf-8")
-    assert "recursive-include submission *.json" in manifest
+    assert "include submission/evidence.template.json" in manifest
+    assert "include submission/blind_test_attestation.template.json" in manifest
+    assert "recursive-include submission *.json" not in manifest
+    assert "include submission/evidence.json" not in manifest
+    assert "include submission/blind_test_attestation.json" not in manifest
+
+
+def test_source_archive_excludes_real_submission_evidence(tmp_path: Path) -> None:
+    root = Path(__file__).resolve().parents[1]
+    real_evidence = root / "submission/evidence.json"
+    real_attestation = root / "submission/blind_test_attestation.json"
+    assert not real_evidence.exists()
+    assert not real_attestation.exists()
+    real_evidence.write_text('{"secret": "real evidence must not ship"}\n', encoding="utf-8")
+    real_attestation.write_text('{"secret": "real attestation must not ship"}\n', encoding="utf-8")
+    dist_dir = tmp_path / "dist"
+    try:
+        subprocess.run(
+            ["uv", "build", "--sdist", "--out-dir", str(dist_dir)],
+            cwd=root,
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        archive = next(dist_dir.glob("*.tar.gz"))
+        with tarfile.open(archive) as tar:
+            submission_members = {
+                Path(name).relative_to(Path(name).parts[0]).as_posix()
+                for name in tar.getnames()
+                if "/submission/" in name
+            }
+    finally:
+        real_evidence.unlink(missing_ok=True)
+        real_attestation.unlink(missing_ok=True)
+    assert submission_members == {
+        "submission/blind_test_attestation.template.json",
+        "submission/evidence.template.json",
+    }

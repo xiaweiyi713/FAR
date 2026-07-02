@@ -592,4 +592,6 @@ reviewer to be independent from the annotators, adjudicator, external blind
 custodian, and trusted scorer recorded elsewhere in the same evidence file. The
 tracked `submission/evidence.template.json` is only for `--allow-incomplete`
 status snapshots; final readiness rejects `*.template.json` evidence paths.
+Source releases include only the two submission templates, not the ignored real
+`submission/evidence.json` or `submission/blind_test_attestation.json` files.
 paper draft deliberately contains no fabricated score or IAA value.
