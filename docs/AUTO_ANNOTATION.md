@@ -274,6 +274,18 @@ uv run python -m bench.build.annotate_packet install-review \
 Repeat with a separately generated project for `reviewer_b`, then complete
 adjudication.
 
+At any point, inspect packet progress and source compatibility:
+
+```bash
+uv run python -m bench.build.annotate_packet status \
+  --packet-dir outputs/falsirag_annotation_packet \
+  --data-dir bench
+```
+
+This reports per-reviewer blank/invalid/completed counts, adjudication progress,
+packet-vs-benchmark fingerprints, visible-field mismatches, and whether it is
+safe to export the adjudication UI or compile the final evidence archive.
+
 After both reviewer files are installed, Label Studio can also be used for the
 adjudicator without hand-editing `adjudications.jsonl`:
 

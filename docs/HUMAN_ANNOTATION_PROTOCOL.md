@@ -109,9 +109,21 @@ material conflict at all.
 
 ## Freeze reviewer files
 
-Before adjudication, verify both reviewer files are complete by running a dry
-compile. It should fail only because adjudication is still blank; if it reports
-missing reviewer labels, return the file to that reviewer.
+Before adjudication, verify both reviewer files are complete by running packet
+status:
+
+```bash
+uv run python -m bench.build.annotate_packet status \
+  --packet-dir outputs/annotations/falsirag_packet_v1 \
+  --data-dir bench
+```
+
+Continue to adjudication only when `reviewers_complete:true`,
+`ready_to_export_adjudication_label_studio:true`, and the benchmark/corpus
+fingerprints match. If a reviewer file has blanks, invalid rows, modified
+visible fields, or the wrong sample set, return the file to that reviewer. A
+dry compile is still useful as a final fail-closed check: before adjudication it
+should fail only because adjudication is still blank.
 
 Do not edit reviewer files after adjudication begins. If a clerical correction
 is required, record the correction in a separate note and keep the original file
@@ -164,6 +176,10 @@ uv run python -m bench.build.annotate_packet install-adjudication \
 The adjudication importer rejects modified contexts, changed reviewer files,
 duplicate tasks, missing rationales, missing conflict-positive revised answers,
 and no-conflict rows that nevertheless set `revised_answer`.
+
+After installing adjudication, run the same status command again. Compile only
+when `ready_to_compile:true`; otherwise resolve the reported reviewer,
+adjudication, fingerprint, or visible-field errors first.
 
 ## Compile and gate
 

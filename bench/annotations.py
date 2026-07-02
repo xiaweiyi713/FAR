@@ -390,6 +390,249 @@ def install_adjudication_file(
     }
 
 
+def _field_status(
+    rows: dict[str, dict[str, Any]],
+    *,
+    field: str,
+    adjudication: bool = False,
+) -> dict[str, Any]:
+    completed = 0
+    blank = 0
+    invalid: list[dict[str, str]] = []
+    conflict_positive = 0
+    no_conflict_with_revised_answer = 0
+    for sample_id, row in rows.items():
+        annotation = row.get(field)
+        if not isinstance(annotation, dict) or annotation.get("conflict_present") is None:
+            blank += 1
+            continue
+        try:
+            validated = _validated_annotation(row, field)
+            if adjudication:
+                revised_answer = validated.get("revised_answer")
+                if validated["conflict_present"]:
+                    conflict_positive += 1
+                    if not isinstance(revised_answer, str) or not revised_answer.strip():
+                        raise ValueError(
+                            f"{sample_id}: conflicting adjudication requires revised_answer"
+                        )
+                elif isinstance(revised_answer, str) and revised_answer.strip():
+                    no_conflict_with_revised_answer += 1
+                    raise ValueError(
+                        f"{sample_id}: no-conflict adjudication must not set revised_answer"
+                    )
+        except ValueError as exc:
+            invalid.append({"sample_id": sample_id, "error": str(exc)})
+            continue
+        completed += 1
+    return {
+        "completed": completed,
+        "blank": blank,
+        "invalid": len(invalid),
+        "invalid_preview": invalid[:10],
+        "conflict_positive": conflict_positive if adjudication else None,
+        "no_conflict_with_revised_answer": (
+            no_conflict_with_revised_answer if adjudication else None
+        ),
+    }
+
+
+def annotation_packet_status(packet_dir: Path, *, data_dir: Path | None = None) -> dict[str, Any]:
+    """Summarize reviewer/adjudication packet progress without compiling it."""
+
+    packet_manifest_path = packet_dir / "packet_manifest.json"
+    packet_manifest = json.loads(packet_manifest_path.read_text(encoding="utf-8"))
+    expected_count = int(packet_manifest["samples"])
+    source_fingerprint_status: dict[str, Any] = {"checked": False}
+    sample_by_id: dict[str, dict[str, Any]] = {}
+    corpus: dict[str, dict[str, Any]] = {}
+    if data_dir is not None:
+        expected_fingerprints = {
+            "benchmark_sha256": sha256_file(data_dir / "falsirag_bench.jsonl"),
+            "corpus_sha256": sha256_file(data_dir / "corpus.jsonl"),
+        }
+        source_fingerprint_status = {
+            "checked": True,
+            "matches": packet_manifest.get("source_fingerprints") == expected_fingerprints,
+            "packet": packet_manifest.get("source_fingerprints"),
+            "data_dir": expected_fingerprints,
+        }
+        samples = read_jsonl(data_dir / "falsirag_bench.jsonl")
+        sample_by_id = {str(row["id"]): row for row in samples}
+        corpus = {row["doc_id"]: row for row in read_jsonl(data_dir / "corpus.jsonl")}
+
+    reviewers: dict[str, dict[str, Any]] = {}
+    reviewer_errors: list[str] = []
+    annotation_files = packet_manifest.get("annotation_files", {})
+    for reviewer_id, filename in sorted(annotation_files.items()):
+        reviewer_status: dict[str, Any] = {
+            "file": str(filename),
+            "exists": False,
+            "file_sha256": "",
+            "rows": 0,
+            "completed": 0,
+            "blank": expected_count,
+            "invalid": 0,
+            "invalid_preview": [],
+            "sample_set_matches": None,
+            "visible_fields_match": None,
+            "complete": False,
+            "errors": [],
+        }
+        try:
+            path = _packet_file(packet_dir, str(filename))
+            reviewer_status["exists"] = True
+            reviewer_status["file_sha256"] = sha256_file(path)
+            rows_by_id = _rows_by_id(
+                read_jsonl(path), expected=expected_count, role=str(reviewer_id)
+            )
+            reviewer_status["rows"] = len(rows_by_id)
+            if sample_by_id:
+                reviewer_status["sample_set_matches"] = set(rows_by_id) == set(sample_by_id)
+                visible_errors = []
+                for sample_id, row in rows_by_id.items():
+                    if sample_id not in sample_by_id:
+                        visible_errors.append(sample_id)
+                        continue
+                    expected = _visible_row(sample_by_id[sample_id], corpus, str(reviewer_id))
+                    try:
+                        _assert_visible_unchanged(
+                            row,
+                            expected,
+                            _REVIEW_VISIBLE_FIELDS,
+                            role=str(reviewer_id),
+                        )
+                    except ValueError:
+                        visible_errors.append(sample_id)
+                reviewer_status["visible_fields_match"] = not visible_errors
+                reviewer_status["visible_field_mismatch_preview"] = visible_errors[:10]
+            field_status = _field_status(rows_by_id, field="annotation")
+            reviewer_status.update(
+                {
+                    "completed": field_status["completed"],
+                    "blank": field_status["blank"],
+                    "invalid": field_status["invalid"],
+                    "invalid_preview": field_status["invalid_preview"],
+                    "complete": (
+                        field_status["completed"] == expected_count
+                        and field_status["invalid"] == 0
+                        and (
+                            reviewer_status["sample_set_matches"] is not False
+                            and reviewer_status["visible_fields_match"] is not False
+                        )
+                    ),
+                }
+            )
+        except Exception as exc:
+            message = str(exc)
+            reviewer_status["errors"].append(message)
+            reviewer_errors.append(f"{reviewer_id}: {message}")
+        reviewers[str(reviewer_id)] = reviewer_status
+
+    adjudication_status: dict[str, Any] = {
+        "file": str(packet_manifest.get("adjudication_file", "")),
+        "exists": False,
+        "file_sha256": "",
+        "rows": 0,
+        "completed": 0,
+        "blank": expected_count,
+        "invalid": 0,
+        "invalid_preview": [],
+        "sample_set_matches": None,
+        "visible_fields_match": None,
+        "adjudicator_ids": [],
+        "complete": False,
+        "errors": [],
+    }
+    try:
+        path = _packet_file(packet_dir, str(packet_manifest["adjudication_file"]))
+        adjudication_status["exists"] = True
+        adjudication_status["file_sha256"] = sha256_file(path)
+        rows_by_id = _rows_by_id(read_jsonl(path), expected=expected_count, role="adjudication")
+        adjudication_status["rows"] = len(rows_by_id)
+        if sample_by_id:
+            adjudication_status["sample_set_matches"] = set(rows_by_id) == set(sample_by_id)
+            visible_errors = []
+            for sample_id, row in rows_by_id.items():
+                if sample_id not in sample_by_id:
+                    visible_errors.append(sample_id)
+                    continue
+                expected = _visible_row(sample_by_id[sample_id], corpus, "adjudicator")
+                expected.pop("annotator_id")
+                try:
+                    _assert_visible_unchanged(
+                        row,
+                        expected,
+                        _ADJUDICATION_VISIBLE_FIELDS,
+                        role="adjudicator",
+                    )
+                except ValueError:
+                    visible_errors.append(sample_id)
+            adjudication_status["visible_fields_match"] = not visible_errors
+            adjudication_status["visible_field_mismatch_preview"] = visible_errors[:10]
+        field_status = _field_status(rows_by_id, field="gold_annotation", adjudication=True)
+        adjudicator_ids = sorted(
+            {str(row.get("adjudicator_id", "")).strip() for row in rows_by_id.values()} - {""}
+        )
+        adjudication_status.update(
+            {
+                "completed": field_status["completed"],
+                "blank": field_status["blank"],
+                "invalid": field_status["invalid"],
+                "invalid_preview": field_status["invalid_preview"],
+                "conflict_positive": field_status["conflict_positive"],
+                "no_conflict_with_revised_answer": field_status["no_conflict_with_revised_answer"],
+                "adjudicator_ids": adjudicator_ids,
+                "consistent_adjudicator_id": len(adjudicator_ids) == 1,
+                "complete": (
+                    field_status["completed"] == expected_count
+                    and field_status["invalid"] == 0
+                    and len(adjudicator_ids) == 1
+                    and (
+                        adjudication_status["sample_set_matches"] is not False
+                        and adjudication_status["visible_fields_match"] is not False
+                    )
+                ),
+            }
+        )
+    except Exception as exc:
+        adjudication_status["errors"].append(str(exc))
+
+    reviewers_complete = all(row["complete"] for row in reviewers.values()) and len(reviewers) >= 2
+    source_matches = source_fingerprint_status.get("matches", True) is not False
+    ready_to_export_adjudication_ui = reviewers_complete and source_matches
+    ready_to_compile = (
+        reviewers_complete
+        and adjudication_status["complete"]
+        and source_matches
+        and not reviewer_errors
+        and not adjudication_status["errors"]
+    )
+    next_steps = []
+    if not reviewers_complete:
+        next_steps.append("complete and install all reviewer annotation files")
+    elif not adjudication_status["complete"]:
+        next_steps.append("complete and install adjudications.jsonl")
+    if source_fingerprint_status.get("matches") is False:
+        next_steps.append("rebuild the packet from the current benchmark/corpus")
+    if ready_to_compile:
+        next_steps.append("run compile to freeze annotation evidence and compute kappa")
+
+    return {
+        "schema_version": "falsirag-annotation-packet-status-v1",
+        "packet_dir": str(packet_dir),
+        "packet_manifest_sha256": sha256_file(packet_manifest_path),
+        "samples": expected_count,
+        "source_fingerprints": source_fingerprint_status,
+        "reviewers": reviewers,
+        "reviewers_complete": reviewers_complete,
+        "adjudication": adjudication_status,
+        "ready_to_export_adjudication_label_studio": ready_to_export_adjudication_ui,
+        "ready_to_compile": ready_to_compile,
+        "next_steps": next_steps,
+    }
+
+
 def compile_annotations(
     data_dir: Path,
     packet_dir: Path,

@@ -872,6 +872,14 @@ converts exactly one active adjudicator completion per task into
 installs that file while refusing replacement, modified visible fields,
 missing conflict-positive revised answers, and no-conflict revised answers.
 
+`annotate_packet status` now gives the human annotation owner a non-mutating
+handoff check: per-reviewer completed/blank/invalid counts, adjudication
+progress, benchmark/corpus fingerprint compatibility, visible-field mismatch
+previews, and booleans for `ready_to_export_adjudication_label_studio` and
+`ready_to_compile`. On the current strict packet it reports 300 blank rows for
+each reviewer and adjudication, matching the fact that no human labels have been
+returned yet.
+
 A fresh strict packet was then generated locally at
 `outputs/annotations/falsirag_packet_v1/`, together with separate prediction-free
 Label Studio bundles for `reviewer_a` and `reviewer_b`. Both contain 300 tasks,

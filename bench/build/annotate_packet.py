@@ -7,6 +7,7 @@ import json
 from pathlib import Path
 
 from bench.annotations import (
+    annotation_packet_status,
     build_annotation_packet,
     compile_annotations,
     install_adjudication_file,
@@ -35,6 +36,9 @@ def main() -> None:
     install_adjudication_parser.add_argument("--packet-dir", type=Path, required=True)
     install_adjudication_parser.add_argument("--adjudication-file", type=Path, required=True)
     install_adjudication_parser.add_argument("--adjudicator-id")
+    status_parser = subparsers.add_parser("status")
+    status_parser.add_argument("--packet-dir", type=Path, required=True)
+    status_parser.add_argument("--data-dir", type=Path)
     validate_parser = subparsers.add_parser("validate-evidence")
     validate_parser.add_argument("--data-dir", type=Path, required=True)
     args = parser.parse_args()
@@ -59,6 +63,8 @@ def main() -> None:
             args.adjudication_file,
             adjudicator_id=args.adjudicator_id,
         )
+    elif args.command == "status":
+        result = annotation_packet_status(args.packet_dir, data_dir=args.data_dir)
     else:
         result = validate_annotation_evidence(args.data_dir)
     print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))

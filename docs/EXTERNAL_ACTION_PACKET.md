@@ -9,9 +9,17 @@ test dry runs cannot satisfy the final gate.
 
 Give two independent reviewers only their respective blind packet, README, and
 `docs/HUMAN_ANNOTATION_PROTOCOL.md`. After both files are frozen, an adjudicator
-fills `adjudications.jsonl` and compiles. If using Label Studio, generate the
-adjudicator project only after installing both reviewer files, then import and
-install the resulting adjudication:
+fills `adjudications.jsonl` and compiles. Check packet progress at every handoff:
+
+```bash
+uv run python -m bench.build.annotate_packet status \
+  --packet-dir outputs/annotations/falsirag_packet_v1 \
+  --data-dir bench
+```
+
+Do not generate the adjudicator project until `reviewers_complete:true` and
+`ready_to_export_adjudication_label_studio:true`. If using Label Studio, then
+import and install the resulting adjudication:
 
 ```bash
 uv run falsirag-auto-annotate adjudication-label-studio \
@@ -44,6 +52,9 @@ Do not continue unless `annotation_report.json` records two distinct reviewers,
 is at least `0.60`. The compiler also freezes the raw reviewer and adjudication
 files under `annotation_evidence/`; both readiness and trusted scoring recompute
 IAA and compiled labels from this archive rather than trusting report numbers.
+The status command should report `ready_to_compile:true` immediately before
+compilation; otherwise resolve the listed blanks, invalid rows, fingerprint
+mismatches, or visible-field mismatches first.
 
 ## 2. Experiment owner
 

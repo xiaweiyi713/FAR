@@ -7,6 +7,7 @@ from pathlib import Path
 import pytest
 
 from bench.annotations import (
+    annotation_packet_status,
     build_annotation_packet,
     cohen_kappa,
     compile_annotations,
@@ -117,6 +118,86 @@ def test_annotation_packet_hides_machine_labels_and_requires_completion(
     assert all(item["evidence_id"].startswith("EVIDENCE_") for item in first["evidence"])
     with pytest.raises(ValueError, match="conflict_present"):
         compile_annotations(ROOT / "bench", packet, tmp_path / "compiled")
+
+
+def test_annotation_packet_status_reports_review_and_adjudication_progress(
+    tmp_path: Path,
+) -> None:
+    packet = tmp_path / "packet"
+    build_annotation_packet(ROOT / "bench", packet, ["alice", "bob"])
+    blank_status = annotation_packet_status(packet, data_dir=ROOT / "bench")
+    assert blank_status["samples"] == 300
+    assert blank_status["reviewers_complete"] is False
+    assert blank_status["ready_to_export_adjudication_label_studio"] is False
+    assert blank_status["ready_to_compile"] is False
+    assert blank_status["reviewers"]["alice"]["blank"] == 300
+    assert blank_status["adjudication"]["blank"] == 300
+    assert blank_status["source_fingerprints"]["matches"] is True
+
+    samples = {
+        row["id"]: row
+        for row in map(
+            json.loads,
+            (ROOT / "bench/falsirag_bench.jsonl").read_text().splitlines(),
+        )
+    }
+    for name in ("annotations_alice.jsonl", "annotations_bob.jsonl"):
+        rows = list(map(json.loads, (packet / name).read_text().splitlines()))
+        for row in rows:
+            sample = samples[row["sample_id"]]
+            row["annotation"] = {
+                "conflict_present": True,
+                "conflict_type": sample["conflict_type"],
+                "revision_action": sample["expected_revision"]["action"],
+                "revised_answer_acceptable": True,
+                "rationale": "Reviewer completed this row.",
+            }
+        (packet / name).write_text(
+            "".join(json.dumps(row, ensure_ascii=False) + "\n" for row in rows),
+            encoding="utf-8",
+        )
+
+    reviewer_status = annotation_packet_status(packet, data_dir=ROOT / "bench")
+    assert reviewer_status["reviewers_complete"] is True
+    assert reviewer_status["ready_to_export_adjudication_label_studio"] is True
+    assert reviewer_status["ready_to_compile"] is False
+    assert reviewer_status["reviewers"]["alice"]["visible_fields_match"] is True
+
+    adjudications = list(map(json.loads, (packet / "adjudications.jsonl").read_text().splitlines()))
+    for row in adjudications:
+        sample = samples[row["sample_id"]]
+        row["adjudicator_id"] = "judge_1"
+        row["gold_annotation"] = {
+            "conflict_present": True,
+            "conflict_type": sample["conflict_type"],
+            "revision_action": sample["expected_revision"]["action"],
+            "revised_answer_acceptable": True,
+            "revised_answer": sample["expected_revision"]["revised_answer"],
+            "rationale": "Final adjudication.",
+        }
+    adjudications[0]["gold_annotation"]["revised_answer"] = ""
+    (packet / "adjudications.jsonl").write_text(
+        "".join(json.dumps(row, ensure_ascii=False) + "\n" for row in adjudications),
+        encoding="utf-8",
+    )
+    invalid_status = annotation_packet_status(packet, data_dir=ROOT / "bench")
+    assert invalid_status["adjudication"]["invalid"] == 1
+    assert invalid_status["ready_to_compile"] is False
+
+    adjudications[0]["gold_annotation"]["revised_answer"] = samples[adjudications[0]["sample_id"]][
+        "expected_revision"
+    ]["revised_answer"]
+    (packet / "adjudications.jsonl").write_text(
+        "".join(json.dumps(row, ensure_ascii=False) + "\n" for row in adjudications),
+        encoding="utf-8",
+    )
+    ready_status = annotation_packet_status(packet, data_dir=ROOT / "bench")
+    assert ready_status["adjudication"]["consistent_adjudicator_id"] is True
+    assert ready_status["adjudication"]["completed"] == 300
+    assert ready_status["ready_to_compile"] is True
+    assert ready_status["next_steps"] == [
+        "run compile to freeze annotation evidence and compute kappa"
+    ]
 
 
 def test_llm_preannotations_are_non_gold_review_aids(tmp_path: Path) -> None:
