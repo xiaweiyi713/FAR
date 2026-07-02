@@ -832,3 +832,41 @@ suites, release archive, paper placeholders, and human policy review. An
 end-to-end test exercises all 11 methods through the blind runner and trusted
 scorer. The current real-project status remains fail-closed because independent
 human labels, rotated-key cloud runs, and external custody do not yet exist.
+
+## 2026-07-02: Human annotation evidence made reviewer-bound and replayable
+
+The Label Studio bridge previously exported the adjudicator's canonical
+evidence order and accepted a reviewer ID only during import. It now requires a
+declared reviewer at export, preserves that reviewer's independent shuffle, and
+binds every task to the packet, reviewer source file, and exact visible context.
+Import rejects reviewer swaps, duplicate tasks, modified context, blank
+rationales, and multiple active annotations. A new atomic `install-review`
+command replaces only the named blank reviewer template and refuses later
+replacement.
+
+The annotation compiler now rejects duplicate sample IDs, packet paths outside
+the packet, changed visible fields, missing rationales, and blank/inconsistent
+adjudicator IDs. Successful compilation freezes the raw reviewer files,
+adjudication, packet manifest, and fingerprints under `annotation_evidence/`.
+`validate-evidence`, submission readiness, and the trusted blind scorer all
+recompute pairwise kappas and verify every compiled conflict type, revision
+action, and supplied revised answer against that archive. This closes a
+reproducibility gap in the future human workflow; no real human labels have been
+created by this engineering change.
+
+The compiler also stopped carrying an unseen machine-seeded revised answer
+through a blank adjudication. A conflict-positive adjudication now requires a
+human-authored revised answer; a no-conflict adjudication is represented by the
+explicit internal `no_conflict` type and deterministically uses the initial
+answer. Both paths are schema- and regression-tested.
+
+A fresh strict packet was then generated locally at
+`outputs/annotations/falsirag_packet_v1/`, together with separate prediction-free
+Label Studio bundles for `reviewer_a` and `reviewer_b`. Both contain 300 tasks,
+zero predictions, reviewer-bound context hashes, and standalone instructions.
+The packet manifest SHA is
+`ae12cf5dcdc0a7ac202dbbc5e3c8a47136c37f8fcf8289c5b5847e2b9c923b24`;
+reviewer task SHAs are
+`3691e27117a722ef8827282235b2609ebd4a8a33a4c878924ba19f327f03c6ab`
+and `f627faf8fdf7c9f71af748926654d8578ae4792647b2c072b9af75db18005e19`.
+They are blank handoff artifacts, not completed human annotations.

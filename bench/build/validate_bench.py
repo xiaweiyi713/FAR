@@ -150,6 +150,8 @@ def validate(data_dir: Path, *, minimum_retrieval_recall: float = 0.8) -> dict[s
                 continue
             if not _span_is_traceable(evidence["text_span"], document.content):
                 untraceable.append(f"{sample.sample_id}:{evidence['evidence_id']}")
+        if sample.conflict_type == "no_conflict":
+            continue
         counter_text = " ".join(item["text_span"] for item in sample.counter_evidence)
         if sample.category.value == "causal_overclaim":
             if "does not establish" not in counter_text.lower():

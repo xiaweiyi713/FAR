@@ -41,6 +41,7 @@ VALID_CONFLICT_TYPES = {
     "definition",
     "counter_evidence",
 }
+VALID_SAMPLE_CONFLICT_TYPES = VALID_CONFLICT_TYPES | {"no_conflict"}
 VALID_REVISION_ACTIONS = {
     "correct_temporal",
     "replace_numerical",
@@ -123,7 +124,7 @@ class FalsiRAGSample:
     def __post_init__(self) -> None:
         if self.split not in VALID_SPLITS:
             raise ValueError(f"unknown split: {self.split}")
-        if self.conflict_type not in VALID_CONFLICT_TYPES:
+        if self.conflict_type not in VALID_SAMPLE_CONFLICT_TYPES:
             raise ValueError(f"unknown conflict type: {self.conflict_type}")
         if not self.claims or not self.gold_evidence or not self.counter_evidence:
             raise ValueError("claims, gold_evidence, and counter_evidence must be non-empty")

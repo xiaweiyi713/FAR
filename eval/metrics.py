@@ -126,7 +126,12 @@ def score_sample(sample: dict[str, Any], prediction: PredictionRecord) -> dict[s
     evidence_precision, evidence_recall = _precision_recall(retrieved, relevant_docs)
     _, counter_recall = _precision_recall(retrieved, counter_docs)
     gold_conflict = str(sample["conflict_type"])
+    gold_conflict_present = gold_conflict != "no_conflict"
     predicted_conflicts = set(prediction.predicted_conflict_types)
+    conflict_presence_correct = bool(predicted_conflicts) == gold_conflict_present
+    typed_conflict_correct = (
+        gold_conflict in predicted_conflicts if gold_conflict_present else not predicted_conflicts
+    )
     answer_score = soft_f1(prediction.answer, reference)
     action_correct = prediction.revision_action == sample["expected_revision"]["action"]
     return {
@@ -141,8 +146,9 @@ def score_sample(sample: dict[str, Any], prediction: PredictionRecord) -> dict[s
         "evidence_precision": evidence_precision,
         "evidence_recall": evidence_recall,
         "counter_evidence_recall": counter_recall,
-        "conflict_detected": float(bool(predicted_conflicts)),
-        "typed_conflict_correct": float(gold_conflict in predicted_conflicts),
+        "conflict_detected": float(conflict_presence_correct),
+        "typed_conflict_correct": float(typed_conflict_correct),
+        "gold_conflict_present": gold_conflict_present,
         "predicted_conflict_count": len(predicted_conflicts),
         "revision_action_correct": float(action_correct),
         "revision_accuracy": float(action_correct and answer_score >= 0.8),
@@ -174,9 +180,13 @@ def aggregate_scores(rows: list[dict[str, Any]]) -> dict[str, Any]:
             result[name] = sum(values) / len(values) if values else 0.0
         return result
 
-    true_positives = sum(int(row["typed_conflict_correct"]) for row in rows)
+    true_positives = sum(
+        int(row["typed_conflict_correct"])
+        for row in rows
+        if bool(row.get("gold_conflict_present", True))
+    )
     predicted = sum(int(row["predicted_conflict_count"]) for row in rows)
-    gold = len(rows)
+    gold = sum(bool(row.get("gold_conflict_present", True)) for row in rows)
     precision = true_positives / predicted if predicted else 0.0
     recall = true_positives / gold if gold else 0.0
     typed_f1 = 2 * precision * recall / (precision + recall) if precision + recall else 0.0

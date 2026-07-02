@@ -134,9 +134,13 @@ def paired_bootstrap_comparison(
 
 
 def _typed_conflict_f1(rows: list[dict[str, Any]]) -> float:
-    true_positives = sum(int(row["typed_conflict_correct"]) for row in rows)
+    true_positives = sum(
+        int(row["typed_conflict_correct"])
+        for row in rows
+        if bool(row.get("gold_conflict_present", True))
+    )
     predicted = sum(int(row["predicted_conflict_count"]) for row in rows)
-    gold = len(rows)
+    gold = sum(bool(row.get("gold_conflict_present", True)) for row in rows)
     denominator = predicted + gold
     return 2 * true_positives / denominator if denominator else 0.0
 

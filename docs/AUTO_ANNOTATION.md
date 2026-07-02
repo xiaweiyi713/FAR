@@ -228,10 +228,15 @@ packet and optional machine predictions to a Label Studio import bundle:
 ```bash
 uv run falsirag-auto-annotate label-studio \
   --packet-dir outputs/falsirag_annotation_packet \
+  --reviewer-id reviewer_a \
   --preannotation-dir outputs/deepseek_preannotations_pilot \
   --output-dir outputs/label_studio_falsirag \
   --overwrite
 ```
+
+The export is bound to exactly one declared reviewer and preserves that
+reviewer's independently shuffled evidence order. Generate a separate project
+for `reviewer_b`; one reviewer's export cannot be relabeled as the other.
 
 The export writes:
 
@@ -254,11 +259,26 @@ uv run falsirag-auto-annotate label-studio-import \
   --overwrite
 ```
 
-The importer writes `annotations_reviewer_a.jsonl`. Copy it into the packet
-directory or reference it from `packet_manifest.json`, then repeat the process
-for a genuinely independent second reviewer and complete adjudication.
+The importer rejects duplicate tasks, modified question/evidence context,
+missing rationales, multiple active completions, cross-reviewer exports, and
+packet fingerprint mismatches. Install the validated result atomically without
+editing `packet_manifest.json`:
+
+```bash
+uv run python -m bench.build.annotate_packet install-review \
+  --packet-dir outputs/falsirag_annotation_packet \
+  --review-file outputs/label_studio_reviewed_reviewer_a/annotations_reviewer_a.jsonl \
+  --reviewer-id reviewer_a
+```
+
+Repeat with a separately generated project for `reviewer_b`, then complete
+adjudication.
 
 The UI is a review accelerator, not a replacement for the publication gate.
+For the preregistered independent-human IAA, omit `--preannotation-dir`; shared
+machine predictions can anchor both reviewers and therefore must not be used to
+claim strict independent agreement. Prediction-assisted reviews may be retained
+as an explicitly labeled secondary workflow.
 
 ## What the file means
 

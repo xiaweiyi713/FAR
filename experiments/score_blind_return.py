@@ -9,6 +9,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from bench.annotations import validate_annotation_evidence
 from bench.build.common import read_jsonl, sha256_file, write_json
 from bench.build.validate_bench import validate as validate_benchmark
 from eval.run_eval import evaluate
@@ -31,8 +32,11 @@ def _validate_annotation(data_dir: Path) -> tuple[dict[str, Any], dict[str, Any]
     manifest = _json(data_dir / "manifest.json")
     rows = read_jsonl(data_dir / "falsirag_bench.jsonl")
     validation = validate_benchmark(data_dir)
+    validate_annotation_evidence(data_dir)
     if report.get("adjudicated") is not True or report.get("agreement_gate_passed") is not True:
         raise ValueError("adjudicated annotation and kappa gates must pass before test scoring")
+    if not str(report.get("adjudicator_id", "")).strip():
+        raise ValueError("annotation report has no adjudicator ID")
     if not rows or any(row.get("annotation_status") != "adjudicated" for row in rows):
         raise ValueError("test scoring data contains non-adjudicated rows")
     annotators = report.get("annotators")
@@ -96,6 +100,9 @@ def score(
     if output_dir.exists() and any(output_dir.iterdir()):
         raise FileExistsError("blind scoring output directory must be empty")
     annotation_report, source_manifest = _validate_annotation(data_dir)
+    annotation_evidence_sha = str(
+        source_manifest.get("annotation", {}).get("evidence_manifest_sha256", "")
+    )
     bundle_manifest_path = blind_bundle_dir / "blind_bundle_manifest.json"
     bundle_manifest = _json(bundle_manifest_path)
     return_manifest_path = return_dir / "suite_manifest.json"
@@ -249,6 +256,7 @@ def score(
         "benchmark_sha256": sha256_file(benchmark_path),
         "finalized_benchmark_manifest_sha256": sha256_file(finalized_manifest_path),
         "annotation_report_sha256": sha256_file(data_dir / "annotation_report.json"),
+        "annotation_evidence_manifest_sha256": annotation_evidence_sha,
         "annotation_gate_passed": annotation_report["agreement_gate_passed"],
         "blind_bundle_manifest_sha256": sha256_file(bundle_manifest_path),
         "return_suite_manifest_sha256": sha256_file(return_manifest_path),

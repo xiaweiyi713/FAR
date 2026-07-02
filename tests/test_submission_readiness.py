@@ -2,11 +2,11 @@ from __future__ import annotations
 
 import hashlib
 import json
-import shutil
 from pathlib import Path
 
+from bench.annotations import build_annotation_packet, compile_annotations
 from bench.build.build_blind_bundle import build as build_blind_bundle
-from bench.build.common import read_jsonl, sha256_file, write_json, write_jsonl
+from bench.build.common import sha256_file, write_json
 from experiments.run_suite import run_suite
 from experiments.score_blind_return import score
 from experiments.submission_readiness import audit
@@ -15,46 +15,49 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def _adjudicated_fixture(path: Path) -> None:
-    shutil.copytree(ROOT / "bench", path)
-    rows = read_jsonl(path / "falsirag_bench.jsonl")
-    for row in rows:
-        row["annotation_status"] = "adjudicated"
-    write_jsonl(path / "falsirag_bench.jsonl", rows)
-    for split in ("train", "dev"):
-        write_jsonl(
-            path / "splits" / f"{split}.jsonl", (row for row in rows if row["split"] == split)
+    packet = path.parent / "packet"
+    build_annotation_packet(ROOT / "bench", packet, ["alice", "bob"])
+    samples = {
+        row["id"]: row
+        for row in map(
+            json.loads,
+            (ROOT / "bench/falsirag_bench.jsonl").read_text().splitlines(),
         )
-    report = {
-        "schema_version": "falsirag-annotation-report-v1",
-        "samples": len(rows),
-        "annotators": ["alice", "bob"],
-        "pairwise": [],
-        "mean_kappas": {
-            "conflict_presence_kappa": 1.0,
-            "conflict_type_kappa": 1.0,
-            "revision_action_kappa": 1.0,
-        },
-        "minimum_required_kappa": 0.6,
-        "agreement_gate_passed": True,
-        "adjudicated": True,
     }
-    write_json(path / "annotation_report.json", report)
-    manifest = json.loads((path / "manifest.json").read_text(encoding="utf-8"))
-    manifest["annotation"] = {
-        "status": "adjudicated",
-        "machine_seed_is_gold": False,
-        "required_annotators": 2,
-        "required_adjudication": True,
-        "report": "annotation_report.json",
-        "agreement_gate_passed": True,
-        "mean_kappas": report["mean_kappas"],
-    }
-    manifest["fingerprints"] = {
-        "benchmark_sha256": sha256_file(path / "falsirag_bench.jsonl"),
-        "corpus_sha256": sha256_file(path / "corpus.jsonl"),
-        "split_manifest_sha256": sha256_file(path / "split_manifest.json"),
-    }
-    write_json(path / "manifest.json", manifest)
+    for filename in ("annotations_alice.jsonl", "annotations_bob.jsonl"):
+        rows = [json.loads(line) for line in (packet / filename).read_text().splitlines()]
+        for row in rows:
+            sample = samples[row["sample_id"]]
+            row["annotation"] = {
+                "conflict_present": True,
+                "conflict_type": sample["conflict_type"],
+                "revision_action": sample["expected_revision"]["action"],
+                "revised_answer_acceptable": True,
+                "rationale": "Test-only completed annotation.",
+            }
+        (packet / filename).write_text(
+            "".join(json.dumps(row, ensure_ascii=False) + "\n" for row in rows),
+            encoding="utf-8",
+        )
+    adjudications = [
+        json.loads(line) for line in (packet / "adjudications.jsonl").read_text().splitlines()
+    ]
+    for row in adjudications:
+        sample = samples[row["sample_id"]]
+        row["adjudicator_id"] = "adjudicator_1"
+        row["gold_annotation"] = {
+            "conflict_present": True,
+            "conflict_type": sample["conflict_type"],
+            "revision_action": sample["expected_revision"]["action"],
+            "revised_answer_acceptable": True,
+            "revised_answer": sample["expected_revision"]["revised_answer"],
+            "rationale": "Test-only adjudication.",
+        }
+    (packet / "adjudications.jsonl").write_text(
+        "".join(json.dumps(row, ensure_ascii=False) + "\n" for row in adjudications),
+        encoding="utf-8",
+    )
+    compile_annotations(ROOT / "bench", packet, path)
 
 
 def _freeze_run_identities(suite: Path, commit: str, config_sha256: str) -> None:
@@ -149,6 +152,9 @@ def test_external_blind_return_can_be_scored_with_bound_attestation(tmp_path: Pa
         resamples=10,
     )
     assert manifest["publication_ready"] is True
+    assert manifest["annotation_evidence_manifest_sha256"] == sha256_file(
+        data_dir / "annotation_evidence/evidence_manifest.json"
+    )
     assert set(manifest["methods"]) == {
         "far",
         "vanilla",

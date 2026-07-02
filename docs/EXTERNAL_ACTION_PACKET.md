@@ -20,7 +20,9 @@ uv run python -m bench.build.annotate_packet compile \
 
 Do not continue unless `annotation_report.json` records two distinct reviewers,
 `adjudicated:true`, `agreement_gate_passed:true`, and every mean Cohen's kappa
-is at least `0.60`.
+is at least `0.60`. The compiler also freezes the raw reviewer and adjudication
+files under `annotation_evidence/`; both readiness and trusted scoring recompute
+IAA and compiled labels from this archive rather than trusting report numbers.
 
 ## 2. Experiment owner
 

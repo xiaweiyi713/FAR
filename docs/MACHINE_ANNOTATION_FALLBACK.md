@@ -126,6 +126,7 @@ To export the predictions for a future reviewer:
 ```bash
 falsirag-auto-annotate label-studio \
   --packet-dir /mnt/d/FAR-outputs/falsirag_annotation_packet \
+  --reviewer-id reviewer_a \
   --preannotation-dir /mnt/d/FAR-outputs/qwen25_preannotations \
   --output-dir /mnt/d/FAR-outputs/label_studio_qwen25 \
   --overwrite
@@ -137,6 +138,10 @@ The resulting files are explicitly non-gold:
 - `preannotation_manifest.json` contains
   `can_satisfy_human_annotation_gate: false`.
 - `compile_annotations` rejects unreviewed machine drafts.
+
+This prediction-assisted export is for triage or secondary review. Generate
+publication IAA projects separately for each declared reviewer and omit
+`--preannotation-dir` so both humans are not anchored by the same machine label.
 
 ## Weak-supervision layer
 

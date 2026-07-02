@@ -62,14 +62,23 @@ python -m bench.build.annotate_packet build \
 
 Annotators label conflict presence, conflict type, revision action, and revised
 answer acceptability independently. An adjudicator then resolves every item.
+Conflict-positive adjudications require a human-authored revised answer;
+conflict-negative rows explicitly use the initial answer rather than retaining
+an unseen machine-seeded reference.
 The compiler reports pairwise and mean Cohen's kappa for conflict presence,
 conflict type, and revision action. The promotion target is at least 0.60 on all
-three mean kappas; the values must be reported even when the gate fails.
+three mean kappas; the values must be reported even when the gate fails. It also
+freezes fingerprinted raw reviewer/adjudication files under
+`annotation_evidence/`. Formal readiness recomputes agreement and checks the
+compiled labels against that archive.
 
 Machine preannotations can be generated with `falsirag-auto-annotate` to speed
 triage, but they remain `publication_gold: false` and cannot replace independent
 human annotation. Reviewer draft files produced from preannotations are rejected
 by the compiler until a human explicitly marks them reviewed.
+Strict IAA Label Studio projects are reviewer-specific and prediction-free;
+shared machine predictions may be used only in an explicitly labeled secondary
+review workflow.
 
 ## Validation and retrieval viability
 

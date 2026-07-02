@@ -144,6 +144,38 @@ def test_causal_overclaim_reduction_requires_causal_marker_removal() -> None:
     assert score_sample(sample, prediction)["overclaim_reduction"] == 1.0
 
 
+def test_no_conflict_gold_rewards_empty_conflict_prediction_without_inflating_f1() -> None:
+    sample = {
+        "id": "F0",
+        "category": "entity_confusion",
+        "split": "dev",
+        "initial_answer": "The original answer is supported.",
+        "gold_evidence": [{"doc_id": "D1"}],
+        "counter_evidence": [{"doc_id": "D1"}],
+        "conflict_type": "no_conflict",
+        "expected_revision": {
+            "action": "qualify_uncertainty",
+            "revised_answer": "The original answer is supported.",
+        },
+        "source_metadata": {"dependency_group": "D1"},
+    }
+    prediction = PredictionRecord(
+        sample_id="F0",
+        answer="The original answer is supported.",
+        evidence_ids=("D1",),
+        predicted_conflict_types=(),
+        revision_action="qualify_uncertainty",
+        method="far",
+    )
+    row = score_sample(sample, prediction)
+    assert row["conflict_detected"] == 1.0
+    assert row["typed_conflict_correct"] == 1.0
+    assert row["gold_conflict_present"] is False
+    aggregate = aggregate_scores([row])
+    assert aggregate["metrics"]["typed_conflict_f1"] == 0.0
+    assert aggregate["typed_conflict_counts"]["gold"] == 0
+
+
 def test_statistics_are_deterministic_and_paired() -> None:
     baseline = [
         {"sample_id": f"F{i}", "category": "a" if i < 3 else "b", "score": 0.0} for i in range(6)

@@ -42,6 +42,20 @@ Each reviewer receives only their own `annotations_*.jsonl`, the packet
 `README.md`, and these instructions. Do not send `falsirag_bench.jsonl`,
 `bench/splits/`, machine preannotations, or another reviewer's file.
 
+For a UI, create one prediction-free Label Studio export per reviewer:
+
+```bash
+uv run falsirag-auto-annotate label-studio \
+  --packet-dir outputs/annotations/falsirag_packet_v1 \
+  --reviewer-id reviewer_a \
+  --output-dir outputs/annotations/label_studio_reviewer_a
+```
+
+Do not reuse the project for `reviewer_b`. Each export is fingerprint-bound to
+the named reviewer's shuffled blind packet. After import, use
+`annotate_packet install-review`; do not edit `packet_manifest.json` or point it
+outside the packet directory.
+
 ## Review fields
 
 For every row, reviewers fill `annotation`:
@@ -106,7 +120,8 @@ under a dated backup path.
 ## Adjudication
 
 The adjudicator reviews only after both independent files are frozen. For every
-row, fill `gold_annotation` in `adjudications.jsonl`:
+row, set the same non-empty `adjudicator_id` and fill `gold_annotation` in
+`adjudications.jsonl`:
 
 | Field | Required value |
 |---|---|
@@ -114,7 +129,7 @@ row, fill `gold_annotation` in `adjudications.jsonl`:
 | `conflict_type` | Final conflict type, or blank only if no conflict. |
 | `revision_action` | Final revision action. |
 | `revised_answer_acceptable` | Final acceptability boolean. |
-| `revised_answer` | Optional corrected reference answer; leave blank if the seeded answer remains adequate after the action. |
+| `revised_answer` | Required human-authored corrected reference answer when `conflict_present=true`; leave blank only when there is no conflict, in which case the compiler explicitly uses `initial_answer`. |
 | `rationale` | One or two sentences explaining the adjudication. |
 
 The adjudicator may consult both reviewer files and the visible packet, but not
@@ -135,11 +150,23 @@ The compiler:
 
 - checks benchmark/corpus fingerprints;
 - rejects incomplete or invalid reviewer/adjudication fields;
+- rejects duplicate IDs, reviewer swaps, packet-path escapes, modified blind
+  questions/evidence, blank rationales, and inconsistent adjudicator IDs;
 - rejects unreviewed machine drafts with `human_reviewed=false`;
 - writes an adjudicated benchmark copy;
 - writes `annotation_report.json` with pairwise and mean Cohen's kappa values;
+- freezes the two reviewer files, adjudication, packet manifest, and their
+  hashes under `annotation_evidence/`, then independently recomputes IAA and
+  checks every compiled gold action/type against that archive;
 - keeps `publication_ready=false` until the external blind-test gate is also
   closed.
+
+The frozen evidence can be re-audited at any time:
+
+```bash
+uv run python -m bench.build.annotate_packet validate-evidence \
+  --data-dir outputs/annotations/falsirag_adjudicated_v1
+```
 
 The annotation gate is considered passed only when
 `annotation_report.json` has:
@@ -167,3 +194,5 @@ fingerprints; editing only the manifest cannot close the gate.
 - Do not report kappa from machine-vs-machine or machine-vs-human suggestions
   as independent human IAA.
 - Do not change `bench/manifest.json` manually; use the compiler output.
+- Do not delete or edit `annotation_evidence/`; formal dev/test gates recompute
+  agreement and adjudication bindings from it.

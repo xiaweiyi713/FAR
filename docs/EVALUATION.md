@@ -9,6 +9,10 @@ IDs, predicted conflict types, revision action, method name, and trace metadata.
 - **Evidence precision/recall:** set overlap over corpus document IDs.
 - **Counter-evidence recall:** recall restricted to annotated falsifying evidence.
 - **Typed conflict F1:** micro F1 over predicted versus gold conflict types.
+- **Conflict presence correctness:** whether the system predicts any conflict
+  exactly when adjudicated gold does; human `no_conflict` rows count as correct
+  only when the predicted conflict set is empty. Typed conflict F1 excludes
+  these true negatives from its positive-gold denominator.
 - **Revision accuracy:** correct revision action and answer soft F1 at least 0.8.
 - **Overclaim reduction:** removal of unsupported causal language or incorrect
   numerical values, reported only where defined.

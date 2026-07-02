@@ -6,7 +6,13 @@ from pathlib import Path
 
 import pytest
 
-from bench.annotations import build_annotation_packet, cohen_kappa, compile_annotations
+from bench.annotations import (
+    build_annotation_packet,
+    cohen_kappa,
+    compile_annotations,
+    install_review_file,
+    validate_annotation_evidence,
+)
 from bench.build.audit_contamination import audit
 from bench.build.auto_annotate import (
     build_review_draft,
@@ -453,7 +459,6 @@ def test_machine_review_draft_requires_explicit_human_review(tmp_path: Path) -> 
         preannotations,
         generator=FakeGenerator(),
         preannotator_id="draft_source",
-        limit=1,
     )
     draft_dir = tmp_path / "draft"
     manifest = build_review_draft(
@@ -469,8 +474,13 @@ def test_machine_review_draft_requires_explicit_human_review(tmp_path: Path) -> 
     assert draft_row["draft_from_machine_preannotation"] is True
     assert draft_row["human_reviewed"] is False
 
+    draft_in_packet = packet / "draft_annotations_alice.jsonl"
+    draft_in_packet.write_text(
+        (draft_dir / "draft_annotations_alice.jsonl").read_text(encoding="utf-8"),
+        encoding="utf-8",
+    )
     packet_manifest = json.loads((packet / "packet_manifest.json").read_text())
-    packet_manifest["annotation_files"]["alice"] = "../draft/draft_annotations_alice.jsonl"
+    packet_manifest["annotation_files"]["alice"] = draft_in_packet.name
     (packet / "packet_manifest.json").write_text(json.dumps(packet_manifest), encoding="utf-8")
     with pytest.raises(ValueError, match="human_reviewed=true"):
         compile_annotations(ROOT / "bench", packet, tmp_path / "compiled")
@@ -508,12 +518,14 @@ def test_label_studio_export_contains_machine_predictions_as_review_aids(
     manifest = export_label_studio(
         packet,
         export_dir,
+        reviewer_id="alice",
         preannotation_dir=preannotations,
     )
     assert manifest["publication_gold"] is False
     assert manifest["human_review_required"] is True
     assert manifest["tasks_with_predictions"] == 2
     assert (export_dir / "label_config.xml").exists()
+    assert "blind review: alice" in (export_dir / "README.md").read_text(encoding="utf-8")
     tasks = json.loads((export_dir / "tasks.json").read_text(encoding="utf-8"))
     assert len(tasks) == 300
     assert tasks[0]["meta"]["publication_gold"] is False
@@ -530,7 +542,7 @@ def test_label_studio_import_returns_reviewed_far_annotation_file(tmp_path: Path
     packet = tmp_path / "packet"
     build_annotation_packet(ROOT / "bench", packet, ["alice", "bob"])
     export_dir = tmp_path / "label_studio"
-    export_label_studio(packet, export_dir)
+    export_label_studio(packet, export_dir, reviewer_id="alice")
     tasks = json.loads((export_dir / "tasks.json").read_text(encoding="utf-8"))
     annotation_result = [
         {
@@ -584,6 +596,58 @@ def test_label_studio_import_returns_reviewed_far_annotation_file(tmp_path: Path
     assert row["annotation"]["conflict_type"] == "counter_evidence"
 
 
+def test_label_studio_exports_are_bound_to_one_reviewer_packet(tmp_path: Path) -> None:
+    packet = tmp_path / "packet"
+    build_annotation_packet(ROOT / "bench", packet, ["alice", "bob"])
+    alice_dir = tmp_path / "alice-label-studio"
+    bob_dir = tmp_path / "bob-label-studio"
+    export_label_studio(packet, alice_dir, reviewer_id="alice")
+    export_label_studio(packet, bob_dir, reviewer_id="bob")
+    alice_tasks = json.loads((alice_dir / "tasks.json").read_text(encoding="utf-8"))
+    bob_tasks = json.loads((bob_dir / "tasks.json").read_text(encoding="utf-8"))
+    alice_by_id = {task["data"]["sample_id"]: task for task in alice_tasks}
+    bob_by_id = {task["data"]["sample_id"]: task for task in bob_tasks}
+    assert all(task["meta"]["reviewer_id"] == "alice" for task in alice_tasks)
+    assert any(
+        alice_by_id[sample_id]["data"]["context"] != bob_by_id[sample_id]["data"]["context"]
+        for sample_id in alice_by_id
+    )
+    reviewed = tmp_path / "alice-export.json"
+    reviewed.write_text(json.dumps(alice_tasks), encoding="utf-8")
+    with pytest.raises(ValueError, match="different reviewer"):
+        import_label_studio(
+            packet,
+            reviewed,
+            tmp_path / "wrong-reviewer",
+            reviewer_id="bob",
+        )
+
+
+def test_install_review_file_is_atomic_and_refuses_replacement(tmp_path: Path) -> None:
+    packet = tmp_path / "packet"
+    build_annotation_packet(ROOT / "bench", packet, ["alice", "bob"])
+    rows = [
+        json.loads(line) for line in (packet / "annotations_alice.jsonl").read_text().splitlines()
+    ]
+    for row in rows:
+        row["annotation"] = {
+            "conflict_present": True,
+            "conflict_type": "counter_evidence",
+            "revision_action": "qualify_uncertainty",
+            "revised_answer_acceptable": True,
+            "rationale": "Human-reviewed visible evidence.",
+        }
+    review_file = tmp_path / "completed_alice.jsonl"
+    review_file.write_text(
+        "".join(json.dumps(row, ensure_ascii=False) + "\n" for row in rows),
+        encoding="utf-8",
+    )
+    installed = install_review_file(packet, review_file, reviewer_id="alice")
+    assert installed["samples"] == 300
+    with pytest.raises(FileExistsError, match="already completed"):
+        install_review_file(packet, review_file, reviewer_id="alice")
+
+
 def test_cohen_kappa_handles_perfect_and_chance_adjusted_agreement() -> None:
     assert cohen_kappa(["a", "b", "a"], ["a", "b", "a"]) == 1.0
     assert cohen_kappa(["a", "a", "b", "b"], ["a", "b", "a", "b"]) == 0.0
@@ -617,6 +681,7 @@ def test_completed_annotations_compile_with_kappa_report(tmp_path: Path) -> None
     adjudications = list(map(json.loads, (packet / "adjudications.jsonl").read_text().splitlines()))
     for row in adjudications:
         sample = samples[row["sample_id"]]
+        row["adjudicator_id"] = "adjudicator_1"
         row["gold_annotation"] = {
             "conflict_present": True,
             "conflict_type": sample["conflict_type"],
@@ -629,11 +694,72 @@ def test_completed_annotations_compile_with_kappa_report(tmp_path: Path) -> None
         "".join(json.dumps(row, ensure_ascii=False) + "\n" for row in adjudications),
         encoding="utf-8",
     )
+    alice_path = packet / "annotations_alice.jsonl"
+    valid_alice = alice_path.read_text(encoding="utf-8")
+    tampered = [json.loads(line) for line in valid_alice.splitlines()]
+    tampered[0]["question"] = "Modified question"
+    alice_path.write_text(
+        "".join(json.dumps(row, ensure_ascii=False) + "\n" for row in tampered),
+        encoding="utf-8",
+    )
+    with pytest.raises(ValueError, match="modified blind packet fields"):
+        compile_annotations(ROOT / "bench", packet, tmp_path / "tampered-compiled")
+    alice_path.write_text(valid_alice, encoding="utf-8")
+    alice_path.write_text(valid_alice + valid_alice.splitlines()[0] + "\n", encoding="utf-8")
+    with pytest.raises(ValueError, match="301 rows"):
+        compile_annotations(ROOT / "bench", packet, tmp_path / "duplicate-compiled")
+    alice_path.write_text(valid_alice, encoding="utf-8")
+    adjudication_path = packet / "adjudications.jsonl"
+    valid_adjudications = adjudication_path.read_text(encoding="utf-8")
+    blank_conflict = [json.loads(line) for line in valid_adjudications.splitlines()]
+    blank_conflict[0]["gold_annotation"]["revised_answer"] = ""
+    adjudication_path.write_text(
+        "".join(json.dumps(row, ensure_ascii=False) + "\n" for row in blank_conflict),
+        encoding="utf-8",
+    )
+    with pytest.raises(ValueError, match="requires revised_answer"):
+        compile_annotations(ROOT / "bench", packet, tmp_path / "blank-answer-compiled")
+    no_conflict = [json.loads(line) for line in valid_adjudications.splitlines()]
+    no_conflict[0]["gold_annotation"].update(
+        {
+            "conflict_present": False,
+            "conflict_type": "",
+            "revision_action": "qualify_uncertainty",
+            "revised_answer": "",
+            "rationale": "No material conflict in the visible evidence.",
+        }
+    )
+    no_conflict_id = no_conflict[0]["sample_id"]
+    adjudication_path.write_text(
+        "".join(json.dumps(row, ensure_ascii=False) + "\n" for row in no_conflict),
+        encoding="utf-8",
+    )
     compiled_dir = tmp_path / "compiled"
     report = compile_annotations(ROOT / "bench", packet, compiled_dir)
     assert report["agreement_gate_passed"] is True
+    assert report["adjudicator_id"] == "adjudicator_1"
     assert set(report["mean_kappas"].values()) == {1.0}
+    evidence_validation = validate_annotation_evidence(compiled_dir)
+    assert evidence_validation["valid"] is True
+    archived_alice = compiled_dir / "annotation_evidence/annotations_alice.jsonl"
+    archived_content = archived_alice.read_text(encoding="utf-8")
+    archived_alice.write_text(archived_content + " ", encoding="utf-8")
+    with pytest.raises(ValueError, match="fingerprint mismatch"):
+        validate_annotation_evidence(compiled_dir)
+    archived_alice.write_text(archived_content, encoding="utf-8")
     assert validate(compiled_dir)["candidate_ready"] is True
+    compiled_by_id = {
+        row["id"]: row
+        for row in map(
+            json.loads,
+            (compiled_dir / "falsirag_bench.jsonl").read_text().splitlines(),
+        )
+    }
+    assert compiled_by_id[no_conflict_id]["conflict_type"] == "no_conflict"
+    assert (
+        compiled_by_id[no_conflict_id]["expected_revision"]["revised_answer"]
+        == compiled_by_id[no_conflict_id]["initial_answer"]
+    )
 
     run_dir = tmp_path / "adjudicated-run"
     run(

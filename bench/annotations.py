@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import json
+import os
 import shutil
+import tempfile
 from collections import Counter
 from itertools import combinations
 from pathlib import Path
@@ -13,6 +15,16 @@ from bench.build.common import read_jsonl, sha256_file, stable_rank, write_json,
 from bench.schema import VALID_CONFLICT_TYPES, VALID_REVISION_ACTIONS
 
 PACKET_VERSION = "falsirag-annotation-packet-v1"
+_REVIEW_VISIBLE_FIELDS = (
+    "schema_version",
+    "sample_id",
+    "question",
+    "initial_answer",
+    "claims",
+    "evidence",
+    "annotator_id",
+)
+_ADJUDICATION_VISIBLE_FIELDS = _REVIEW_VISIBLE_FIELDS[:-1]
 
 
 def _validate_annotator_id(value: str) -> str:
@@ -147,59 +159,10 @@ def cohen_kappa(left: list[str], right: list[str]) -> float:
     return (observed - expected) / (1.0 - expected)
 
 
-def _validated_annotation(row: dict[str, Any], field: str) -> dict[str, Any]:
-    if row.get("draft_from_machine_preannotation") and not row.get("human_reviewed"):
-        raise ValueError(
-            f"{row.get('sample_id')}: machine preannotation drafts require human_reviewed=true"
-        )
-    annotation = row.get(field)
-    if not isinstance(annotation, dict):
-        raise ValueError(f"{row.get('sample_id')}: missing {field}")
-    present = annotation.get("conflict_present")
-    if not isinstance(present, bool):
-        raise ValueError(f"{row.get('sample_id')}: conflict_present must be boolean")
-    conflict_type = annotation.get("conflict_type")
-    if present and conflict_type not in VALID_CONFLICT_TYPES:
-        raise ValueError(f"{row.get('sample_id')}: invalid conflict type")
-    if not present:
-        conflict_type = "no_conflict"
-    action = annotation.get("revision_action")
-    if action not in VALID_REVISION_ACTIONS:
-        raise ValueError(f"{row.get('sample_id')}: invalid revision action")
-    acceptable = annotation.get("revised_answer_acceptable")
-    if not isinstance(acceptable, bool):
-        raise ValueError(f"{row.get('sample_id')}: revised_answer_acceptable must be boolean")
-    return {**annotation, "conflict_type": conflict_type}
-
-
-def compile_annotations(
-    data_dir: Path,
-    packet_dir: Path,
-    output_dir: Path,
-) -> dict[str, Any]:
-    packet_manifest = json.loads((packet_dir / "packet_manifest.json").read_text(encoding="utf-8"))
-    source_fingerprints = packet_manifest["source_fingerprints"]
-    if source_fingerprints != {
-        "benchmark_sha256": sha256_file(data_dir / "falsirag_bench.jsonl"),
-        "corpus_sha256": sha256_file(data_dir / "corpus.jsonl"),
-    }:
-        raise ValueError("annotation packet does not match the current benchmark")
-    by_annotator: dict[str, dict[str, dict[str, Any]]] = {}
-    for annotator_id, filename in packet_manifest["annotation_files"].items():
-        rows = read_jsonl(packet_dir / filename)
-        by_annotator[annotator_id] = {
-            row["sample_id"]: _validated_annotation(row, "annotation") for row in rows
-        }
-    sample_ids = set.intersection(*(set(rows) for rows in by_annotator.values()))
-    if len(sample_ids) != packet_manifest["samples"]:
-        raise ValueError("annotation files do not contain the same complete sample set")
-    adjudications = {
-        row["sample_id"]: _validated_annotation(row, "gold_annotation")
-        for row in read_jsonl(packet_dir / packet_manifest["adjudication_file"])
-    }
-    if set(adjudications) != sample_ids:
-        raise ValueError("adjudications are incomplete or contain unknown samples")
-
+def _agreement_summary(
+    by_annotator: dict[str, dict[str, dict[str, Any]]],
+    sample_ids: set[str],
+) -> tuple[list[dict[str, Any]], dict[str, float]]:
     pair_reports: list[dict[str, Any]] = []
     for left_id, right_id in combinations(sorted(by_annotator), 2):
         ordered_ids = sorted(sample_ids)
@@ -230,7 +193,195 @@ def compile_annotations(
             "revision_action_kappa",
         )
     }
+    return pair_reports, mean_kappas
+
+
+def _validated_annotation(row: dict[str, Any], field: str) -> dict[str, Any]:
+    if row.get("draft_from_machine_preannotation") and not row.get("human_reviewed"):
+        raise ValueError(
+            f"{row.get('sample_id')}: machine preannotation drafts require human_reviewed=true"
+        )
+    annotation = row.get(field)
+    if not isinstance(annotation, dict):
+        raise ValueError(f"{row.get('sample_id')}: missing {field}")
+    present = annotation.get("conflict_present")
+    if not isinstance(present, bool):
+        raise ValueError(f"{row.get('sample_id')}: conflict_present must be boolean")
+    conflict_type = annotation.get("conflict_type")
+    if present and conflict_type not in VALID_CONFLICT_TYPES:
+        raise ValueError(f"{row.get('sample_id')}: invalid conflict type")
+    if not present:
+        conflict_type = "no_conflict"
+    action = annotation.get("revision_action")
+    if action not in VALID_REVISION_ACTIONS:
+        raise ValueError(f"{row.get('sample_id')}: invalid revision action")
+    acceptable = annotation.get("revised_answer_acceptable")
+    if not isinstance(acceptable, bool):
+        raise ValueError(f"{row.get('sample_id')}: revised_answer_acceptable must be boolean")
+    rationale = annotation.get("rationale")
+    if not isinstance(rationale, str) or not rationale.strip():
+        raise ValueError(f"{row.get('sample_id')}: rationale must be non-empty")
+    return {**annotation, "conflict_type": conflict_type, "rationale": rationale.strip()}
+
+
+def _packet_file(packet_dir: Path, filename: str) -> Path:
+    path = (packet_dir / filename).resolve()
+    try:
+        path.relative_to(packet_dir.resolve())
+    except ValueError as exc:
+        raise ValueError(f"annotation packet file escapes packet directory: {filename}") from exc
+    if not path.is_file():
+        raise FileNotFoundError(f"annotation packet file is missing: {filename}")
+    return path
+
+
+def _rows_by_id(
+    rows: list[dict[str, Any]], *, expected: int, role: str
+) -> dict[str, dict[str, Any]]:
+    sample_ids = [str(row.get("sample_id", "")) for row in rows]
+    if len(rows) != expected:
+        raise ValueError(f"{role} file has {len(rows)} rows; expected {expected}")
+    if any(not sample_id for sample_id in sample_ids):
+        raise ValueError(f"{role} file contains a row without sample_id")
+    if len(set(sample_ids)) != len(sample_ids):
+        raise ValueError(f"{role} file contains duplicate sample IDs")
+    return dict(zip(sample_ids, rows, strict=True))
+
+
+def _assert_visible_unchanged(
+    row: dict[str, Any],
+    expected: dict[str, Any],
+    fields: tuple[str, ...],
+    *,
+    role: str,
+) -> None:
+    changed = [field for field in fields if row.get(field) != expected.get(field)]
+    if changed:
+        raise ValueError(f"{row.get('sample_id')}: {role} modified blind packet fields: {changed}")
+
+
+def install_review_file(
+    packet_dir: Path,
+    review_file: Path,
+    *,
+    reviewer_id: str,
+) -> dict[str, Any]:
+    """Install one completed reviewer file without replacing other packet artifacts."""
+
+    reviewer_id = _validate_annotator_id(reviewer_id)
+    manifest = json.loads((packet_dir / "packet_manifest.json").read_text(encoding="utf-8"))
+    annotation_files = manifest.get("annotation_files", {})
+    if reviewer_id not in annotation_files:
+        raise ValueError(f"reviewer is not declared by this packet: {reviewer_id}")
+    target = _packet_file(packet_dir, str(annotation_files[reviewer_id]))
+    template_rows = _rows_by_id(
+        read_jsonl(target), expected=int(manifest["samples"]), role=f"{reviewer_id} template"
+    )
+    if any(
+        row.get("annotation", {}).get("conflict_present") is not None
+        for row in template_rows.values()
+    ):
+        raise FileExistsError(f"reviewer file is already completed: {target.name}")
+    imported_rows = _rows_by_id(
+        read_jsonl(review_file),
+        expected=int(manifest["samples"]),
+        role=f"{reviewer_id} import",
+    )
+    if set(imported_rows) != set(template_rows):
+        raise ValueError("imported reviewer file has a different sample set")
+    for sample_id, row in imported_rows.items():
+        _assert_visible_unchanged(
+            row,
+            template_rows[sample_id],
+            _REVIEW_VISIBLE_FIELDS,
+            role=reviewer_id,
+        )
+        _validated_annotation(row, "annotation")
+    descriptor, temporary = tempfile.mkstemp(prefix=f".{target.name}.", dir=packet_dir)
+    os.close(descriptor)
+    temporary_path = Path(temporary)
+    try:
+        shutil.copy2(review_file, temporary_path)
+        os.replace(temporary_path, target)
+    finally:
+        temporary_path.unlink(missing_ok=True)
+    return {
+        "schema_version": "falsirag-installed-review-v1",
+        "reviewer_id": reviewer_id,
+        "samples": len(imported_rows),
+        "source_review_sha256": sha256_file(review_file),
+        "installed_file": target.name,
+        "installed_sha256": sha256_file(target),
+    }
+
+
+def compile_annotations(
+    data_dir: Path,
+    packet_dir: Path,
+    output_dir: Path,
+) -> dict[str, Any]:
+    packet_manifest = json.loads((packet_dir / "packet_manifest.json").read_text(encoding="utf-8"))
+    source_fingerprints = packet_manifest["source_fingerprints"]
+    if source_fingerprints != {
+        "benchmark_sha256": sha256_file(data_dir / "falsirag_bench.jsonl"),
+        "corpus_sha256": sha256_file(data_dir / "corpus.jsonl"),
+    }:
+        raise ValueError("annotation packet does not match the current benchmark")
+    annotator_ids = packet_manifest.get("annotator_ids")
+    annotation_files = packet_manifest.get("annotation_files")
+    if (
+        not isinstance(annotator_ids, list)
+        or len(set(map(str, annotator_ids))) < 2
+        or not isinstance(annotation_files, dict)
+        or set(map(str, annotator_ids)) != set(annotation_files)
+    ):
+        raise ValueError("packet must declare at least two matching unique annotation files")
     samples = read_jsonl(data_dir / "falsirag_bench.jsonl")
+    corpus = {row["doc_id"]: row for row in read_jsonl(data_dir / "corpus.jsonl")}
+    sample_by_id = {str(row["id"]): row for row in samples}
+    expected_count = int(packet_manifest["samples"])
+    by_annotator: dict[str, dict[str, dict[str, Any]]] = {}
+    for annotator_id, filename in annotation_files.items():
+        rows = _rows_by_id(
+            read_jsonl(_packet_file(packet_dir, str(filename))),
+            expected=expected_count,
+            role=str(annotator_id),
+        )
+        if set(rows) != set(sample_by_id):
+            raise ValueError(f"{annotator_id}: annotation sample set does not match benchmark")
+        validated: dict[str, dict[str, Any]] = {}
+        for sample_id, row in rows.items():
+            expected = _visible_row(sample_by_id[sample_id], corpus, str(annotator_id))
+            _assert_visible_unchanged(row, expected, _REVIEW_VISIBLE_FIELDS, role=str(annotator_id))
+            validated[sample_id] = _validated_annotation(row, "annotation")
+        by_annotator[str(annotator_id)] = validated
+    sample_ids = set(sample_by_id)
+    adjudication_rows = _rows_by_id(
+        read_jsonl(_packet_file(packet_dir, str(packet_manifest["adjudication_file"]))),
+        expected=expected_count,
+        role="adjudication",
+    )
+    if set(adjudication_rows) != sample_ids:
+        raise ValueError("adjudications are incomplete or contain unknown samples")
+    adjudicator_ids = {
+        str(row.get("adjudicator_id", "")).strip() for row in adjudication_rows.values()
+    }
+    if "" in adjudicator_ids or len(adjudicator_ids) != 1:
+        raise ValueError("adjudication rows require one consistent non-empty adjudicator_id")
+    adjudications: dict[str, dict[str, Any]] = {}
+    for sample_id, row in adjudication_rows.items():
+        expected = _visible_row(sample_by_id[sample_id], corpus, "adjudicator")
+        expected.pop("annotator_id")
+        _assert_visible_unchanged(row, expected, _ADJUDICATION_VISIBLE_FIELDS, role="adjudicator")
+        gold = _validated_annotation(row, "gold_annotation")
+        revised_answer = gold.get("revised_answer")
+        if gold["conflict_present"] and (
+            not isinstance(revised_answer, str) or not revised_answer.strip()
+        ):
+            raise ValueError(f"{sample_id}: conflicting adjudication requires revised_answer")
+        adjudications[sample_id] = gold
+
+    pair_reports, mean_kappas = _agreement_summary(by_annotator, sample_ids)
     compiled = []
     for sample in samples:
         gold = adjudications[sample["id"]]
@@ -238,9 +389,14 @@ def compile_annotations(
         sample["conflict_type"] = gold["conflict_type"]
         sample["expected_revision"]["action"] = gold["revision_action"]
         revised_answer = gold.get("revised_answer")
-        if isinstance(revised_answer, str) and revised_answer.strip():
-            sample["expected_revision"]["revised_answer"] = revised_answer.strip()
+        sample["expected_revision"]["revised_answer"] = (
+            revised_answer.strip()
+            if isinstance(revised_answer, str) and revised_answer.strip()
+            else sample["initial_answer"]
+        )
         compiled.append(sample)
+    if output_dir.exists() and any(output_dir.iterdir()):
+        raise FileExistsError("compiled annotation output directory must be empty")
     output_dir.mkdir(parents=True, exist_ok=True)
     write_jsonl(output_dir / "falsirag_bench.jsonl", compiled)
     shutil.copy2(data_dir / "corpus.jsonl", output_dir / "corpus.jsonl")
@@ -255,10 +411,43 @@ def compile_annotations(
         data_dir / "splits" / "test_inputs.jsonl",
         output_dir / "splits" / "test_inputs.jsonl",
     )
+    evidence_dir = output_dir / "annotation_evidence"
+    evidence_dir.mkdir()
+    evidence_sources = {
+        "packet_manifest.json": packet_dir / "packet_manifest.json",
+        **{
+            str(filename): _packet_file(packet_dir, str(filename))
+            for filename in annotation_files.values()
+        },
+        str(packet_manifest["adjudication_file"]): _packet_file(
+            packet_dir, str(packet_manifest["adjudication_file"])
+        ),
+    }
+    readme_path = packet_dir / "README.md"
+    if readme_path.is_file():
+        evidence_sources["README.md"] = readme_path
+    evidence_files: dict[str, str] = {}
+    for relative, source in evidence_sources.items():
+        destination = evidence_dir / relative
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(source, destination)
+        evidence_files[relative] = sha256_file(destination)
+    evidence_manifest = {
+        "schema_version": "falsirag-annotation-evidence-v1",
+        "source_fingerprints": source_fingerprints,
+        "annotators": sorted(by_annotator),
+        "adjudicator_id": next(iter(adjudicator_ids)),
+        "samples": len(compiled),
+        "files": dict(sorted(evidence_files.items())),
+    }
+    evidence_manifest_path = evidence_dir / "evidence_manifest.json"
+    write_json(evidence_manifest_path, evidence_manifest)
     report = {
         "schema_version": "falsirag-annotation-report-v1",
         "samples": len(compiled),
         "annotators": sorted(by_annotator),
+        "adjudicator_id": next(iter(adjudicator_ids)),
+        "annotation_evidence_manifest_sha256": sha256_file(evidence_manifest_path),
         "pairwise": pair_reports,
         "mean_kappas": mean_kappas,
         "minimum_required_kappa": 0.6,
@@ -275,6 +464,9 @@ def compile_annotations(
         "machine_seed_is_gold": False,
         "required_annotators": 2,
         "required_adjudication": True,
+        "adjudicator_id": next(iter(adjudicator_ids)),
+        "evidence": "annotation_evidence/evidence_manifest.json",
+        "evidence_manifest_sha256": sha256_file(evidence_manifest_path),
         "report": "annotation_report.json",
         "agreement_gate_passed": report["agreement_gate_passed"],
         "mean_kappas": mean_kappas,
@@ -287,4 +479,144 @@ def compile_annotations(
         "split_manifest_sha256": sha256_file(output_dir / "split_manifest.json"),
     }
     write_json(output_dir / "manifest.json", manifest)
+    validate_annotation_evidence(output_dir)
     return report
+
+
+def validate_annotation_evidence(data_dir: Path) -> dict[str, Any]:
+    """Recompute IAA and adjudication bindings from a compiled evidence archive."""
+
+    evidence_dir = data_dir / "annotation_evidence"
+    evidence_manifest_path = evidence_dir / "evidence_manifest.json"
+    evidence_manifest = json.loads(evidence_manifest_path.read_text(encoding="utf-8"))
+    if evidence_manifest.get("schema_version") != "falsirag-annotation-evidence-v1":
+        raise ValueError("unsupported annotation evidence schema")
+    files = evidence_manifest.get("files")
+    if not isinstance(files, dict) or not files:
+        raise ValueError("annotation evidence file fingerprints are missing")
+    observed_files = {
+        path.relative_to(evidence_dir).as_posix()
+        for path in evidence_dir.rglob("*")
+        if path.is_file() and path != evidence_manifest_path
+    }
+    if observed_files != set(files):
+        raise ValueError("annotation evidence archive contains missing or unrecorded files")
+    for relative, fingerprint in files.items():
+        path = _packet_file(evidence_dir, str(relative))
+        if sha256_file(path) != fingerprint:
+            raise ValueError(f"annotation evidence fingerprint mismatch: {relative}")
+
+    packet_manifest = json.loads(
+        (evidence_dir / "packet_manifest.json").read_text(encoding="utf-8")
+    )
+    if packet_manifest.get("source_fingerprints") != evidence_manifest.get("source_fingerprints"):
+        raise ValueError("packet and evidence manifests disagree on source fingerprints")
+    if evidence_manifest["source_fingerprints"].get("corpus_sha256") != sha256_file(
+        data_dir / "corpus.jsonl"
+    ):
+        raise ValueError("annotation evidence points to a different corpus")
+    annotation_files = packet_manifest.get("annotation_files")
+    annotator_ids = packet_manifest.get("annotator_ids")
+    if (
+        not isinstance(annotation_files, dict)
+        or not isinstance(annotator_ids, list)
+        or set(annotation_files) != set(map(str, annotator_ids))
+        or len(annotation_files) < 2
+    ):
+        raise ValueError("archived packet reviewer declarations are invalid")
+    expected_count = int(packet_manifest["samples"])
+    samples = read_jsonl(data_dir / "falsirag_bench.jsonl")
+    sample_by_id = {str(row["id"]): row for row in samples}
+    corpus = {row["doc_id"]: row for row in read_jsonl(data_dir / "corpus.jsonl")}
+    if expected_count != len(sample_by_id):
+        raise ValueError("archived packet sample count differs from compiled benchmark")
+
+    by_annotator: dict[str, dict[str, dict[str, Any]]] = {}
+    for annotator_id, filename in annotation_files.items():
+        rows = _rows_by_id(
+            read_jsonl(_packet_file(evidence_dir, str(filename))),
+            expected=expected_count,
+            role=str(annotator_id),
+        )
+        if set(rows) != set(sample_by_id):
+            raise ValueError(f"{annotator_id}: archived reviewer sample set mismatch")
+        validated: dict[str, dict[str, Any]] = {}
+        for sample_id, row in rows.items():
+            expected = _visible_row(sample_by_id[sample_id], corpus, str(annotator_id))
+            _assert_visible_unchanged(row, expected, _REVIEW_VISIBLE_FIELDS, role=str(annotator_id))
+            validated[sample_id] = _validated_annotation(row, "annotation")
+        by_annotator[str(annotator_id)] = validated
+
+    adjudication_rows = _rows_by_id(
+        read_jsonl(_packet_file(evidence_dir, str(packet_manifest.get("adjudication_file", "")))),
+        expected=expected_count,
+        role="adjudication",
+    )
+    if set(adjudication_rows) != set(sample_by_id):
+        raise ValueError("archived adjudication sample set mismatch")
+    adjudicator_ids = {
+        str(row.get("adjudicator_id", "")).strip() for row in adjudication_rows.values()
+    }
+    if "" in adjudicator_ids or len(adjudicator_ids) != 1:
+        raise ValueError("archived adjudication has inconsistent adjudicator IDs")
+    adjudications: dict[str, dict[str, Any]] = {}
+    for sample_id, row in adjudication_rows.items():
+        expected = _visible_row(sample_by_id[sample_id], corpus, "adjudicator")
+        expected.pop("annotator_id")
+        _assert_visible_unchanged(row, expected, _ADJUDICATION_VISIBLE_FIELDS, role="adjudicator")
+        gold = _validated_annotation(row, "gold_annotation")
+        revised_answer = gold.get("revised_answer")
+        if gold["conflict_present"] and (
+            not isinstance(revised_answer, str) or not revised_answer.strip()
+        ):
+            raise ValueError(f"{sample_id}: conflicting adjudication requires revised_answer")
+        adjudications[sample_id] = gold
+
+    pairwise, mean_kappas = _agreement_summary(by_annotator, set(sample_by_id))
+    report = json.loads((data_dir / "annotation_report.json").read_text(encoding="utf-8"))
+    checks = {
+        "annotators": report.get("annotators") == sorted(by_annotator),
+        "adjudicator": report.get("adjudicator_id") == next(iter(adjudicator_ids)),
+        "samples": report.get("samples") == expected_count,
+        "pairwise": report.get("pairwise") == pairwise,
+        "mean_kappas": report.get("mean_kappas") == mean_kappas,
+        "evidence": report.get("annotation_evidence_manifest_sha256")
+        == sha256_file(evidence_manifest_path),
+    }
+    failed = sorted(key for key, passed in checks.items() if not passed)
+    if failed:
+        raise ValueError(f"annotation report differs from archived evidence: {failed}")
+    for sample_id, sample in sample_by_id.items():
+        gold = adjudications[sample_id]
+        if sample.get("annotation_status") != "adjudicated":
+            raise ValueError(f"{sample_id}: compiled row is not adjudicated")
+        if sample.get("conflict_type") != gold["conflict_type"]:
+            raise ValueError(f"{sample_id}: compiled conflict type differs from adjudication")
+        if sample.get("expected_revision", {}).get("action") != gold["revision_action"]:
+            raise ValueError(f"{sample_id}: compiled revision action differs from adjudication")
+        revised_answer = gold.get("revised_answer")
+        expected_answer = (
+            revised_answer.strip()
+            if isinstance(revised_answer, str) and revised_answer.strip()
+            else sample["initial_answer"]
+        )
+        if sample.get("expected_revision", {}).get("revised_answer") != expected_answer:
+            raise ValueError(f"{sample_id}: compiled revised answer differs from adjudication")
+    manifest = json.loads((data_dir / "manifest.json").read_text(encoding="utf-8"))
+    annotation = manifest.get("annotation", {})
+    if (
+        not isinstance(annotation, dict)
+        or annotation.get("evidence_manifest_sha256") != sha256_file(evidence_manifest_path)
+        or annotation.get("adjudicator_id") != next(iter(adjudicator_ids))
+        or annotation.get("mean_kappas") != mean_kappas
+    ):
+        raise ValueError("compiled manifest differs from archived annotation evidence")
+    return {
+        "schema_version": "falsirag-annotation-evidence-validation-v1",
+        "valid": True,
+        "samples": expected_count,
+        "annotators": sorted(by_annotator),
+        "adjudicator_id": next(iter(adjudicator_ids)),
+        "mean_kappas": mean_kappas,
+        "evidence_manifest_sha256": sha256_file(evidence_manifest_path),
+    }

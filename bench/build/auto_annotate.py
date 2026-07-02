@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import re
 import shutil
@@ -393,6 +394,14 @@ def build_review_draft(
     )
     if preannotation_manifest.get("source_packet_sha256") != packet_sha256:
         raise ValueError("preannotations do not match the current annotation packet")
+    packet_manifest = json.loads(packet_manifest_path.read_text(encoding="utf-8"))
+    annotation_files = packet_manifest.get("annotation_files", {})
+    if reviewer_id not in annotation_files:
+        raise ValueError(f"reviewer is not declared by this packet: {reviewer_id}")
+    reviewer_rows = {
+        str(row["sample_id"]): row
+        for row in read_jsonl(packet_dir / str(annotation_files[reviewer_id]))
+    }
     preannotation_file = preannotation_dir / str(preannotation_manifest["preannotation_file"])
     preannotation_rows = read_jsonl(preannotation_file)
     if output_dir.exists():
@@ -403,17 +412,21 @@ def build_review_draft(
 
     draft_rows = []
     for row in preannotation_rows:
+        sample_id = str(row["sample_id"])
+        if sample_id not in reviewer_rows:
+            raise ValueError(f"{sample_id}: preannotation is not in the reviewer packet")
+        source = reviewer_rows[sample_id]
         suggestion = row["preannotation"]
         present = bool(suggestion["conflict_present"])
         conflict_type = "" if not present else str(suggestion["conflict_type"])
         draft_rows.append(
             {
                 "schema_version": PACKET_VERSION,
-                "sample_id": row["sample_id"],
-                "question": row["question"],
-                "initial_answer": row["initial_answer"],
-                "claims": row["claims"],
-                "evidence": row["evidence"],
+                "sample_id": source["sample_id"],
+                "question": source["question"],
+                "initial_answer": source["initial_answer"],
+                "claims": source["claims"],
+                "evidence": source["evidence"],
                 "annotator_id": reviewer_id,
                 "annotation": {
                     "conflict_present": present,
@@ -523,6 +536,7 @@ def export_label_studio(
     packet_dir: Path,
     output_dir: Path,
     *,
+    reviewer_id: str,
     preannotation_dir: Path | None = None,
     overwrite: bool = False,
 ) -> dict[str, Any]:
@@ -535,7 +549,12 @@ def export_label_studio(
     packet_manifest_path = packet_dir / "packet_manifest.json"
     packet_manifest = json.loads(packet_manifest_path.read_text(encoding="utf-8"))
     packet_sha256 = sha256_file(packet_manifest_path)
-    source_rows = read_jsonl(packet_dir / packet_manifest["adjudication_file"])
+    annotation_files = packet_manifest.get("annotation_files", {})
+    if reviewer_id not in annotation_files:
+        raise ValueError(f"reviewer is not declared by this packet: {reviewer_id}")
+    source_file = packet_dir / str(annotation_files[reviewer_id])
+    source_file_sha256 = sha256_file(source_file)
+    source_rows = read_jsonl(source_file)
     preannotations_by_id: dict[str, dict[str, Any]] = {}
     preannotation_sha256 = ""
     preannotator_id = ""
@@ -561,14 +580,18 @@ def export_label_studio(
     tasks = []
     with_predictions = 0
     for row in source_rows:
+        context = _label_studio_context(row)
         task: dict[str, Any] = {
             "data": {
                 "sample_id": row["sample_id"],
-                "context": _label_studio_context(row),
+                "context": context,
             },
             "meta": {
                 "schema_version": LABEL_STUDIO_EXPORT_VERSION,
                 "source_packet_sha256": packet_sha256,
+                "source_annotation_file_sha256": source_file_sha256,
+                "reviewer_id": reviewer_id,
+                "context_sha256": hashlib.sha256(context.encode()).hexdigest(),
                 "publication_gold": False,
                 "human_review_required": True,
             },
@@ -584,21 +607,44 @@ def export_label_studio(
         json.dumps(tasks, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",
     )
+    assistance_note = (
+        "This project contains machine predictions and is not eligible for strict independent "
+        "IAA.\n"
+        if preannotation_dir is not None
+        else "This strict-IAA project contains no machine predictions.\n"
+    )
+    (output_dir / "README.md").write_text(
+        f"# FalsiRAG blind review: {reviewer_id}\n\n"
+        f"{assistance_note}"
+        "Import `label_config.xml` and `tasks.json` into a dedicated Label Studio project. "
+        "Complete every field and return the full JSON task export. Work independently: do "
+        "not search the web, inspect benchmark gold, use another reviewer's project, or "
+        "coordinate labels. Every rationale must cite visible evidence IDs.\n",
+        encoding="utf-8",
+    )
     result = {
         "schema_version": LABEL_STUDIO_EXPORT_VERSION,
         "created_at": datetime.now(timezone.utc).isoformat(),
         "source_packet_sha256": packet_sha256,
+        "source_annotation_file_sha256": source_file_sha256,
+        "reviewer_id": reviewer_id,
         "source_preannotation_sha256": preannotation_sha256,
         "preannotator_id": preannotator_id,
         "tasks_file": "tasks.json",
         "label_config_file": "label_config.xml",
+        "readme_file": "README.md",
         "tasks": len(tasks),
         "tasks_with_predictions": with_predictions,
         "publication_gold": False,
         "human_review_required": True,
         "import_note": (
-            "Create a Label Studio project with label_config.xml, then import tasks.json. "
-            "Predictions are machine drafts for review, not gold labels."
+            "Create a dedicated Label Studio project with label_config.xml, then import "
+            "tasks.json. "
+            + (
+                "Predictions are machine drafts for secondary review, not independent gold."
+                if preannotation_dir is not None
+                else "This reviewer-bound strict-IAA export contains no predictions."
+            )
         ),
     }
     write_json(output_dir / "label_studio_manifest.json", result)
@@ -638,12 +684,15 @@ def _label_studio_results_to_annotation(
     acceptable = choices.get("revised_answer_acceptable")
     if acceptable not in {"acceptable", "not_acceptable"}:
         raise ValueError(f"{sample_id}: missing revised_answer_acceptable annotation")
+    rationale = text.get("rationale", "").strip()
+    if not rationale:
+        raise ValueError(f"{sample_id}: rationale must be non-empty")
     return {
         "conflict_present": conflict_present,
         "conflict_type": conflict_type,
         "revision_action": revision_action,
         "revised_answer_acceptable": acceptable == "acceptable",
-        "rationale": text.get("rationale", ""),
+        "rationale": rationale,
     }
 
 
@@ -660,10 +709,12 @@ def import_label_studio(
     packet_manifest_path = packet_dir / "packet_manifest.json"
     packet_manifest = json.loads(packet_manifest_path.read_text(encoding="utf-8"))
     packet_sha256 = sha256_file(packet_manifest_path)
-    source_rows = {
-        str(row["sample_id"]): row
-        for row in read_jsonl(packet_dir / packet_manifest["adjudication_file"])
-    }
+    annotation_files = packet_manifest.get("annotation_files", {})
+    if reviewer_id not in annotation_files:
+        raise ValueError(f"reviewer is not declared by this packet: {reviewer_id}")
+    source_file = packet_dir / str(annotation_files[reviewer_id])
+    source_file_sha256 = sha256_file(source_file)
+    source_rows = {str(row["sample_id"]): row for row in read_jsonl(source_file)}
     exported_tasks = json.loads(label_studio_json.read_text(encoding="utf-8"))
     if not isinstance(exported_tasks, list):
         raise ValueError("Label Studio export must be a JSON array of tasks")
@@ -673,16 +724,40 @@ def import_label_studio(
         if not isinstance(task, dict):
             raise ValueError("Label Studio task must be an object")
         data = task.get("data", {})
+        meta = task.get("meta", {})
         sample_id = str(data.get("sample_id", ""))
         if sample_id not in source_rows:
             raise ValueError(f"{sample_id}: unknown sample_id in Label Studio export")
-        task_sha256 = task.get("meta", {}).get("source_packet_sha256")
-        if task_sha256 not in {None, packet_sha256}:
+        if sample_id in annotations_by_id:
+            raise ValueError(f"{sample_id}: duplicate Label Studio task")
+        task_sha256 = meta.get("source_packet_sha256")
+        if task_sha256 != packet_sha256:
             raise ValueError(f"{sample_id}: Label Studio task came from a different packet")
+        if meta.get("reviewer_id") != reviewer_id:
+            raise ValueError(f"{sample_id}: Label Studio task belongs to a different reviewer")
+        if meta.get("source_annotation_file_sha256") != source_file_sha256:
+            raise ValueError(f"{sample_id}: reviewer source-file fingerprint mismatch")
+        expected_context = _label_studio_context(source_rows[sample_id])
+        observed_context = str(data.get("context", ""))
+        expected_context_sha = hashlib.sha256(expected_context.encode()).hexdigest()
+        if (
+            observed_context != expected_context
+            or meta.get("context_sha256") != expected_context_sha
+        ):
+            raise ValueError(f"{sample_id}: blind review context was modified")
         annotations = task.get("annotations") or task.get("completions") or []
-        if not annotations:
-            raise ValueError(f"{sample_id}: missing human Label Studio annotation")
-        first_annotation = annotations[0]
+        active_annotations = [
+            item
+            for item in annotations
+            if isinstance(item, dict)
+            and not item.get("was_cancelled", False)
+            and not item.get("skipped", False)
+        ]
+        if len(active_annotations) != 1:
+            raise ValueError(
+                f"{sample_id}: expected exactly one completed human Label Studio annotation"
+            )
+        first_annotation = active_annotations[0]
         results = first_annotation.get("result", [])
         if not isinstance(results, list):
             raise ValueError(f"{sample_id}: annotation result must be a list")
@@ -716,6 +791,7 @@ def import_label_studio(
         "schema_version": "falsirag-label-studio-import-v1",
         "created_at": datetime.now(timezone.utc).isoformat(),
         "source_packet_sha256": packet_sha256,
+        "source_annotation_file_sha256": source_file_sha256,
         "source_label_studio_sha256": sha256_file(label_studio_json),
         "reviewer_id": reviewer_id,
         "annotation_file": filename,
@@ -723,8 +799,8 @@ def import_label_studio(
         "human_reviewed": True,
         "publication_gold": False,
         "next_step": (
-            "Copy or reference this file from packet_manifest.json as one independent "
-            "reviewer annotation, then complete the second reviewer and adjudication files."
+            "Install this file with `python -m bench.build.annotate_packet install-review`, "
+            "then complete the second reviewer and adjudication files."
         ),
     }
     write_json(output_dir / "label_studio_import_manifest.json", result)
@@ -751,6 +827,7 @@ def main() -> None:
     draft_parser.add_argument("--overwrite", action="store_true")
     label_studio_parser = subparsers.add_parser("label-studio")
     label_studio_parser.add_argument("--packet-dir", type=Path, required=True)
+    label_studio_parser.add_argument("--reviewer-id", required=True)
     label_studio_parser.add_argument("--preannotation-dir", type=Path)
     label_studio_parser.add_argument("--output-dir", type=Path, required=True)
     label_studio_parser.add_argument("--overwrite", action="store_true")
@@ -789,6 +866,7 @@ def main() -> None:
         result = export_label_studio(
             args.packet_dir,
             args.output_dir,
+            reviewer_id=args.reviewer_id,
             preannotation_dir=args.preannotation_dir,
             overwrite=args.overwrite,
         )

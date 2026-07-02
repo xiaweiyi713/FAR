@@ -11,7 +11,7 @@
 | 300--400 benchmark, five categories | 300 rows in `bench/falsirag_bench.jsonl` | Candidate complete |
 | In-corpus counter-evidence | `bench/corpus.jsonl`, validator recall 0.91 | Implemented |
 | Frozen held-out split/no leakage | `bench/split_manifest.json`, gold-free bundle builder, blind-suite test, `docs/BLIND_TEST_HANDOFF.md` | Technically isolated; external custodian/execution pending |
-| Double annotation and IAA | `bench/annotations.py`, `docs/HUMAN_ANNOTATION_PROTOCOL.md` | Tooling and SOP complete; humans pending |
+| Double annotation and IAA | Reviewer-bound Label Studio exports/imports, atomic installer, raw-evidence freezer/revalidator in `bench/annotations.py`, `docs/HUMAN_ANNOTATION_PROTOCOL.md` | Tamper-evident tooling and SOP complete; humans pending |
 | External FEVER slice | `bench/external/fever_pair_candidates_v1/` | Candidate imported; annotation pending |
 | Six baselines, including closest-neighbor CounterRefine control | `baselines/`; ignored local pull `outputs/remote_qwen_six_baseline_suite/` | Implemented; CRAG, Self-RAG, and CounterRefine style reproductions explicitly labeled; Qwen dev six-baseline diagnostic complete/validated, still `publication_ready:false` |
 | Four ablations | `experiments/ablations.py`; untyped wrapper preserves batched graph construction; complete local Qwen dev ablation reports in `outputs/remote_qwen_ablation_matrix/` | All four corrected Qwen dev ablations complete/validated; typed-vs-untyped supports typed control, other component effects are mixed and must be rechecked on adjudicated gold |
