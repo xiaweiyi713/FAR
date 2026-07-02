@@ -111,3 +111,17 @@ def scan_secrets_main() -> None:
     from experiments.scan_secrets import main
 
     main()
+
+
+def submission_readiness_main() -> None:
+    _prefer_far_repo()
+    from experiments.submission_readiness import main
+
+    main()
+
+
+def score_blind_return_main() -> None:
+    _prefer_far_repo()
+    from experiments.score_blind_return import main
+
+    main()

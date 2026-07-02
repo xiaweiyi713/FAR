@@ -28,3 +28,6 @@ The following cannot be truthfully completed by code generation:
 
 Do not replace `PENDING-EMPIRICAL-RUN` cells until result bundle validation
 passes. Diagnostic smoke figures under `outputs/` are not submission figures.
+The final handoff is now machine-auditable through
+`falsirag-score-blind-return` and `falsirag-submission-readiness`; the latter
+must report `ready:true` after human policy review, not merely pass unit tests.

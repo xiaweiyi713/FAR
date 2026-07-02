@@ -1,0 +1,46 @@
+{
+  "schema_version": "far-submission-evidence-v1",
+  "adjudicated_data_dir": "outputs/annotations/falsirag_adjudicated_v1",
+  "dev_suites": {
+    "deepseek_v4_flash": "outputs/formal/deepseek_dev_suite",
+    "qwen_3_7_plus": "outputs/formal/qwen_plus_dev_suite",
+    "qwen_3_5_9b": "outputs/formal/qwen_open_dev_suite"
+  },
+  "blind_bundle_dir": "outputs/handoff/falsirag_blind_test_v1",
+  "blind_returns": {
+    "deepseek_v4_flash": "outputs/returned/deepseek_test_suite",
+    "qwen_3_7_plus": "outputs/returned/qwen_plus_test_suite",
+    "qwen_3_5_9b": "outputs/returned/qwen_open_test_suite"
+  },
+  "scored_test_suites": {
+    "deepseek_v4_flash": "outputs/final/deepseek_test_scored",
+    "qwen_3_7_plus": "outputs/final/qwen_plus_test_scored",
+    "qwen_3_5_9b": "outputs/final/qwen_open_test_scored"
+  },
+  "blind_test_attestation": "submission/blind_test_attestation.json",
+  "blind_test": {
+    "schema_version": "far-blind-test-attestation-v1",
+    "custodian_id": "",
+    "scorer_id": "",
+    "completed_at": "",
+    "frozen_commit": "",
+    "bundle_manifest_sha256": "",
+    "return_manifest_sha256": {
+      "deepseek_v4_flash": "",
+      "qwen_3_7_plus": "",
+      "qwen_3_5_9b": ""
+    },
+    "one_shot": false,
+    "externally_held": false,
+    "gold_loaded_by_custodian": true,
+    "all_failures_reported": false
+  },
+  "release_checksums": "build/release-checksums.json",
+  "human_review": {
+    "reviewer_id": "",
+    "completed_at": "",
+    "aaai_policy_checked": false,
+    "authorship_checked": false,
+    "claims_checked": false
+  }
+}

@@ -26,6 +26,11 @@ Go/no-go gates:
 5. Freeze code/config, transfer test gold to an independent custodian, then run
    test once. Report all failures and intervals.
 
+After the custodian returns all three unscored suites, use
+`falsirag-score-blind-return` with the role-separated attestation. Final
+submission acceptance is determined by `falsirag-submission-readiness`; a
+technical dry run or machine-seeded report cannot satisfy it.
+
 The suite binds comparison direction explicitly: FAR and other baselines are
 measured against Vanilla, and each `minus_*` report is measured against full
 FAR on identical sample IDs. Reports retain both method names and the baseline

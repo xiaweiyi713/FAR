@@ -22,6 +22,8 @@ from bench.build.machine_label_audit import audit_machine_labels
 from bench.build.validate_bench import validate
 from bench.build.weak_label import generate_weak_labels, weak_label_row
 from bench.schema import VALID_CONFLICT_TYPES, VALID_REVISION_ACTIONS
+from eval.run_eval import evaluate
+from experiments.run_far import run
 
 ROOT = Path(__file__).resolve().parents[1]
 VERA_BENCH = Path("/Users/xuwenyao/VeraRAG/data/verabench")
@@ -632,6 +634,25 @@ def test_completed_annotations_compile_with_kappa_report(tmp_path: Path) -> None
     assert report["agreement_gate_passed"] is True
     assert set(report["mean_kappas"].values()) == {1.0}
     assert validate(compiled_dir)["candidate_ready"] is True
+
+    run_dir = tmp_path / "adjudicated-run"
+    run(
+        ROOT / "experiments/configs/offline_smoke.yaml",
+        compiled_dir,
+        run_dir,
+        split="dev",
+        limit=5,
+    )
+    evaluation = evaluate(
+        compiled_dir / "falsirag_bench.jsonl",
+        run_dir / "predictions.jsonl",
+        tmp_path / "adjudicated-evaluation",
+        resamples=20,
+    )
+    assert evaluation["publication_ready"] is True
+    assert evaluation["publication"]["phase"] == "development"
+    assert evaluation["publication"]["annotation_ready"] is True
+    assert evaluation["publication"]["external_blind_ready"] is False
 
 
 def test_contamination_audit_reports_explicit_reference_overlap(tmp_path: Path) -> None:

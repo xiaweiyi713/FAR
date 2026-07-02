@@ -47,25 +47,47 @@ def _publication_context(
     benchmark_path: Path,
     samples: dict[str, dict[str, Any]],
     predictions: list[PredictionRecord],
+    *,
+    benchmark_manifest_path: Path | None = None,
 ) -> dict[str, Any]:
-    manifest_path = benchmark_path.parent / "manifest.json"
+    manifest_path = benchmark_manifest_path or benchmark_path.parent / "manifest.json"
     manifest = (
         json.loads(manifest_path.read_text(encoding="utf-8")) if manifest_path.exists() else None
     )
     annotation_counts = Counter(
         str(samples[item.sample_id].get("annotation_status", "missing")) for item in predictions
     )
-    manifest_ready = bool(manifest and manifest.get("publication_ready"))
     rows_adjudicated = bool(annotation_counts) and set(annotation_counts) == {"adjudicated"}
+    annotation = manifest.get("annotation", {}) if isinstance(manifest, dict) else {}
+    annotation_ready = bool(
+        isinstance(annotation, dict)
+        and annotation.get("status") == "adjudicated"
+        and annotation.get("agreement_gate_passed") is True
+        and rows_adjudicated
+    )
+    scored_splits = {str(samples[item.sample_id].get("split", "missing")) for item in predictions}
+    test_scored = "test" in scored_splits
+    blind_test = manifest.get("blind_test", {}) if isinstance(manifest, dict) else {}
+    external_blind_ready = bool(
+        isinstance(blind_test, dict)
+        and blind_test.get("status") == "completed"
+        and blind_test.get("externally_held") is True
+        and blind_test.get("one_shot") is True
+        and blind_test.get("gold_loaded_by_custodian") is False
+    )
     reasons = []
     if manifest is None:
         reasons.append("benchmark manifest is missing")
-    elif not manifest_ready:
-        reasons.append("benchmark manifest is not publication-ready")
-    if not rows_adjudicated:
-        reasons.append("scored rows are not all adjudicated")
+    if not annotation_ready:
+        reasons.append("benchmark annotation/adjudication gate is not ready")
+    if test_scored and not external_blind_ready:
+        reasons.append("external one-shot blind-test gate is not ready")
     return {
-        "ready": manifest_ready and rows_adjudicated,
+        "ready": annotation_ready and (not test_scored or external_blind_ready),
+        "phase": "test" if test_scored else "development",
+        "annotation_ready": annotation_ready,
+        "external_blind_ready": external_blind_ready,
+        "scored_splits": sorted(scored_splits),
         "benchmark_manifest": str(manifest_path) if manifest_path.exists() else None,
         "benchmark_manifest_sha256": (
             sha256_file(manifest_path) if manifest_path.exists() else None
@@ -121,6 +143,7 @@ def evaluate(
     resamples: int = 2000,
     seed: int = 1729,
     baseline_scores_path: Path | None = None,
+    benchmark_manifest_path: Path | None = None,
 ) -> dict[str, Any]:
     samples = {row["id"]: row for row in read_jsonl(benchmark_path)}
     prediction_rows = read_jsonl(predictions_path)
@@ -134,7 +157,12 @@ def evaluate(
     if len(methods) != 1:
         raise ValueError("one evaluation report may contain exactly one method")
     scores = [score_sample(samples[item.sample_id], item) for item in predictions]
-    publication = _publication_context(benchmark_path, samples, predictions)
+    publication = _publication_context(
+        benchmark_path,
+        samples,
+        predictions,
+        benchmark_manifest_path=benchmark_manifest_path,
+    )
     aggregate = aggregate_scores(scores)
     intervals = {
         metric: stratified_bootstrap_ci(

@@ -139,20 +139,22 @@ The custodian should not return any edited benchmark file.
 
 ## Trusted scoring
 
-Only after the return package is frozen, score it against the adjudicated
-benchmark:
+Only after all return packages and the role-separated one-shot attestation are
+frozen, score each complete suite against the adjudicated benchmark:
 
 ```bash
-uv run falsirag-eval \
+uv run falsirag-score-blind-return \
+  --model-id deepseek_v4_flash \
   --data-dir outputs/annotations/falsirag_adjudicated_v1 \
-  --predictions /path/to/returned/deepseek_test_far/runs/far/predictions.jsonl \
-  --output-dir outputs/evaluations/deepseek_test_far \
-  --split test \
-  --allow-test
+  --blind-bundle-dir outputs/handoff/falsirag_blind_test_v1 \
+  --return-dir outputs/returned/deepseek_test_suite \
+  --attestation submission/blind_test_attestation.json \
+  --output-dir outputs/final/deepseek_test_scored
 ```
 
-Run the preregistered baseline first and pass its `scores.jsonl` as
-`--baseline-scores` for paired McNemar/bootstrap reports.
+The scorer validates and evaluates Vanilla first, compares FAR and the other
+baselines against Vanilla, compares each ablation against FAR, and emits the
+paired McNemar/bootstrap reports plus tables and figures in one bound bundle.
 
 ## Acceptance checks
 

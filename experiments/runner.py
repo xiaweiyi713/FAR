@@ -7,6 +7,7 @@ import importlib.metadata
 import json
 import os
 import platform
+import subprocess
 import sys
 from contextlib import contextmanager
 from datetime import datetime, timezone
@@ -176,6 +177,29 @@ def _implementation_sha256() -> str:
     return digest.hexdigest()
 
 
+def _source_revision() -> dict[str, Any]:
+    """Bind formal runs to an exact clean Git revision when Git is available."""
+
+    try:
+        commit = subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            cwd=ROOT,
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout.strip()
+        status = subprocess.run(
+            ["git", "status", "--porcelain", "--untracked-files=all"],
+            cwd=ROOT,
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout
+    except (OSError, subprocess.CalledProcessError):
+        return {"git_commit": None, "git_dirty": None}
+    return {"git_commit": commit, "git_dirty": bool(status.strip())}
+
+
 def _package_version(name: str) -> str | None:
     try:
         return importlib.metadata.version(name)
@@ -256,6 +280,7 @@ def build_run_identity(
         "benchmark_input_sha256": sha256_file(benchmark_input_path),
         "corpus_sha256": sha256_file(data_dir / "corpus.jsonl"),
         "implementation_sha256": _implementation_sha256(),
+        "source_revision": _source_revision(),
         "llm": config.get("llm", {}),
         "llm_runtime": _llm_runtime_identity(config),
         "retrieval": config.get("retrieval", {}),

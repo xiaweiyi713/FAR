@@ -811,3 +811,24 @@ from every FAR submodule.
 
 After completion, `far-ollama` was stopped and the remote host was confirmed to
 have no FAR/VeraRAG/Ollama tmux sessions or processes.
+
+## 2026-07-02: External evidence chain made fail-closed and executable
+
+The remaining human/cloud/custodian work is now represented by one explicit
+acceptance chain rather than prose-only TODOs. Formal run identities include
+the exact Git commit and dirty state, and result validation recomputes the v2
+identity signature to reject provenance tampering. Evaluation readiness was
+split correctly by phase: adjudicated dev/train reports require the human
+annotation and kappa gate, while test reports additionally require an external,
+one-shot, gold-free blind-test record.
+
+Added `falsirag-score-blind-return` to validate a complete 11-method custodian
+return, role-separated attestation, handoff and source fingerprints, and frozen
+commit before trusted scoring. It emits comparison-bound test reports and final
+artifacts into a fresh directory. Added `falsirag-submission-readiness` and
+templates to audit the candidate benchmark, human annotation, all three formal
+dev suites, final blind bundle, three returns, attestation, three scored test
+suites, release archive, paper placeholders, and human policy review. An
+end-to-end test exercises all 11 methods through the blind runner and trusted
+scorer. The current real-project status remains fail-closed because independent
+human labels, rotated-key cloud runs, and external custody do not yet exist.

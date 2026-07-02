@@ -22,6 +22,8 @@ paper/build/
 *.synctex.gz
 .DS_Store
 tmp/
+submission/evidence.json
+submission/blind_test_attestation.json
 paper/aaai27/
 !paper/aaai27/
 paper/aaai27/*

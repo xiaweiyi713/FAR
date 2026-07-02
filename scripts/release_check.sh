@@ -29,6 +29,10 @@ uv build
 uv run falsirag-release-checksums \
   --sbom build/sbom/far-sbom.cdx.json \
   --output build/release-checksums.json --check --json
+uv run falsirag-submission-readiness \
+  --evidence submission/evidence.template.json \
+  --output build/release/submission-readiness-current.json \
+  --allow-incomplete > /dev/null
 
 (
   cd paper

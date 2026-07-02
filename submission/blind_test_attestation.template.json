@@ -1,0 +1,17 @@
+{
+  "schema_version": "far-blind-test-attestation-v1",
+  "custodian_id": "",
+  "scorer_id": "",
+  "completed_at": "",
+  "frozen_commit": "",
+  "bundle_manifest_sha256": "",
+  "return_manifest_sha256": {
+    "deepseek_v4_flash": "",
+    "qwen_3_7_plus": "",
+    "qwen_3_5_9b": ""
+  },
+  "one_shot": false,
+  "externally_held": false,
+  "gold_loaded_by_custodian": true,
+  "all_failures_reported": false
+}

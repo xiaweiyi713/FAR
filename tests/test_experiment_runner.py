@@ -173,6 +173,7 @@ def test_runner_resumes_without_duplicates_and_evaluation_is_bound(tmp_path: Pat
         prediction["predicted_conflict_types"]
     )
     identity = json.loads((run_dir / "run_identity.json").read_text(encoding="utf-8"))
+    assert set(identity["source_revision"]) == {"git_commit", "git_dirty"}
     assert {
         "faiss-cpu",
         "huggingface-hub",
@@ -190,8 +191,22 @@ def test_runner_resumes_without_duplicates_and_evaluation_is_bound(tmp_path: Pat
     )
     assert evaluation["publication_ready"] is False
     assert evaluation["publication"]["annotation_status_counts"] == {"machine_seeded": 5}
-    assert "benchmark manifest is not publication-ready" in evaluation["publication"]["reasons"]
+    assert (
+        "benchmark annotation/adjudication gate is not ready"
+        in evaluation["publication"]["reasons"]
+    )
     assert validate_result_bundle(run_dir, evaluation_dir)["valid"] is True
+
+    identity_path = run_dir / "run_identity.json"
+    original_identity = identity_path.read_text(encoding="utf-8")
+    tampered_identity = json.loads(original_identity)
+    tampered_identity["source_revision"] = {"git_commit": "0" * 40, "git_dirty": False}
+    identity_path.write_text(json.dumps(tampered_identity), encoding="utf-8")
+    assert (
+        "run identity signature is invalid"
+        in validate_result_bundle(run_dir, evaluation_dir)["errors"]
+    )
+    identity_path.write_text(original_identity, encoding="utf-8")
 
     prediction_rows = [
         json.loads(line)

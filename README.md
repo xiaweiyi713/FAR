@@ -23,6 +23,8 @@ uv run falsirag-validate-bench
 uv run falsirag-generate-sbom --check
 uv run falsirag-weak-label --help
 uv run falsirag-machine-label-audit --help
+uv run falsirag-submission-readiness \
+  --evidence submission/evidence.template.json --allow-incomplete
 bash scripts/check_cloud_run_readiness.sh
 uv run python -m pytest
 ```
@@ -57,7 +59,8 @@ not publication-ready or scored rows have not been adjudicated.
 For final test execution, first use `falsirag-build-blind-bundle`; test runners
 then consume only sanitized operational inputs and emit unscored prediction
 manifests. They do not load local gold or build result artifacts. The trusted
-scoring handoff is documented in `docs/REPRODUCING.md`.
+scoring handoff and fail-closed final gate are documented in
+`docs/EXTERNAL_ACTION_PACKET.md`.
 
 ## Method outputs
 
@@ -102,6 +105,7 @@ adjudication, reported Cohen's kappa, and an externally held blind test. See
 - [`docs/AUTO_ANNOTATION.md`](docs/AUTO_ANNOTATION.md): local Qwen, weak-label, and optional DeepSeek preannotation workflow
 - [`docs/HUMAN_ANNOTATION_PROTOCOL.md`](docs/HUMAN_ANNOTATION_PROTOCOL.md): independent reviewer and adjudication SOP
 - [`docs/BLIND_TEST_HANDOFF.md`](docs/BLIND_TEST_HANDOFF.md): external gold-free test custody SOP
+- [`docs/EXTERNAL_ACTION_PACKET.md`](docs/EXTERNAL_ACTION_PACKET.md): role-by-role final execution packet and submission gate
 - [`docs/EXPERIMENT_PLAN.md`](docs/EXPERIMENT_PLAN.md): model/baseline/ablation matrix
 - [`docs/DEVELOPMENT_LOG.md`](docs/DEVELOPMENT_LOG.md): frozen dev-only tuning decisions and hashes
 - [`docs/PROPOSAL_TRACEABILITY.md`](docs/PROPOSAL_TRACEABILITY.md): proposal-to-evidence audit

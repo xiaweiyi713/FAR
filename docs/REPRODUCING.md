@@ -1,5 +1,9 @@
 # Reproduction Guide
 
+For the role-by-role path from completed annotation through external blind
+custody, trusted scoring, and final acceptance, use
+`docs/EXTERNAL_ACTION_PACKET.md`.
+
 ## Environment contract
 
 FAR declares Python 3.10+ support in `pyproject.toml`. The checked-in

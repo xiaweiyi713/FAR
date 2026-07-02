@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import math
 from pathlib import Path
@@ -42,8 +43,23 @@ def validate_result_bundle(run_dir: Path, evaluation_dir: Path | None = None) ->
     predictions = read_jsonl(predictions_path)
     if manifest.get("status") != "complete":
         errors.append("run manifest status is not complete")
+    if manifest.get("errors") != 0:
+        errors.append("run manifest records errors")
+    if manifest.get("expected") != manifest.get("completed"):
+        errors.append("run manifest is not complete for its expected inputs")
     if manifest.get("run_signature") != identity.get("run_signature"):
         errors.append("run signature mismatch")
+    if identity.get("schema_version") == "far-run-signature-v2":
+        stable = {
+            key: value
+            for key, value in identity.items()
+            if key not in {"run_signature", "created_at", "environment"}
+        }
+        expected_signature = hashlib.sha256(
+            json.dumps(stable, sort_keys=True, separators=(",", ":")).encode()
+        ).hexdigest()
+        if identity.get("run_signature") != expected_signature:
+            errors.append("run identity signature is invalid")
     if manifest.get("predictions_sha256") != sha256_file(predictions_path):
         errors.append("prediction fingerprint mismatch")
     if len(predictions) != manifest.get("completed"):

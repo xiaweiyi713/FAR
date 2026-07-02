@@ -153,6 +153,11 @@ The annotation gate is considered passed only when
 
 and every mean kappa is at least `0.60`.
 
+Record the compiled directory in a working copy of
+`submission/evidence.template.json`. The final readiness command independently
+rechecks reviewer count, adjudication status, kappas, row statuses, and dataset
+fingerprints; editing only the manifest cannot close the gate.
+
 ## What not to do
 
 - Do not copy machine preannotations into reviewer files without real human

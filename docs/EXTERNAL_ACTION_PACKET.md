@@ -1,0 +1,103 @@
+# External Action Packet
+
+This is the shortest truthful path from the current machine-seeded diagnostic
+state to a submission-ready FAR result. The commands fail closed: machine
+preannotations, partial runs, dirty source trees, unbound returns, and local
+test dry runs cannot satisfy the final gate.
+
+## 1. Human annotation owner
+
+Give two independent reviewers only their respective blind packet, README, and
+`docs/HUMAN_ANNOTATION_PROTOCOL.md`. After both files are frozen, an adjudicator
+fills `adjudications.jsonl` and compiles:
+
+```bash
+uv run python -m bench.build.annotate_packet compile \
+  --data-dir bench \
+  --packet-dir outputs/annotations/falsirag_packet_v1 \
+  --output-dir outputs/annotations/falsirag_adjudicated_v1
+```
+
+Do not continue unless `annotation_report.json` records two distinct reviewers,
+`adjudicated:true`, `agreement_gate_passed:true`, and every mean Cohen's kappa
+is at least `0.60`.
+
+## 2. Experiment owner
+
+Rotate the previously exposed DeepSeek key; never reuse or record it. Export the
+rotated DeepSeek and DashScope keys only in the remote shell. Run the complete
+11-method dev matrix for DeepSeek V4-Flash, Qwen3.7 Plus 2026-05-26, and local
+Qwen3.5 9B against the adjudicated directory. Large caches, outputs, and models
+remain under `/mnt/d` on `windows-gpu`.
+
+Formal run identities now bind the implementation hash and exact Git commit and
+record whether the worktree was dirty. Start final runs only from one clean,
+frozen commit. A dirty or commit-mismatched run is rejected by the submission
+gate.
+
+## 3. Release and handoff owner
+
+On the frozen commit, run `bash scripts/release_check.sh`, then build a new
+gold-free bundle from adjudicated data:
+
+```bash
+uv run falsirag-build-blind-bundle \
+  --data-dir outputs/annotations/falsirag_adjudicated_v1 \
+  --output-dir outputs/handoff/falsirag_blind_test_v1
+```
+
+Never hand off `falsirag_blind_test_technical_v1`. Send the external custodian
+only the new blind bundle, frozen release/repository, configs, environment
+instructions, and credentials through environment variables.
+
+## 4. External custodian
+
+Run each frozen model suite once with `--split test --allow-test`. Return the
+three complete unscored suite directories and logs. Do not request gold, retry
+because of output quality, or edit benchmark files. Record any operational
+restart or failure.
+
+The custodian and trusted scorer then fill
+`submission/blind_test_attestation.template.json`. They must be distinct roles;
+the attestation binds the frozen commit plus SHA-256 hashes of the final bundle
+manifest and all three return manifests.
+
+## 5. Trusted scorer
+
+Score each frozen return against the adjudicated benchmark. For example:
+
+```bash
+uv run falsirag-score-blind-return \
+  --model-id deepseek_v4_flash \
+  --data-dir outputs/annotations/falsirag_adjudicated_v1 \
+  --blind-bundle-dir outputs/handoff/falsirag_blind_test_v1 \
+  --return-dir outputs/returned/deepseek_test_suite \
+  --attestation submission/blind_test_attestation.json \
+  --output-dir outputs/final/deepseek_test_scored
+```
+
+Repeat with model IDs `qwen_3_7_plus` and `qwen_3_5_9b`. The scorer verifies
+gold-free execution, all 11 methods, full test IDs, prediction and identity
+fingerprints, clean/frozen commit provenance, role separation, and one-shot
+attestation before producing paired reports and final tables/figures. The output
+directory must be empty, preventing silent replacement of an earlier score.
+
+## 6. Paper and final gate owner
+
+Copy `submission/evidence.template.json` to an ignored working file, replace
+every path and attestation field with the real artifacts, fill the final paper
+cells, and have a human review AAAI policy, authorship, and empirical claims.
+Then run:
+
+```bash
+uv run falsirag-submission-readiness \
+  --evidence submission/evidence.json \
+  --output build/submission-readiness.json
+```
+
+Exit code zero and `ready:true` are required. The gate independently checks the
+candidate benchmark, human annotation/IAA, three adjudicated dev suites, final
+blind bundle, three externally returned suites, bound role attestation, three
+trusted-scored test suites, release archive, and human paper review. A status
+snapshot may be generated before completion with `--allow-incomplete`; it is
+not a waiver of any failed gate.
