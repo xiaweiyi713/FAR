@@ -266,6 +266,7 @@ def run_suite(
         reports,
         {"far": runs_dir / "far" / "predictions.jsonl"},
         output_dir / "artifacts",
+        overwrite=True,
     )
     manifest = {
         "schema_version": "far-suite-manifest-v1",

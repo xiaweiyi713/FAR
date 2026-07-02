@@ -12,6 +12,17 @@ from typing import Any
 
 from bench.build.common import read_jsonl, sha256_file, write_json
 
+GENERATED_ARTIFACT_FILES = (
+    "main_results.csv",
+    "ablation_results.csv",
+    "main_results.tex",
+    "ablation_results.tex",
+    "typed_conflict_breakdown.png",
+    "counter_evidence_recall.png",
+    "revision_trace_case.png",
+    "artifact_manifest.json",
+)
+
 
 def _mapping(values: list[str]) -> dict[str, Path]:
     result: dict[str, Path] = {}
@@ -108,6 +119,23 @@ def _validate_artifact_publication_scope(
         if non_test:
             raise ValueError(f"publication artifacts require test-only reports: {non_test}")
     return summary
+
+
+def _prepare_output_dir(output_dir: Path, *, overwrite: bool) -> None:
+    if not output_dir.exists():
+        output_dir.mkdir(parents=True)
+        return
+    existing = sorted(output_dir.iterdir())
+    if not existing:
+        return
+    if not overwrite:
+        raise FileExistsError("artifact output directory must be empty unless --overwrite is used")
+    allowed = {output_dir / name for name in GENERATED_ARTIFACT_FILES}
+    unexpected = [path.name for path in existing if path not in allowed or not path.is_file()]
+    if unexpected:
+        raise ValueError(f"artifact output directory contains unexpected files: {unexpected}")
+    for path in existing:
+        path.unlink()
 
 
 def _table_rows(reports: dict[str, dict[str, Any]], labels: list[str]) -> list[dict[str, Any]]:
@@ -208,6 +236,7 @@ def build(
     *,
     require_publication_ready: bool = False,
     require_test_only: bool = False,
+    overwrite: bool = False,
 ) -> dict[str, Any]:
     reports = _validated_reports(report_paths)
     publication_summary = _validate_artifact_publication_scope(
@@ -215,10 +244,10 @@ def build(
         require_publication_ready=require_publication_ready,
         require_test_only=require_test_only,
     )
+    _prepare_output_dir(output_dir, overwrite=overwrite)
     plt, font_manager = _load_plotting_backend()
     unicode_font = _configure_unicode_font(plt, font_manager)
 
-    output_dir.mkdir(parents=True, exist_ok=True)
     main_labels = [label for label in reports if "minus_" not in label]
     ablation_labels = [label for label in reports if label == "far" or "minus_" in label]
     if not main_labels or len(ablation_labels) < 2:
@@ -290,11 +319,9 @@ def build(
     fig.savefig(output_dir / "revision_trace_case.png", dpi=200)
     plt.close(fig)
 
-    outputs = (
-        sorted(output_dir.glob("*.csv"))
-        + sorted(output_dir.glob("*.tex"))
-        + sorted(output_dir.glob("*.png"))
-    )
+    outputs = [
+        output_dir / name for name in GENERATED_ARTIFACT_FILES if name != "artifact_manifest.json"
+    ]
     manifest = {
         "schema_version": "far-artifact-manifest-v1",
         "diagnostic_only": any(
@@ -362,6 +389,11 @@ def main() -> None:
         action="store_true",
         help="fail unless every input report scores only the externally blind test split",
     )
+    parser.add_argument(
+        "--overwrite",
+        action="store_true",
+        help="replace a directory containing only prior FAR-generated artifact files",
+    )
     args = parser.parse_args()
     manifest = build(
         _mapping(args.report),
@@ -369,6 +401,7 @@ def main() -> None:
         args.output_dir,
         require_publication_ready=args.require_publication_ready,
         require_test_only=args.require_test_only,
+        overwrite=args.overwrite,
     )
     print(json.dumps(manifest, ensure_ascii=False, indent=2, sort_keys=True))
 

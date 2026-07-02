@@ -261,6 +261,34 @@ def test_suite_runs_far_baseline_ablation_and_artifacts(tmp_path: Path) -> None:
     assert ablation_report["comparison"]["candidate_method"] == "far_minus_typed_conflict"
     assert "typed_conflict_f1" in ablation_report["comparison"]["metrics"]
     assert "typed_conflict_f1" in ablation_report["confidence_intervals"]
+    stale_output = tmp_path / "stale-artifacts"
+    stale_output.mkdir()
+    (stale_output / "old.png").write_text("stale", encoding="utf-8")
+    with pytest.raises(FileExistsError, match="must be empty"):
+        build_artifacts(
+            {
+                "far": tmp_path / "suite/evaluations/far/report.json",
+                "vanilla": tmp_path / "suite/evaluations/vanilla_rag/report.json",
+                "minus_typed_conflict": (
+                    tmp_path / "suite/evaluations/minus_typed_conflict/report.json"
+                ),
+            },
+            {"far": tmp_path / "suite/runs/far/predictions.jsonl"},
+            stale_output,
+        )
+    with pytest.raises(ValueError, match="unexpected files"):
+        build_artifacts(
+            {
+                "far": tmp_path / "suite/evaluations/far/report.json",
+                "vanilla": tmp_path / "suite/evaluations/vanilla_rag/report.json",
+                "minus_typed_conflict": (
+                    tmp_path / "suite/evaluations/minus_typed_conflict/report.json"
+                ),
+            },
+            {"far": tmp_path / "suite/runs/far/predictions.jsonl"},
+            stale_output,
+            overwrite=True,
+        )
     with pytest.raises(ValueError, match="test-only"):
         build_artifacts(
             {

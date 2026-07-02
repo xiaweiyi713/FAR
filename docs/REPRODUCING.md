@@ -537,7 +537,8 @@ uv run falsirag-build-artifacts \
   --report vanilla=outputs/evaluations/vanilla_rag/report.json \
   --report minus_typed_conflict=outputs/evaluations/minus_typed_conflict/report.json \
   --prediction far=outputs/runs/far/predictions.jsonl \
-  --output-dir outputs/artifacts
+  --output-dir outputs/artifacts \
+  --overwrite
 ```
 
 For final submission figures, use only reports produced by
@@ -551,13 +552,18 @@ uv run falsirag-build-artifacts \
   --prediction far=outputs/returned/qwen_open_test_suite/runs/far/predictions.jsonl \
   --output-dir outputs/final/qwen_open_test_scored/artifacts \
   --require-publication-ready \
-  --require-test-only
+  --require-test-only \
+  --overwrite
 ```
 
 The trusted scorer already uses these strict requirements. The generated
 `artifact_manifest.json` records `publication_ready`, `test_only`, phases,
 scored splits, and per-report publication summaries; the final submission gate
 rejects artifacts that were not built in strict test-only mode.
+Without `--overwrite`, the artifact builder refuses a non-empty output
+directory. With `--overwrite`, it replaces only the known FAR-generated artifact
+files and still rejects unexpected leftovers, which prevents stale tables or
+figures from being silently carried into the manifest.
 
 ## Paper
 
