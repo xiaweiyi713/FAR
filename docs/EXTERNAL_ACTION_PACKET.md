@@ -9,7 +9,28 @@ test dry runs cannot satisfy the final gate.
 
 Give two independent reviewers only their respective blind packet, README, and
 `docs/HUMAN_ANNOTATION_PROTOCOL.md`. After both files are frozen, an adjudicator
-fills `adjudications.jsonl` and compiles:
+fills `adjudications.jsonl` and compiles. If using Label Studio, generate the
+adjudicator project only after installing both reviewer files, then import and
+install the resulting adjudication:
+
+```bash
+uv run falsirag-auto-annotate adjudication-label-studio \
+  --packet-dir outputs/annotations/falsirag_packet_v1 \
+  --output-dir outputs/annotations/label_studio_adjudicator
+
+uv run falsirag-auto-annotate adjudication-label-studio-import \
+  --packet-dir outputs/annotations/falsirag_packet_v1 \
+  --label-studio-json outputs/annotations/label_studio_adjudicator/project-export.json \
+  --output-dir outputs/annotations/label_studio_adjudicated \
+  --adjudicator-id adjudicator_1
+
+uv run python -m bench.build.annotate_packet install-adjudication \
+  --packet-dir outputs/annotations/falsirag_packet_v1 \
+  --adjudication-file outputs/annotations/label_studio_adjudicated/adjudications.jsonl \
+  --adjudicator-id adjudicator_1
+```
+
+Then compile:
 
 ```bash
 uv run python -m bench.build.annotate_packet compile \

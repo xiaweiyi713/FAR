@@ -11,7 +11,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from bench.annotations import PACKET_VERSION
+from bench.annotations import (
+    PACKET_VERSION,
+    _validated_annotation,
+)
 from bench.build.common import read_jsonl, sha256_file, write_json, write_jsonl
 from bench.schema import VALID_CONFLICT_TYPES, VALID_REVISION_ACTIONS
 from far.protocols import TextGenerator
@@ -63,6 +66,48 @@ LABEL_STUDIO_CONFIG = """<View>
     <Choice value="not_acceptable"/>
   </Choices>
   <TextArea name="suggested_revised_answer" toName="context" rows="4" editable="true"/>
+  <TextArea name="rationale" toName="context" rows="5" editable="true"/>
+</View>
+"""
+
+ADJUDICATION_LABEL_STUDIO_CONFIG = """<View>
+  <Style>
+    .falsirag-block { margin-bottom: 1.25em; }
+    .falsirag-meta { color: #666; font-size: 0.9em; }
+  </Style>
+  <Header value="FalsiRAG adjudication"/>
+  <View className="falsirag-block">
+    <Text name="context" value="$context"/>
+  </View>
+  <Choices name="conflict_presence" toName="context" choice="single" showInLine="true">
+    <Choice value="conflict"/>
+    <Choice value="no_conflict"/>
+  </Choices>
+  <Choices name="conflict_type" toName="context" choice="single" showInLine="true">
+    <Choice value="temporal"/>
+    <Choice value="entity"/>
+    <Choice value="numerical"/>
+    <Choice value="causal"/>
+    <Choice value="source_reliability"/>
+    <Choice value="definition"/>
+    <Choice value="counter_evidence"/>
+    <Choice value="no_conflict"/>
+  </Choices>
+  <Choices name="revision_action" toName="context" choice="single" showInLine="true">
+    <Choice value="correct_temporal"/>
+    <Choice value="requalify_entity"/>
+    <Choice value="replace_numerical"/>
+    <Choice value="downgrade_causal_to_correlation"/>
+    <Choice value="prefer_reliable_source"/>
+    <Choice value="clarify_definition"/>
+    <Choice value="retract"/>
+    <Choice value="qualify_uncertainty"/>
+  </Choices>
+  <Choices name="revised_answer_acceptable" toName="context" choice="single" showInLine="true">
+    <Choice value="acceptable"/>
+    <Choice value="not_acceptable"/>
+  </Choices>
+  <TextArea name="revised_answer" toName="context" rows="4" editable="true"/>
   <TextArea name="rationale" toName="context" rows="5" editable="true"/>
 </View>
 """
@@ -492,6 +537,80 @@ def _label_studio_context(row: dict[str, Any]) -> str:
     )
 
 
+def _evidence_fingerprint(item: dict[str, Any]) -> str:
+    return json.dumps(
+        {
+            "title": item.get("title", ""),
+            "source": item.get("source", ""),
+            "date": item.get("date"),
+            "text": item.get("text", ""),
+        },
+        ensure_ascii=False,
+        sort_keys=True,
+    )
+
+
+def _reviewer_evidence_map(
+    reviewer_row: dict[str, Any],
+    adjudication_row: dict[str, Any],
+) -> dict[str, str]:
+    adjudication_ids = {
+        _evidence_fingerprint(item): str(item["evidence_id"])
+        for item in adjudication_row.get("evidence", [])
+    }
+    return {
+        str(item["evidence_id"]): adjudication_ids.get(_evidence_fingerprint(item), "unmatched")
+        for item in reviewer_row.get("evidence", [])
+    }
+
+
+def _format_annotation_for_context(annotation: dict[str, Any]) -> str:
+    return "\n".join(
+        (
+            f"- conflict_present: {annotation.get('conflict_present')}",
+            f"- conflict_type: {annotation.get('conflict_type')}",
+            f"- revision_action: {annotation.get('revision_action')}",
+            f"- revised_answer_acceptable: {annotation.get('revised_answer_acceptable')}",
+            f"- rationale: {annotation.get('rationale', '')}",
+        )
+    )
+
+
+def _adjudication_label_studio_context(
+    row: dict[str, Any],
+    reviewer_rows_by_id: dict[str, dict[str, dict[str, Any]]],
+) -> str:
+    base_context = _label_studio_context(row).replace(
+        "## Review note\n"
+        "Gold labels and evidence roles are hidden. If a prediction is shown, treat it "
+        "as a machine draft that must be independently verified.",
+        "## Adjudication note\n"
+        "Set the final gold annotation after reading the visible packet and the frozen "
+        "independent reviewer labels below. Reviewer evidence IDs may use different "
+        "letters; use the evidence-ID map when reading reviewer rationales. If the final "
+        "label is no_conflict, leave revised_answer blank.",
+    )
+    reviewer_blocks = []
+    for reviewer_id in sorted(reviewer_rows_by_id):
+        reviewer_row = reviewer_rows_by_id[reviewer_id][str(row["sample_id"])]
+        evidence_map = _reviewer_evidence_map(reviewer_row, row)
+        evidence_map_text = ", ".join(
+            f"{left}->{right}" for left, right in sorted(evidence_map.items())
+        )
+        reviewer_blocks.append(
+            "\n".join(
+                (
+                    f"### {reviewer_id}",
+                    _format_annotation_for_context(reviewer_row["annotation"]),
+                    f"- evidence_id_map_to_adjudicator_packet: {evidence_map_text}",
+                )
+            )
+        )
+    return (
+        base_context + "\n\n## Frozen independent reviewer labels\n" + "\n\n".join(reviewer_blocks)
+    )
+
+
 def _choice_result(field: str, value: str) -> dict[str, Any]:
     return {
         "from_name": field,
@@ -654,6 +773,8 @@ def export_label_studio(
 def _label_studio_results_to_annotation(
     sample_id: str,
     results: list[dict[str, Any]],
+    *,
+    include_revised_answer: bool = False,
 ) -> dict[str, Any]:
     choices: dict[str, str] = {}
     text: dict[str, str] = {}
@@ -687,13 +808,255 @@ def _label_studio_results_to_annotation(
     rationale = text.get("rationale", "").strip()
     if not rationale:
         raise ValueError(f"{sample_id}: rationale must be non-empty")
-    return {
+    annotation = {
         "conflict_present": conflict_present,
         "conflict_type": conflict_type,
         "revision_action": revision_action,
         "revised_answer_acceptable": acceptable == "acceptable",
         "rationale": rationale,
     }
+    if include_revised_answer:
+        revised_answer = text.get("revised_answer", "").strip()
+        if conflict_present and not revised_answer:
+            raise ValueError(f"{sample_id}: conflicting adjudication requires revised_answer")
+        if not conflict_present and revised_answer:
+            raise ValueError(f"{sample_id}: no-conflict adjudication must not set revised_answer")
+        annotation["revised_answer"] = revised_answer
+    return annotation
+
+
+def _completed_reviewer_rows(
+    packet_dir: Path,
+    packet_manifest: dict[str, Any],
+) -> tuple[dict[str, dict[str, dict[str, Any]]], dict[str, str]]:
+    annotation_files = packet_manifest.get("annotation_files", {})
+    if not isinstance(annotation_files, dict) or len(annotation_files) < 2:
+        raise ValueError("packet must declare at least two reviewer files")
+    reviewer_rows_by_id: dict[str, dict[str, dict[str, Any]]] = {}
+    reviewer_file_sha256s: dict[str, str] = {}
+    expected_count = int(packet_manifest["samples"])
+    for reviewer_id, filename in annotation_files.items():
+        source_file = packet_dir / str(filename)
+        reviewer_file_sha256s[str(reviewer_id)] = sha256_file(source_file)
+        rows = read_jsonl(source_file)
+        if len(rows) != expected_count:
+            raise ValueError(f"{reviewer_id}: reviewer file has the wrong row count")
+        rows_by_id: dict[str, dict[str, Any]] = {}
+        for row in rows:
+            sample_id = str(row.get("sample_id", ""))
+            if not sample_id or sample_id in rows_by_id:
+                raise ValueError(f"{reviewer_id}: reviewer file has invalid sample IDs")
+            if row.get("annotator_id") != reviewer_id:
+                raise ValueError(f"{sample_id}: reviewer file belongs to a different reviewer")
+            _validated_annotation(row, "annotation")
+            rows_by_id[sample_id] = row
+        reviewer_rows_by_id[str(reviewer_id)] = rows_by_id
+    return reviewer_rows_by_id, reviewer_file_sha256s
+
+
+def export_adjudication_label_studio(
+    packet_dir: Path,
+    output_dir: Path,
+    *,
+    overwrite: bool = False,
+) -> dict[str, Any]:
+    """Export completed reviewer labels into an adjudicator Label Studio project."""
+
+    packet_manifest_path = packet_dir / "packet_manifest.json"
+    packet_manifest = json.loads(packet_manifest_path.read_text(encoding="utf-8"))
+    packet_sha256 = sha256_file(packet_manifest_path)
+    reviewer_rows_by_id, reviewer_file_sha256s = _completed_reviewer_rows(
+        packet_dir, packet_manifest
+    )
+    source_file = packet_dir / str(packet_manifest["adjudication_file"])
+    source_file_sha256 = sha256_file(source_file)
+    source_rows = read_jsonl(source_file)
+    if output_dir.exists():
+        if not overwrite:
+            raise FileExistsError(f"{output_dir} exists; pass --overwrite to replace it")
+        shutil.rmtree(output_dir)
+    output_dir.mkdir(parents=True)
+
+    tasks = []
+    for row in source_rows:
+        sample_id = str(row["sample_id"])
+        if any(sample_id not in rows for rows in reviewer_rows_by_id.values()):
+            raise ValueError(f"{sample_id}: missing a reviewer label for adjudication export")
+        context = _adjudication_label_studio_context(row, reviewer_rows_by_id)
+        tasks.append(
+            {
+                "data": {
+                    "sample_id": sample_id,
+                    "context": context,
+                },
+                "meta": {
+                    "schema_version": LABEL_STUDIO_EXPORT_VERSION,
+                    "role": "adjudicator",
+                    "source_packet_sha256": packet_sha256,
+                    "source_adjudication_file_sha256": source_file_sha256,
+                    "reviewer_file_sha256s": reviewer_file_sha256s,
+                    "reviewer_ids": sorted(reviewer_rows_by_id),
+                    "context_sha256": hashlib.sha256(context.encode()).hexdigest(),
+                    "publication_gold_after_compile_only": True,
+                },
+            }
+        )
+
+    (output_dir / "label_config.xml").write_text(
+        ADJUDICATION_LABEL_STUDIO_CONFIG,
+        encoding="utf-8",
+    )
+    (output_dir / "tasks.json").write_text(
+        json.dumps(tasks, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    (output_dir / "README.md").write_text(
+        "# FalsiRAG adjudication project\n\n"
+        "Import `label_config.xml` and `tasks.json` into a dedicated Label Studio project. "
+        "Use it only after both reviewer files are frozen in the packet. Complete one final "
+        "annotation per task. Conflict-positive rows require a human-authored "
+        "`revised_answer`; no-conflict rows must leave `revised_answer` blank.\n",
+        encoding="utf-8",
+    )
+    result = {
+        "schema_version": "falsirag-label-studio-adjudication-export-v1",
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "source_packet_sha256": packet_sha256,
+        "source_adjudication_file_sha256": source_file_sha256,
+        "reviewer_file_sha256s": reviewer_file_sha256s,
+        "reviewer_ids": sorted(reviewer_rows_by_id),
+        "tasks_file": "tasks.json",
+        "label_config_file": "label_config.xml",
+        "readme_file": "README.md",
+        "tasks": len(tasks),
+        "publication_gold_after_compile_only": True,
+        "next_step": (
+            "After Label Studio export, run `falsirag-auto-annotate "
+            "adjudication-label-studio-import`, then install the resulting file with "
+            "`python -m bench.build.annotate_packet install-adjudication`."
+        ),
+    }
+    write_json(output_dir / "label_studio_adjudication_manifest.json", result)
+    return result
+
+
+def import_adjudication_label_studio(
+    packet_dir: Path,
+    label_studio_json: Path,
+    output_dir: Path,
+    *,
+    adjudicator_id: str,
+    overwrite: bool = False,
+) -> dict[str, Any]:
+    """Convert Label Studio adjudication exports back into FAR adjudication JSONL."""
+
+    packet_manifest_path = packet_dir / "packet_manifest.json"
+    packet_manifest = json.loads(packet_manifest_path.read_text(encoding="utf-8"))
+    packet_sha256 = sha256_file(packet_manifest_path)
+    reviewer_rows_by_id, reviewer_file_sha256s = _completed_reviewer_rows(
+        packet_dir, packet_manifest
+    )
+    source_file = packet_dir / str(packet_manifest["adjudication_file"])
+    source_file_sha256 = sha256_file(source_file)
+    source_rows = {str(row["sample_id"]): row for row in read_jsonl(source_file)}
+    exported_tasks = json.loads(label_studio_json.read_text(encoding="utf-8"))
+    if not isinstance(exported_tasks, list):
+        raise ValueError("Label Studio adjudication export must be a JSON array of tasks")
+
+    adjudications_by_id: dict[str, dict[str, Any]] = {}
+    for task in exported_tasks:
+        if not isinstance(task, dict):
+            raise ValueError("Label Studio adjudication task must be an object")
+        data = task.get("data", {})
+        meta = task.get("meta", {})
+        sample_id = str(data.get("sample_id", ""))
+        if sample_id not in source_rows:
+            raise ValueError(f"{sample_id}: unknown sample_id in Label Studio export")
+        if sample_id in adjudications_by_id:
+            raise ValueError(f"{sample_id}: duplicate Label Studio adjudication task")
+        if meta.get("source_packet_sha256") != packet_sha256:
+            raise ValueError(f"{sample_id}: Label Studio task came from a different packet")
+        if meta.get("role") != "adjudicator":
+            raise ValueError(f"{sample_id}: Label Studio task is not an adjudication task")
+        if meta.get("source_adjudication_file_sha256") != source_file_sha256:
+            raise ValueError(f"{sample_id}: adjudication source-file fingerprint mismatch")
+        if meta.get("reviewer_file_sha256s") != reviewer_file_sha256s:
+            raise ValueError(f"{sample_id}: reviewer files changed after adjudication export")
+        expected_context = _adjudication_label_studio_context(
+            source_rows[sample_id],
+            reviewer_rows_by_id,
+        )
+        observed_context = str(data.get("context", ""))
+        expected_context_sha = hashlib.sha256(expected_context.encode()).hexdigest()
+        if (
+            observed_context != expected_context
+            or meta.get("context_sha256") != expected_context_sha
+        ):
+            raise ValueError(f"{sample_id}: adjudication context was modified")
+        annotations = task.get("annotations") or task.get("completions") or []
+        active_annotations = [
+            item
+            for item in annotations
+            if isinstance(item, dict)
+            and not item.get("was_cancelled", False)
+            and not item.get("skipped", False)
+        ]
+        if len(active_annotations) != 1:
+            raise ValueError(
+                f"{sample_id}: expected exactly one completed adjudicator Label Studio annotation"
+            )
+        first_annotation = active_annotations[0]
+        results = first_annotation.get("result", [])
+        if not isinstance(results, list):
+            raise ValueError(f"{sample_id}: adjudication result must be a list")
+        adjudications_by_id[sample_id] = _label_studio_results_to_annotation(
+            sample_id,
+            results,
+            include_revised_answer=True,
+        )
+
+    missing = set(source_rows) - set(adjudications_by_id)
+    if missing:
+        preview = ", ".join(sorted(missing)[:5])
+        raise ValueError(
+            f"Label Studio adjudication export is missing {len(missing)} samples: {preview}"
+        )
+
+    if output_dir.exists():
+        if not overwrite:
+            raise FileExistsError(f"{output_dir} exists; pass --overwrite to replace it")
+        shutil.rmtree(output_dir)
+    output_dir.mkdir(parents=True)
+
+    rows = []
+    for sample_id in sorted(source_rows):
+        source = dict(source_rows[sample_id])
+        source.pop("annotator_id", None)
+        source["adjudicator_id"] = adjudicator_id
+        source["gold_annotation"] = adjudications_by_id[sample_id]
+        source["source_tool"] = "label_studio"
+        rows.append(source)
+
+    filename = "adjudications.jsonl"
+    write_jsonl(output_dir / filename, rows)
+    result = {
+        "schema_version": "falsirag-label-studio-adjudication-import-v1",
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "source_packet_sha256": packet_sha256,
+        "source_adjudication_file_sha256": source_file_sha256,
+        "reviewer_file_sha256s": reviewer_file_sha256s,
+        "source_label_studio_sha256": sha256_file(label_studio_json),
+        "adjudicator_id": adjudicator_id,
+        "adjudication_file": filename,
+        "samples": len(rows),
+        "publication_gold_after_compile_only": True,
+        "next_step": (
+            "Install this file with `python -m bench.build.annotate_packet "
+            "install-adjudication`, then run `compile`."
+        ),
+    }
+    write_json(output_dir / "label_studio_adjudication_import_manifest.json", result)
+    return result
 
 
 def import_label_studio(
@@ -837,6 +1200,30 @@ def main() -> None:
     label_studio_import_parser.add_argument("--output-dir", type=Path, required=True)
     label_studio_import_parser.add_argument("--reviewer-id", required=True)
     label_studio_import_parser.add_argument("--overwrite", action="store_true")
+    adjudication_label_studio_parser = subparsers.add_parser("adjudication-label-studio")
+    adjudication_label_studio_parser.add_argument("--packet-dir", type=Path, required=True)
+    adjudication_label_studio_parser.add_argument("--output-dir", type=Path, required=True)
+    adjudication_label_studio_parser.add_argument("--overwrite", action="store_true")
+    adjudication_label_studio_import_parser = subparsers.add_parser(
+        "adjudication-label-studio-import"
+    )
+    adjudication_label_studio_import_parser.add_argument(
+        "--packet-dir",
+        type=Path,
+        required=True,
+    )
+    adjudication_label_studio_import_parser.add_argument(
+        "--label-studio-json",
+        type=Path,
+        required=True,
+    )
+    adjudication_label_studio_import_parser.add_argument(
+        "--output-dir",
+        type=Path,
+        required=True,
+    )
+    adjudication_label_studio_import_parser.add_argument("--adjudicator-id", required=True)
+    adjudication_label_studio_import_parser.add_argument("--overwrite", action="store_true")
     summarize_parser = subparsers.add_parser("summarize")
     summarize_parser.add_argument("--preannotation-dir", type=Path, required=True)
     summarize_parser.add_argument("--packet-dir", type=Path)
@@ -878,6 +1265,24 @@ def main() -> None:
             args.label_studio_json,
             args.output_dir,
             reviewer_id=args.reviewer_id,
+            overwrite=args.overwrite,
+        )
+        print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
+        return
+    if args.command == "adjudication-label-studio":
+        result = export_adjudication_label_studio(
+            args.packet_dir,
+            args.output_dir,
+            overwrite=args.overwrite,
+        )
+        print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
+        return
+    if args.command == "adjudication-label-studio-import":
+        result = import_adjudication_label_studio(
+            args.packet_dir,
+            args.label_studio_json,
+            args.output_dir,
+            adjudicator_id=args.adjudicator_id,
             overwrite=args.overwrite,
         )
         print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))

@@ -10,14 +10,17 @@ from bench.annotations import (
     build_annotation_packet,
     cohen_kappa,
     compile_annotations,
+    install_adjudication_file,
     install_review_file,
     validate_annotation_evidence,
 )
 from bench.build.audit_contamination import audit
 from bench.build.auto_annotate import (
     build_review_draft,
+    export_adjudication_label_studio,
     export_label_studio,
     generate_preannotations,
+    import_adjudication_label_studio,
     import_label_studio,
     summarize_preannotations,
 )
@@ -623,6 +626,107 @@ def test_label_studio_exports_are_bound_to_one_reviewer_packet(tmp_path: Path) -
         )
 
 
+def test_label_studio_adjudication_round_trip_installs_and_compiles(tmp_path: Path) -> None:
+    packet = tmp_path / "packet"
+    build_annotation_packet(ROOT / "bench", packet, ["alice", "bob"])
+    samples = {
+        row["id"]: row
+        for row in map(
+            json.loads,
+            (ROOT / "bench/falsirag_bench.jsonl").read_text().splitlines(),
+        )
+    }
+    for name in ("annotations_alice.jsonl", "annotations_bob.jsonl"):
+        rows = list(map(json.loads, (packet / name).read_text().splitlines()))
+        for row in rows:
+            sample = samples[row["sample_id"]]
+            row["annotation"] = {
+                "conflict_present": True,
+                "conflict_type": sample["conflict_type"],
+                "revision_action": sample["expected_revision"]["action"],
+                "revised_answer_acceptable": True,
+                "rationale": "Reviewer checked the visible evidence.",
+            }
+        (packet / name).write_text(
+            "".join(json.dumps(row, ensure_ascii=False) + "\n" for row in rows),
+            encoding="utf-8",
+        )
+
+    export_dir = tmp_path / "adjudication-label-studio"
+    manifest = export_adjudication_label_studio(packet, export_dir)
+    assert manifest["tasks"] == 300
+    assert manifest["reviewer_ids"] == ["alice", "bob"]
+    tasks = json.loads((export_dir / "tasks.json").read_text(encoding="utf-8"))
+    assert "Frozen independent reviewer labels" in tasks[0]["data"]["context"]
+    assert "evidence_id_map_to_adjudicator_packet" in tasks[0]["data"]["context"]
+
+    for task in tasks:
+        sample = samples[task["data"]["sample_id"]]
+        task["annotations"] = [
+            {
+                "result": [
+                    {
+                        "from_name": "conflict_presence",
+                        "to_name": "context",
+                        "type": "choices",
+                        "value": {"choices": ["conflict"]},
+                    },
+                    {
+                        "from_name": "conflict_type",
+                        "to_name": "context",
+                        "type": "choices",
+                        "value": {"choices": [sample["conflict_type"]]},
+                    },
+                    {
+                        "from_name": "revision_action",
+                        "to_name": "context",
+                        "type": "choices",
+                        "value": {"choices": [sample["expected_revision"]["action"]]},
+                    },
+                    {
+                        "from_name": "revised_answer_acceptable",
+                        "to_name": "context",
+                        "type": "choices",
+                        "value": {"choices": ["acceptable"]},
+                    },
+                    {
+                        "from_name": "revised_answer",
+                        "to_name": "context",
+                        "type": "textarea",
+                        "value": {"text": [sample["expected_revision"]["revised_answer"]]},
+                    },
+                    {
+                        "from_name": "rationale",
+                        "to_name": "context",
+                        "type": "textarea",
+                        "value": {"text": ["Adjudicator selected the final label."]},
+                    },
+                ]
+            }
+        ]
+    reviewed_json = tmp_path / "label_studio_adjudicated.json"
+    reviewed_json.write_text(json.dumps(tasks, ensure_ascii=False), encoding="utf-8")
+
+    imported = tmp_path / "adjudication-imported"
+    import_manifest = import_adjudication_label_studio(
+        packet,
+        reviewed_json,
+        imported,
+        adjudicator_id="judge_1",
+    )
+    assert import_manifest["samples"] == 300
+    installed = install_adjudication_file(
+        packet,
+        imported / "adjudications.jsonl",
+        adjudicator_id="judge_1",
+    )
+    assert installed["samples"] == 300
+    compiled = tmp_path / "compiled"
+    report = compile_annotations(ROOT / "bench", packet, compiled)
+    assert report["adjudicator_id"] == "judge_1"
+    assert validate_annotation_evidence(compiled)["valid"] is True
+
+
 def test_install_review_file_is_atomic_and_refuses_replacement(tmp_path: Path) -> None:
     packet = tmp_path / "packet"
     build_annotation_packet(ROOT / "bench", packet, ["alice", "bob"])
@@ -725,11 +829,18 @@ def test_completed_annotations_compile_with_kappa_report(tmp_path: Path) -> None
             "conflict_present": False,
             "conflict_type": "",
             "revision_action": "qualify_uncertainty",
-            "revised_answer": "",
+            "revised_answer": "This should not be accepted for no-conflict adjudication.",
             "rationale": "No material conflict in the visible evidence.",
         }
     )
     no_conflict_id = no_conflict[0]["sample_id"]
+    adjudication_path.write_text(
+        "".join(json.dumps(row, ensure_ascii=False) + "\n" for row in no_conflict),
+        encoding="utf-8",
+    )
+    with pytest.raises(ValueError, match="must not set revised_answer"):
+        compile_annotations(ROOT / "bench", packet, tmp_path / "no-conflict-answer-compiled")
+    no_conflict[0]["gold_annotation"]["revised_answer"] = ""
     adjudication_path.write_text(
         "".join(json.dumps(row, ensure_ascii=False) + "\n" for row in no_conflict),
         encoding="utf-8",

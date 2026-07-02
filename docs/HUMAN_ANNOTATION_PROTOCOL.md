@@ -135,6 +135,36 @@ row, set the same non-empty `adjudicator_id` and fill `gold_annotation` in
 The adjudicator may consult both reviewer files and the visible packet, but not
 the original machine-seeded hidden labels as authority.
 
+For a UI, generate an adjudicator-specific Label Studio project only after both
+reviewer files have been installed/frozen:
+
+```bash
+uv run falsirag-auto-annotate adjudication-label-studio \
+  --packet-dir outputs/annotations/falsirag_packet_v1 \
+  --output-dir outputs/annotations/label_studio_adjudicator
+```
+
+This export includes the adjudicator's blind packet plus both frozen reviewer
+labels and reviewer-to-adjudicator evidence-ID maps. After the adjudicator
+exports the completed Label Studio JSON, convert and atomically install it:
+
+```bash
+uv run falsirag-auto-annotate adjudication-label-studio-import \
+  --packet-dir outputs/annotations/falsirag_packet_v1 \
+  --label-studio-json outputs/annotations/label_studio_adjudicator/project-export.json \
+  --output-dir outputs/annotations/label_studio_adjudicated \
+  --adjudicator-id adjudicator_1
+
+uv run python -m bench.build.annotate_packet install-adjudication \
+  --packet-dir outputs/annotations/falsirag_packet_v1 \
+  --adjudication-file outputs/annotations/label_studio_adjudicated/adjudications.jsonl \
+  --adjudicator-id adjudicator_1
+```
+
+The adjudication importer rejects modified contexts, changed reviewer files,
+duplicate tasks, missing rationales, missing conflict-positive revised answers,
+and no-conflict rows that nevertheless set `revised_answer`.
+
 ## Compile and gate
 
 After reviewer and adjudication files are complete:
@@ -152,6 +182,8 @@ The compiler:
 - rejects incomplete or invalid reviewer/adjudication fields;
 - rejects duplicate IDs, reviewer swaps, packet-path escapes, modified blind
   questions/evidence, blank rationales, and inconsistent adjudicator IDs;
+- rejects conflict-positive adjudications without `revised_answer` and
+  no-conflict adjudications with a non-empty `revised_answer`;
 - rejects unreviewed machine drafts with `human_reviewed=false`;
 - writes an adjudicated benchmark copy;
 - writes `annotation_report.json` with pairwise and mean Cohen's kappa values;

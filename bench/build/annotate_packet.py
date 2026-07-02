@@ -9,6 +9,7 @@ from pathlib import Path
 from bench.annotations import (
     build_annotation_packet,
     compile_annotations,
+    install_adjudication_file,
     install_review_file,
     validate_annotation_evidence,
 )
@@ -30,6 +31,10 @@ def main() -> None:
     install_parser.add_argument("--packet-dir", type=Path, required=True)
     install_parser.add_argument("--review-file", type=Path, required=True)
     install_parser.add_argument("--reviewer-id", required=True)
+    install_adjudication_parser = subparsers.add_parser("install-adjudication")
+    install_adjudication_parser.add_argument("--packet-dir", type=Path, required=True)
+    install_adjudication_parser.add_argument("--adjudication-file", type=Path, required=True)
+    install_adjudication_parser.add_argument("--adjudicator-id")
     validate_parser = subparsers.add_parser("validate-evidence")
     validate_parser.add_argument("--data-dir", type=Path, required=True)
     args = parser.parse_args()
@@ -47,6 +52,12 @@ def main() -> None:
             args.packet_dir,
             args.review_file,
             reviewer_id=args.reviewer_id,
+        )
+    elif args.command == "install-adjudication":
+        result = install_adjudication_file(
+            args.packet_dir,
+            args.adjudication_file,
+            adjudicator_id=args.adjudicator_id,
         )
     else:
         result = validate_annotation_evidence(args.data_dir)

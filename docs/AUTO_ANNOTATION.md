@@ -274,6 +274,33 @@ uv run python -m bench.build.annotate_packet install-review \
 Repeat with a separately generated project for `reviewer_b`, then complete
 adjudication.
 
+After both reviewer files are installed, Label Studio can also be used for the
+adjudicator without hand-editing `adjudications.jsonl`:
+
+```bash
+uv run falsirag-auto-annotate adjudication-label-studio \
+  --packet-dir outputs/falsirag_annotation_packet \
+  --output-dir outputs/label_studio_adjudicator \
+  --overwrite
+
+uv run falsirag-auto-annotate adjudication-label-studio-import \
+  --packet-dir outputs/falsirag_annotation_packet \
+  --label-studio-json outputs/label_studio_adjudicator/project-export.json \
+  --output-dir outputs/label_studio_adjudicated \
+  --adjudicator-id adjudicator_1 \
+  --overwrite
+
+uv run python -m bench.build.annotate_packet install-adjudication \
+  --packet-dir outputs/falsirag_annotation_packet \
+  --adjudication-file outputs/label_studio_adjudicated/adjudications.jsonl \
+  --adjudicator-id adjudicator_1
+```
+
+The adjudication export is fingerprint-bound to the current packet, the blank
+adjudication template, and both frozen reviewer files. The import includes
+reviewer labels and evidence-ID maps as context, but the final gold annotation
+must be the adjudicator's own completed Label Studio result.
+
 The UI is a review accelerator, not a replacement for the publication gate.
 For the preregistered independent-human IAA, omit `--preannotation-dir`; shared
 machine predictions can anchor both reviewers and therefore must not be used to

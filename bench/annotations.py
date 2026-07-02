@@ -315,6 +315,81 @@ def install_review_file(
     }
 
 
+def install_adjudication_file(
+    packet_dir: Path,
+    adjudication_file: Path,
+    *,
+    adjudicator_id: str | None = None,
+) -> dict[str, Any]:
+    """Install one completed adjudication file without replacing frozen evidence."""
+
+    if adjudicator_id is not None:
+        adjudicator_id = _validate_annotator_id(adjudicator_id)
+    manifest = json.loads((packet_dir / "packet_manifest.json").read_text(encoding="utf-8"))
+    target = _packet_file(packet_dir, str(manifest["adjudication_file"]))
+    template_rows = _rows_by_id(
+        read_jsonl(target), expected=int(manifest["samples"]), role="adjudication template"
+    )
+    if any(
+        row.get("gold_annotation", {}).get("conflict_present") is not None
+        or str(row.get("adjudicator_id", "")).strip()
+        for row in template_rows.values()
+    ):
+        raise FileExistsError(f"adjudication file is already completed: {target.name}")
+    imported_rows = _rows_by_id(
+        read_jsonl(adjudication_file),
+        expected=int(manifest["samples"]),
+        role="adjudication import",
+    )
+    if set(imported_rows) != set(template_rows):
+        raise ValueError("imported adjudication file has a different sample set")
+    observed_adjudicator_ids: set[str] = set()
+    for sample_id, row in imported_rows.items():
+        _assert_visible_unchanged(
+            row,
+            template_rows[sample_id],
+            _ADJUDICATION_VISIBLE_FIELDS,
+            role="adjudicator",
+        )
+        row_adjudicator_id = str(row.get("adjudicator_id", "")).strip()
+        if not row_adjudicator_id:
+            raise ValueError(f"{sample_id}: adjudicator_id must be non-empty")
+        observed_adjudicator_ids.add(row_adjudicator_id)
+        gold = _validated_annotation(row, "gold_annotation")
+        revised_answer = gold.get("revised_answer")
+        if gold["conflict_present"] and (
+            not isinstance(revised_answer, str) or not revised_answer.strip()
+        ):
+            raise ValueError(f"{sample_id}: conflicting adjudication requires revised_answer")
+        if (
+            not gold["conflict_present"]
+            and isinstance(revised_answer, str)
+            and revised_answer.strip()
+        ):
+            raise ValueError(f"{sample_id}: no-conflict adjudication must not set revised_answer")
+    if len(observed_adjudicator_ids) != 1:
+        raise ValueError("adjudication import requires one consistent adjudicator_id")
+    observed_adjudicator_id = next(iter(observed_adjudicator_ids))
+    if adjudicator_id is not None and observed_adjudicator_id != adjudicator_id:
+        raise ValueError("adjudication import belongs to a different adjudicator")
+    descriptor, temporary = tempfile.mkstemp(prefix=f".{target.name}.", dir=packet_dir)
+    os.close(descriptor)
+    temporary_path = Path(temporary)
+    try:
+        shutil.copy2(adjudication_file, temporary_path)
+        os.replace(temporary_path, target)
+    finally:
+        temporary_path.unlink(missing_ok=True)
+    return {
+        "schema_version": "falsirag-installed-adjudication-v1",
+        "adjudicator_id": observed_adjudicator_id,
+        "samples": len(imported_rows),
+        "source_adjudication_sha256": sha256_file(adjudication_file),
+        "installed_file": target.name,
+        "installed_sha256": sha256_file(target),
+    }
+
+
 def compile_annotations(
     data_dir: Path,
     packet_dir: Path,
@@ -379,6 +454,12 @@ def compile_annotations(
             not isinstance(revised_answer, str) or not revised_answer.strip()
         ):
             raise ValueError(f"{sample_id}: conflicting adjudication requires revised_answer")
+        if (
+            not gold["conflict_present"]
+            and isinstance(revised_answer, str)
+            and revised_answer.strip()
+        ):
+            raise ValueError(f"{sample_id}: no-conflict adjudication must not set revised_answer")
         adjudications[sample_id] = gold
 
     pair_reports, mean_kappas = _agreement_summary(by_annotator, sample_ids)
@@ -570,6 +651,12 @@ def validate_annotation_evidence(data_dir: Path) -> dict[str, Any]:
             not isinstance(revised_answer, str) or not revised_answer.strip()
         ):
             raise ValueError(f"{sample_id}: conflicting adjudication requires revised_answer")
+        if (
+            not gold["conflict_present"]
+            and isinstance(revised_answer, str)
+            and revised_answer.strip()
+        ):
+            raise ValueError(f"{sample_id}: no-conflict adjudication must not set revised_answer")
         adjudications[sample_id] = gold
 
     pairwise, mean_kappas = _agreement_summary(by_annotator, set(sample_by_id))

@@ -858,7 +858,19 @@ The compiler also stopped carrying an unseen machine-seeded revised answer
 through a blank adjudication. A conflict-positive adjudication now requires a
 human-authored revised answer; a no-conflict adjudication is represented by the
 explicit internal `no_conflict` type and deterministically uses the initial
-answer. Both paths are schema- and regression-tested.
+answer. This was tightened further so a no-conflict adjudication with a
+non-empty `revised_answer` is rejected instead of silently altering the
+reference answer. Both paths are schema- and regression-tested.
+
+The final human handoff now has a Label Studio adjudication round trip rather
+than requiring manual JSON editing. `falsirag-auto-annotate
+adjudication-label-studio` exports an adjudicator project after the reviewer
+files are frozen, including both reviewer labels and reviewer-to-adjudicator
+evidence-ID maps as read-only context. `adjudication-label-studio-import`
+converts exactly one active adjudicator completion per task into
+`adjudications.jsonl`, and `annotate_packet install-adjudication` atomically
+installs that file while refusing replacement, modified visible fields,
+missing conflict-positive revised answers, and no-conflict revised answers.
 
 A fresh strict packet was then generated locally at
 `outputs/annotations/falsirag_packet_v1/`, together with separate prediction-free
