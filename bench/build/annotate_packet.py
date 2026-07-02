@@ -9,6 +9,7 @@ from pathlib import Path
 from bench.annotations import (
     annotation_packet_status,
     build_annotation_packet,
+    build_reviewer_handoff,
     compile_annotations,
     install_adjudication_file,
     install_review_file,
@@ -24,6 +25,11 @@ def main() -> None:
     build_parser.add_argument("--output-dir", type=Path, required=True)
     build_parser.add_argument("--annotator", action="append", required=True)
     build_parser.add_argument("--overwrite", action="store_true")
+    reviewer_handoff_parser = subparsers.add_parser("reviewer-handoff")
+    reviewer_handoff_parser.add_argument("--packet-dir", type=Path, required=True)
+    reviewer_handoff_parser.add_argument("--output-dir", type=Path, required=True)
+    reviewer_handoff_parser.add_argument("--reviewer-id", required=True)
+    reviewer_handoff_parser.add_argument("--overwrite", action="store_true")
     compile_parser = subparsers.add_parser("compile")
     compile_parser.add_argument("--data-dir", type=Path, required=True)
     compile_parser.add_argument("--packet-dir", type=Path, required=True)
@@ -47,6 +53,13 @@ def main() -> None:
             args.data_dir,
             args.output_dir,
             args.annotator,
+            overwrite=args.overwrite,
+        )
+    elif args.command == "reviewer-handoff":
+        result = build_reviewer_handoff(
+            args.packet_dir,
+            args.output_dir,
+            reviewer_id=args.reviewer_id,
             overwrite=args.overwrite,
         )
     elif args.command == "compile":

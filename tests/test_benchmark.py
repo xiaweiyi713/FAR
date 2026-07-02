@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import re
+import zipfile
 from pathlib import Path
 
 import pytest
@@ -9,6 +10,7 @@ import pytest
 from bench.annotations import (
     annotation_packet_status,
     build_annotation_packet,
+    build_reviewer_handoff,
     cohen_kappa,
     compile_annotations,
     install_adjudication_file,
@@ -198,6 +200,47 @@ def test_annotation_packet_status_reports_review_and_adjudication_progress(
     assert ready_status["next_steps"] == [
         "run compile to freeze annotation evidence and compute kappa"
     ]
+
+
+def test_reviewer_handoff_contains_only_one_blank_reviewer_packet(tmp_path: Path) -> None:
+    packet = tmp_path / "packet"
+    build_annotation_packet(ROOT / "bench", packet, ["alice", "bob"])
+
+    handoff_dir = tmp_path / "alice_handoff"
+    manifest = build_reviewer_handoff(packet, handoff_dir, reviewer_id="alice")
+    assert manifest["samples"] == 300
+    assert manifest["safety"]["single_reviewer_only"] is True
+    assert manifest["safety"]["machine_predictions_included"] is False
+    assert (handoff_dir / "annotations_alice.jsonl").exists()
+    assert not (handoff_dir / "annotations_bob.jsonl").exists()
+    assert not (handoff_dir / "packet_manifest.json").exists()
+    assert (tmp_path / "alice_handoff.zip").exists()
+    assert manifest["archive_sha256"]
+
+    names = set()
+    with zipfile.ZipFile(tmp_path / "alice_handoff.zip") as archive:
+        names = set(archive.namelist())
+        assert "annotations_alice.jsonl" in names
+        assert "annotations_bob.jsonl" not in names
+        assert "packet_manifest.json" not in names
+    assert names == {
+        "annotations_alice.jsonl",
+        "PACKET_README.md",
+        "REVIEWER_INSTRUCTIONS.md",
+        "handoff_manifest.json",
+    }
+
+    rows = list(map(json.loads, (packet / "annotations_alice.jsonl").read_text().splitlines()))
+    rows[0]["annotation"]["conflict_present"] = False
+    rows[0]["annotation"]["revision_action"] = "qualify_uncertainty"
+    rows[0]["annotation"]["revised_answer_acceptable"] = True
+    rows[0]["annotation"]["rationale"] = "Already filled."
+    (packet / "annotations_alice.jsonl").write_text(
+        "".join(json.dumps(row, ensure_ascii=False) + "\n" for row in rows),
+        encoding="utf-8",
+    )
+    with pytest.raises(ValueError, match="blank reviewer template"):
+        build_reviewer_handoff(packet, tmp_path / "filled_handoff", reviewer_id="alice")
 
 
 def test_llm_preannotations_are_non_gold_review_aids(tmp_path: Path) -> None:

@@ -42,6 +42,22 @@ Each reviewer receives only their own `annotations_*.jsonl`, the packet
 `README.md`, and these instructions. Do not send `falsirag_bench.jsonl`,
 `bench/splits/`, machine preannotations, or another reviewer's file.
 
+To avoid hand-picking files, build a reviewer-specific handoff package:
+
+```bash
+uv run falsirag-annotate-packet reviewer-handoff \
+  --packet-dir outputs/annotations/falsirag_packet_v1 \
+  --output-dir outputs/annotations/reviewer_a_handoff \
+  --reviewer-id reviewer_a \
+  --overwrite
+```
+
+This command refuses non-blank reviewer files and writes a directory plus ZIP
+archive containing only that reviewer's JSONL template, packet README,
+reviewer instructions, and a SHA-256 handoff manifest. It intentionally excludes
+`packet_manifest.json`, machine predictions, source benchmark files, and the
+other reviewer's packet.
+
 For a UI, create one prediction-free Label Studio export per reviewer:
 
 ```bash

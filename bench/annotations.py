@@ -6,6 +6,7 @@ import json
 import os
 import shutil
 import tempfile
+import zipfile
 from collections import Counter
 from itertools import combinations
 from pathlib import Path
@@ -25,6 +26,7 @@ _REVIEW_VISIBLE_FIELDS = (
     "annotator_id",
 )
 _ADJUDICATION_VISIBLE_FIELDS = _REVIEW_VISIBLE_FIELDS[:-1]
+_REVIEW_HANDOFF_FIELDS = {*_REVIEW_VISIBLE_FIELDS, "annotation"}
 
 
 def _validate_annotator_id(value: str) -> str:
@@ -313,6 +315,113 @@ def install_review_file(
         "installed_file": target.name,
         "installed_sha256": sha256_file(target),
     }
+
+
+def build_reviewer_handoff(
+    packet_dir: Path,
+    output_dir: Path,
+    *,
+    reviewer_id: str,
+    overwrite: bool = False,
+) -> dict[str, Any]:
+    """Build a minimal, reviewer-specific handoff directory and ZIP archive."""
+
+    reviewer_id = _validate_annotator_id(reviewer_id)
+    manifest_path = packet_dir / "packet_manifest.json"
+    packet_manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    annotation_files = packet_manifest.get("annotation_files", {})
+    if reviewer_id not in annotation_files:
+        raise ValueError(f"reviewer is not declared by this packet: {reviewer_id}")
+    source = _packet_file(packet_dir, str(annotation_files[reviewer_id]))
+    rows = _rows_by_id(
+        read_jsonl(source),
+        expected=int(packet_manifest["samples"]),
+        role=f"{reviewer_id} handoff",
+    )
+    for sample_id, row in rows.items():
+        extra_fields = sorted(set(row) - _REVIEW_HANDOFF_FIELDS)
+        if extra_fields:
+            raise ValueError(f"{sample_id}: reviewer handoff row contains extra fields")
+        if row.get("annotator_id") != reviewer_id:
+            raise ValueError(f"{sample_id}: reviewer handoff row belongs to another reviewer")
+        annotation = row.get("annotation")
+        if not isinstance(annotation, dict):
+            raise ValueError(f"{sample_id}: reviewer handoff row is missing annotation object")
+        if annotation.get("conflict_present") is not None:
+            raise ValueError("reviewer handoff can only be built from a blank reviewer template")
+        if (
+            any(
+                str(annotation.get(field, "")).strip()
+                for field in ("conflict_type", "revision_action", "rationale")
+            )
+            or annotation.get("revised_answer_acceptable") is not None
+        ):
+            raise ValueError("reviewer handoff can only be built from a blank reviewer template")
+
+    if output_dir.exists():
+        if not overwrite:
+            raise FileExistsError(f"{output_dir} exists; pass overwrite=True to replace it")
+        shutil.rmtree(output_dir)
+    output_dir.mkdir(parents=True)
+
+    annotation_name = source.name
+    destination = output_dir / annotation_name
+    shutil.copy2(source, destination)
+    copied_files = [annotation_name]
+    packet_readme = packet_dir / "README.md"
+    if packet_readme.is_file():
+        shutil.copy2(packet_readme, output_dir / "PACKET_README.md")
+        copied_files.append("PACKET_README.md")
+    instructions = (
+        f"# FalsiRAG reviewer handoff: {reviewer_id}\n\n"
+        "You received a reviewer-specific blind packet. Work independently. Do not "
+        "search the web, inspect benchmark gold/source files, use machine "
+        "preannotations, or consult another reviewer.\n\n"
+        f"Fill every `annotation` object in `{annotation_name}`. Each rationale must "
+        "cite visible evidence IDs such as `EVIDENCE_A`. Return only the completed "
+        "JSONL file to the annotation owner.\n\n"
+        "The annotation owner will install the returned file with "
+        "`python -m bench.build.annotate_packet install-review` and will verify "
+        "packet fingerprints before adjudication.\n"
+    )
+    (output_dir / "REVIEWER_INSTRUCTIONS.md").write_text(instructions, encoding="utf-8")
+    copied_files.append("REVIEWER_INSTRUCTIONS.md")
+
+    file_hashes = {relative: sha256_file(output_dir / relative) for relative in copied_files}
+    result = {
+        "schema_version": "falsirag-reviewer-handoff-v1",
+        "reviewer_id": reviewer_id,
+        "samples": len(rows),
+        "source_packet_sha256": sha256_file(manifest_path),
+        "source_annotation_file_sha256": sha256_file(source),
+        "files": file_hashes,
+        "archive_file": f"{output_dir.name}.zip",
+        "archive_sha256": "",
+        "safety": {
+            "single_reviewer_only": True,
+            "blank_template_only": True,
+            "machine_predictions_included": False,
+            "other_reviewer_files_included": False,
+            "packet_manifest_included": False,
+        },
+    }
+    manifest_destination = output_dir / "handoff_manifest.json"
+    write_json(manifest_destination, result)
+    copied_files.append("handoff_manifest.json")
+
+    archive_path = output_dir.parent / f"{output_dir.name}.zip"
+    if archive_path.exists():
+        if not overwrite:
+            raise FileExistsError(f"{archive_path} exists; pass overwrite=True to replace it")
+        archive_path.unlink()
+    with zipfile.ZipFile(archive_path, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+        for relative in sorted(copied_files):
+            info = zipfile.ZipInfo(relative, date_time=(2026, 1, 1, 0, 0, 0))
+            info.compress_type = zipfile.ZIP_DEFLATED
+            archive.writestr(info, (output_dir / relative).read_bytes())
+    result["archive_sha256"] = sha256_file(archive_path)
+    write_json(manifest_destination, result)
+    return result
 
 
 def install_adjudication_file(

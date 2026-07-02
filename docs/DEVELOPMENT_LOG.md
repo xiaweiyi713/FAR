@@ -889,4 +889,11 @@ The packet manifest SHA is
 reviewer task SHAs are
 `3691e27117a722ef8827282235b2609ebd4a8a33a4c878924ba19f327f03c6ab`
 and `f627faf8fdf7c9f71af748926654d8578ae4792647b2c072b9af75db18005e19`.
+`falsirag-annotate-packet reviewer-handoff` now also builds deterministic
+single-reviewer file-based ZIPs from the same blank templates while excluding
+the other reviewer, packet manifest, source benchmark, and machine predictions.
+The current ignored ZIP SHAs are `reviewer_a_handoff.zip`
+`304ec1db46f6d3b940f7acd37b8474c7b834bdc8448b8f0f5bb08b48abdde1e4` and
+`reviewer_b_handoff.zip`
+`dd12819bc2592086e23f552cfb70808d66a390cea7a819d6cc7b852c3bfa5c8e`.
 They are blank handoff artifacts, not completed human annotations.

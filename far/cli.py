@@ -50,6 +50,13 @@ def validate_bench_main() -> None:
     main()
 
 
+def annotate_packet_main() -> None:
+    _prefer_far_repo()
+    from bench.build.annotate_packet import main
+
+    main()
+
+
 def auto_annotate_main() -> None:
     _prefer_far_repo()
     from bench.build.auto_annotate import main

@@ -8,8 +8,23 @@ test dry runs cannot satisfy the final gate.
 ## 1. Human annotation owner
 
 Give two independent reviewers only their respective blind packet, README, and
-`docs/HUMAN_ANNOTATION_PROTOCOL.md`. After both files are frozen, an adjudicator
-fills `adjudications.jsonl` and compiles. Check packet progress at every handoff:
+`docs/HUMAN_ANNOTATION_PROTOCOL.md`. The safest file-based handoff is generated
+per reviewer:
+
+```bash
+uv run falsirag-annotate-packet reviewer-handoff \
+  --packet-dir outputs/annotations/falsirag_packet_v1 \
+  --output-dir outputs/annotations/reviewer_a_handoff \
+  --reviewer-id reviewer_a \
+  --overwrite
+```
+
+Repeat with `reviewer_b`. The handoff builder refuses filled templates and
+excludes the other reviewer, packet manifest, source benchmark, and machine
+predictions.
+
+After both files are frozen, an adjudicator fills `adjudications.jsonl` and
+compiles. Check packet progress at every handoff:
 
 ```bash
 uv run python -m bench.build.annotate_packet status \
