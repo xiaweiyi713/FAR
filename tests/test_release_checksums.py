@@ -66,3 +66,8 @@ def test_release_checksums_reject_modified_artifact(tmp_path: Path) -> None:
     assert any("sdist" not in error and "mismatch" in error for error in audit.errors)
     payload = json.loads(output.read_text(encoding="utf-8"))
     assert payload["schema_version"] == "far-release-checksums-v1"
+
+
+def test_source_archive_includes_submission_evidence_templates() -> None:
+    manifest = (Path(__file__).resolve().parents[1] / "MANIFEST.in").read_text(encoding="utf-8")
+    assert "recursive-include submission *.json" in manifest

@@ -6,6 +6,7 @@ include .gitattributes
 recursive-include docs *.md
 recursive-include examples *.py
 recursive-include scripts *.sh
+recursive-include submission *.json
 recursive-include paper *.tex *.bib *.bst *.sty *.txt *.md
 recursive-include bench/external *.md *.json *.jsonl
 
