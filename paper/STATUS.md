@@ -10,15 +10,17 @@ The following cannot be truthfully completed by code generation:
 
 1. two independent annotations and adjudication for 300 candidate items;
 2. an externally held blind test;
-3. the remaining matched Qwen3.5 baselines/ablations. The corrected Qwen3.5 FAR
-   dev rerun has finished 60/60 with zero errors
-   (`992a4cf027db5491feef2a57210d8a9395be61798c0ff84b29760d495bc96b56`), but
-   the matched suite is still running and is not yet a complete comparison.
-   It was frozen with the original five baselines; the subsequently added
-   CounterRefine-style closest-neighbor control must run separately under the
-   same config before a reports-only merge;
-   full DeepSeek V4-Flash and Qwen3.7 Plus (2026-05-26) runs also remain;
-4. final paired confidence intervals, McNemar values, and typed-ablation claim;
+3. the remaining matched model matrix. Corrected Qwen3.5 dev FAR, all four
+   ablations, and the original five baselines have finished 60/60 with zero
+   errors. The FAR prediction SHA is
+   `992a4cf027db5491feef2a57210d8a9395be61798c0ff84b29760d495bc96b56`.
+   The typed-vs-untyped dev diagnostic supports typed conflict control, but the
+   other ablation effects are mixed and must not be overstated. The sixth
+   CounterRefine-style closest-neighbor control is running separately under the
+   same Qwen config before a reports-only merge. Full DeepSeek V4-Flash and
+   Qwen3.7 Plus (2026-05-26) runs also remain;
+4. final validated six-baseline reports, paired confidence intervals, McNemar
+   values, and any typed-ablation claim that survives adjudicated gold/test;
 5. named authors, affiliations, and the human-required AAAI policy review.
 
 Do not replace `PENDING-EMPIRICAL-RUN` cells until result bundle validation
