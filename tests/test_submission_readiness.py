@@ -4,12 +4,14 @@ import hashlib
 import json
 from pathlib import Path
 
+import pytest
+
 from bench.annotations import build_annotation_packet, compile_annotations
 from bench.build.build_blind_bundle import build as build_blind_bundle
 from bench.build.common import sha256_file, write_json
 from experiments.run_suite import run_suite
 from experiments.score_blind_return import score
-from experiments.submission_readiness import audit, paper_source_fingerprints
+from experiments.submission_readiness import Gate, _paper_gate, audit, paper_source_fingerprints
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -132,6 +134,33 @@ def test_paper_gate_rejects_stale_human_review_source_hashes() -> None:
     paper_gate = next(gate for gate in report["gates"] if gate["name"] == "human_paper_review")
     assert paper_gate["passed"] is False
     assert "stale" in paper_gate["detail"]
+
+
+def test_paper_gate_rejects_reused_experiment_role() -> None:
+    evidence = {
+        "human_review": {
+            "reviewer_id": "Alice",
+            "completed_at": "2026-07-02T12:00:00Z",
+            "aaai_policy_checked": True,
+            "authorship_checked": True,
+            "claims_checked": True,
+            "paper_source_sha256": paper_source_fingerprints(ROOT),
+        }
+    }
+    annotation = Gate(
+        "human_annotation",
+        True,
+        "passed",
+        {"annotators": ["alice", "bob"], "adjudicator_id": "judge_1"},
+    )
+    attestation = Gate(
+        "blind_test_attestation",
+        True,
+        "passed",
+        {"custodian_id": "external-custodian", "scorer_id": "trusted-scorer"},
+    )
+    with pytest.raises(ValueError, match="paper reviewer must be independent"):
+        _paper_gate(ROOT, evidence, annotation, attestation)
 
 
 def test_external_blind_return_can_be_scored_with_bound_attestation(tmp_path: Path) -> None:

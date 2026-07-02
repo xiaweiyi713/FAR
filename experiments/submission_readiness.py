@@ -459,18 +459,62 @@ def _release_gate(root: Path, config: dict[str, Any], dev_suites: Gate) -> dict[
     return {"manifest": str(path), "sha256": sha256_file(path), "artifacts": audit.artifact_count}
 
 
-def _paper_gate(root: Path, config: dict[str, Any]) -> dict[str, Any]:
+def _role_key(raw: Any) -> str:
+    if raw is None:
+        return ""
+    return str(raw).strip().casefold()
+
+
+def _critical_experiment_roles(annotation: Gate, attestation: Gate) -> dict[str, list[str]]:
+    roles: dict[str, list[str]] = {}
+    if annotation.passed:
+        for annotator in annotation.evidence.get("annotators", []):
+            key = _role_key(annotator)
+            if key:
+                roles.setdefault(key, []).append(f"annotator:{annotator}")
+        adjudicator = annotation.evidence.get("adjudicator_id")
+        key = _role_key(adjudicator)
+        if key:
+            roles.setdefault(key, []).append(f"adjudicator:{adjudicator}")
+    if attestation.passed:
+        for field, label in (
+            ("custodian_id", "blind_custodian"),
+            ("scorer_id", "trusted_scorer"),
+        ):
+            value = attestation.evidence.get(field)
+            key = _role_key(value)
+            if key:
+                roles.setdefault(key, []).append(f"{label}:{value}")
+    return roles
+
+
+def _paper_gate(
+    root: Path,
+    config: dict[str, Any],
+    annotation: Gate,
+    attestation: Gate,
+) -> dict[str, Any]:
     review = config.get("human_review")
     if not isinstance(review, dict):
         raise ValueError("human_review attestation is missing")
     required = ("aaai_policy_checked", "authorship_checked", "claims_checked")
     failed = [field for field in required if review.get(field) is not True]
-    if not str(review.get("reviewer_id", "")).strip():
+    reviewer_id = str(review.get("reviewer_id", "")).strip()
+    if not reviewer_id:
         failed.append("reviewer_id")
     if not str(review.get("completed_at", "")).strip():
         failed.append("completed_at")
     if failed:
         raise ValueError(f"human paper review is incomplete: {failed}")
+    overlapping_roles = _critical_experiment_roles(annotation, attestation).get(
+        _role_key(reviewer_id),
+        [],
+    )
+    if overlapping_roles:
+        raise ValueError(
+            "human paper reviewer must be independent from experiment roles: "
+            f"{reviewer_id} overlaps with {sorted(overlapping_roles)}"
+        )
     source_fingerprints = paper_source_fingerprints(root)
     claimed_fingerprints = review.get("paper_source_sha256")
     if not isinstance(claimed_fingerprints, dict):
@@ -499,7 +543,7 @@ def _paper_gate(root: Path, config: dict[str, Any]) -> dict[str, Any]:
     if placeholders:
         raise ValueError(f"paper still contains empirical placeholders: {placeholders}")
     return {
-        "reviewer_id": review["reviewer_id"],
+        "reviewer_id": reviewer_id,
         "completed_at": review.get("completed_at"),
         "tex_files": len(sources),
         "paper_source_sha256": source_fingerprints,
@@ -551,7 +595,12 @@ def audit(root: Path, evidence: dict[str, Any]) -> dict[str, Any]:
         )
     )
     gates.append(_gate("release_archive", lambda: _release_gate(root, evidence, dev_suites)))
-    gates.append(_gate("human_paper_review", lambda: _paper_gate(root, evidence)))
+    gates.append(
+        _gate(
+            "human_paper_review",
+            lambda: _paper_gate(root, evidence, annotation, attestation),
+        )
+    )
     blockers = [gate.name for gate in gates if not gate.passed]
     return {
         "schema_version": "far-submission-readiness-report-v1",

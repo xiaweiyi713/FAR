@@ -163,7 +163,10 @@ uv run falsirag-submission-readiness --print-paper-fingerprints
 
 Copy the printed map into `human_review.paper_source_sha256`. If any paper
 source changes after review, rerun the human review and refresh the
-fingerprints; stale review hashes fail the final gate.
+fingerprints; stale review hashes fail the final gate. The paper reviewer must
+also be independent from the experiment roles already bound by the evidence
+file: the final gate rejects a `human_review.reviewer_id` that matches any
+annotator, the adjudicator, the blind custodian, or the trusted scorer.
 Then run:
 
 ```bash
