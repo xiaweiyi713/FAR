@@ -166,7 +166,10 @@ The custodian should not return any edited benchmark file.
 ## Trusted scoring
 
 Only after all return packages and the role-separated one-shot attestation are
-frozen, score each complete suite against the adjudicated benchmark:
+frozen, score each complete suite against the adjudicated benchmark. Copy
+`submission/blind_test_attestation.template.json` to the ignored real path
+`submission/blind_test_attestation.json` before filling it; the scorer rejects
+the tracked `.template.json` path.
 
 ```bash
 uv run falsirag-score-blind-return \

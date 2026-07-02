@@ -119,10 +119,12 @@ three complete unscored suite directories and logs. Do not request gold, retry
 because of output quality, or edit benchmark files. Record any operational
 restart or failure.
 
-The custodian and trusted scorer then fill
-`submission/blind_test_attestation.template.json`. They must be distinct roles;
-the attestation binds the frozen commit plus SHA-256 hashes of the final bundle
-manifest and all three return manifests.
+Copy `submission/blind_test_attestation.template.json` to the ignored real file
+`submission/blind_test_attestation.json`; the custodian and trusted scorer then
+fill that real JSON file. They must be distinct roles; the attestation binds
+the frozen commit plus SHA-256 hashes of the final bundle manifest and all three
+return manifests. The scorer and final readiness gate reject the `.template.json`
+path so real operational evidence is not written back into the tracked template.
 
 ## 5. Trusted scorer
 

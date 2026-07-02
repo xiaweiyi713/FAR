@@ -20,6 +20,7 @@ from experiments.submission_readiness import (
     REPORT_METHODS,
     ROOT,
     _json,
+    _reject_template_path,
     _run_dir,
     _source_commit,
     _validate_identity_binding,
@@ -155,6 +156,7 @@ def score(
     if len(commits) != 1:
         raise ValueError("returned runs do not share one frozen clean commit")
     frozen_commit = next(iter(commits))
+    _reject_template_path(attestation_path, "blind-test attestation")
     attestation = _json(attestation_path)
     _validate_attestation(
         attestation,

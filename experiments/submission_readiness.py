@@ -70,6 +70,11 @@ def _json(path: Path) -> dict[str, Any]:
     return value
 
 
+def _reject_template_path(path: Path, label: str) -> None:
+    if path.name.endswith(".template.json"):
+        raise ValueError(f"{label} must be copied to a real ignored JSON file before use: {path}")
+
+
 def _run_dir(suite: Path, label: str) -> Path:
     if label in REPORT_METHODS - {"far", "vanilla"} and not label.startswith("minus_"):
         return suite / "runs" / "baselines" / label
@@ -335,6 +340,7 @@ def _attestation_gate(
     if not isinstance(attestation, dict):
         raise ValueError("blind_test attestation is missing")
     attestation_path = _resolve(root, config.get("blind_test_attestation"))
+    _reject_template_path(attestation_path, "blind-test attestation")
     if _json(attestation_path) != attestation:
         raise ValueError("inline blind_test evidence differs from the frozen attestation file")
     if attestation.get("schema_version") != "far-blind-test-attestation-v1":

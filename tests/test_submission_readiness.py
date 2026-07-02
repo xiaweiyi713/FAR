@@ -11,7 +11,13 @@ from bench.build.build_blind_bundle import build as build_blind_bundle
 from bench.build.common import sha256_file, write_json
 from experiments.run_suite import run_suite
 from experiments.score_blind_return import score
-from experiments.submission_readiness import Gate, _paper_gate, audit, paper_source_fingerprints
+from experiments.submission_readiness import (
+    Gate,
+    _attestation_gate,
+    _paper_gate,
+    audit,
+    paper_source_fingerprints,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -161,6 +167,57 @@ def test_paper_gate_rejects_reused_experiment_role() -> None:
     )
     with pytest.raises(ValueError, match="paper reviewer must be independent"):
         _paper_gate(ROOT, evidence, annotation, attestation)
+
+
+def test_attestation_gate_rejects_template_file_path(tmp_path: Path) -> None:
+    return_manifest_sha256 = {
+        "deepseek_v4_flash": "c" * 64,
+        "qwen_3_7_plus": "d" * 64,
+        "qwen_3_5_9b": "e" * 64,
+    }
+    attestation = {
+        "schema_version": "far-blind-test-attestation-v1",
+        "custodian_id": "external-custodian",
+        "scorer_id": "trusted-scorer",
+        "completed_at": "2026-07-02T12:00:00Z",
+        "frozen_commit": "a" * 40,
+        "bundle_manifest_sha256": "b" * 64,
+        "return_manifest_sha256": return_manifest_sha256,
+        "one_shot": True,
+        "externally_held": True,
+        "gold_loaded_by_custodian": False,
+        "all_failures_reported": True,
+    }
+    template_path = tmp_path / "blind_test_attestation.template.json"
+    write_json(template_path, attestation)
+    returns = Gate(
+        "external_blind_returns",
+        True,
+        "passed",
+        {
+            "frozen_commit": attestation["frozen_commit"],
+            "models": {
+                model: {"manifest_sha256": manifest_sha}
+                for model, manifest_sha in return_manifest_sha256.items()
+            },
+        },
+    )
+    bundle = Gate(
+        "final_blind_bundle",
+        True,
+        "passed",
+        {"manifest_sha256": attestation["bundle_manifest_sha256"]},
+    )
+    with pytest.raises(ValueError, match="must be copied to a real ignored JSON file"):
+        _attestation_gate(
+            tmp_path,
+            {
+                "blind_test_attestation": "blind_test_attestation.template.json",
+                "blind_test": attestation,
+            },
+            returns,
+            bundle,
+        )
 
 
 def test_external_blind_return_can_be_scored_with_bound_attestation(tmp_path: Path) -> None:
