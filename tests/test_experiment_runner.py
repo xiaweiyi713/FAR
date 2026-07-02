@@ -9,7 +9,7 @@ import pytest
 from bench.build.build_blind_bundle import build as build_blind_bundle
 from bench.build.common import sha256_file
 from eval.run_eval import evaluate
-from experiments.build_artifacts import _load_plotting_backend
+from experiments.build_artifacts import _load_plotting_backend, _mapping
 from experiments.build_artifacts import build as build_artifacts
 from experiments.run_far import _primary_trace, run
 from experiments.run_suite import run_suite
@@ -291,6 +291,33 @@ def test_suite_runs_far_baseline_ablation_and_artifacts(tmp_path: Path) -> None:
     assert rebuilt["diagnostic_only"] is True
     assert sha256_file(far_predictions) == prediction_fingerprint
 
+    copied = tmp_path / "mixed-reports"
+    for label in ("far", "vanilla_rag", "minus_typed_conflict"):
+        source = tmp_path / "suite/evaluations" / label
+        target = copied / label
+        target.mkdir(parents=True)
+        (target / "scores.jsonl").write_text(
+            (source / "scores.jsonl").read_text(encoding="utf-8"),
+            encoding="utf-8",
+        )
+        report = json.loads((source / "report.json").read_text(encoding="utf-8"))
+        if label == "vanilla_rag":
+            report["provenance"]["benchmark_sha256"] = "0" * 64
+        (target / "report.json").write_text(
+            json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True),
+            encoding="utf-8",
+        )
+    with pytest.raises(ValueError, match="different benchmark"):
+        build_artifacts(
+            {
+                "far": copied / "far/report.json",
+                "vanilla": copied / "vanilla_rag/report.json",
+                "minus_typed_conflict": copied / "minus_typed_conflict/report.json",
+            },
+            {"far": far_predictions},
+            tmp_path / "mixed-artifacts",
+        )
+
 
 def test_blind_test_suite_runs_without_loading_or_scoring_gold(tmp_path: Path) -> None:
     data_dir = tmp_path / "blind-data"
@@ -328,3 +355,8 @@ def test_artifact_builder_explains_missing_eval_extra() -> None:
         pytest.raises(RuntimeError, match="optional eval dependencies"),
     ):
         _load_plotting_backend()
+
+
+def test_artifact_input_mapping_rejects_duplicate_labels() -> None:
+    with pytest.raises(ValueError, match="duplicate input label"):
+        _mapping(["far=/tmp/a.json", "far=/tmp/b.json"])

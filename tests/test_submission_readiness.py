@@ -209,3 +209,5 @@ def test_external_blind_return_can_be_scored_with_bound_attestation(tmp_path: Pa
         "publication_ready": True,
         "test_only": True,
     }
+    assert artifact_manifest["reports"] == manifest["reports"]
+    assert artifact_manifest["benchmark_sha256"] == manifest["benchmark_sha256"]

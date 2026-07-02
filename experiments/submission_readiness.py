@@ -436,6 +436,10 @@ def _scored_tests_gate(
             "test_only": True,
         }:
             raise ValueError(f"{model}: final artifacts were not built in strict mode")
+        if artifact.get("reports") != reports:
+            raise ValueError(f"{model}: final artifact report fingerprints do not match scoring")
+        if artifact.get("benchmark_sha256") != annotation.evidence["benchmark_sha256"]:
+            raise ValueError(f"{model}: final artifacts are bound to the wrong benchmark")
         output[model] = {
             "suite": str(suite),
             "manifest_sha256": sha256_file(manifest_path),

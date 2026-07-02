@@ -19,6 +19,10 @@ def _mapping(values: list[str]) -> dict[str, Path]:
         if "=" not in value:
             raise ValueError("inputs must use LABEL=/path/to/file")
         label, raw_path = value.split("=", 1)
+        if not label.strip():
+            raise ValueError("input label must not be empty")
+        if label in result:
+            raise ValueError(f"duplicate input label: {label}")
         result[label] = Path(raw_path)
     return result
 
@@ -43,12 +47,30 @@ def _report_publication_summary(report: dict[str, Any]) -> dict[str, Any]:
     scored_splits = publication.get("scored_splits", [])
     if not isinstance(scored_splits, list):
         scored_splits = []
+    provenance = report.get("provenance", {})
+    if not isinstance(provenance, dict):
+        provenance = {}
+    benchmark_sha = provenance.get("benchmark_sha256")
+    benchmark_manifest_sha = provenance.get("benchmark_manifest_sha256")
     return {
         "publication_ready": bool(report.get("publication_ready")),
         "partial": bool(report.get("partial")),
         "phase": publication.get("phase"),
         "scored_splits": sorted(map(str, scored_splits)),
+        "benchmark_sha256": benchmark_sha if isinstance(benchmark_sha, str) else None,
+        "benchmark_manifest_sha256": (
+            benchmark_manifest_sha if isinstance(benchmark_manifest_sha, str) else None
+        ),
     }
+
+
+def _unique_summary_values(
+    summary: dict[str, dict[str, Any]], field: str, *, allow_none: bool = False
+) -> set[str | None]:
+    values = {item.get(field) for item in summary.values()}
+    if not allow_none and (None in values or "" in values):
+        raise ValueError(f"artifact reports are missing {field}")
+    return values
 
 
 def _validate_artifact_publication_scope(
@@ -60,6 +82,15 @@ def _validate_artifact_publication_scope(
     summary = {
         label: _report_publication_summary(report) for label, report in sorted(reports.items())
     }
+    benchmark_hashes = _unique_summary_values(summary, "benchmark_sha256")
+    if len(benchmark_hashes) != 1:
+        raise ValueError("artifact reports use different benchmark fingerprints")
+    benchmark_manifest_hashes = _unique_summary_values(
+        summary, "benchmark_manifest_sha256", allow_none=True
+    )
+    non_empty_manifest_hashes = {value for value in benchmark_manifest_hashes if value}
+    if len(non_empty_manifest_hashes) > 1:
+        raise ValueError("artifact reports use different benchmark manifest fingerprints")
     if require_publication_ready:
         not_ready = [
             label
@@ -288,6 +319,21 @@ def build(
             "test_only": require_test_only,
         },
         "publication": publication_summary,
+        "benchmark_sha256": next(
+            iter(_unique_summary_values(publication_summary, "benchmark_sha256"))
+        ),
+        "benchmark_manifest_sha256": next(
+            iter(
+                {
+                    value
+                    for value in _unique_summary_values(
+                        publication_summary, "benchmark_manifest_sha256", allow_none=True
+                    )
+                    if value
+                }
+            ),
+            None,
+        ),
         "reports": {label: sha256_file(path) for label, path in report_paths.items()},
         "predictions": {label: sha256_file(path) for label, path in prediction_paths.items()},
         "unicode_font": (

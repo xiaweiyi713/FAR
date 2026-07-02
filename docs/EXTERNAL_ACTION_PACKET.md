@@ -145,8 +145,10 @@ attestation before producing paired reports and final tables/figures. The output
 directory must be empty, preventing silent replacement of an earlier score. The
 generated `artifact_manifest.json` must report `publication_ready:true`,
 `test_only:true`, and strict requirements for both publication-ready and
-test-only inputs; `falsirag-submission-readiness` rejects final artifacts that
-were rebuilt from dev, partial, diagnostic, or mixed-split reports.
+test-only inputs. It must also carry the same report fingerprints and benchmark
+fingerprint as the scored-suite manifest; `falsirag-submission-readiness`
+rejects final artifacts that were rebuilt from dev, partial, diagnostic,
+mixed-split, or cross-benchmark reports.
 
 ## 6. Paper and final gate owner
 
