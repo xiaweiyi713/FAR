@@ -1,41 +1,113 @@
 # FAR: Falsification-Augmented Retrieval
 
+[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-3776AB.svg)](https://www.python.org/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Research status](https://img.shields.io/badge/status-research%20artifact-orange.svg)](docs/COMPLETION_AUDIT.md)
+
+**Ask What Could Be Wrong: Falsification-Guided Retrieval for Self-Correcting
+Language Agents**
+
 FAR asks a retrieval-augmented agent a deliberately uncomfortable question:
-**what evidence would make its current answer wrong?** It decomposes an initial
-answer into a claim graph, assigns typed evidence needs, issues support,
-refutation, and boundary queries, detects typed conflicts, and applies a
-type-specific revision with a claim-level audit trace.
+**what evidence would make its current answer wrong?** Instead of accumulating
+only supporting passages, FAR turns possible failure modes into typed,
+retrievable evidence requirements and uses the resulting conflicts to revise
+the answer.
 
-The repository is a complete research scaffold for the AAAI-27 project in
-[`PROJECT_PROPOSAL.md`](PROJECT_PROPOSAL.md). It includes the method, a
-300-candidate FalsiRAG-Bench build, annotation/adjudication tools, six baselines,
-four ablations, statistical inference, checkpointed runners, paper sources, and
-artifact validation. It does **not** claim completed human annotation or final
-multi-model results; those require independent annotators and model credentials.
+This repository contains the method, FalsiRAG-Bench candidate data, experiment
+and evaluation infrastructure, independent-annotation workflow, blind-test
+handoff tooling, and an anonymous AAAI-27 paper draft. The complete research
+plan is in [PROJECT_PROPOSAL.md](PROJECT_PROPOSAL.md).
 
-## Quickstart
+> [!IMPORTANT]
+> This is a research artifact, not a finished publication result. The current
+> 300 benchmark labels are machine-seeded. They are useful for development but
+> cannot replace two independent human annotations, adjudication, or externally
+> held blind testing. The repository fails closed on those distinctions.
 
-```bash
-uv sync --extra dev --extra eval
-uv pip install --no-deps -e /Users/xuwenyao/VeraRAG  # optional adapters
-uv run python examples/offline_demo.py
-uv run falsirag-validate-bench
-uv run falsirag-generate-sbom --check
-uv run falsirag-weak-label --help
-uv run falsirag-machine-label-audit --help
-uv run falsirag-submission-readiness \
-  --evidence submission/evidence.template.json --allow-incomplete
-bash scripts/check_cloud_run_readiness.sh
-uv run python -m pytest
+## Why FAR
+
+FAR does **not** claim that answer-conditioned re-retrieval or counter-evidence
+search is new by itself. Its intended contribution is a shared typed-conflict
+control layer that connects:
+
+1. a dependency-aware claim graph;
+2. positive evidence requirements;
+3. support, refutation, and boundary queries;
+4. typed conflict detection; and
+5. type-specific revision with an auditable before/after trace.
+
+```mermaid
+flowchart LR
+    A["Question + initial answer"] --> B["Claim graph"]
+    B --> C["Typed evidence requirements"]
+    C --> D["Support queries"]
+    C --> E["Refutation queries"]
+    C --> F["Boundary queries"]
+    D --> G["Evidence retrieval"]
+    E --> G
+    F --> G
+    G --> H["Typed conflict control"]
+    H --> I["Typed answer revision"]
+    I --> J["Answer + evidence map + audit trace"]
 ```
 
-For formal hybrid+dense+reranker+NLI configurations, run
-`uv sync --extra experiment` and install the local VeraRAG code with
-`uv pip install --no-deps -e /Users/xuwenyao/VeraRAG`. The formal configs fail
-closed if dense retrieval or NLI is unavailable, so a degraded run cannot be
-mislabeled as the configured method.
+## Current research status
 
-Run a balanced, dependency-free diagnostic slice:
+| Area | Current state |
+|---|---|
+| FAR method | Implemented and covered by unit/integration tests |
+| FalsiRAG-Bench | 300 balanced candidate samples and 175 documents; construction validator passes |
+| Labels | 300/300 machine-seeded; independent human review and adjudication pending |
+| Development experiments | Corrected Qwen3.5 9B FAR, six baselines, and four ablations complete on dev; diagnostic only |
+| Formal model matrix | DeepSeek V4-Flash and Qwen3.7 Plus runs await rotated credentials and adjudicated labels |
+| Blind test | Gold-free bundle, custody protocol, return validator, and trusted scorer implemented; external execution pending |
+| Paper | Anonymous AAAI-27 draft and checklist compile; final empirical cells and human review pending |
+
+The authoritative requirement-by-requirement status is
+[docs/COMPLETION_AUDIT.md](docs/COMPLETION_AUDIT.md). Diagnostic scores must not
+be copied into the paper's final table.
+
+## Installation
+
+Requirements:
+
+- Python 3.10 or newer;
+- [uv](https://docs.astral.sh/uv/);
+- Git;
+- optional local VeraRAG checkout for its provider/retrieval adapters.
+
+Clone and install the standalone offline path:
+
+```bash
+git clone https://github.com/xiaweiyi713/FAR.git
+cd FAR
+uv sync --extra dev --extra eval
+uv run python examples/offline_demo.py
+```
+
+The offline demo and deterministic protocol do not require API keys. To use the
+formal dense/reranking/NLI stack, install the experiment dependencies and, when
+available, a sibling VeraRAG checkout:
+
+```bash
+uv sync --extra dev --extra eval --extra experiment
+uv pip install --no-deps -e ../VeraRAG
+```
+
+Formal configurations fail rather than silently degrading if dense retrieval,
+reranking, or NLI assets are unavailable.
+
+## Quick validation
+
+```bash
+uv run falsirag-validate-bench
+uv run falsirag-scan-secrets --json
+uv run ruff check .
+uv run mypy far bench baselines eval experiments tests
+uv run pytest
+```
+
+Run a small, balanced, dependency-free diagnostic suite:
 
 ```bash
 uv run falsirag-suite \
@@ -47,75 +119,108 @@ uv run falsirag-suite \
   --resamples 200
 ```
 
-After installing the `experiment` extra and VeraRAG, validate the exact pinned
-formal retrieval/NLI stack without API calls using
-`experiments/configs/formal_stack_smoke.yaml` (see the reproduction guide).
+Limited runs are marked `partial`; artifacts derived from them remain
+`diagnostic_only`. The held-out `test` split is rejected unless the caller
+explicitly supplies `--allow-test`.
 
-The `test` split is rejected unless `--allow-test` is supplied. Limited runs are
-marked `partial`, and any tables/figures built from them are marked
-`diagnostic_only`. Full runs remain diagnostic while the benchmark manifest is
-not publication-ready or scored rows have not been adjudicated.
-
-For final test execution, first use `falsirag-build-blind-bundle`; test runners
-then consume only sanitized operational inputs and emit unscored prediction
-manifests. They do not load local gold or build result artifacts. The trusted
-scoring handoff and fail-closed final gate are documented in
-`docs/EXTERNAL_ACTION_PACKET.md`.
-
-## Method outputs
+## Method output
 
 `FARPipeline.run(question, initial_answer)` returns:
 
 - a validated acyclic claim graph;
-- positive typed evidence requirements for every claim;
+- typed evidence requirements for every claim;
 - support/refutation/boundary query and retrieval traces;
 - a claim-to-evidence map and typed conflicts;
-- the revised answer and explicit before/after revision trace.
+- a revised answer; and
+- an explicit before/after revision trace.
 
-The core runs offline with deterministic rules. Configured LLMs participate in
-claim decomposition, typed query generation, and revision realization. Invalid
-structured model outputs fall back to the deterministic protocol; provider
-failures remain visible.
+Configured LLMs can participate in claim decomposition, typed-query generation,
+and revision realization. Invalid structured output falls back to the
+deterministic typed protocol; provider failures remain visible in run records.
 
-The VeraRAG adapter exposes its six providers (OpenAI, Anthropic, Ollama,
-DashScope, ZhipuAI, and DeepSeek) plus BM25, dense, FAISS, hybrid RRF, and an
-optional CrossEncoder reranker. The checked-in API configs use the same pinned
-BGE hybrid+rereanking stack and required NLI conflict layer for
-paired model comparisons. Dense or NLI degradation aborts formal runs rather
-than changing the method silently.
+The optional VeraRAG adapter supports OpenAI, Anthropic, Ollama, DashScope,
+ZhipuAI, and DeepSeek, together with BM25, dense, FAISS, hybrid RRF, and an
+optional CrossEncoder reranker.
 
-## Benchmark status
+## Benchmark
 
-FalsiRAG-Bench v0.2.0-candidate contains five balanced categories (60 each),
-175 corpus documents, frozen source-document-group splits, and in-corpus
-counter-evidence. The validator currently reports zero cross-split dependency
-leakage and 0.91 lexical counter-evidence recall@10 across the three query
-families. This is a construction check, not a model result.
+FalsiRAG-Bench v0.2.0-candidate contains five balanced categories:
 
-All 300 labels are `machine_seeded`. `bench/manifest.json` therefore sets
-`publication_ready: false`. Promotion requires two independent annotations,
-adjudication, reported Cohen's kappa, and an externally held blind test. See
-[`bench/CARD.md`](bench/CARD.md).
+- temporal shift;
+- numerical conflict;
+- entity confusion;
+- causal overclaim; and
+- multi-source conflict.
+
+The frozen candidate build has 300 samples, 175 corpus documents, no
+cross-split dependency-group leakage, and 0.91 lexical counter-evidence
+recall@10 when pooling the three query families. This is a corpus-construction
+check, not a FAR performance result.
+
+`bench/manifest.json` intentionally records `publication_ready: false` until
+two independent reviewers, a separate adjudicator, agreement checks, and the
+external blind-test protocol are complete. See [bench/CARD.md](bench/CARD.md)
+for sources, licenses, construction, and limitations.
+
+## Reproducibility and release gates
+
+The repository records benchmark fingerprints, config hashes, implementation
+hashes, Git revision/dirty state, run signatures, resumable checkpoints, paired
+bootstrap intervals, and McNemar tests.
+
+Run all repository-controlled checks on a clean commit:
+
+```bash
+bash scripts/release_check.sh
+```
+
+Without an evidence override, this runs in deliberately incomplete template
+mode. A true final release must use a real ignored evidence file:
+
+```bash
+FAR_SUBMISSION_EVIDENCE=submission/evidence.json bash scripts/release_check.sh
+```
+
+The final command fingerprints nine package, audit, evidence, and paper
+artifacts before running the readiness audit. It succeeds only when the human
+annotation, three-model dev matrix, external blind returns, trusted scoring,
+release archive, and independent paper review all pass.
+
+Never commit API keys. A previously exposed key must be rotated before use.
+
+## Repository map
+
+```text
+far/          FAR claim, evidence, query, conflict, and revision pipeline
+bench/        Candidate benchmark, corpus, schemas, builders, and annotation tools
+baselines/    Six transparent comparison systems
+eval/         Metrics, confidence intervals, and paired significance tests
+experiments/  Runners, configs, result validation, scoring, and release gates
+paper/        AAAI-27 manuscript, supplement, style files, and checklist
+submission/   Non-secret evidence and attestation templates
+docs/         Architecture, protocols, experiment plan, and completion audits
+tests/        Unit, integration, provenance, and fail-closed regression tests
+```
 
 ## Documentation
 
-- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md): components and VeraRAG boundary
-- [`docs/REPRODUCING.md`](docs/REPRODUCING.md): benchmark, runs, resume, and paper
-- [`docs/EVALUATION.md`](docs/EVALUATION.md): metric and inference definitions
-- [`docs/AUTO_ANNOTATION.md`](docs/AUTO_ANNOTATION.md): local Qwen, weak-label, and optional DeepSeek preannotation workflow
-- [`docs/HUMAN_ANNOTATION_PROTOCOL.md`](docs/HUMAN_ANNOTATION_PROTOCOL.md): independent reviewer and adjudication SOP
-- [`docs/BLIND_TEST_HANDOFF.md`](docs/BLIND_TEST_HANDOFF.md): external gold-free test custody SOP
-- [`docs/EXTERNAL_ACTION_PACKET.md`](docs/EXTERNAL_ACTION_PACKET.md): role-by-role final execution packet and submission gate
-- [`docs/EXPERIMENT_PLAN.md`](docs/EXPERIMENT_PLAN.md): model/baseline/ablation matrix
-- [`docs/DEVELOPMENT_LOG.md`](docs/DEVELOPMENT_LOG.md): frozen dev-only tuning decisions and hashes
-- [`docs/PROPOSAL_TRACEABILITY.md`](docs/PROPOSAL_TRACEABILITY.md): proposal-to-evidence audit
-- [`docs/COMPLETION_AUDIT.md`](docs/COMPLETION_AUDIT.md): requirement-by-requirement submission gates
-- [`paper/main.tex`](paper/main.tex): anonymous AAAI-27 draft using the official kit
-- [`paper/aaai27/ReproducibilityChecklist.tex`](paper/aaai27/ReproducibilityChecklist.tex): evidence-based AAAI checklist
+- [Architecture](docs/ARCHITECTURE.md)
+- [Reproduction guide](docs/REPRODUCING.md)
+- [Experiment plan](docs/EXPERIMENT_PLAN.md)
+- [Evaluation definitions](docs/EVALUATION.md)
+- [Automatic annotation assistance](docs/AUTO_ANNOTATION.md)
+- [Independent human annotation protocol](docs/HUMAN_ANNOTATION_PROTOCOL.md)
+- [External blind-test handoff](docs/BLIND_TEST_HANDOFF.md)
+- [Role-by-role final action packet](docs/EXTERNAL_ACTION_PACKET.md)
+- [Proposal traceability](docs/PROPOSAL_TRACEABILITY.md)
+- [Completion audit](docs/COMPLETION_AUDIT.md)
+- [Development log](docs/DEVELOPMENT_LOG.md)
+- [Anonymous paper draft](paper/main.tex)
 
 ## License
 
-FAR code and controlled synthetic summaries are MIT licensed. VeraRAG is reused
-through optional adapters under its MIT license. Upstream datasets and source
-materials retain their own terms; the separately imported FEVER candidate slice
-records CC-BY-SA-3.0 and GPL-3.0 provenance.
+FAR code and controlled synthetic summaries are released under the
+[MIT License](LICENSE). VeraRAG adapters reuse MIT-licensed code through an
+optional local dependency. Upstream datasets and source materials retain their
+own terms; the separately imported FEVER candidate slice records CC-BY-SA-3.0
+and GPL-3.0 provenance in its accompanying license file.
