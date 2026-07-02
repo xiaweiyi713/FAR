@@ -26,10 +26,10 @@ bash scripts/release_check.sh
 ```
 
 It executes formatting/lint/type/tests, benchmark validation, the redacting
-secret scan, SBOM generation, wheel/sdist build, release checksums, and PDF
-compilation for the paper, supplement, and reproducibility checklist. It first
-requires a clean Git worktree, and the checksum manifest records the exact
-commit. Human
+secret scan, SBOM generation, wheel/sdist build, PDF compilation for the paper,
+supplement, and reproducibility checklist, and release checksums for the package
+plus generated audit/PDF artifacts. It first requires a clean Git worktree, and
+the checksum manifest records the exact commit. Human
 annotation, external blind custody, author metadata, and policy review remain
 separate governance gates and are not falsely automated by this script.
 
@@ -53,11 +53,15 @@ release set:
 uv build
 uv run falsirag-release-checksums \
   --sbom build/sbom/far-sbom.cdx.json \
+  --artifact paper_main_pdf=paper/build/release/main.pdf \
   --output build/release-checksums.json --check --json
 ```
 
-The checksum manifest requires exactly the source distribution, wheel, and
-CycloneDX SBOM roles and validates their paths, byte sizes, and SHA-256 hashes.
+The checksum manifest always requires the source distribution, wheel, and
+CycloneDX SBOM roles, and accepts additional `--artifact ROLE=PATH` entries for
+paper PDFs, benchmark validation reports, secret-scan reports, or other final
+release deliverables. It validates every recorded path, byte size, and SHA-256
+hash.
 
 Scan tracked and unignored text files before every commit or release:
 

@@ -6,6 +6,7 @@ import argparse
 import hashlib
 import json
 import subprocess
+from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -84,6 +85,7 @@ def build_checksum_manifest(
     project_root: str | Path = ".",
     dist_dir: str | Path = DEFAULT_DIST_DIR,
     sbom_path: str | Path = DEFAULT_SBOM,
+    extra_artifacts: Iterable[tuple[str, str | Path]] = (),
 ) -> dict[str, Any]:
     root = Path(project_root)
     project = build_sbom(root)["metadata"]["component"]
@@ -91,24 +93,26 @@ def build_checksum_manifest(
     version = str(project["version"])
     distribution = name.lower().replace("-", "_")
     dist = Path(dist_dir)
+    artifacts = [
+        _entry(
+            dist / f"{distribution}-{version}.tar.gz",
+            role="sdist",
+            root=root,
+        ),
+        _entry(
+            dist / f"{distribution}-{version}-py3-none-any.whl",
+            role="wheel",
+            root=root,
+        ),
+        _entry(Path(sbom_path), role="cyclonedx_sbom", root=root),
+    ]
+    artifacts.extend(_entry(Path(path), role=role, root=root) for role, path in extra_artifacts)
     return {
         "schema_version": "far-release-checksums-v1",
         "project": {"name": name, "version": version},
         "source_revision": _git_revision(root),
         "generator": "experiments.generate_release_checksums",
-        "artifacts": [
-            _entry(
-                dist / f"{distribution}-{version}.tar.gz",
-                role="sdist",
-                root=root,
-            ),
-            _entry(
-                dist / f"{distribution}-{version}-py3-none-any.whl",
-                role="wheel",
-                root=root,
-            ),
-            _entry(Path(sbom_path), role="cyclonedx_sbom", root=root),
-        ],
+        "artifacts": artifacts,
     }
 
 
@@ -191,12 +195,27 @@ def validate_checksum_manifest(
     return ChecksumAudit(not errors, tuple(errors), str(path), len(artifacts))
 
 
+def _parse_extra_artifact(raw: str) -> tuple[str, Path]:
+    role, sep, path = raw.partition("=")
+    if not sep or not role.strip() or not path.strip():
+        raise argparse.ArgumentTypeError("artifact must use ROLE=PATH")
+    return role.strip(), Path(path.strip())
+
+
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--project-root", type=Path, default=Path("."))
     parser.add_argument("--dist-dir", type=Path, default=DEFAULT_DIST_DIR)
     parser.add_argument("--sbom", type=Path, default=DEFAULT_SBOM)
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
+    parser.add_argument(
+        "--artifact",
+        action="append",
+        default=[],
+        type=_parse_extra_artifact,
+        metavar="ROLE=PATH",
+        help="add an extra release artifact to fingerprint; may be repeated",
+    )
     parser.add_argument("--check", action="store_true")
     parser.add_argument("--json", action="store_true")
     args = parser.parse_args(argv)
@@ -204,6 +223,7 @@ def main(argv: list[str] | None = None) -> None:
         project_root=args.project_root,
         dist_dir=args.dist_dir,
         sbom_path=args.sbom,
+        extra_artifacts=args.artifact,
     )
     path = write_checksum_manifest(manifest, args.output)
     audit = validate_checksum_manifest(path, project_root=args.project_root)

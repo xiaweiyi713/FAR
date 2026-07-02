@@ -56,6 +56,35 @@ def test_release_checksums_cover_package_and_sbom(tmp_path: Path) -> None:
     assert manifest["source_revision"] == {"git_commit": None, "git_dirty": None}
 
 
+def test_release_checksums_cover_extra_release_artifacts(tmp_path: Path) -> None:
+    root, sbom = _release_tree(tmp_path)
+    paper_pdf = root / "paper/build/release/main.pdf"
+    paper_pdf.parent.mkdir(parents=True)
+    paper_pdf.write_bytes(b"%PDF release copy")
+    manifest = build_checksum_manifest(
+        project_root=root,
+        sbom_path=sbom,
+        extra_artifacts=[("paper_main_pdf", paper_pdf)],
+    )
+    output = write_checksum_manifest(manifest, root / "build/release-checksums.json")
+
+    audit = validate_checksum_manifest(output, project_root=root)
+
+    assert audit.valid is True
+    assert audit.artifact_count == 4
+    assert {item["role"] for item in manifest["artifacts"]} == {
+        "sdist",
+        "wheel",
+        "cyclonedx_sbom",
+        "paper_main_pdf",
+    }
+    paper_pdf.write_bytes(b"%PDF replaced")
+    modified_audit = validate_checksum_manifest(output, project_root=root)
+    assert modified_audit.valid is False
+    assert "artifact size mismatch: paper/build/release/main.pdf" in modified_audit.errors
+    assert "artifact sha256 mismatch: paper/build/release/main.pdf" in modified_audit.errors
+
+
 def test_release_checksums_reject_modified_artifact(tmp_path: Path) -> None:
     root, sbom = _release_tree(tmp_path)
     manifest = build_checksum_manifest(project_root=root, sbom_path=sbom)
