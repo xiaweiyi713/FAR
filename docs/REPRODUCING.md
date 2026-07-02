@@ -447,6 +447,22 @@ rebuilds evaluations and artifacts for all six baselines without another model
 call for any existing run. Override `WAIT_FOR_SESSION`, `SUITE_ROOT`, or
 `POLL_SECONDS` only when intentionally recovering a differently named suite.
 
+If the remote workspace was temporarily rolled back to the legacy suite's
+implementation fingerprint to resume old checkpoints, do not rsync current
+`main` over it while the suite is still active. From the Mac, stage a clean
+current archive and queue the safe post-suite finalizer instead:
+
+```bash
+bash scripts/queue_qwen_legacy_finalize.sh
+```
+
+The finalizer writes the current clean revision to D:, waits for
+`far-qwen-suite-v3` to exit, verifies FAR + four ablations + the original five
+baselines are all complete 60/60 and non-partial, then replaces the remote
+workspace with the staged archive and runs `queue_qwen_counterrefine.sh`. This
+preserves the legacy run signatures and still ends with the current six-baseline
+reports-only merge.
+
 ## Externally held blind test
 
 Do not run the ordinary scored suite against local test gold. Before the one
