@@ -549,5 +549,14 @@ latexmk -pdf -interaction=nonstopmode -halt-on-error main.tex
 
 The repository vendors unmodified `aaai2027.sty` and `aaai2027.bst` from the
 official Author Kit. Replace pending empirical tables only with validated,
-complete reports. The paper draft deliberately contains no fabricated score or
-IAA value.
+complete reports. Before the final `falsirag-submission-readiness` run, record
+the exact reviewed paper source hashes:
+
+```bash
+uv run falsirag-submission-readiness --print-paper-fingerprints
+```
+
+Copy that map into `human_review.paper_source_sha256` in the real ignored
+submission evidence file. Any later paper edit invalidates the review and must
+be rechecked by a human. The paper draft deliberately contains no fabricated
+score or IAA value.

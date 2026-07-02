@@ -149,6 +149,15 @@ directory must be empty, preventing silent replacement of an earlier score.
 Copy `submission/evidence.template.json` to an ignored working file, replace
 every path and attestation field with the real artifacts, fill the final paper
 cells, and have a human review AAAI policy, authorship, and empirical claims.
+After the review, bind it to the exact reviewed paper sources:
+
+```bash
+uv run falsirag-submission-readiness --print-paper-fingerprints
+```
+
+Copy the printed map into `human_review.paper_source_sha256`. If any paper
+source changes after review, rerun the human review and refresh the
+fingerprints; stale review hashes fail the final gate.
 Then run:
 
 ```bash

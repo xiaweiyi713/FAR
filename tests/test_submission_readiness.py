@@ -9,7 +9,7 @@ from bench.build.build_blind_bundle import build as build_blind_bundle
 from bench.build.common import sha256_file, write_json
 from experiments.run_suite import run_suite
 from experiments.score_blind_return import score
-from experiments.submission_readiness import audit
+from experiments.submission_readiness import audit, paper_source_fingerprints
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -105,6 +105,33 @@ def test_submission_audit_fails_closed_on_template() -> None:
     assert report["gates"][0]["passed"] is True
     assert "human_annotation" in report["blockers"]
     assert "trusted_test_scoring" in report["blockers"]
+
+
+def test_paper_source_fingerprints_cover_submission_sources() -> None:
+    fingerprints = paper_source_fingerprints(ROOT)
+    assert "paper/main.tex" in fingerprints
+    assert "paper/supplement.tex" in fingerprints
+    assert "paper/references.bib" in fingerprints
+    assert "paper/aaai27/ReproducibilityChecklist.tex" in fingerprints
+    assert all(len(value) == 64 for value in fingerprints.values())
+
+
+def test_paper_gate_rejects_stale_human_review_source_hashes() -> None:
+    evidence = json.loads((ROOT / "submission/evidence.template.json").read_text(encoding="utf-8"))
+    fingerprints = paper_source_fingerprints(ROOT)
+    fingerprints["paper/main.tex"] = "0" * 64
+    evidence["human_review"] = {
+        "reviewer_id": "paper-reviewer",
+        "completed_at": "2026-07-02T12:00:00Z",
+        "aaai_policy_checked": True,
+        "authorship_checked": True,
+        "claims_checked": True,
+        "paper_source_sha256": fingerprints,
+    }
+    report = audit(ROOT, evidence)
+    paper_gate = next(gate for gate in report["gates"] if gate["name"] == "human_paper_review")
+    assert paper_gate["passed"] is False
+    assert "stale" in paper_gate["detail"]
 
 
 def test_external_blind_return_can_be_scored_with_bound_attestation(tmp_path: Path) -> None:

@@ -41,6 +41,7 @@
     "completed_at": "",
     "aaai_policy_checked": false,
     "authorship_checked": false,
-    "claims_checked": false
+    "claims_checked": false,
+    "paper_source_sha256": {}
   }
 }

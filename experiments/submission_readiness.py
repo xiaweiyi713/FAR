@@ -457,20 +457,53 @@ def _paper_gate(root: Path, config: dict[str, Any]) -> dict[str, Any]:
         failed.append("completed_at")
     if failed:
         raise ValueError(f"human paper review is incomplete: {failed}")
-    sources = sorted((root / "paper").glob("*.tex")) + sorted(
-        (root / "paper" / "aaai27").glob("*.tex")
+    source_fingerprints = paper_source_fingerprints(root)
+    claimed_fingerprints = review.get("paper_source_sha256")
+    if not isinstance(claimed_fingerprints, dict):
+        raise ValueError("human paper review must bind paper_source_sha256 fingerprints")
+    expected_keys = set(source_fingerprints)
+    claimed_keys = set(map(str, claimed_fingerprints))
+    if claimed_keys != expected_keys:
+        missing = sorted(expected_keys - claimed_keys)
+        extra = sorted(claimed_keys - expected_keys)
+        raise ValueError(
+            f"human paper review source fingerprint set mismatch: missing={missing}, extra={extra}"
+        )
+    mismatched = sorted(
+        path
+        for path, expected in source_fingerprints.items()
+        if claimed_fingerprints.get(path) != expected
     )
+    if mismatched:
+        raise ValueError(f"human paper review is stale for sources: {mismatched}")
+    sources = [root / relative for relative in source_fingerprints]
     placeholders = []
     for path in sources:
         for line_number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
             if "PENDING-EMPIRICAL-RUN" in line:
-                placeholders.append(f"{path.name}:{line_number}")
+                placeholders.append(f"{path.relative_to(root)}:{line_number}")
     if placeholders:
         raise ValueError(f"paper still contains empirical placeholders: {placeholders}")
     return {
         "reviewer_id": review["reviewer_id"],
         "completed_at": review.get("completed_at"),
         "tex_files": len(sources),
+        "paper_source_sha256": source_fingerprints,
+    }
+
+
+def paper_source_fingerprints(root: Path) -> dict[str, str]:
+    """Fingerprint every paper source that must be covered by human review."""
+
+    paper_root = root / "paper"
+    patterns = ("*.tex", "*.bib", "*.txt", "*.md")
+    sources: list[Path] = []
+    for pattern in patterns:
+        sources.extend(paper_root.glob(pattern))
+        sources.extend((paper_root / "aaai27").glob(pattern))
+    return {
+        str(path.relative_to(root)): sha256_file(path)
+        for path in sorted(set(sources), key=lambda candidate: str(candidate.relative_to(root)))
     }
 
 
@@ -517,10 +550,27 @@ def audit(root: Path, evidence: dict[str, Any]) -> dict[str, Any]:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--project-root", type=Path, default=ROOT)
-    parser.add_argument("--evidence", type=Path, required=True)
+    parser.add_argument("--evidence", type=Path)
     parser.add_argument("--output", type=Path)
     parser.add_argument("--allow-incomplete", action="store_true")
+    parser.add_argument(
+        "--print-paper-fingerprints",
+        action="store_true",
+        help="print the current paper_source_sha256 map for human_review evidence",
+    )
     args = parser.parse_args()
+    if args.print_paper_fingerprints:
+        print(
+            json.dumps(
+                paper_source_fingerprints(args.project_root.resolve()),
+                ensure_ascii=False,
+                indent=2,
+                sort_keys=True,
+            )
+        )
+        return
+    if args.evidence is None:
+        parser.error("--evidence is required unless --print-paper-fingerprints is used")
     report = audit(args.project_root.resolve(), _json(args.evidence))
     rendered = json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True)
     print(rendered)
