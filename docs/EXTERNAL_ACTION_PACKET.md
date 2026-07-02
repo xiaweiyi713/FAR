@@ -86,8 +86,11 @@ gate.
 
 ## 3. Release and handoff owner
 
-On the frozen commit, run `bash scripts/release_check.sh`, then build a new
-gold-free bundle from adjudicated data and package it for the custodian:
+On the frozen commit, run `bash scripts/release_check.sh` as a repository and
+paper-build diagnostic. With no `FAR_SUBMISSION_EVIDENCE` override this uses the
+tracked template, so its readiness report must remain incomplete and is not the
+final release archive. Then build a new gold-free bundle from adjudicated data
+and package it for the custodian:
 
 ```bash
 uv run falsirag-build-blind-bundle \
@@ -159,6 +162,9 @@ every path and attestation field with the real artifacts, fill the final paper
 cells, and have a human review AAAI policy, authorship, and empirical claims.
 Do not fill the tracked template itself: without `--allow-incomplete`,
 `falsirag-submission-readiness` rejects `*.template.json` evidence paths.
+Set `submission_evidence_snapshot` in the copied file to
+`submission/evidence.json`; leaving the template path there is rejected because
+the release archive must fingerprint the exact evidence object under audit.
 After the review, bind it to the exact reviewed paper sources:
 
 ```bash
@@ -171,17 +177,19 @@ fingerprints; stale review hashes fail the final gate. The paper reviewer must
 also be independent from the experiment roles already bound by the evidence
 file: the final gate rejects a `human_review.reviewer_id` that matches any
 annotator, the adjudicator, the blind custodian, or the trusted scorer.
-Then run:
+Then rebuild the release archive and run the final audit as one ordered command:
 
 ```bash
-uv run falsirag-submission-readiness \
-  --evidence submission/evidence.json \
-  --output build/submission-readiness.json
+FAR_SUBMISSION_EVIDENCE=submission/evidence.json bash scripts/release_check.sh
 ```
 
-Exit code zero and `ready:true` are required. The gate independently checks the
+Exit code zero and `ready:true` in
+`build/release/submission-readiness-current.json` are required. The script first
+fingerprints the actual evidence file alongside the package, audit, and paper
+artifacts, then runs readiness against that new manifest; reversing those steps
+would create stale or circular provenance. The gate independently checks the
 candidate benchmark, human annotation/IAA, three adjudicated dev suites, final
 blind bundle, three externally returned suites, bound role attestation, three
 trusted-scored test suites, release archive, and human paper review. A status
-snapshot may be generated before completion with `--allow-incomplete`; it is
-not a waiver of any failed gate.
+snapshot generated from the template with `--allow-incomplete` is not a waiver
+of any failed gate.

@@ -18,7 +18,7 @@
 | Six metrics, CI, McNemar | `eval/` | Implemented |
 | Checkpoint/signature/result validation | `experiments/runner.py`, validation tests; identities bind clean Git revision and validators recompute signatures | Implemented |
 | Two tables and three figures | `experiments/build_artifacts.py` | Implemented; final inputs pending |
-| Reproducible archive, SBOM, fingerprints | build metadata, lockfile, SBOM and release-checksum generators | Implemented; regenerate on submission commit |
+| Reproducible archive, SBOM, fingerprints | build metadata, lockfile, SBOM and release-checksum generators; final manifest requires nine package/audit/evidence/paper roles and binds the exact evidence object before readiness runs | Implemented; regenerate with `FAR_SUBMISSION_EVIDENCE=submission/evidence.json` on submission commit |
 | AAAI-27 paper and supplement | `paper/` | Draft complete; empirical cells pending |
 | Multi-model main/test results | Versioned DeepSeek V4-Flash, Qwen3.7 Plus (2026-05-26), and local Qwen3.5 9B configs/runners; corrected FAR rerun prediction SHA `992a4cf0...bc96b56`; corrected untyped prediction SHA `26e6ae37...28658`; CounterRefine prediction SHA `483f08ec...b8c57`; suite manifest SHA `dccd854c...c4467` | Qwen dev six-baseline + four-ablation diagnostic complete; cloud credentials/runs, adjudicated labels, and test custodian pending |
 | Final external acceptance chain | `falsirag-score-blind-return`, `falsirag-submission-readiness`, `submission/*.template.json`, `docs/EXTERNAL_ACTION_PACKET.md` | Implemented and tested end to end with non-publication fixtures; real external evidence pending |
