@@ -59,9 +59,9 @@ uv run falsirag-release-checksums \
 
 The checksum manifest always requires the source distribution, wheel, and
 CycloneDX SBOM roles, and accepts additional `--artifact ROLE=PATH` entries for
-paper PDFs, benchmark validation reports, secret-scan reports, or other final
-release deliverables. It validates every recorded path, byte size, and SHA-256
-hash.
+paper PDFs, benchmark validation reports, secret-scan reports, submission
+readiness snapshots, or other final release deliverables. It validates every
+recorded path, byte size, and SHA-256 hash.
 
 Scan tracked and unignored text files before every commit or release:
 

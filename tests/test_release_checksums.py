@@ -85,6 +85,21 @@ def test_release_checksums_cover_extra_release_artifacts(tmp_path: Path) -> None
     assert "artifact sha256 mismatch: paper/build/release/main.pdf" in modified_audit.errors
 
 
+def test_release_check_fingerprints_generated_audit_and_pdf_artifacts() -> None:
+    script = (Path(__file__).resolve().parents[1] / "scripts/release_check.sh").read_text(
+        encoding="utf-8"
+    )
+    for role in (
+        "benchmark_validation_report",
+        "secret_scan_report",
+        "submission_readiness_snapshot",
+        "paper_main_pdf",
+        "paper_supplement_pdf",
+        "aaai_reproducibility_checklist_pdf",
+    ):
+        assert f"--artifact {role}=" in script
+
+
 def test_release_checksums_reject_modified_artifact(tmp_path: Path) -> None:
     root, sbom = _release_tree(tmp_path)
     manifest = build_checksum_manifest(project_root=root, sbom_path=sbom)

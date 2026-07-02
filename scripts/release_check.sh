@@ -46,6 +46,7 @@ uv run falsirag-release-checksums \
   --sbom build/sbom/far-sbom.cdx.json \
   --artifact benchmark_validation_report=build/release/benchmark-validation.json \
   --artifact secret_scan_report=build/release/secret-scan.json \
+  --artifact submission_readiness_snapshot=build/release/submission-readiness-current.json \
   --artifact paper_main_pdf=paper/build/release/main.pdf \
   --artifact paper_supplement_pdf=paper/build/release/supplement.pdf \
   --artifact aaai_reproducibility_checklist_pdf=paper/build/release/ReproducibilityChecklist.pdf \
