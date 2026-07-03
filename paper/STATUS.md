@@ -33,9 +33,10 @@ signals, and `falsirag-solo-readiness` currently passes the benchmark,
 machine-audit, complete 11-method Qwen dev suite, and gold-free local test
 bundle gates. The complete non-publication evidence is tracked under
 `diagnostics/solo_v1/` and independently rechecked by
-`falsirag-solo-release verify`. This supports a machine-audited
-synthetic-benchmark report, not the strict human/external claims required by
-the current AAAI submission draft.
+`falsirag-solo-release verify`. The reader-facing technical synthesis is
+tracked at `reports/single_author_diagnostic_report.md`. This supports a
+machine-audited synthetic-benchmark report, not the strict human/external
+claims required by the current AAAI submission draft.
 
 A separate frozen FEVER binary transfer diagnostic is also public under
 `diagnostics/fever_binary_v1/`. The human-annotated upstream FEVER labels yield

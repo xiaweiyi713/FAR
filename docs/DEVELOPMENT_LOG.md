@@ -970,3 +970,22 @@ precision 0.80, recall 0.40, and F1 0.533. Its paired accuracy difference is
 exact McNemar `p=1.0`. The result is retained as an honest external-transfer
 failure signal and frozen without tuning. It is not full FAR, typed gold,
 external blindness, or a publication-ready main result.
+
+## 2026-07-03: Single-author diagnostic report added
+
+Added `reports/single_author_diagnostic_report.md` as the durable reader-facing
+deliverable for the no-human-annotator path. The report summarizes the public
+solo evidence bundle, Qwen 11-method dev suite, machine-consensus audit,
+diagnostic figures, and the frozen FEVER binary transfer result. It opens with
+the permitted diagnostic claim and keeps the forbidden strict claims explicit:
+no human gold, no human IAA, no externally held blind test, no final multi-model
+generality, and no AAAI main-table evidence.
+
+The report intentionally preserves negative and mixed evidence. FAR has the
+strongest local counter-evidence recall and a positive typed-versus-untyped
+mechanism signal, but revision accuracy remains modest; the refutation,
+boundary, and typed-revision ablations are not monotonic; and FEVER transfer
+does not improve paired accuracy. README, the completion audit, proposal
+traceability, and paper status now point to the report so the diagnostic
+profile has a complete public handoff without weakening the strict submission
+gate.

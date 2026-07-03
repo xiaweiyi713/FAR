@@ -70,6 +70,7 @@ flowchart LR
 | Blind test | Gold-free bundle, custody protocol, return validator, and trusted scorer implemented; external execution pending |
 | Solo study profile | Automated readiness passes; 69-file, 11-method diagnostic evidence bundle is tracked and self-verifying |
 | External transfer | Frozen 100-pair FEVER binary diagnostic is public; accuracy 0.72 and low recall disclose limited transfer |
+| Report | Single-author machine-audited diagnostic report is tracked under [reports/](reports/) |
 | Paper | Anonymous AAAI-27 draft and checklist compile; final empirical cells and human review pending |
 
 The authoritative requirement-by-requirement status is
@@ -210,6 +211,11 @@ any manifest that upgrades the bundle to human gold or publication-ready
 evidence. To rebuild the bundle from local ignored outputs, use
 `falsirag-solo-release build`; the exact command is documented in the bundle
 README.
+
+The reader-facing report for this fallback path is tracked at
+[reports/single_author_diagnostic_report.md](reports/single_author_diagnostic_report.md).
+It is the complete single-author diagnostic deliverable and keeps the strict
+AAAI claims separate from the machine-audited evidence.
 
 The separately licensed FEVER slice has a narrower inherited reference:
 SUPPORTS/REFUTES and gold evidence come from the human-annotated
