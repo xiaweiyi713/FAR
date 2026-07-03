@@ -934,3 +934,20 @@ only the audited blind bundle, selected config files, a run sheet, and a
 handoff manifest. This reduces the risk of accidentally sending the
 machine-seeded technical dry run, adjudicated gold, local score files, or
 credentials to the external custodian.
+
+## 2026-07-03: Public diagnostic evidence release
+
+The previously ignored local Qwen and machine-audit outputs are now exported as
+the tracked `diagnostics/solo_v1/` evidence bundle. It contains 69 fingerprinted
+files (about 4.5 MB): all 11 methods' complete 60-row dev predictions, run
+identities, run manifests, scores, evaluation reports, two tables, three
+figures, the 300-row machine consensus audit, and the gold-free test technical
+audit. This closes the gap where README claims could only be checked against
+one workstation's ignored `outputs/` directory.
+
+Added `falsirag-solo-release build|verify`. Verification recomputes the exact
+file set, all SHA-256 bindings, result-bundle signatures, prediction/report and
+report/score links, and artifact outputs. It also rejects symlinks and any
+attempt to claim publication gold, human IAA replacement, strict-gate impact,
+or publication readiness. The release verifies successfully while remaining
+explicitly `publication_ready:false`; it does not change the strict AAAI gate.

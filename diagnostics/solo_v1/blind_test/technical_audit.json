@@ -1,0 +1,13 @@
+{
+  "bundle_dir": "outputs/handoff/falsirag_blind_test_technical_v1",
+  "documents": 175,
+  "files": {
+    "blind_bundle_manifest.json": "70f6c28c4809d82822fc75596061d07284edf94ef24af6790836571fe24f7c86",
+    "corpus.jsonl": "97fb3ecff5e76fc521434182204479179b7c02422864850b60867c6d91838e12",
+    "splits/test_inputs.jsonl": "1ce8ed27a4db9c1793d9d9342418b82826c5e31d9b5ae754e012fb1f12454016"
+  },
+  "manifest_sha256": "70f6c28c4809d82822fc75596061d07284edf94ef24af6790836571fe24f7c86",
+  "samples": 58,
+  "schema_version": "falsirag-blind-bundle-audit-v1",
+  "valid": true
+}

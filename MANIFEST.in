@@ -4,6 +4,7 @@ include .python-version
 include .gitattributes
 
 recursive-include docs *.md
+recursive-include diagnostics *
 recursive-include examples *.py
 recursive-include scripts *.sh
 include submission/blind_test_attestation.template.json

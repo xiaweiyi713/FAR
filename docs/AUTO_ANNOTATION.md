@@ -202,6 +202,24 @@ The current profile reports `complete: true`. Its allowed description is
 claims of human IAA, human-validated gold, external blind custody, or
 multi-model generality from the single Qwen suite.
 
+The complete diagnostic can be exported as a self-verifying public bundle:
+
+```bash
+uv run falsirag-solo-release build \
+  --data-dir bench \
+  --machine-report outputs/machine_consensus_v1/machine_consensus_report.json \
+  --suite-dir outputs/remote_qwen_six_baseline_suite \
+  --blind-bundle-dir outputs/handoff/falsirag_blind_test_technical_v1 \
+  --output-dir diagnostics/solo_v1 \
+  --overwrite
+
+uv run falsirag-solo-release verify diagnostics/solo_v1
+```
+
+The tracked release includes raw dev predictions and machine signals so its
+reports can be audited without access to ignored local outputs. Its manifest
+hard-codes the non-human, non-publication interpretation boundary.
+
 ## Optional DeepSeek workflow
 
 Create a blind packet first:

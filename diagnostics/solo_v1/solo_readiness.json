@@ -1,0 +1,187 @@
+{
+  "blockers": [],
+  "claims": {
+    "allowed": [
+      "machine-audited synthetic benchmark",
+      "complete local development comparison",
+      "reproducible diagnostic evidence"
+    ],
+    "forbidden": [
+      "human-validated gold",
+      "human inter-annotator agreement",
+      "externally held blind test",
+      "publication-ready final evidence",
+      "multi-model generality from a single local model"
+    ]
+  },
+  "complete": true,
+  "created_at": "2026-07-03T03:27:17.824097+00:00",
+  "gates": [
+    {
+      "detail": "passed",
+      "evidence": {
+        "candidate_ready": true,
+        "counter_evidence_retrieval": {
+          "by_category": {
+            "causal_overclaim": 1.0,
+            "entity_confusion": 0.95,
+            "multi_source_conflict": 0.8166666666666667,
+            "numerical_conflict": 0.85,
+            "temporal_shift": 0.9333333333333333
+          },
+          "hits": 273,
+          "queries_per_claim": 3,
+          "recall": 0.91,
+          "samples": 300,
+          "top_k_per_query": 10
+        },
+        "counts": {
+          "ambiguous_operational_inputs": 0,
+          "annotation_status": {
+            "machine_seeded": 300
+          },
+          "categories": {
+            "causal_overclaim": 60,
+            "entity_confusion": 60,
+            "multi_source_conflict": 60,
+            "numerical_conflict": 60,
+            "temporal_shift": 60
+          },
+          "cross_split_dependency_groups": 0,
+          "documents": 175,
+          "samples": 300,
+          "semantically_unanchored_counter_evidence": 0,
+          "splits": {
+            "dev": 60,
+            "test": 58,
+            "train": 182
+          },
+          "untraceable_evidence": 0
+        },
+        "errors": [],
+        "fingerprints": {
+          "benchmark_sha256": "c5bd988f60646bde33d62f654ddb456d2c2c1279175bee92ef503f362addbd8f",
+          "corpus_sha256": "cca5f62db0fbb51e1bae8111ea85fe169fba7be5a8e63847a9c1c048cdae25cd",
+          "split_manifest_sha256": "ac83fa38d452371017a0c9f7fdf3447817071731032bce3579543f2e2524ce4a"
+        },
+        "publication_blockers": [
+          "two independent annotations per sample",
+          "adjudication of disagreements",
+          "Cohen's kappa report for conflict type and revision action",
+          "externally held blind-test protocol"
+        ],
+        "publication_ready": false,
+        "schema_version": "falsirag-validation-report-v1",
+        "valid": true
+      },
+      "name": "candidate_benchmark",
+      "passed": true
+    },
+    {
+      "detail": "passed",
+      "evidence": {
+        "dispositions": {
+          "machine_confirmed": 178,
+          "machine_disputed": 122
+        },
+        "report_sha256": "efd0091ad0ea4e6716db0f94fa582bafd52034dbb3c8f984a12b46651fd7a8a5",
+        "rows_sha256": "f1160cec2030310e2e54fd86ce6f4180f54a494b3114c1e289e08785ff1eda10",
+        "samples": 300,
+        "sources": [
+          "qwen25_7b_ollama_machine_weak",
+          "rules_weak_supervision_v1"
+        ]
+      },
+      "name": "machine_annotation_audit",
+      "passed": true
+    },
+    {
+      "detail": "passed",
+      "evidence": {
+        "diagnostic_only": true,
+        "methods": {
+          "counterrefine_style_reproduction": {
+            "predictions_sha256": "483f08eca2c34431ac81e87dcac2277433afc5e24e858475742d5c162a6b8c57",
+            "report_sha256": "e3c25f966e99b126aad8ff0c3e24353bdf287b85b8d42e7b14beeef94a6d4d5e",
+            "samples": 60
+          },
+          "crag_style_reproduction": {
+            "predictions_sha256": "7e758b60c453d6ed9c240c60f34938e1954a3f6050426b8c90474e642ebf3115",
+            "report_sha256": "85d1f9a141c2c79c8d5a32bf90ab319ffc1638ab8ad1085b443857373e9bcf8c",
+            "samples": 60
+          },
+          "far": {
+            "predictions_sha256": "992a4cf027db5491feef2a57210d8a9395be61798c0ff84b29760d495bc96b56",
+            "report_sha256": "d6a4be169d3543b3f02311b998d8f043aefb45c32ca8b13afdd0050572ab1b4a",
+            "samples": 60
+          },
+          "minus_boundary_query": {
+            "predictions_sha256": "0f3f365c23afec84fc28e8848fe908324b4f3807b9d913c9f4fb0fd38702ec72",
+            "report_sha256": "7c78e3453bb85648c98f2197e1f531f9fa3c1e9977726010cb94470b6d385527",
+            "samples": 60
+          },
+          "minus_refutation_query": {
+            "predictions_sha256": "a789a4b6a816c47b0266d765ce7570df54dd2269b399861390bb652c68efeb3e",
+            "report_sha256": "0f9ede56e1d097f5592b8a0a9d88d1adf6ecdf9dc10a345291bafbee295a5ffc",
+            "samples": 60
+          },
+          "minus_typed_conflict": {
+            "predictions_sha256": "26e6ae372d54a8dea30dd8a892a68a4ba425d91bf341366b21ce309d6d928658",
+            "report_sha256": "9c925721314548bbac737eb354dbe08cf6f19980bcf84bcb118137216c45330c",
+            "samples": 60
+          },
+          "minus_typed_revision": {
+            "predictions_sha256": "601777f8bedacd60cfe4d7a9599f3a1b92bd6e24d531784ffd6e4ad75ca5bc8c",
+            "report_sha256": "e4961b5827549d0f8e6e328203a4170dc5a7da67ea95ec9344976e1061da9e92",
+            "samples": 60
+          },
+          "multi_query_rag": {
+            "predictions_sha256": "5a3105efcda5049f4e0bdf047fe84f3d56ec91b82f5958503d88ecb0e51d47d9",
+            "report_sha256": "c6763039f5e7fd2b0544784903ad8a1406ae5103c2d0072ce991366fc6f0d7f6",
+            "samples": 60
+          },
+          "reflective_rag": {
+            "predictions_sha256": "30a8561dc96f336208ecf751b4a391446ec40d3220a40e86be0daaa75b619ae9",
+            "report_sha256": "93feef8f41d8872097c65b1d5fbb37f78a4c5e9860b0fec81f1d14bd619b8f15",
+            "samples": 60
+          },
+          "self_rag_style_reproduction": {
+            "predictions_sha256": "483d08c0140fcf3e6f21986e1bed0dcfbcdb7c48ef67b4e6da91496f8403daf6",
+            "report_sha256": "1c80c862b190de8f2cd0947165202138d0380e8200c84e228d34147cd02bfb3c",
+            "samples": 60
+          },
+          "vanilla": {
+            "predictions_sha256": "610e22139839a614489125f3e81807f522c9deb0949beecdb51a98714e987763",
+            "report_sha256": "901772b71c2d6c369fa21c43dd3d56f9ad47c8fdaa79c2eab05d71f17335b1a9",
+            "samples": 60
+          }
+        },
+        "split": "dev",
+        "suite_manifest_sha256": "dccd854c74d3eec109fb879e0c0d1fb838763694adc655b24eb83219807c4467"
+      },
+      "name": "complete_local_dev_suite",
+      "passed": true
+    },
+    {
+      "detail": "passed",
+      "evidence": {
+        "bundle_dir": "outputs/handoff/falsirag_blind_test_technical_v1",
+        "documents": 175,
+        "files": {
+          "blind_bundle_manifest.json": "70f6c28c4809d82822fc75596061d07284edf94ef24af6790836571fe24f7c86",
+          "corpus.jsonl": "97fb3ecff5e76fc521434182204479179b7c02422864850b60867c6d91838e12",
+          "splits/test_inputs.jsonl": "1ce8ed27a4db9c1793d9d9342418b82826c5e31d9b5ae754e012fb1f12454016"
+        },
+        "manifest_sha256": "70f6c28c4809d82822fc75596061d07284edf94ef24af6790836571fe24f7c86",
+        "samples": 58,
+        "schema_version": "falsirag-blind-bundle-audit-v1",
+        "valid": true
+      },
+      "name": "gold_free_local_test_bundle",
+      "passed": true
+    }
+  ],
+  "schema_version": "far-solo-readiness-v1",
+  "strict_submission_gate_affected": false,
+  "study_profile": "single_author_machine_audited_diagnostic"
+}

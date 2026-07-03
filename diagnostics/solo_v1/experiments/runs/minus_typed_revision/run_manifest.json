@@ -1,0 +1,13 @@
+{
+  "completed": 60,
+  "errors": 0,
+  "expected": 60,
+  "method": "far_minus_typed_revision",
+  "missing_ids": [],
+  "partial": false,
+  "predictions_sha256": "601777f8bedacd60cfe4d7a9599f3a1b92bd6e24d531784ffd6e4ad75ca5bc8c",
+  "run_signature": "139f6a1e8d3176600b8edf6ad3a4e502ee3584817a2f2d3fef704c9e7968ece6",
+  "schema_version": "far-run-manifest-v1",
+  "split": "dev",
+  "status": "complete"
+}

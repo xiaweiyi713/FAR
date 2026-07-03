@@ -31,8 +31,11 @@ automated endpoint. `falsirag-machine-consensus` audits the controlled
 construction labels with fingerprint-bound Qwen2.5 and deterministic weak
 signals, and `falsirag-solo-readiness` currently passes the benchmark,
 machine-audit, complete 11-method Qwen dev suite, and gold-free local test
-bundle gates. This supports a machine-audited synthetic-benchmark report, not
-the strict human/external claims required by the current AAAI submission draft.
+bundle gates. The complete non-publication evidence is tracked under
+`diagnostics/solo_v1/` and independently rechecked by
+`falsirag-solo-release verify`. This supports a machine-audited
+synthetic-benchmark report, not the strict human/external claims required by
+the current AAAI submission draft.
 
 Do not replace `PENDING-EMPIRICAL-RUN` cells until result bundle validation
 passes. Diagnostic smoke figures under `outputs/` are not submission figures.

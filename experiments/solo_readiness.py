@@ -149,9 +149,7 @@ def _suite_gate(data_dir: Path, suite_dir: Path) -> dict[str, Any]:
 
 def _blind_gate(data_dir: Path, bundle_dir: Path) -> dict[str, Any]:
     audit = audit_bundle(bundle_dir, allow_technical=True)
-    manifest = json.loads(
-        (bundle_dir / "blind_bundle_manifest.json").read_text(encoding="utf-8")
-    )
+    manifest = json.loads((bundle_dir / "blind_bundle_manifest.json").read_text(encoding="utf-8"))
     if manifest.get("source_corpus_sha256") != sha256_file(data_dir / "corpus.jsonl"):
         raise ValueError("technical blind bundle was built from a different corpus")
     return audit

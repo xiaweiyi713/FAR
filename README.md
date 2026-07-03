@@ -27,8 +27,9 @@ plan is in [PROJECT_PROPOSAL.md](PROJECT_PROPOSAL.md).
 > A separate `single_author_machine_audited_diagnostic` profile is available
 > when no second annotator exists. It audits construction-derived labels with
 > LLM and deterministic weak signals, validates the complete local dev suite,
-> and preserves a gold-free local test bundle. It does not claim human gold or
-> external blindness.
+> and preserves a gold-free local test bundle. Its complete public evidence is
+> tracked under [diagnostics/solo_v1](diagnostics/solo_v1). It does not claim
+> human gold or external blindness.
 
 ## Why FAR
 
@@ -67,7 +68,7 @@ flowchart LR
 | Development experiments | Corrected Qwen3.5 9B FAR, six baselines, and four ablations complete on dev; diagnostic only |
 | Formal model matrix | DeepSeek V4-Flash and Qwen3.7 Plus runs await rotated credentials and adjudicated labels |
 | Blind test | Gold-free bundle, custody protocol, return validator, and trusted scorer implemented; external execution pending |
-| Solo study profile | Automated readiness passes for benchmark, machine audit, 11-method Qwen dev suite, and gold-free local test bundle |
+| Solo study profile | Automated readiness passes; 69-file, 11-method diagnostic evidence bundle is tracked and self-verifying |
 | Paper | Anonymous AAAI-27 draft and checklist compile; final empirical cells and human review pending |
 
 The authoritative requirement-by-requirement status is
@@ -194,6 +195,20 @@ uv run falsirag-solo-readiness \
 
 This does not weaken `falsirag-submission-readiness`; the strict AAAI evidence
 gate remains separate.
+
+The repository also tracks the complete 4.5 MB diagnostic evidence bundle,
+including all 11 methods' predictions, scores, reports, figures, and the
+300-row machine audit. Verify it without rerunning a model:
+
+```bash
+uv run falsirag-solo-release verify diagnostics/solo_v1
+```
+
+The verifier rejects missing, extra, modified, or symlinked files and rejects
+any manifest that upgrades the bundle to human gold or publication-ready
+evidence. To rebuild the bundle from local ignored outputs, use
+`falsirag-solo-release build`; the exact command is documented in the bundle
+README.
 
 ## Reproducibility and release gates
 

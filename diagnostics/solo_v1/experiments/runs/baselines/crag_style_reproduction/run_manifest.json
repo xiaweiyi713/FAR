@@ -1,0 +1,13 @@
+{
+  "completed": 60,
+  "errors": 0,
+  "expected": 60,
+  "method": "crag_style_reproduction",
+  "missing_ids": [],
+  "partial": false,
+  "predictions_sha256": "7e758b60c453d6ed9c240c60f34938e1954a3f6050426b8c90474e642ebf3115",
+  "run_signature": "07ed8f897b8e422b6157eb5d84fa39a9065a6b5a0c7840fa47bca68872bfab80",
+  "schema_version": "far-run-manifest-v1",
+  "split": "dev",
+  "status": "complete"
+}

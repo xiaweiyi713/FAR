@@ -1,0 +1,129 @@
+{
+  "allowed_claim": "Construction-derived labels were audited by independent machine signals; machine agreement is reported as quality evidence, not human IAA.",
+  "can_report_human_iaa": false,
+  "checks": {
+    "benchmark_structurally_valid": true,
+    "complete_llm_coverage": true,
+    "deterministic_weak_coverage": true,
+    "llm_fallback_rate": true,
+    "source_fingerprints_match": true,
+    "source_ids_distinct": true
+  },
+  "created_at": "2026-07-03T03:11:30.889962+00:00",
+  "dispositions": {
+    "machine_confirmed": 178,
+    "machine_disputed": 122
+  },
+  "forbidden_claims": [
+    "independent human annotation",
+    "human adjudication",
+    "Cohen's kappa between human annotators",
+    "human-validated gold"
+  ],
+  "human_annotation_replaced": false,
+  "machine_consensus_rows": "machine_consensus_rows.jsonl",
+  "machine_consensus_rows_sha256": "f1160cec2030310e2e54fd86ce6f4180f54a494b3114c1e289e08785ff1eda10",
+  "observed": {
+    "llm_fallback_rate": 0.0033333333333333335,
+    "weak_coverage": 0.7033333333333334
+  },
+  "publication_gold": false,
+  "ready_for_solo_machine_audited_study": true,
+  "samples": 300,
+  "schema_version": "falsirag-machine-consensus-v1",
+  "source_fingerprints": {
+    "benchmark_sha256": "c5bd988f60646bde33d62f654ddb456d2c2c1279175bee92ef503f362addbd8f",
+    "corpus_sha256": "cca5f62db0fbb51e1bae8111ea85fe169fba7be5a8e63847a9c1c048cdae25cd"
+  },
+  "sources": {
+    "qwen25_7b_ollama_machine_weak": {
+      "by_category": {
+        "causal_overclaim": {
+          "exact_joint_agreement_on_non_abstained": 0.55,
+          "exact_joint_matches": 33,
+          "non_abstained": 60,
+          "samples": 60
+        },
+        "entity_confusion": {
+          "exact_joint_agreement_on_non_abstained": 0.06779661016949153,
+          "exact_joint_matches": 4,
+          "non_abstained": 59,
+          "samples": 60
+        },
+        "multi_source_conflict": {
+          "exact_joint_agreement_on_non_abstained": 0.016666666666666666,
+          "exact_joint_matches": 1,
+          "non_abstained": 60,
+          "samples": 60
+        },
+        "numerical_conflict": {
+          "exact_joint_agreement_on_non_abstained": 0.5666666666666667,
+          "exact_joint_matches": 34,
+          "non_abstained": 60,
+          "samples": 60
+        },
+        "temporal_shift": {
+          "exact_joint_agreement_on_non_abstained": 0.75,
+          "exact_joint_matches": 45,
+          "non_abstained": 60,
+          "samples": 60
+        }
+      },
+      "coverage": 0.9966666666666667,
+      "exact_joint_agreement_on_non_abstained": 0.391304347826087,
+      "exact_joint_matches": 117,
+      "fallback_count": 1,
+      "file_sha256": "6796d46aa84e7c0a0ff32083e9257aa5fc6c7e5c3a9236735f4dfc659aa34caa",
+      "kind": "llm_preannotation",
+      "non_abstained": 299,
+      "samples": 300
+    },
+    "rules_weak_supervision_v1": {
+      "by_category": {
+        "causal_overclaim": {
+          "exact_joint_agreement_on_non_abstained": 0.3181818181818182,
+          "exact_joint_matches": 7,
+          "non_abstained": 22,
+          "samples": 60
+        },
+        "entity_confusion": {
+          "exact_joint_agreement_on_non_abstained": 0.3142857142857143,
+          "exact_joint_matches": 11,
+          "non_abstained": 35,
+          "samples": 60
+        },
+        "multi_source_conflict": {
+          "exact_joint_agreement_on_non_abstained": 0.4666666666666667,
+          "exact_joint_matches": 28,
+          "non_abstained": 60,
+          "samples": 60
+        },
+        "numerical_conflict": {
+          "exact_joint_agreement_on_non_abstained": 0.4411764705882353,
+          "exact_joint_matches": 15,
+          "non_abstained": 34,
+          "samples": 60
+        },
+        "temporal_shift": {
+          "exact_joint_agreement_on_non_abstained": 1.0,
+          "exact_joint_matches": 60,
+          "non_abstained": 60,
+          "samples": 60
+        }
+      },
+      "coverage": 0.7033333333333334,
+      "exact_joint_agreement_on_non_abstained": 0.5734597156398105,
+      "exact_joint_matches": 121,
+      "fallback_count": 0,
+      "file_sha256": "f31f2422d5c3471002675db57b2b5104ee1ee71bb14b170477c95aa02296f8a1",
+      "kind": "deterministic_weak_label",
+      "non_abstained": 211,
+      "samples": 300
+    }
+  },
+  "study_profile": "single_author_machine_audited_synthetic_benchmark",
+  "thresholds": {
+    "maximum_llm_fallback_rate": 0.01,
+    "minimum_weak_coverage": 0.5
+  }
+}

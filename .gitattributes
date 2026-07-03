@@ -1,3 +1,6 @@
 # Preserve the official AAAI-27 style files byte-for-byte, including upstream whitespace.
 paper/aaai2027.sty whitespace=-blank-at-eol,-blank-at-eof
 paper/aaai2027.bst whitespace=-blank-at-eol,-blank-at-eof
+
+# Preserve fingerprinted CSV artifacts byte-for-byte (Python csv uses CRLF records).
+diagnostics/solo_v1/experiments/artifacts/*.csv whitespace=-blank-at-eol,-blank-at-eof

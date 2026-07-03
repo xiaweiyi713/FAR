@@ -141,6 +141,13 @@ def solo_readiness_main() -> None:
     main()
 
 
+def solo_release_main() -> None:
+    _prefer_far_repo()
+    from experiments.diagnostic_release import main
+
+    main()
+
+
 def score_blind_return_main() -> None:
     _prefer_far_repo()
     from experiments.score_blind_return import main

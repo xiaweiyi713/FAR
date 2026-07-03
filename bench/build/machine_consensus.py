@@ -115,9 +115,7 @@ def build_machine_consensus(
         if set(rows) != sample_ids:
             raise ValueError(f"{source_id}: preannotations do not cover the complete benchmark")
         fallback_count = sum(
-            str(row.get("preannotation", {}).get("rationale", "")).startswith(
-                "Automatic fallback;"
-            )
+            str(row.get("preannotation", {}).get("rationale", "")).startswith("Automatic fallback;")
             for row in rows.values()
         )
         llm_sources.append(
@@ -154,9 +152,7 @@ def build_machine_consensus(
         )
 
     source_stats: dict[str, dict[str, Any]] = {}
-    per_category: dict[str, dict[str, Counter[str]]] = defaultdict(
-        lambda: defaultdict(Counter)
-    )
+    per_category: dict[str, dict[str, Counter[str]]] = defaultdict(lambda: defaultdict(Counter))
     audit_rows: list[dict[str, Any]] = []
     disposition_counts: Counter[str] = Counter()
     weak_non_abstained_total = 0
@@ -242,12 +238,10 @@ def build_machine_consensus(
         source_id = str(source["source_id"])
         samples = len(sample_ids)
         source_abstentions = sum(
-            int(per_category[category][source_id]["abstained"])
-            for category in per_category
+            int(per_category[category][source_id]["abstained"]) for category in per_category
         )
         matches = sum(
-            int(per_category[category][source_id]["joint_matches"])
-            for category in per_category
+            int(per_category[category][source_id]["joint_matches"]) for category in per_category
         )
         source_stats[source_id] = {
             "kind": source["kind"],
@@ -256,9 +250,7 @@ def build_machine_consensus(
             "non_abstained": samples - source_abstentions,
             "coverage": _rate(samples - source_abstentions, samples),
             "exact_joint_matches": matches,
-            "exact_joint_agreement_on_non_abstained": _rate(
-                matches, samples - source_abstentions
-            ),
+            "exact_joint_agreement_on_non_abstained": _rate(matches, samples - source_abstentions),
             "fallback_count": source.get("fallback_count", 0),
             "by_category": {
                 category: {
