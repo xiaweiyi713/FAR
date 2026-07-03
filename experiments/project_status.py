@@ -21,6 +21,7 @@ from experiments.evaluate_fever_binary import verify_evaluation as verify_fever_
 from experiments.submission_readiness import audit as audit_submission_readiness
 
 SNAPSHOT_SCHEMA_VERSION = "far-project-status-snapshot-v1"
+SNAPSHOT_AUDIT_SCHEMA_VERSION = "far-project-status-snapshot-audit-v1"
 
 
 def _json(path: Path) -> dict[str, Any]:
@@ -28,6 +29,13 @@ def _json(path: Path) -> dict[str, Any]:
     if not isinstance(value, dict):
         raise ValueError(f"{path}: expected JSON object")
     return value
+
+
+def _display_path(root: Path, path: Path) -> str:
+    try:
+        return path.relative_to(root).as_posix()
+    except ValueError:
+        return path.as_posix()
 
 
 def _priority_table(root: Path, path: Path) -> dict[str, Any]:
@@ -208,14 +216,71 @@ externally held blind-test evidence, or strict AAAI submission readiness.
 """
 
 
+def verify_status_snapshot(
+    root: Path,
+    json_path: Path,
+    markdown_path: Path,
+) -> dict[str, Any]:
+    """Rebuild and compare both tracked status representations without writing."""
+    expected = build_status_snapshot(root)
+    errors: list[str] = []
+
+    try:
+        tracked_json = _json(json_path)
+    except (OSError, ValueError, json.JSONDecodeError) as exc:
+        errors.append(f"JSON snapshot unreadable: {exc}")
+    else:
+        if tracked_json != expected:
+            errors.append("JSON snapshot is stale; regenerate it with falsirag-project-status")
+
+    expected_markdown = render_markdown(expected)
+    try:
+        tracked_markdown = markdown_path.read_text(encoding="utf-8")
+    except OSError as exc:
+        errors.append(f"Markdown snapshot unreadable: {exc}")
+    else:
+        if tracked_markdown != expected_markdown:
+            errors.append("Markdown snapshot is stale; regenerate it with falsirag-project-status")
+
+    return {
+        "schema_version": SNAPSHOT_AUDIT_SCHEMA_VERSION,
+        "valid": not errors,
+        "diagnostic_complete": bool(
+            expected["single_author_machine_audited_diagnostic"]["complete"]
+        ),
+        "checked": {
+            "json": _display_path(root, json_path),
+            "markdown": _display_path(root, markdown_path),
+        },
+        "errors": errors,
+    }
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--project-root", type=Path, default=Path(__file__).resolve().parents[1])
     parser.add_argument("--json-output", type=Path)
     parser.add_argument("--markdown-output", type=Path)
+    parser.add_argument(
+        "--verify",
+        action="store_true",
+        help="compare tracked JSON and Markdown snapshots with current evidence without writing",
+    )
     args = parser.parse_args()
 
-    snapshot = build_status_snapshot(args.project_root.resolve())
+    root = args.project_root.resolve()
+    if args.verify:
+        json_path = (args.json_output or root / "reports/project_status_snapshot.json").resolve()
+        markdown_path = (
+            args.markdown_output or root / "reports/project_status_snapshot.md"
+        ).resolve()
+        audit = verify_status_snapshot(root, json_path, markdown_path)
+        print(json.dumps(audit, ensure_ascii=False, indent=2, sort_keys=True))
+        if not audit["valid"] or not audit["diagnostic_complete"]:
+            raise SystemExit(1)
+        return
+
+    snapshot = build_status_snapshot(root)
     if args.json_output:
         write_json(args.json_output, snapshot)
     if args.markdown_output:

@@ -1036,3 +1036,13 @@ blind bundle, external returns, attestation, trusted scoring, release archive,
 and human paper review. It is intentionally a lightweight status audit; the
 full `scripts/release_check.sh` gate remains responsible for release-package and
 paper-build validation.
+
+## 2026-07-03: Project-status freshness added to the solo gate
+
+Added a read-only `falsirag-project-status --verify` mode. It rebuilds the
+status object from current repository evidence, renders the reader-facing
+Markdown in memory, and compares both forms with the tracked snapshots. Missing,
+malformed, or stale JSON/Markdown now fails with an explicit error and no file
+mutation. `scripts/solo_diagnostic_check.sh` runs this verifier and its focused
+tests, so the one-command public diagnostic gate can no longer pass while its
+headline project-status ledger is out of date.

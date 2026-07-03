@@ -46,8 +46,10 @@ bash scripts/solo_diagnostic_check.sh
 ```
 
 This verifies the solo evidence bundle, the frozen FEVER binary diagnostic, the
-reader-facing report's numeric/source consistency, and inclusion of the report
-in the source distribution.
+reader-facing report's numeric/source consistency, the generated JSON/Markdown
+project-status ledger's freshness, and inclusion of the reports in the source
+distribution. The ledger-only read-only check is
+`uv run falsirag-project-status --verify`.
 
 Generate and validate the declared-dependency CycloneDX 1.5 SBOM before a
 release build:

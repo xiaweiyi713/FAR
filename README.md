@@ -231,6 +231,13 @@ cloud credentials, ignored local outputs, or external custody, run:
 bash scripts/solo_diagnostic_check.sh
 ```
 
+This gate also rebuilds the project-status evidence in memory and rejects a
+stale tracked JSON or Markdown ledger. Run the same check directly with:
+
+```bash
+uv run falsirag-project-status --verify
+```
+
 The separately licensed FEVER slice has a narrower inherited reference:
 SUPPORTS/REFUTES and gold evidence come from the human-annotated
 [FEVER dataset](https://fever.ai/dataset/fever.html), while FAR's four typed
