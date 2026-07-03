@@ -210,6 +210,7 @@ def test_source_archive_includes_submission_evidence_templates() -> None:
     manifest = (Path(__file__).resolve().parents[1] / "MANIFEST.in").read_text(encoding="utf-8")
     assert "include submission/evidence.template.json" in manifest
     assert "include submission/blind_test_attestation.template.json" in manifest
+    assert "recursive-include reports *.md" in manifest
     assert "recursive-include submission *.json" not in manifest
     assert "include submission/evidence.json" not in manifest
     assert "include submission/blind_test_attestation.json" not in manifest
@@ -245,4 +246,29 @@ def test_source_archive_excludes_real_submission_evidence(tmp_path: Path) -> Non
     assert submission_members == {
         "submission/blind_test_attestation.template.json",
         "submission/evidence.template.json",
+    }
+
+
+def test_source_archive_includes_reader_facing_reports(tmp_path: Path) -> None:
+    root = Path(__file__).resolve().parents[1]
+    dist_dir = tmp_path / "dist"
+
+    subprocess.run(
+        ["uv", "build", "--sdist", "--out-dir", str(dist_dir)],
+        cwd=root,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    archive = next(dist_dir.glob("*.tar.gz"))
+    with tarfile.open(archive) as tar:
+        report_members = {
+            Path(name).relative_to(Path(name).parts[0]).as_posix()
+            for name in tar.getnames()
+            if "/reports/" in name
+        }
+
+    assert report_members == {
+        "reports/README.md",
+        "reports/single_author_diagnostic_report.md",
     }
