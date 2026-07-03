@@ -1,100 +1,87 @@
-# FAR: Falsification-Augmented Retrieval
+# FAR：证伪增强检索
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-3776AB.svg)](https://www.python.org/)
-[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Research status](https://img.shields.io/badge/status-research%20artifact-orange.svg)](docs/COMPLETION_AUDIT.md)
+[![许可证：MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![研究状态](https://img.shields.io/badge/status-research%20artifact-orange.svg)](docs/COMPLETION_AUDIT.md)
 [![CI](https://github.com/xiaweiyi713/FAR/actions/workflows/ci.yml/badge.svg)](https://github.com/xiaweiyi713/FAR/actions/workflows/ci.yml)
 
 **Ask What Could Be Wrong: Falsification-Guided Retrieval for Self-Correcting
 Language Agents**
 
-FAR asks a retrieval-augmented agent a deliberately uncomfortable question:
-**what evidence would make its current answer wrong?** Instead of accumulating
-only supporting passages, FAR turns possible failure modes into typed,
-retrievable evidence requirements and uses the resulting conflicts to revise
-the answer.
+FAR 会向检索增强智能体提出一个刻意“唱反调”的问题：**什么证据能够证明当前答案是错的？**
+它不再只积累支持性段落，而是把可能的错误类型转化为可检索的类型化证据需求，再根据发现的冲突修正答案。
 
-This repository contains the method, FalsiRAG-Bench candidate data, experiment
-and evaluation infrastructure, independent-annotation workflow, blind-test
-handoff tooling, and an anonymous AAAI-27 paper draft. The complete research
-plan is in [PROJECT_PROPOSAL.md](PROJECT_PROPOSAL.md).
+本仓库包含 FAR 方法、FalsiRAG-Bench 候选数据、实验与评测基础设施、独立标注流程、盲测交接工具，
+以及匿名 AAAI-27 论文草稿。完整研究企划见 [PROJECT_PROPOSAL.md](PROJECT_PROPOSAL.md)。
 
 > [!IMPORTANT]
-> This is a research artifact, not a finished publication result. The current
-> 300 benchmark labels are machine-seeded. They are useful for development but
-> cannot replace two independent human annotations, adjudication, or externally
-> held blind testing. The repository fails closed on those distinctions.
+> 本仓库是研究制品，不是已经完成的正式论文结果。当前 300 条基准标签由构造规则和机器信号生成，
+> 可用于开发，但不能替代两名真人的独立标注、仲裁或外部保管盲测。仓库对这些边界采用失败关闭策略。
 >
-> A separate `single_author_machine_audited_diagnostic` profile is available
-> when no second annotator exists. It audits construction-derived labels with
-> LLM and deterministic weak signals, validates the complete local dev suite,
-> and preserves a gold-free local test bundle. Its complete public evidence is
-> tracked under [diagnostics/solo_v1](diagnostics/solo_v1). The derived
-> [122-row review-priority table](reports/solo_human_review_priority.csv)
-> identifies machine-disputed examples for scarce future review. It does not
-> claim human gold or external blindness.
+> 在找不到第二位标注者时，可以使用独立的 `single_author_machine_audited_diagnostic`
+>（单作者机器审计诊断）路径。它使用 LLM 与确定性弱监督信号审计构造标签，验证完整本地开发集实验，
+> 并保留不含金标的技术测试包。完整公开证据位于
+> [diagnostics/solo_v1](diagnostics/solo_v1)。派生的
+> [122 条人工复核优先级表](reports/solo_human_review_priority.csv)
+> 可帮助未来有限的人力优先检查机器争议样本，但它不代表真人金标或外部盲测。
 
-## Why FAR
+## 为什么需要 FAR
 
-FAR does **not** claim that answer-conditioned re-retrieval or counter-evidence
-search is new by itself. Its intended contribution is a shared typed-conflict
-control layer that connects:
+FAR **不声称**“根据答案再次检索”或“搜索反证”本身是首次提出。它的核心贡献是一个共享的
+**类型化冲突控制层**，将以下环节连接起来：
 
-1. a dependency-aware claim graph;
-2. positive evidence requirements;
-3. support, refutation, and boundary queries;
-4. typed conflict detection; and
-5. type-specific revision with an auditable before/after trace.
+1. 带依赖关系的主张图；
+2. 正向的类型化证据需求；
+3. 支持、反驳和边界三类查询；
+4. 类型化冲突检测；
+5. 按冲突类型执行的答案修订，以及可审计的修改前后轨迹。
 
 ```mermaid
 flowchart LR
-    A["Question + initial answer"] --> B["Claim graph"]
-    B --> C["Typed evidence requirements"]
-    C --> D["Support queries"]
-    C --> E["Refutation queries"]
-    C --> F["Boundary queries"]
-    D --> G["Evidence retrieval"]
+    A["问题 + 初始答案"] --> B["主张图"]
+    B --> C["类型化证据需求"]
+    C --> D["支持查询"]
+    C --> E["反驳查询"]
+    C --> F["边界查询"]
+    D --> G["证据检索"]
     E --> G
     F --> G
-    G --> H["Typed conflict control"]
-    H --> I["Typed answer revision"]
-    I --> J["Answer + evidence map + audit trace"]
+    G --> H["类型化冲突控制"]
+    H --> I["类型化答案修订"]
+    I --> J["答案 + 证据映射 + 审计轨迹"]
 ```
 
-## Current research status
+## 当前研究状态
 
-| Area | Current state |
+| 模块 | 当前状态 |
 |---|---|
-| FAR method | Implemented and covered by unit/integration tests |
-| FalsiRAG-Bench | 300 balanced candidate samples and 175 documents; construction validator passes |
-| Labels | 300/300 construction-derived; machine audit complete (178 confirmed, 122 disputed); 122-row review-priority table generated; strict human track pending |
-| Development experiments | Corrected Qwen3.5 9B FAR, six baselines, and four ablations complete on dev; diagnostic only |
-| Formal model matrix | DeepSeek V4-Flash and Qwen3.7 Plus runs await rotated credentials and adjudicated labels |
-| Blind test | Gold-free bundle, custody protocol, return validator, and trusted scorer implemented; external execution pending |
-| Solo study profile | Automated readiness passes; 69-file, 11-method diagnostic evidence bundle is tracked and self-verifying |
-| External transfer | Frozen 100-pair FEVER binary diagnostic is public; accuracy 0.72 and low recall disclose limited transfer |
-| Report | Single-author diagnostic report, review-priority CSV, and generated project-status snapshot are tracked under [reports/](reports/) |
-| Paper | Anonymous AAAI-27 draft and checklist compile; final empirical cells and human review pending |
+| FAR 方法 | 已实现，并有单元测试和集成测试覆盖 |
+| FalsiRAG-Bench | 300 条五类均衡候选样本、175 篇语料文档；构造校验通过 |
+| 标签 | 300/300 为构造标签；机器审计确认 178 条、争议 122 条；严格真人标注路径待完成 |
+| 开发集实验 | Qwen3.5 9B 上的 FAR、6 个基线和 4 个消融均已完成；仅作诊断 |
+| 正式多模型矩阵 | DeepSeek V4-Flash 与 Qwen3.7 Plus 等待轮换后的凭据和仲裁标签 |
+| 盲测 | 无金标测试包、保管协议、回传校验器和可信评分器均已实现；等待外部执行 |
+| 单作者研究路径 | 自动验收通过；已跟踪 69 个文件、11 种方法的自校验诊断证据包 |
+| 外部迁移 | 已公开冻结的 100 对 FEVER 二分类诊断；0.72 准确率和偏低召回率如实披露了迁移局限 |
+| 报告 | 单作者诊断报告、复核优先级 CSV 和项目状态快照位于 [reports/](reports/) |
+| 论文 | 匿名 AAAI-27 草稿和清单可编译；最终实证表格与真人审查待完成 |
 
-The authoritative requirement-by-requirement status is
-[docs/COMPLETION_AUDIT.md](docs/COMPLETION_AUDIT.md). Diagnostic scores must not
-be copied into the paper's final table.
+逐项权威状态见 [项目完成度审计](docs/COMPLETION_AUDIT.md)。诊断结果不得复制到论文正式主表中。
 
-For a generated status ledger, see
-[reports/project_status_snapshot.md](reports/project_status_snapshot.md). It
-confirms the single-author diagnostic track is complete while the strict AAAI
-submission track remains blocked on real external evidence.
+机器生成的当前状态账本见
+[项目状态快照](reports/project_status_snapshot.md)。它确认单作者机器审计诊断路径已经完成，
+同时明确严格 AAAI 投稿路径仍受真实外部证据阻塞。
 
-## Installation
+## 安装
 
-Requirements:
+环境要求：
 
-- Python 3.10 or newer;
-- [uv](https://docs.astral.sh/uv/);
-- Git;
-- optional local VeraRAG checkout for its provider/retrieval adapters.
+- Python 3.10 或更高版本；
+- [uv](https://docs.astral.sh/uv/)；
+- Git；
+- 可选：本地 VeraRAG 仓库，用于模型供应商与检索适配器。
 
-Clone and install the standalone offline path:
+克隆仓库并安装可独立运行的离线路径：
 
 ```bash
 git clone https://github.com/xiaweiyi713/FAR.git
@@ -103,25 +90,21 @@ uv sync --extra dev --extra eval
 uv run python examples/offline_demo.py
 ```
 
-The public CI workflow tests Python 3.10--3.13 and checks lint, types, the
-benchmark, the redacting secret scan, and tracked single-author diagnostic
-evidence without cloud credentials or VeraRAG. It also installs the built wheel
-and source distribution into isolated environments and validates their packaged
-benchmark, offline configuration, and console entry points.
+公开 CI 会在 Python 3.10–3.13 上运行测试，并检查格式、静态类型、基准、脱敏密钥扫描和单作者诊断证据，
+全程不需要云端凭据或 VeraRAG。CI 还会把构建出的 wheel 与源码包分别安装到隔离环境，验证包内基准、
+离线配置和命令行入口。
 
-The offline demo and deterministic protocol do not require API keys. To use the
-formal dense/reranking/NLI stack, install the experiment dependencies and, when
-available, a sibling VeraRAG checkout:
+离线演示与确定性协议不需要 API Key。若要使用正式的稠密检索、重排序和 NLI 栈，请安装实验依赖，
+并在有条件时安装同级目录中的 VeraRAG：
 
 ```bash
 uv sync --extra dev --extra eval --extra experiment
 uv pip install --no-deps -e ../VeraRAG
 ```
 
-Formal configurations fail rather than silently degrading if dense retrieval,
-reranking, or NLI assets are unavailable.
+如果缺少稠密检索、重排序或 NLI 所需资源，正式配置会直接失败，不会静默降级。
 
-## Quick validation
+## 快速验证
 
 ```bash
 uv run falsirag-validate-bench
@@ -131,7 +114,7 @@ uv run mypy far bench baselines eval experiments tests scripts/package_smoke.py
 uv run pytest
 ```
 
-Run a small, balanced, dependency-free diagnostic suite:
+运行一个小规模、类别均衡且不依赖外部模型的诊断实验：
 
 ```bash
 uv run falsirag-suite \
@@ -143,51 +126,46 @@ uv run falsirag-suite \
   --resamples 200
 ```
 
-Limited runs are marked `partial`; artifacts derived from them remain
-`diagnostic_only`. The held-out `test` split is rejected unless the caller
-explicitly supplies `--allow-test`.
+有限样本运行会标记为 `partial`，由它生成的制品仍保持 `diagnostic_only`。
+除非调用者明确提供 `--allow-test`，运行器会拒绝访问留出的 `test` 划分。
 
-## Method output
+## 方法输出
 
-`FARPipeline.run(question, initial_answer)` returns:
+`FARPipeline.run(question, initial_answer)` 返回：
 
-- a validated acyclic claim graph;
-- typed evidence requirements for every claim;
-- support/refutation/boundary query and retrieval traces;
-- a claim-to-evidence map and typed conflicts;
-- a revised answer; and
-- an explicit before/after revision trace.
+- 经过校验的无环主张图；
+- 每条主张的类型化证据需求；
+- 支持、反驳、边界查询及检索轨迹；
+- 主张到证据的映射和类型化冲突；
+- 修订后的答案；
+- 明确的修改前后修订轨迹。
 
-Configured LLMs can participate in claim decomposition, typed-query generation,
-and revision realization. Invalid structured output falls back to the
-deterministic typed protocol; provider failures remain visible in run records.
+配置好的 LLM 可以参与主张分解、类型化查询生成和修订文本生成。无效的结构化输出会回退到确定性类型化协议；
+供应商调用失败则会明确记录在运行结果中。
 
-The optional VeraRAG adapter supports OpenAI, Anthropic, Ollama, DashScope,
-ZhipuAI, and DeepSeek, together with BM25, dense, FAISS, hybrid RRF, and an
-optional CrossEncoder reranker.
+可选 VeraRAG 适配器支持 OpenAI、Anthropic、Ollama、DashScope、智谱和 DeepSeek，
+以及 BM25、稠密检索、FAISS、混合 RRF 和可选 CrossEncoder 重排序器。
 
-## Benchmark
+## 基准数据
 
-FalsiRAG-Bench v0.2.0-candidate contains five balanced categories:
+FalsiRAG-Bench v0.2.0-candidate 包含五个均衡类别：
 
-- temporal shift;
-- numerical conflict;
-- entity confusion;
-- causal overclaim; and
-- multi-source conflict.
+- 时间变化（temporal shift）；
+- 数值冲突（numerical conflict）；
+- 实体混淆（entity confusion）；
+- 因果过度推断（causal overclaim）；
+- 多来源冲突（multi-source conflict）。
 
-The frozen candidate build has 300 samples, 175 corpus documents, no
-cross-split dependency-group leakage, and 0.91 lexical counter-evidence
-recall@10 when pooling the three query families. This is a corpus-construction
-check, not a FAR performance result.
+冻结的候选版本包含 300 条样本和 175 篇语料文档，不存在跨划分依赖组泄漏；合并三类查询后，
+词法 counter-evidence recall@10 为 0.91。这个数值是语料构造检查，不是 FAR 方法的性能结果。
 
-`bench/manifest.json` intentionally records `publication_ready: false` until
-two independent reviewers, a separate adjudicator, agreement checks, and the
-external blind-test protocol are complete. See [bench/CARD.md](bench/CARD.md)
-for sources, licenses, construction, and limitations.
+在两名独立复核者、一名独立仲裁者、一致性检查和外部盲测全部完成前，
+`bench/manifest.json` 会始终记录 `publication_ready: false`。数据来源、许可证、构造方式和限制见
+[基准数据卡](bench/CARD.md)。
 
-For a single-author diagnostic study, build a fingerprinted machine-audit
-record:
+### 单作者机器审计路径
+
+生成带指纹的机器审计记录：
 
 ```bash
 uv run falsirag-machine-consensus \
@@ -198,7 +176,7 @@ uv run falsirag-machine-consensus \
   --overwrite
 ```
 
-Then validate the complete automated profile:
+验证完整自动化诊断路径：
 
 ```bash
 uv run falsirag-solo-readiness \
@@ -209,48 +187,40 @@ uv run falsirag-solo-readiness \
   --output outputs/solo_readiness.json
 ```
 
-This does not weaken `falsirag-submission-readiness`; the strict AAAI evidence
-gate remains separate.
+这不会降低 `falsirag-submission-readiness` 的要求；严格 AAAI 证据门禁仍然独立存在。
 
-The repository also tracks the complete 4.5 MB diagnostic evidence bundle,
-including all 11 methods' predictions, scores, reports, figures, and the
-300-row machine audit. Verify it without rerunning a model:
+仓库还跟踪了完整的约 4.5 MB 诊断证据包，其中包含 11 种方法的预测、分数、报告、图表，
+以及 300 条机器审计记录。无需重新运行模型即可验证：
 
 ```bash
 uv run falsirag-solo-release verify diagnostics/solo_v1
 ```
 
-The verifier rejects missing, extra, modified, or symlinked files and rejects
-any manifest that upgrades the bundle to human gold or publication-ready
-evidence. To rebuild the bundle from local ignored outputs, use
-`falsirag-solo-release build`; the exact command is documented in the bundle
-README.
+校验器会拒绝缺失、额外、修改过或使用符号链接的文件，也会拒绝任何把诊断包升级为真人金标或正式投稿证据的清单。
+若要从本地忽略的输出重建证据包，请使用 `falsirag-solo-release build`；完整命令写在证据包 README 中。
 
-The reader-facing report for this fallback path is tracked at
-[reports/single_author_diagnostic_report.md](reports/single_author_diagnostic_report.md).
-It is the complete single-author diagnostic deliverable and keeps the strict
-AAAI claims separate from the machine-audited evidence.
+面向读者的单作者成果报告位于
+[reports/single_author_diagnostic_report.md](reports/single_author_diagnostic_report.md)。
+它是无人协助情况下完整的诊断交付物，并明确区分机器审计证据和严格 AAAI 证据。
 
-To verify only the public single-author diagnostic path without human labels,
-cloud credentials, ignored local outputs, or external custody, run:
+无需真人标签、云端凭据、本地忽略输出或外部保管人，即可运行公开单作者诊断门禁：
 
 ```bash
 bash scripts/solo_diagnostic_check.sh
 ```
 
-This gate also rebuilds the project-status evidence in memory and rejects a
-stale tracked JSON or Markdown ledger. Run the same check directly with:
+该门禁还会在内存中重建项目状态，并拒绝过期的 JSON 或 Markdown 状态账本。也可以单独运行：
 
 ```bash
 uv run falsirag-project-status --verify
 ```
 
-The separately licensed FEVER slice has a narrower inherited reference:
-SUPPORTS/REFUTES and gold evidence come from the human-annotated
-[FEVER dataset](https://fever.ai/dataset/fever.html), while FAR's four typed
-sampling buckets remain machine-generated and non-gold. The frozen external
-binary diagnostic is tracked in
-[diagnostics/fever_binary_v1](diagnostics/fever_binary_v1). Verify it with:
+### FEVER 外部迁移诊断
+
+独立许可的 FEVER 切片只继承了较窄的参考标签：SUPPORTS/REFUTES 与金证据来自真人标注的
+[FEVER 数据集](https://fever.ai/dataset/fever.html)，而 FAR 的四类抽样桶仍由机器启发式生成，不是金标。
+冻结的外部二分类诊断位于
+[diagnostics/fever_binary_v1](diagnostics/fever_binary_v1)，验证命令如下：
 
 ```bash
 uv run falsirag-eval-fever-binary verify \
@@ -258,72 +228,65 @@ uv run falsirag-eval-fever-binary verify \
   diagnostics/fever_binary_v1
 ```
 
-Both the heuristic and VeraRAG NLI detector reach 0.72 accuracy. NLI improves
-binary conflict recall from 0.30 to 0.40 and F1 from 0.462 to 0.533, but the
-paired accuracy difference is zero (95% bootstrap [-0.05, 0.05], McNemar
-`p=1.0`). This is a visible detector-transfer diagnostic—not a full FAR run,
-typed gold, external blindness, or a publication main result—and it is frozen
-without post-inspection tuning.
+启发式检测器和 VeraRAG NLI 检测器的准确率均为 0.72。NLI 将二分类冲突召回率从 0.30 提升到 0.40，
+F1 从 0.462 提升到 0.533；但配对准确率差为 0（95% bootstrap 区间 [-0.05, 0.05]，
+McNemar `p=1.0`）。这是公开可见的检测器迁移诊断，不是完整 FAR 实验、类型化金标、外部盲测或论文主结果；
+结果冻结后不会再根据观察结果调参。
 
-## Reproducibility and release gates
+## 可复现性与发布门禁
 
-The repository records benchmark fingerprints, config hashes, implementation
-hashes, Git revision/dirty state, run signatures, resumable checkpoints, paired
-bootstrap intervals, and McNemar tests.
+仓库记录基准指纹、配置哈希、实现哈希、Git 提交与工作树状态、运行签名、可恢复检查点、
+配对 bootstrap 区间和 McNemar 检验。
 
-Run all repository-controlled checks on a clean commit:
+在干净提交上运行全部仓库可控检查：
 
 ```bash
 bash scripts/release_check.sh
 ```
 
-Without an evidence override, this runs in deliberately incomplete template
-mode. A true final release must use a real ignored evidence file:
+若不覆盖证据文件，该命令会故意使用未完成的模板模式。真正的最终发布必须使用被 Git 忽略的真实证据文件：
 
 ```bash
 FAR_SUBMISSION_EVIDENCE=submission/evidence.json bash scripts/release_check.sh
 ```
 
-The final command fingerprints nine package, audit, evidence, and paper
-artifacts before running the readiness audit. It succeeds only when the human
-annotation, three-model dev matrix, external blind returns, trusted scoring,
-release archive, and independent paper review all pass.
+最终命令会先为 9 项代码包、审计、证据和论文制品生成指纹，再执行投稿就绪审计。
+只有真人标注、三模型开发集矩阵、外部盲测回传、可信评分、发布归档和独立论文审查全部通过时，
+它才会返回成功。
 
-Never commit API keys. A previously exposed key must be rotated before use.
+**切勿提交 API Key。任何曾经公开暴露的密钥都必须撤销并重新生成后才能使用。**
 
-## Repository map
+## 仓库结构
 
 ```text
-far/          FAR claim, evidence, query, conflict, and revision pipeline
-bench/        Candidate benchmark, corpus, schemas, builders, and annotation tools
-baselines/    Six transparent comparison systems
-eval/         Metrics, confidence intervals, and paired significance tests
-experiments/  Runners, configs, result validation, scoring, and release gates
-paper/        AAAI-27 manuscript, supplement, style files, and checklist
-submission/   Non-secret evidence and attestation templates
-docs/         Architecture, protocols, experiment plan, and completion audits
-tests/        Unit, integration, provenance, and fail-closed regression tests
+far/          FAR 主张、证据、查询、冲突与修订管线
+bench/        候选基准、语料、数据结构、构造与标注工具
+baselines/    六个透明的对照系统
+eval/         指标、置信区间与配对显著性检验
+experiments/  运行器、配置、结果校验、评分与发布门禁
+paper/        AAAI-27 正文、补充材料、样式文件与复现清单
+submission/   不含密钥的证据与盲测声明模板
+docs/         架构、协议、实验计划与完成度审计
+tests/        单元、集成、来源追踪与失败关闭回归测试
 ```
 
-## Documentation
+## 文档索引
 
-- [Architecture](docs/ARCHITECTURE.md)
-- [Reproduction guide](docs/REPRODUCING.md)
-- [Experiment plan](docs/EXPERIMENT_PLAN.md)
-- [Evaluation definitions](docs/EVALUATION.md)
-- [Automatic annotation assistance](docs/AUTO_ANNOTATION.md)
-- [Independent human annotation protocol](docs/HUMAN_ANNOTATION_PROTOCOL.md)
-- [External blind-test handoff](docs/BLIND_TEST_HANDOFF.md)
-- [Role-by-role final action packet](docs/EXTERNAL_ACTION_PACKET.md)
-- [Proposal traceability](docs/PROPOSAL_TRACEABILITY.md)
-- [Completion audit](docs/COMPLETION_AUDIT.md)
-- [Development log](docs/DEVELOPMENT_LOG.md)
-- [Anonymous paper draft](paper/main.tex)
+- [系统架构](docs/ARCHITECTURE.md)
+- [复现指南](docs/REPRODUCING.md)
+- [实验计划](docs/EXPERIMENT_PLAN.md)
+- [评测定义](docs/EVALUATION.md)
+- [自动标注辅助方案](docs/AUTO_ANNOTATION.md)
+- [独立真人标注协议](docs/HUMAN_ANNOTATION_PROTOCOL.md)
+- [外部盲测交接说明](docs/BLIND_TEST_HANDOFF.md)
+- [最终外部角色行动手册](docs/EXTERNAL_ACTION_PACKET.md)
+- [企划追踪矩阵](docs/PROPOSAL_TRACEABILITY.md)
+- [项目完成度审计](docs/COMPLETION_AUDIT.md)
+- [开发日志](docs/DEVELOPMENT_LOG.md)
+- [匿名论文草稿](paper/main.tex)
 
-## License
+## 许可证
 
-FAR code and controlled synthetic summaries are released under the
-[MIT License](LICENSE). VeraRAG adapters reuse MIT-licensed code through an
-optional local dependency. Upstream datasets and source materials retain their
-own terms; the separately imported FEVER candidate slice records CC-BY-SA-3.0
-and GPL-3.0 provenance in its accompanying license file.
+FAR 代码与受控合成摘要采用 [MIT License](LICENSE)。VeraRAG 适配器通过可选本地依赖复用 MIT 许可代码。
+上游数据集和来源材料保留各自条款；单独导入的 FEVER 候选切片在随附许可证文件中记录了
+CC-BY-SA-3.0 与 GPL-3.0 来源信息。
