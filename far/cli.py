@@ -78,6 +78,13 @@ def machine_label_audit_main() -> None:
     main()
 
 
+def machine_consensus_main() -> None:
+    _prefer_far_repo()
+    from bench.build.machine_consensus import main
+
+    main()
+
+
 def run_suite_main() -> None:
     _prefer_far_repo()
     from experiments.run_suite import main
@@ -123,6 +130,13 @@ def scan_secrets_main() -> None:
 def submission_readiness_main() -> None:
     _prefer_far_repo()
     from experiments.submission_readiness import main
+
+    main()
+
+
+def solo_readiness_main() -> None:
+    _prefer_far_repo()
+    from experiments.solo_readiness import main
 
     main()
 

@@ -26,6 +26,14 @@ The following cannot be truthfully completed by code generation:
    values, and any typed-ablation claim that survives adjudicated gold/test;
 5. named authors, affiliations, and the human-required AAAI policy review.
 
+For a single-author diagnostic release, the repository now has a separate
+automated endpoint. `falsirag-machine-consensus` audits the controlled
+construction labels with fingerprint-bound Qwen2.5 and deterministic weak
+signals, and `falsirag-solo-readiness` currently passes the benchmark,
+machine-audit, complete 11-method Qwen dev suite, and gold-free local test
+bundle gates. This supports a machine-audited synthetic-benchmark report, not
+the strict human/external claims required by the current AAAI submission draft.
+
 Do not replace `PENDING-EMPIRICAL-RUN` cells until result bundle validation
 passes. Diagnostic smoke figures under `outputs/` are not submission figures.
 The final handoff is now machine-auditable through

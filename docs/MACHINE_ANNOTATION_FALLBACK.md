@@ -12,6 +12,8 @@ the original double-human annotation protocol.
 Use FAR's built-in LLM preannotator with the local open-weight Qwen/Ollama
 runtime as the primary automatic labeler, then add FAR's deterministic
 rule-based weak-supervision labeler as a second non-gold machine signal.
+Finally, compile both signals with `falsirag-machine-consensus` and validate the
+whole single-author artifact with `falsirag-solo-readiness`.
 
 Why this is the best fit:
 
@@ -32,8 +34,25 @@ What it cannot do:
 - It should not be used to rewrite `machine_seed_is_gold` to `true`.
 
 If the paper proceeds without humans, describe the labels as
-`machine-seeded`, `weakly supervised`, or `pseudo-gold`, and keep the original
-human-annotation gate listed as a limitation.
+`construction-derived`, `machine-audited`, `weakly supervised`, or
+`pseudo-gold`. Do not call them human gold. The original human-annotation gate
+remains available as the stricter submission profile rather than blocking all
+single-author development.
+
+## Implemented automated replacement boundary
+
+FAR now has two non-overlapping readiness profiles:
+
+1. `falsirag-solo-readiness` can pass with a valid synthetic benchmark,
+   fingerprint-bound LLM/weak-label audit, the complete 11-method local dev
+   suite, and a gold-free local test bundle.
+2. `falsirag-submission-readiness` still requires real independent humans,
+   external custody/scoring, the frozen multi-model matrix, and independent
+   paper review.
+
+Automation replaces the workflow needed to finish and publish a reproducible
+diagnostic artifact; it does not manufacture evidence that independent people
+or organizations existed.
 
 ## Open-source tools checked
 

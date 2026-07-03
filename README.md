@@ -23,6 +23,12 @@ plan is in [PROJECT_PROPOSAL.md](PROJECT_PROPOSAL.md).
 > 300 benchmark labels are machine-seeded. They are useful for development but
 > cannot replace two independent human annotations, adjudication, or externally
 > held blind testing. The repository fails closed on those distinctions.
+>
+> A separate `single_author_machine_audited_diagnostic` profile is available
+> when no second annotator exists. It audits construction-derived labels with
+> LLM and deterministic weak signals, validates the complete local dev suite,
+> and preserves a gold-free local test bundle. It does not claim human gold or
+> external blindness.
 
 ## Why FAR
 
@@ -57,10 +63,11 @@ flowchart LR
 |---|---|
 | FAR method | Implemented and covered by unit/integration tests |
 | FalsiRAG-Bench | 300 balanced candidate samples and 175 documents; construction validator passes |
-| Labels | 300/300 machine-seeded; independent human review and adjudication pending |
+| Labels | 300/300 construction-derived; machine audit complete (178 confirmed, 122 disputed); strict human track pending |
 | Development experiments | Corrected Qwen3.5 9B FAR, six baselines, and four ablations complete on dev; diagnostic only |
 | Formal model matrix | DeepSeek V4-Flash and Qwen3.7 Plus runs await rotated credentials and adjudicated labels |
 | Blind test | Gold-free bundle, custody protocol, return validator, and trusted scorer implemented; external execution pending |
+| Solo study profile | Automated readiness passes for benchmark, machine audit, 11-method Qwen dev suite, and gold-free local test bundle |
 | Paper | Anonymous AAAI-27 draft and checklist compile; final empirical cells and human review pending |
 
 The authoritative requirement-by-requirement status is
@@ -161,6 +168,32 @@ check, not a FAR performance result.
 two independent reviewers, a separate adjudicator, agreement checks, and the
 external blind-test protocol are complete. See [bench/CARD.md](bench/CARD.md)
 for sources, licenses, construction, and limitations.
+
+For a single-author diagnostic study, build a fingerprinted machine-audit
+record:
+
+```bash
+uv run falsirag-machine-consensus \
+  --data-dir bench \
+  --preannotation-dir outputs/remote_machine_annotation/qwen25_preannotations \
+  --weak-label-dir outputs/remote_machine_annotation/rules_weak_labels \
+  --output-dir outputs/machine_consensus_v1 \
+  --overwrite
+```
+
+Then validate the complete automated profile:
+
+```bash
+uv run falsirag-solo-readiness \
+  --data-dir bench \
+  --machine-report outputs/machine_consensus_v1/machine_consensus_report.json \
+  --suite-dir outputs/remote_qwen_six_baseline_suite \
+  --blind-bundle-dir outputs/handoff/falsirag_blind_test_technical_v1 \
+  --output outputs/solo_readiness.json
+```
+
+This does not weaken `falsirag-submission-readiness`; the strict AAAI evidence
+gate remains separate.
 
 ## Reproducibility and release gates
 

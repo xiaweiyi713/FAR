@@ -76,6 +76,13 @@ Machine preannotations can be generated with `falsirag-auto-annotate` to speed
 triage, but they remain `publication_gold: false` and cannot replace independent
 human annotation. Reviewer draft files produced from preannotations are rejected
 by the compiler until a human explicitly marks them reviewed.
+
+For a single-author study, `falsirag-machine-consensus` provides a separate
+machine-audited synthetic-benchmark profile. It does not rewrite construction
+labels. Instead, it fingerprints them and records blind LLM/weak-label coverage,
+abstentions, fallbacks, exact joint agreement, and every disputed sample.
+`falsirag-solo-readiness` can certify the resulting diagnostic artifact while
+the stricter human-publication gate remains unchanged.
 Strict IAA Label Studio projects are reviewer-specific and prediction-free;
 shared machine predictions may be used only in an explicitly labeled secondary
 review workflow.

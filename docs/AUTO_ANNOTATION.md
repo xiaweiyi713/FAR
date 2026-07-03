@@ -160,6 +160,48 @@ the ignored `outputs/remote_machine_annotation/` directory:
 These numbers are useful for reviewer triage and quality-control planning only.
 They must not be reported as human inter-annotator agreement.
 
+## Complete single-author machine-audit profile
+
+When no other annotator is available, FAR can freeze an honest automated
+evidence chain instead of leaving the project half-complete. The benchmark
+labels remain construction-derived; LLM and rule sources blindly audit them and
+never become human gold.
+
+```bash
+uv run falsirag-machine-consensus \
+  --data-dir bench \
+  --preannotation-dir outputs/remote_machine_annotation/qwen25_preannotations \
+  --weak-label-dir outputs/remote_machine_annotation/rules_weak_labels \
+  --output-dir outputs/machine_consensus_v1 \
+  --overwrite
+```
+
+The current audit passes its solo-study checks:
+
+- 300 construction-derived reference rows;
+- Qwen2.5 effective coverage 299/300 after one conservative fallback;
+- deterministic weak-label coverage 211/300;
+- 178 rows confirmed by at least one exact non-abstaining machine signal;
+- 122 rows explicitly retained as machine-disputed limitations;
+- zero stale source fingerprints or missing sample IDs.
+
+Run the separate solo readiness gate after the full local dev suite and
+gold-free technical test bundle exist:
+
+```bash
+uv run falsirag-solo-readiness \
+  --data-dir bench \
+  --machine-report outputs/machine_consensus_v1/machine_consensus_report.json \
+  --suite-dir outputs/remote_qwen_six_baseline_suite \
+  --blind-bundle-dir outputs/handoff/falsirag_blind_test_technical_v1 \
+  --output outputs/solo_readiness.json
+```
+
+The current profile reports `complete: true`. Its allowed description is
+“single-author, machine-audited synthetic benchmark diagnostic.” It forbids
+claims of human IAA, human-validated gold, external blind custody, or
+multi-model generality from the single Qwen suite.
+
 ## Optional DeepSeek workflow
 
 Create a blind packet first:

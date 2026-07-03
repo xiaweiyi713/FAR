@@ -898,6 +898,31 @@ The current ignored ZIP SHAs are `reviewer_a_handoff.zip`
 `dd12819bc2592086e23f552cfb70808d66a390cea7a819d6cc7b852c3bfa5c8e`.
 They are blank handoff artifacts, not completed human annotations.
 
+## 2026-07-03: Single-author machine-audited study profile completed
+
+The strict human-publication gate remains unchanged, but it is no longer the
+only way to reach a well-defined project endpoint. Added
+`falsirag-machine-consensus`, which treats controlled benchmark-construction
+labels as the reference and freezes how non-gold LLM preannotations and
+deterministic weak labels agree, abstain, fall back, or dispute each row. It
+rejects stale fingerprints, incomplete sample sets, duplicate source IDs, and
+sources that do not explicitly remain `publication_gold:false`.
+
+The current 300-row audit records 299 effective Qwen2.5 labels after one
+conservative fallback and 211 non-abstaining rule labels. At least one
+non-abstaining machine signal exactly confirms the construction conflict/action
+pair for 178 rows; the remaining 122 are retained as machine-disputed
+limitations rather than silently promoted to consensus.
+
+Added the separate `falsirag-solo-readiness` gate. It validates the candidate
+benchmark, machine-consensus evidence, all 11 complete Qwen development
+methods, and the 58-row gold-free technical test bundle. The current local
+report passes all four gates with `complete:true`. Its schema explicitly
+forbids claims of human gold, human IAA, external blind custody,
+publication-ready final evidence, or multi-model generality. The existing
+`falsirag-submission-readiness` path continues to require real external roles
+and is not weakened by this profile.
+
 The external blind-test handoff was also tightened. `falsirag-build-blind-bundle`
 now has `audit` and `package` subcommands. `audit` requires the bundle to contain
 exactly `blind_bundle_manifest.json`, `corpus.jsonl`, and

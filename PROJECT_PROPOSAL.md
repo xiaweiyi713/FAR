@@ -4,7 +4,7 @@
 > 目标会议：**AAAI-27 主会**（[官方 CFP，2026-06-29 核验](https://aaai.org/conference/aaai/aaai-27/main-technical-track-call/)：摘要 2026-07-21 / 全文 2026-07-28 / 补充 2026-07-31；正文最多 7 页、含参考文献最多 9 页）
 > 本文是 FAR 的完整项目企划：研究问题 / 方法 / 目录结构 / 技术栈 / 基准 / 实验 / 时间线 / **VeraRAG 复用映射（精确到文件）** / 风险对冲。
 
-> **执行状态**：企划到实现的逐项证据见 [`docs/PROPOSAL_TRACEABILITY.md`](docs/PROPOSAL_TRACEABILITY.md)。代码、候选基准、运行器、统计和论文骨架已实现；独立双标注/仲裁、外部保管的盲测以及冻结的多模型结果仍是不可由机器结果替代的投稿门槛。
+> **执行状态**：企划到实现的逐项证据见 [`docs/PROPOSAL_TRACEABILITY.md`](docs/PROPOSAL_TRACEABILITY.md)。代码、候选基准、运行器、统计和论文骨架已实现。项目现分成两条互不混淆的验收路径：① 单作者机器审计诊断路径已可完整自动验收；② AAAI 严格投稿路径仍要求真实独立双标注/仲裁、外部保管盲测和冻结多模型结果，机器结果不能伪装成这些外部角色。
 
 ---
 
@@ -186,6 +186,7 @@ FAR/
 - **语料中必须真实包含 counter_evidence**——否则 FAR 的反事实查询"找不到反证"，方法无从体现。`bench/corpus.jsonl` 要为每个 falsifiable claim 植入可检索的反证文档。
 - 5 类各 ~60–80 题，**总 300–400**；其中固定 **留盲 test split**（方法/prompt 只在 train+dev 调）。
 - 小规模**双人标注 + 报 IAA(Cohen's κ)**（至少在 conflict_type 和 expected_revision 上）。
+- 若确实只有一位作者，则使用**构造标签 + 独立机器信号审计**的降级协议：LLM 预标注与确定性弱标注均盲于构造角色，冻结覆盖率、弃权、回退、逐类精确一致率和争议样本；论文必须写成 machine-audited synthetic benchmark，不报告 human IAA，也不把该路径升级成 strict publication gold。
 - 来源：Wikipedia/Wikidata、arXiv/leaderboard 元数据、公开报告——**动态网页须存快照保证可复现**。可部分复用你已有的 VeraBench 语料与金融/论文项目样本。
 
 ---
@@ -284,5 +285,6 @@ FAR/
 6. **已完成外部证据闭环工具**：正式 run identity 现在绑定 implementation hash、精确 Git commit 与 dirty 状态，结果校验会重算签名；`falsirag-score-blind-return` 仅在 11 个方法完整、盲包/返回包/冻结 commit/双角色一次性声明全部一致时，才由受信评分者生成 test 配对统计和最终表图；`falsirag-submission-readiness` 再统一核验人工 IAA、三模型 adjudicated dev、最终盲包、三份外部返回、三份可信评分、release 与人工论文审查。当前模板运行会明确失败于真实外部证据缺失，不能把技术演练升级成投稿完成。逐角色命令见 `docs/EXTERNAL_ACTION_PACKET.md`。
 7. **已强化真人标注证据链**：Label Studio 任务按 reviewer 独立绑定各自的盲序与文件指纹，跨 reviewer 导入、重复任务、改写问题/证据、空 rationale 和多份有效 completion 均会失败；review 文件通过原子安装进入 packet，不能再把 manifest 指向外部路径。裁决阶段也已支持 Label Studio 往返：导出时绑定两份冻结 reviewer 文件、展示 reviewer 标签与 evidence-ID 映射，导入和原子安装时拒绝改写上下文、缺失 revised answer、无冲突却填写 revised answer 或替换已完成 adjudication。新增 `annotate_packet status` 可在每次交接时报告 reviewer/adjudication 完成数、空白/非法行、指纹匹配、可见字段篡改以及是否可进入 adjudication UI / compile。编译时会拒绝重复样本、可见字段篡改和不一致的 adjudicator ID，并把两份 reviewer 原始文件、adjudication 与 packet manifest 指纹封存在 `annotation_evidence/`。readiness 与盲测评分会从该归档重新计算 κ、核对每条最终 conflict/action/revised answer，而不是只相信可手改的 `annotation_report.json`。有冲突的 gold 必须提供人写 revised answer；无冲突才显式使用 initial answer，不能静默沿用机器种子答案。这提升了未来真人证据的可审计性，但仍不把现有机器标注算作真人 IAA。
 8. **已生成可直接分发的严格双人盲标包**：本地忽略目录 `outputs/annotations/falsirag_packet_v1/` 含 300 条 `reviewer_a`/`reviewer_b` 独立乱序模板；两份 prediction-free Label Studio 项目分别位于 `outputs/annotations/label_studio_reviewer_a/` 与 `...reviewer_b/`，每份均为 300 tasks、0 machine predictions，并带独立 README。另可用 `falsirag-annotate-packet reviewer-handoff` 生成只含单个 reviewer 空白 JSONL、README、说明和 SHA manifest 的确定性文件包；当前本地 `reviewer_a_handoff.zip` SHA 为 `304ec1db46f6d3b940f7acd37b8474c7b834bdc8448b8f0f5bb08b48abdde1e4`，`reviewer_b_handoff.zip` SHA 为 `dd12819bc2592086e23f552cfb70808d66a390cea7a819d6cc7b852c3bfa5c8e`。packet manifest SHA 为 `ae12cf5dcdc0a7ac202dbbc5e3c8a47136c37f8fcf8289c5b5847e2b9c923b24`；两份 tasks SHA 分别为 `3691e27117a722ef8827282235b2609ebd4a8a33a4c878924ba19f327f03c6ab` 和 `f627faf8fdf7c9f71af748926654d8578ae4792647b2c072b9af75db18005e19`。这些只是待真人填写的空白任务，`tasks_with_predictions:0`，不构成人工完成或 IAA。
+9. **已完成单作者自动化替代路径**：新增 `falsirag-machine-consensus`，把构造标签作为可追溯 reference，用 Qwen2.5 LLM 预标注与确定性规则信号做盲审计并冻结全部指纹。当前 300 条中，Qwen 有效覆盖 299 条、规则非弃权覆盖 211 条；178 条至少被一个非弃权机器信号精确确认，122 条明确标为 machine-disputed，不静默当成共识。新增 `falsirag-solo-readiness` 后，候选基准、机器审计、11 方法完整 Qwen dev 套件和 58 条无金标本地 test bundle 四个门禁均已通过，`complete:true`。这使本项目在没有第二位真人时仍可完整交付一个可复现的 machine-audited synthetic diagnostic，但不声称 human IAA、human gold、外部盲测或单模型之外的泛化。
 
 > 一句话收尾：**FAR 的成败不在工程量（VeraRAG 已给你 70%），而在两点——(1) typed conflict control 是否在 adjudicated gold 上稳定提升修订质量；(2) CounterRefine/RARR 等近邻基线下，这个 typed-control 增益是否仍成立。当前 machine-seeded dev 已支持 typed-vs-untyped，但 refutation/boundary/typed-revision 子模块结果混合；正式论文必须按 gold/test 结果收窄或改写主张。**
