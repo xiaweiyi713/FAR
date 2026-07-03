@@ -213,7 +213,7 @@ def test_source_archive_includes_submission_evidence_templates() -> None:
     manifest = (Path(__file__).resolve().parents[1] / "MANIFEST.in").read_text(encoding="utf-8")
     assert "include submission/evidence.template.json" in manifest
     assert "include submission/blind_test_attestation.template.json" in manifest
-    assert "recursive-include reports *.md" in manifest
+    assert "recursive-include reports *.md *.csv" in manifest
     assert "recursive-include submission *.json" not in manifest
     assert "include submission/evidence.json" not in manifest
     assert "include submission/blind_test_attestation.json" not in manifest
@@ -274,4 +274,5 @@ def test_source_archive_includes_reader_facing_reports(tmp_path: Path) -> None:
     assert report_members == {
         "reports/README.md",
         "reports/single_author_diagnostic_report.md",
+        "reports/solo_human_review_priority.csv",
     }

@@ -160,3 +160,10 @@ def score_blind_return_main() -> None:
     from experiments.score_blind_return import main
 
     main()
+
+
+def review_priority_main() -> None:
+    _prefer_far_repo()
+    from experiments.review_priority import main
+
+    main()

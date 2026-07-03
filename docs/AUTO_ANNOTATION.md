@@ -220,6 +220,25 @@ The tracked release includes raw dev predictions and machine signals so its
 reports can be audited without access to ignored local outputs. Its manifest
 hard-codes the non-human, non-publication interpretation boundary.
 
+## Public priority list for scarce review time
+
+If no real annotator is available, stop at the solo machine-audited diagnostic
+and do not relabel the benchmark from machine outputs. If a small amount of
+human review later becomes possible, prioritize the machine-disputed rows first:
+
+```bash
+uv run falsirag-review-priority \
+  --input diagnostics/solo_v1/machine_annotation/machine_consensus_rows.jsonl \
+  --output reports/solo_human_review_priority.csv
+```
+
+The tracked priority table has 122 rows, all `machine_disputed`. It exposes the
+sample ID, category, construction reference conflict/action fields, Qwen
+preannotation signal, deterministic weak-label signal, and a triage reason. It
+intentionally omits revised-answer text and cannot satisfy the human annotation
+gate. Its purpose is to answer: “if I can only review a few examples, which
+machine/reference disagreements should I inspect first?”
+
 ## Optional DeepSeek workflow
 
 Create a blind packet first:

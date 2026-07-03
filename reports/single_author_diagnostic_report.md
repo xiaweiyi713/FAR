@@ -128,6 +128,13 @@ The resulting disposition is:
 
 The 122 disputed rows remain in the evidence bundle and must be disclosed. They are not silently relabeled, filtered, or upgraded to gold.
 
+For limited future review time, the derived priority table
+[`reports/solo_human_review_priority.csv`](solo_human_review_priority.csv)
+lists all 122 machine-disputed rows in a deterministic review order. The table
+contains sample IDs, categories, reference conflict/action fields, machine
+signal fields, and a triage reason; it intentionally omits revised-answer text
+and does not claim any human or gold-label status.
+
 ### Local development evaluation
 
 The local dev suite evaluates 11 matched runs on 60 dev samples. Every run has tracked predictions, a run identity, a run manifest, scores, and an evaluation report. The suite manifest SHA is:
@@ -179,14 +186,15 @@ What remains uncertain:
 ## Recommended next steps
 
 1. Use this report as the single-author public deliverable if no annotators are available.
-2. Keep the strict AAAI paper draft conservative: leave empirical cells pending until human annotation, external custody, and final multi-model runs exist.
-3. If time allows, target revision reliability next rather than broad detector tuning. The current evidence shows retrieval is relatively strong, while revision accuracy is the visible bottleneck.
-4. Do not tune on the frozen FEVER 100-pair diagnostic. If external development is needed, create a separate development split and reserve a new frozen evaluation slice.
-5. Rotate any exposed API keys before cloud experiments. The repository should only use environment variables or local ignored secrets.
+2. If any small amount of human review becomes available, start with [`reports/solo_human_review_priority.csv`](solo_human_review_priority.csv), not the full 300 rows.
+3. Keep the strict AAAI paper draft conservative: leave empirical cells pending until human annotation, external custody, and final multi-model runs exist.
+4. If time allows, target revision reliability next rather than broad detector tuning. The current evidence shows retrieval is relatively strong, while revision accuracy is the visible bottleneck.
+5. Do not tune on the frozen FEVER 100-pair diagnostic. If external development is needed, create a separate development split and reserve a new frozen evaluation slice.
+6. Rotate any exposed API keys before cloud experiments. The repository should only use environment variables or local ignored secrets.
 
 ## Further questions
 
-- Which 122 machine-disputed rows should be prioritized for human review if limited reviewer time becomes available?
+- After the 122-row priority table is reviewed, which categories produce true benchmark-builder mistakes versus expected machine limitations?
 - Can typed revision be improved without sacrificing the answer-correctness gains seen in the `minus_typed_revision` ablation?
 - Does the typed-versus-untyped advantage survive on adjudicated labels and across DeepSeek V4-Flash and Qwen3.7 Plus?
 - Which external dataset can provide typed conflict labels without post-hoc tuning on the FEVER diagnostic slice?
@@ -204,4 +212,3 @@ uv run falsirag-eval-fever-binary verify \
 ```
 
 To rebuild the solo readiness object, use the original ignored evidence locations documented in `diagnostics/solo_v1/README.md`. The tracked public evidence check is `falsirag-solo-release verify`.
-

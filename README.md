@@ -28,8 +28,10 @@ plan is in [PROJECT_PROPOSAL.md](PROJECT_PROPOSAL.md).
 > when no second annotator exists. It audits construction-derived labels with
 > LLM and deterministic weak signals, validates the complete local dev suite,
 > and preserves a gold-free local test bundle. Its complete public evidence is
-> tracked under [diagnostics/solo_v1](diagnostics/solo_v1). It does not claim
-> human gold or external blindness.
+> tracked under [diagnostics/solo_v1](diagnostics/solo_v1). The derived
+> [122-row review-priority table](reports/solo_human_review_priority.csv)
+> identifies machine-disputed examples for scarce future review. It does not
+> claim human gold or external blindness.
 
 ## Why FAR
 
@@ -64,13 +66,13 @@ flowchart LR
 |---|---|
 | FAR method | Implemented and covered by unit/integration tests |
 | FalsiRAG-Bench | 300 balanced candidate samples and 175 documents; construction validator passes |
-| Labels | 300/300 construction-derived; machine audit complete (178 confirmed, 122 disputed); strict human track pending |
+| Labels | 300/300 construction-derived; machine audit complete (178 confirmed, 122 disputed); 122-row review-priority table generated; strict human track pending |
 | Development experiments | Corrected Qwen3.5 9B FAR, six baselines, and four ablations complete on dev; diagnostic only |
 | Formal model matrix | DeepSeek V4-Flash and Qwen3.7 Plus runs await rotated credentials and adjudicated labels |
 | Blind test | Gold-free bundle, custody protocol, return validator, and trusted scorer implemented; external execution pending |
 | Solo study profile | Automated readiness passes; 69-file, 11-method diagnostic evidence bundle is tracked and self-verifying |
 | External transfer | Frozen 100-pair FEVER binary diagnostic is public; accuracy 0.72 and low recall disclose limited transfer |
-| Report | Single-author machine-audited diagnostic report is tracked under [reports/](reports/) |
+| Report | Single-author machine-audited diagnostic report and review-priority CSV are tracked under [reports/](reports/) |
 | Paper | Anonymous AAAI-27 draft and checklist compile; final empirical cells and human review pending |
 
 The authoritative requirement-by-requirement status is

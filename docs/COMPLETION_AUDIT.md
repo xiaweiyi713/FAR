@@ -16,7 +16,7 @@ close an empirical gate.
 | 300--400 candidate benchmark in five classes | 300 rows, 60 per class | Candidate complete | Benchmark validator and fingerprints pass |
 | Counter-evidence in the corpus | Frozen corpus; lexical recall@10 = 0.91 | Construction gate passed | Validator report remains bound to frozen corpus |
 | No dependency-group split leakage | `bench/split_manifest.json` (182/60/58) | Implemented | Validator reports zero leakage |
-| Automatic labeling assistance | Qwen2.5 machine preannotations 300/300 with 1 fallback after retry; deterministic weak labels 300/300 with 211 non-abstained signals; `falsirag-machine-consensus` freezes source fingerprints, per-category agreement, fallback/abstention rates, and 178 confirmed / 122 disputed rows | Implemented; solo machine-audited profile passes | Remains `publication_gold: false`; disputed rows must be disclosed |
+| Automatic labeling assistance | Qwen2.5 machine preannotations 300/300 with 1 fallback after retry; deterministic weak labels 300/300 with 211 non-abstained signals; `falsirag-machine-consensus` freezes source fingerprints, per-category agreement, fallback/abstention rates, and 178 confirmed / 122 disputed rows; `falsirag-review-priority` publishes a 122-row disputed-sample triage CSV | Implemented; solo machine-audited profile passes | Remains `publication_gold: false`; disputed rows must be disclosed and not relabeled without real review |
 | Single-author automated readiness and public evidence | `falsirag-solo-readiness` validates the candidate benchmark, machine-consensus evidence, all 11 complete Qwen dev methods, and the 58-row gold-free technical test bundle; `diagnostics/solo_v1/` tracks 69 fingerprinted files and `falsirag-solo-release verify` recomputes run/report/score/artifact integrity; `reports/single_author_diagnostic_report.md` turns the tracked evidence into a reader-facing technical report with explicit claim boundaries; `scripts/solo_diagnostic_check.sh` rechecks the public solo bundle, FEVER diagnostic, report/evidence consistency, and report inclusion in the source archive | Implemented; tracked release verifies with `complete:true` and a durable diagnostic report exists | Diagnostic/synthetic-study claims only; no human IAA, external blindness, or multi-model generality |
 | Independent annotation and IAA | Reviewer-specific blind packets and Label Studio exports; `reviewer-handoff` builds single-reviewer blank JSONL/README/instruction packages with SHA manifests; atomic review and adjudication installers; Label Studio adjudication export/import includes frozen reviewer labels plus evidence-ID maps; `annotate_packet status` reports per-role progress, fingerprint compatibility, and visible-field mismatches before each handoff; compiler rejects duplicate/tampered/cross-reviewer inputs and freezes fingerprinted raw reviewer/adjudication evidence for independent kappa recomputation. Prepared strict local handoff: packet SHA `ae12cf5d...23b24`; reviewer task SHAs `3691e271...c6ab` and `f627faf8...e19`, each 300 tasks and zero predictions | Empty strict reviewer handoffs ready; external work pending | Two independent completed files, named adjudicator, frozen evidence archive, adjudication, and recomputed kappa |
 | External FEVER slice | 100 fingerprinted pairs; binary SUPPORTS/REFUTES reference and evidence inherit human-annotated FEVER; `falsirag-eval-fever-binary` plus `diagnostics/fever_binary_v1/` freeze/recompute the visible detector-transfer diagnostic | Binary diagnostic complete: heuristic/NLI accuracy 0.72, NLI recall 0.40 and F1 0.533; typed buckets remain non-gold | Independent annotation is still required for typed-conflict claims; do not tune on the frozen slice or present it as full FAR/blind-test evidence |
@@ -38,11 +38,13 @@ its named evidence or explicitly removed from the paper's claims. In particular:
 
 1. LLM preannotations may reduce reviewer effort but cannot be reported as two
    independent human annotations or Cohen's kappa.
-2. Local access to the test labels is not an externally held blind test.
-3. Smoke, partial, train, and development runs cannot populate the main test
+2. The review-priority CSV is a queue for scarce future review time, not a
+   corrected label file.
+3. Local access to the test labels is not an externally held blind test.
+4. Smoke, partial, train, and development runs cannot populate the main test
    table.
-4. The typed-control contribution survives only if the preregistered paired
+5. The typed-control contribution survives only if the preregistered paired
    typed-versus-untyped comparison supports it; otherwise the paper must report
    the diagnostic or negative result.
-5. `paper/aaai27/ReproducibilityChecklist.tex` must be re-audited after final
+6. `paper/aaai27/ReproducibilityChecklist.tex` must be re-audited after final
    runs so every `partial` or `no` answer remains truthful.

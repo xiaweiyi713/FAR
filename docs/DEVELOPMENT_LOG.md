@@ -1000,3 +1000,22 @@ runs the report/evidence consistency tests, and checks that the reader-facing
 report is included in the source distribution. This gives reviewers and future
 maintainers one command for the public diagnostic deliverable while keeping the
 strict AAAI submission gate separate and fail-closed.
+
+## 2026-07-03: Scarce-review automation fallback triage
+
+The project cannot honestly synthesize two independent human reviewers from
+software. The chosen fallback is therefore a reproducible triage layer on top of
+the existing machine consensus audit, not a new gold-label source. Added
+`falsirag-review-priority`, which reads the frozen
+`machine_consensus_rows.jsonl` and writes
+`reports/solo_human_review_priority.csv`.
+
+The tracked CSV contains exactly the 122 `machine_disputed` rows, sorted by
+machine/reference disagreement strength and then by stable identifiers. It
+exposes sample ID, category, construction reference conflict/action, Qwen
+preannotation signal, deterministic weak-label signal, claim-limitation flag,
+and a plain-language triage reason. It deliberately omits revised-answer text
+and revised-answer hashes. The table answers the practical single-author
+question: if only a small amount of review time appears later, which rows should
+be inspected first? It remains `publication_gold:false` in interpretation and
+does not alter the strict submission gate.
