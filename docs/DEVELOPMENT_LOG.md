@@ -989,3 +989,14 @@ does not improve paired accuracy. README, the completion audit, proposal
 traceability, and paper status now point to the report so the diagnostic
 profile has a complete public handoff without weakening the strict submission
 gate.
+
+## 2026-07-03: Public solo diagnostic one-command check
+
+Added `scripts/solo_diagnostic_check.sh` as a lightweight verifier for the
+single-author diagnostic path. Unlike the full release gate, it does not require
+human labels, cloud credentials, ignored local outputs, or external custody. It
+verifies `diagnostics/solo_v1/`, verifies the frozen FEVER binary diagnostic,
+runs the report/evidence consistency tests, and checks that the reader-facing
+report is included in the source distribution. This gives reviewers and future
+maintainers one command for the public diagnostic deliverable while keeping the
+strict AAAI submission gate separate and fail-closed.

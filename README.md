@@ -217,6 +217,13 @@ The reader-facing report for this fallback path is tracked at
 It is the complete single-author diagnostic deliverable and keeps the strict
 AAAI claims separate from the machine-audited evidence.
 
+To verify only the public single-author diagnostic path without human labels,
+cloud credentials, ignored local outputs, or external custody, run:
+
+```bash
+bash scripts/solo_diagnostic_check.sh
+```
+
 The separately licensed FEVER slice has a narrower inherited reference:
 SUPPORTS/REFUTES and gold evidence come from the human-annotated
 [FEVER dataset](https://fever.ai/dataset/fever.html), while FAR's four typed

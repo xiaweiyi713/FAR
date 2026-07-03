@@ -37,6 +37,18 @@ readiness. Human annotation, external blind custody, author metadata, and policy
 review remain separate governance inputs and are not falsely automated by this
 script.
 
+For the lighter single-author diagnostic profile, which needs only tracked
+public evidence and no human labels, cloud credentials, ignored local outputs,
+or external custodian, run:
+
+```bash
+bash scripts/solo_diagnostic_check.sh
+```
+
+This verifies the solo evidence bundle, the frozen FEVER binary diagnostic, the
+reader-facing report's numeric/source consistency, and inclusion of the report
+in the source distribution.
+
 Generate and validate the declared-dependency CycloneDX 1.5 SBOM before a
 release build:
 
