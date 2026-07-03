@@ -105,7 +105,9 @@ uv run python examples/offline_demo.py
 
 The public CI workflow tests Python 3.10--3.13 and checks lint, types, the
 benchmark, the redacting secret scan, and tracked single-author diagnostic
-evidence without cloud credentials or VeraRAG.
+evidence without cloud credentials or VeraRAG. It also installs the built wheel
+and source distribution into isolated environments and validates their packaged
+benchmark, offline configuration, and console entry points.
 
 The offline demo and deterministic protocol do not require API keys. To use the
 formal dense/reranking/NLI stack, install the experiment dependencies and, when
@@ -125,7 +127,7 @@ reranking, or NLI assets are unavailable.
 uv run falsirag-validate-bench
 uv run falsirag-scan-secrets --json
 uv run ruff check .
-uv run mypy far bench baselines eval experiments tests
+uv run mypy far bench baselines eval experiments tests scripts/package_smoke.py
 uv run pytest
 ```
 

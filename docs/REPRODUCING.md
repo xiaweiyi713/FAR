@@ -13,7 +13,7 @@ silently drift beyond the proposal's compatibility claim. Use:
 
 ```bash
 uv run ruff check .
-uv run mypy far bench baselines eval experiments tests
+uv run mypy far bench baselines eval experiments tests scripts/package_smoke.py
 uv run python -m pytest
 ```
 
@@ -76,11 +76,18 @@ release set:
 
 ```bash
 uv build
+bash scripts/check_release_packages.sh
 uv run falsirag-release-checksums \
   --sbom build/sbom/far-sbom.cdx.json \
   --artifact paper_main_pdf=paper/build/release/main.pdf \
   --output build/release-checksums.json --check --json
 ```
+
+The package smoke script installs the wheel and sdist separately with `uv` in
+isolated environments and runs `scripts/package_smoke.py` with Python isolated
+mode. It validates imports, console entry points, the packaged offline config,
+and the full packaged benchmark including its frozen 0.91 counter-evidence
+recall, so a green source checkout cannot hide a broken distribution.
 
 The checksum manifest always requires the source distribution, wheel, and
 CycloneDX SBOM roles, and accepts additional `--artifact ROLE=PATH` entries for

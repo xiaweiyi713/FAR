@@ -189,7 +189,10 @@ def test_release_check_fingerprints_generated_audit_and_pdf_artifacts() -> None:
     readiness_offset = script.index("uv run falsirag-submission-readiness")
     solo_offset = script.index("bash scripts/solo_diagnostic_check.sh")
     validate_offset = script.index("uv run falsirag-validate-bench")
+    build_offset = script.index("uv build")
+    smoke_offset = script.index("bash scripts/check_release_packages.sh")
     assert solo_offset < validate_offset
+    assert build_offset < smoke_offset < checksum_offset
     assert checksum_offset < readiness_offset
     assert "submission_readiness_snapshot" not in script
     assert 'EVIDENCE_PATH="${FAR_SUBMISSION_EVIDENCE:-' in script
@@ -275,6 +278,8 @@ def test_source_archive_includes_reader_facing_reports(tmp_path: Path) -> None:
         }
 
     assert ".github/workflows/ci.yml" in members
+    assert "scripts/check_release_packages.sh" in members
+    assert "scripts/package_smoke.py" in members
     assert report_members == {
         "reports/README.md",
         "reports/project_status_snapshot.json",

@@ -1057,3 +1057,14 @@ validation, and the one-command public diagnostic gate. No API credential or
 local VeraRAG checkout is used. Third-party actions are pinned to full commit
 hashes, and contract tests preserve the supported-version matrix, read-only
 permissions, secret-free design, and required diagnostic commands.
+
+## 2026-07-03: Built distributions now receive isolated smoke tests
+
+Added `scripts/check_release_packages.sh` and `scripts/package_smoke.py`. After
+building, the release gate installs the wheel and source distribution into two
+independent ephemeral `uv` environments and launches Python in isolated mode,
+outside the repository working directory. The smoke probe verifies installed
+package metadata/imports, required console entry points, the packaged offline
+configuration, and the complete packaged candidate benchmark with its frozen
+0.91 counter-evidence recall. The public CI diagnostic job runs the same check,
+closing the gap between source-tree tests and actually installable artifacts.
