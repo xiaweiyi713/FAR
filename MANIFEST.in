@@ -2,6 +2,7 @@ include PROJECT_PROPOSAL.md
 include uv.lock
 include .python-version
 include .gitattributes
+include .github/workflows/ci.yml
 
 recursive-include docs *.md
 recursive-include reports *.md *.csv *.json

@@ -265,12 +265,16 @@ def test_source_archive_includes_reader_facing_reports(tmp_path: Path) -> None:
     )
     archive = next(dist_dir.glob("*.tar.gz"))
     with tarfile.open(archive) as tar:
+        members = {
+            Path(name).relative_to(Path(name).parts[0]).as_posix() for name in tar.getnames()
+        }
         report_members = {
             Path(name).relative_to(Path(name).parts[0]).as_posix()
             for name in tar.getnames()
             if "/reports/" in name
         }
 
+    assert ".github/workflows/ci.yml" in members
     assert report_members == {
         "reports/README.md",
         "reports/project_status_snapshot.json",

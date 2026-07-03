@@ -3,6 +3,7 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-3776AB.svg)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Research status](https://img.shields.io/badge/status-research%20artifact-orange.svg)](docs/COMPLETION_AUDIT.md)
+[![CI](https://github.com/xiaweiyi713/FAR/actions/workflows/ci.yml/badge.svg)](https://github.com/xiaweiyi713/FAR/actions/workflows/ci.yml)
 
 **Ask What Could Be Wrong: Falsification-Guided Retrieval for Self-Correcting
 Language Agents**
@@ -101,6 +102,10 @@ cd FAR
 uv sync --extra dev --extra eval
 uv run python examples/offline_demo.py
 ```
+
+The public CI workflow tests Python 3.10--3.13 and checks lint, types, the
+benchmark, the redacting secret scan, and tracked single-author diagnostic
+evidence without cloud credentials or VeraRAG.
 
 The offline demo and deterministic protocol do not require API keys. To use the
 formal dense/reranking/NLI stack, install the experiment dependencies and, when

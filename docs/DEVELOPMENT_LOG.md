@@ -1046,3 +1046,14 @@ malformed, or stale JSON/Markdown now fails with an explicit error and no file
 mutation. `scripts/solo_diagnostic_check.sh` runs this verifier and its focused
 tests, so the one-command public diagnostic gate can no longer pass while its
 headline project-status ledger is out of date.
+
+## 2026-07-03: Public continuous integration added
+
+Added a least-privilege GitHub Actions workflow for the public repository. A
+Python 3.10--3.13 matrix installs only FAR's locked public `dev` and `eval`
+dependencies and runs the complete test suite. A separate Python 3.12 job runs
+format/lint, static types, the redacting secret scan, candidate-benchmark
+validation, and the one-command public diagnostic gate. No API credential or
+local VeraRAG checkout is used. Third-party actions are pinned to full commit
+hashes, and contract tests preserve the supported-version matrix, read-only
+permissions, secret-free design, and required diagnostic commands.

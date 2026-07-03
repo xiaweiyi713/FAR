@@ -1,0 +1,65 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tests:
+    name: Python ${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+      - name: Install uv and Python
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          version: "0.11.26"
+          python-version: ${{ matrix.python-version }}
+          enable-cache: true
+      - name: Install public test dependencies
+        run: uv sync --locked --extra dev --extra eval
+      - name: Run tests
+        run: uv run --locked pytest
+
+  public-diagnostic:
+    name: Public diagnostic gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+      - name: Install uv and Python
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          version: "0.11.26"
+          python-version: "3.12"
+          enable-cache: true
+      - name: Install public validation dependencies
+        run: uv sync --locked --extra dev --extra eval
+      - name: Check formatting and lint
+        run: |
+          uv run --locked ruff format --check .
+          uv run --locked ruff check .
+      - name: Check types
+        run: uv run --locked mypy far bench baselines eval experiments tests
+      - name: Scan tracked files for secrets
+        run: uv run --locked falsirag-scan-secrets --json
+      - name: Validate candidate benchmark
+        run: uv run --locked falsirag-validate-bench --data-dir bench
+      - name: Verify public diagnostic evidence
+        run: bash scripts/solo_diagnostic_check.sh

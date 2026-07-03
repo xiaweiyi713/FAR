@@ -19,6 +19,13 @@ uv run python -m pytest
 
 before publishing or replacing paper numbers.
 
+The same public-dependency contract runs in `.github/workflows/ci.yml` on
+Python 3.10--3.13. Its diagnostic job additionally runs lint, type checking,
+benchmark validation, the redacting secret scan, and
+`scripts/solo_diagnostic_check.sh`. It needs neither API secrets nor a sibling
+VeraRAG checkout; integration tests requiring that optional package are skipped
+when it is absent.
+
 On the final submission commit, run the single fail-closed release gate:
 
 ```bash
