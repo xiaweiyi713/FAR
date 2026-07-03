@@ -148,6 +148,13 @@ def solo_release_main() -> None:
     main()
 
 
+def evaluate_fever_binary_main() -> None:
+    _prefer_far_repo()
+    from experiments.evaluate_fever_binary import main
+
+    main()
+
+
 def score_blind_return_main() -> None:
     _prefer_far_repo()
     from experiments.score_blind_return import main

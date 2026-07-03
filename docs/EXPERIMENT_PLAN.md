@@ -25,6 +25,10 @@ Go/no-go gates:
    central claim as a diagnostic or negative result; do not shop test prompts.
 5. Freeze code/config, transfer test gold to an independent custodian, then run
    test once. Report all failures and intervals.
+6. Keep the visible FEVER binary transfer diagnostic frozen after its first
+   inspection. Its inherited SUPPORTS/REFUTES labels may evaluate binary
+   detection, but its machine-generated typed buckets must not support typed
+   claims or become a post-hoc tuning set presented as external validation.
 
 After the custodian returns all three unscored suites, use
 `falsirag-score-blind-return` with the role-separated attestation. Final

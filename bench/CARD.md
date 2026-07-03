@@ -29,9 +29,11 @@ retains its own terms. Synthetic boundary and distractor documents are released
 under the FAR MIT license and are marked `synthetic: true`.
 
 The optional FEVER external slice is imported from VeraRAG's fingerprinted
-candidate set. Its declared upstream licenses are CC-BY-SA-3.0 and GPL-3.0. It
-remains separate from the main benchmark and cannot be reported as gold before
-independent annotation and adjudication.
+candidate set. Its declared upstream licenses are CC-BY-SA-3.0 and GPL-3.0.
+Its binary SUPPORTS/REFUTES labels and evidence inherit FEVER's human
+annotations, so they support a separately reported binary diagnostic. The four
+typed sampling buckets were generated heuristically and remain non-gold; they
+still require independent annotation and adjudication before any typed claim.
 
 ## Splits and leakage control
 
@@ -123,3 +125,6 @@ small source corpus, correlated variants within source-document groups,
 Chinese-heavy main data, currently uncompleted human annotation, and an
 operational rather than externally enforced blind test. Confidence intervals
 must respect dependency groups. Report external FEVER results separately.
+The frozen FEVER binary result evaluates only the conflict detector over
+visible claim-evidence pairs, not retrieval, revision, the complete FAR
+pipeline, or an externally held blind test.

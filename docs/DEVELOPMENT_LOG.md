@@ -951,3 +951,22 @@ report/score links, and artifact outputs. It also rejects symlinks and any
 attempt to claim publication gold, human IAA replacement, strict-gate impact,
 or publication readiness. The release verifies successfully while remaining
 explicitly `publication_ready:false`; it does not change the strict AAAI gate.
+
+## 2026-07-03: Frozen FEVER binary transfer diagnostic
+
+The 100-pair external FEVER candidate set was separated into what its
+provenance actually supports. SUPPORTS/REFUTES labels and evidence are inherited
+from human-annotated FEVER; temporal, numeric, source, and definition sampling
+buckets are machine heuristics and remain `publication_gold:false`. Added
+`falsirag-eval-fever-binary run|verify`, a pinned NLI configuration, source
+fingerprint and transformation audits, prediction/config/README fingerprints,
+metric and confidence-interval recomputation, paired bootstrap, and exact
+McNemar verification.
+
+On the frozen visible slice, the heuristic detector obtains accuracy 0.72,
+precision 1.00, recall 0.30, and F1 0.462. VeraRAG NLI obtains accuracy 0.72,
+precision 0.80, recall 0.40, and F1 0.533. Its paired accuracy difference is
+0.00 (95% bootstrap [-0.05, 0.05]); four samples improve and four regress, so
+exact McNemar `p=1.0`. The result is retained as an honest external-transfer
+failure signal and frozen without tuning. It is not full FAR, typed gold,
+external blindness, or a publication-ready main result.

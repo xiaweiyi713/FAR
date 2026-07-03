@@ -1,0 +1,149 @@
+{
+  "config_file": "detector_config.yaml",
+  "config_sha256": "1ca65ad4c40ac6ba78b712dfd4dfa0c99730dc0e3b9cc2dc79b706a6d317bda3",
+  "created_at": "2026-07-03T03:36:29.212439+00:00",
+  "interpretation": {
+    "allowed_claim": "visible external-slice binary conflict-detection transfer diagnostic",
+    "binary_labels_inherited_from_human_annotated_fever": true,
+    "externally_held_blind_test": false,
+    "full_far_pipeline_evaluated": false,
+    "publication_ready_main_result": false,
+    "typed_bucket_publication_gold": false,
+    "typed_buckets_are_machine_seeded": true
+  },
+  "methods": {
+    "heuristic": {
+      "accuracy_ci": {
+        "confidence": 0.95,
+        "estimate": 0.72,
+        "lower": 0.6600000000000001,
+        "method": "stratified-percentile-bootstrap-v1",
+        "metric": "correct",
+        "resamples": 2000,
+        "seed": 1729,
+        "strata": {
+          "REFUTES": 40,
+          "SUPPORTS": 60
+        },
+        "upper": 0.78
+      },
+      "metrics": {
+        "accuracy": 0.72,
+        "accuracy_by_machine_sampling_bucket": {
+          "definitional_conflict": 0.0,
+          "numeric_conflict": 0.7,
+          "source_disagreement": 0.0,
+          "support_pair": 1.0,
+          "temporal_conflict": 0.5
+        },
+        "confusion_matrix": {
+          "fn": 28,
+          "fp": 0,
+          "tn": 60,
+          "tp": 12
+        },
+        "f1": 0.4615384615384615,
+        "precision": 1.0,
+        "recall": 0.3,
+        "samples": 100
+      },
+      "predictions_file": "predictions_heuristic.jsonl",
+      "predictions_sha256": "373434709bedb14b0ea8f2271017a519cde0a9eb7fb44bea0091bb51725fc31d"
+    },
+    "vera_nli": {
+      "accuracy_ci": {
+        "confidence": 0.95,
+        "estimate": 0.72,
+        "lower": 0.65,
+        "method": "stratified-percentile-bootstrap-v1",
+        "metric": "correct",
+        "resamples": 2000,
+        "seed": 1729,
+        "strata": {
+          "REFUTES": 40,
+          "SUPPORTS": 60
+        },
+        "upper": 0.79
+      },
+      "metrics": {
+        "accuracy": 0.72,
+        "accuracy_by_machine_sampling_bucket": {
+          "definitional_conflict": 0.2,
+          "numeric_conflict": 0.8,
+          "source_disagreement": 0.1,
+          "support_pair": 0.9333333333333333,
+          "temporal_conflict": 0.5
+        },
+        "confusion_matrix": {
+          "fn": 24,
+          "fp": 4,
+          "tn": 56,
+          "tp": 16
+        },
+        "f1": 0.5333333333333333,
+        "precision": 0.8,
+        "recall": 0.4,
+        "samples": 100
+      },
+      "predictions_file": "predictions_vera_nli.jsonl",
+      "predictions_sha256": "8103094e2d498cad29ccd1cd3682467d2cbba211c59b1a19dbc051c516ec6efe"
+    }
+  },
+  "paired_comparisons": {
+    "vera_nli_vs_heuristic": {
+      "accuracy": {
+        "candidate_minus_baseline": 0.0,
+        "confidence": 0.95,
+        "higher_is_better": true,
+        "lower": -0.05,
+        "method": "paired-stratified-percentile-bootstrap-v1",
+        "metric": "correct",
+        "pairs": 100,
+        "probability_candidate_better": 0.424,
+        "resamples": 2000,
+        "seed": 1729,
+        "upper": 0.05
+      },
+      "mcnemar": {
+        "baseline_only": 4,
+        "candidate_only": 4,
+        "discordant": 8,
+        "method": "exact-two-sided-mcnemar-v1",
+        "p_value": 1.0
+      }
+    }
+  },
+  "readme_sha256": "d665a357c09889d054b72350990a925a32356aa81172a1de0ef54629938ce169",
+  "schema_version": "far-fever-binary-evaluation-v1",
+  "source_audit": {
+    "binary_reference": {
+      "official_fever_url": "https://fever.ai/dataset/fever.html",
+      "source": "human-annotated FEVER SUPPORTS/REFUTES labels and gold evidence",
+      "upstream_dataset_url": "https://huggingface.co/datasets/copenlu/fever_gold_evidence"
+    },
+    "documents": 200,
+    "errors": [],
+    "fingerprints": {
+      "corpus_sha256": "0f6c9848405aff6915cc0e1930c08b33de5c81c3065a937a196b444e0df9da3d",
+      "questions_sha256": "ec95969eaaa26c1c74519eead85228723e97e8e4c5044ac9fd740bc097715cad",
+      "upstream_manifest_sha256": "69c13e062c6a4a64c12d015f1d6aa0449d7157456d73a1be515662dac3ae525c"
+    },
+    "labels": {
+      "REFUTES": 40,
+      "SUPPORTS": 60
+    },
+    "machine_typed_buckets": {
+      "definitional_conflict": 10,
+      "numeric_conflict": 10,
+      "source_disagreement": 10,
+      "support_pair": 60,
+      "temporal_conflict": 10
+    },
+    "questions": 100,
+    "schema_version": "far-fever-binary-source-audit-v1",
+    "typed_bucket_publication_gold": false,
+    "valid": true
+  },
+  "source_manifest_sha256": "59e023401c48205954e5f895dce34985e154ae8815b83e7f258f0c42ffaed07d",
+  "study_profile": "external_fever_binary_transfer_diagnostic"
+}

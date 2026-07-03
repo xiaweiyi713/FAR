@@ -585,6 +585,33 @@ directory. With `--overwrite`, it replaces only the known FAR-generated artifact
 files and still rejects unexpected leftovers, which prevents stale tables or
 figures from being silently carried into the manifest.
 
+## Frozen FEVER binary transfer diagnostic
+
+The external FEVER slice supports binary scoring from inherited human-annotated
+SUPPORTS/REFUTES labels, but its typed sampling buckets remain machine-generated
+and non-gold. Reproduce the frozen detector-only comparison with the pinned
+local NLI snapshot:
+
+```bash
+uv run falsirag-eval-fever-binary run \
+  --data-dir bench/external/fever_pair_candidates_v1 \
+  --output-dir diagnostics/fever_binary_v1 \
+  --detector heuristic \
+  --detector vera_nli \
+  --config experiments/configs/fever_binary_nli.yaml \
+  --resamples 2000 \
+  --overwrite
+
+uv run falsirag-eval-fever-binary verify \
+  --data-dir bench/external/fever_pair_candidates_v1 \
+  diagnostics/fever_binary_v1
+```
+
+Verification recomputes source transformations, every prediction row, metrics,
+confidence intervals, paired bootstrap, McNemar, and file fingerprints. Do not
+tune on this visible frozen slice and then report it as independent external
+validation.
+
 ## Paper
 
 ```bash

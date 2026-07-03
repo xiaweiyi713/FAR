@@ -37,6 +37,14 @@ bundle gates. The complete non-publication evidence is tracked under
 synthetic-benchmark report, not the strict human/external claims required by
 the current AAAI submission draft.
 
+A separate frozen FEVER binary transfer diagnostic is also public under
+`diagnostics/fever_binary_v1/`. The human-annotated upstream FEVER labels yield
+0.72 accuracy for both the heuristic and VeraRAG NLI detectors; NLI raises
+recall from 0.30 to 0.40 but does not improve paired accuracy (McNemar
+`p=1.0`). This negative result exposes limited detector transfer. It does not
+evaluate the full FAR pipeline, and the machine-generated typed buckets remain
+non-gold, so these values must not populate the AAAI main table.
+
 Do not replace `PENDING-EMPIRICAL-RUN` cells until result bundle validation
 passes. Diagnostic smoke figures under `outputs/` are not submission figures.
 The final handoff is now machine-auditable through

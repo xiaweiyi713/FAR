@@ -69,6 +69,7 @@ flowchart LR
 | Formal model matrix | DeepSeek V4-Flash and Qwen3.7 Plus runs await rotated credentials and adjudicated labels |
 | Blind test | Gold-free bundle, custody protocol, return validator, and trusted scorer implemented; external execution pending |
 | Solo study profile | Automated readiness passes; 69-file, 11-method diagnostic evidence bundle is tracked and self-verifying |
+| External transfer | Frozen 100-pair FEVER binary diagnostic is public; accuracy 0.72 and low recall disclose limited transfer |
 | Paper | Anonymous AAAI-27 draft and checklist compile; final empirical cells and human review pending |
 
 The authoritative requirement-by-requirement status is
@@ -209,6 +210,26 @@ any manifest that upgrades the bundle to human gold or publication-ready
 evidence. To rebuild the bundle from local ignored outputs, use
 `falsirag-solo-release build`; the exact command is documented in the bundle
 README.
+
+The separately licensed FEVER slice has a narrower inherited reference:
+SUPPORTS/REFUTES and gold evidence come from the human-annotated
+[FEVER dataset](https://fever.ai/dataset/fever.html), while FAR's four typed
+sampling buckets remain machine-generated and non-gold. The frozen external
+binary diagnostic is tracked in
+[diagnostics/fever_binary_v1](diagnostics/fever_binary_v1). Verify it with:
+
+```bash
+uv run falsirag-eval-fever-binary verify \
+  --data-dir bench/external/fever_pair_candidates_v1 \
+  diagnostics/fever_binary_v1
+```
+
+Both the heuristic and VeraRAG NLI detector reach 0.72 accuracy. NLI improves
+binary conflict recall from 0.30 to 0.40 and F1 from 0.462 to 0.533, but the
+paired accuracy difference is zero (95% bootstrap [-0.05, 0.05], McNemar
+`p=1.0`). This is a visible detector-transfer diagnostic—not a full FAR run,
+typed gold, external blindness, or a publication main result—and it is frozen
+without post-inspection tuning.
 
 ## Reproducibility and release gates
 
