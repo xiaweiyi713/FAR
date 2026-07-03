@@ -187,6 +187,9 @@ def test_release_check_fingerprints_generated_audit_and_pdf_artifacts() -> None:
         assert f"--artifact {role}=" in script
     checksum_offset = script.index("uv run falsirag-release-checksums")
     readiness_offset = script.index("uv run falsirag-submission-readiness")
+    solo_offset = script.index("bash scripts/solo_diagnostic_check.sh")
+    validate_offset = script.index("uv run falsirag-validate-bench")
+    assert solo_offset < validate_offset
     assert checksum_offset < readiness_offset
     assert "submission_readiness_snapshot" not in script
     assert 'EVIDENCE_PATH="${FAR_SUBMISSION_EVIDENCE:-' in script

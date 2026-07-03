@@ -22,6 +22,7 @@ uv run ruff format --check .
 uv run ruff check .
 uv run mypy far bench baselines eval experiments tests
 uv run pytest -q
+bash scripts/solo_diagnostic_check.sh
 uv run falsirag-validate-bench --output build/release/benchmark-validation.json
 uv run falsirag-scan-secrets --json > build/release/secret-scan.json
 uv run falsirag-generate-sbom \
