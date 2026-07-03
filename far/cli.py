@@ -167,3 +167,10 @@ def review_priority_main() -> None:
     from experiments.review_priority import main
 
     main()
+
+
+def project_status_main() -> None:
+    _prefer_far_repo()
+    from experiments.project_status import main
+
+    main()

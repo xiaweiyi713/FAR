@@ -6,3 +6,7 @@ This directory contains durable, versioned reports derived from tracked project 
 - [Solo human-review priority CSV](solo_human_review_priority.csv): a deterministic
   triage table for the 122 machine-disputed rows. It is generated from the
   tracked machine-consensus audit and is a review-priority aid, not gold labels.
+- [Project status snapshot](project_status_snapshot.md) and
+  [machine-readable JSON](project_status_snapshot.json): a generated ledger
+  separating the complete single-author diagnostic track from the still-blocked
+  strict AAAI submission track.

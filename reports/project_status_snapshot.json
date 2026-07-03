@@ -1,0 +1,86 @@
+{
+  "evidence": {
+    "benchmark": {
+      "candidate_ready": true,
+      "counter_evidence_recall": 0.91,
+      "documents": 175,
+      "fingerprints": {
+        "benchmark_sha256": "c5bd988f60646bde33d62f654ddb456d2c2c1279175bee92ef503f362addbd8f",
+        "corpus_sha256": "cca5f62db0fbb51e1bae8111ea85fe169fba7be5a8e63847a9c1c048cdae25cd",
+        "split_manifest_sha256": "ac83fa38d452371017a0c9f7fdf3447817071731032bce3579543f2e2524ce4a"
+      },
+      "publication_ready": false,
+      "samples": 300,
+      "valid": true
+    },
+    "fever_binary": {
+      "errors": [],
+      "publication_ready_main_result": false,
+      "schema_version": "far-fever-binary-evaluation-audit-v1",
+      "valid": true
+    },
+    "reader_reports": {
+      "files": {
+        "reports/README.md": "003e3ea1629f5858c601fce2bb2a09b47abf356bf844340fc928a031e31eb357",
+        "reports/single_author_diagnostic_report.md": "076534b0000e3dd37d4c67b89788cf46a662670c0f5e3a6f6283d476497d8f2c",
+        "reports/solo_human_review_priority.csv": "bb036eb51e27d4b654978dd2bd0a2330422c58bf7bc2e6769fced165242a5dee"
+      },
+      "missing": [],
+      "valid": true
+    },
+    "review_priority": {
+      "can_satisfy_human_annotation_gate": false,
+      "dispositions": [
+        "machine_disputed"
+      ],
+      "path": "reports/solo_human_review_priority.csv",
+      "publication_gold": false,
+      "rows": 122,
+      "sha256": "bb036eb51e27d4b654978dd2bd0a2330422c58bf7bc2e6769fced165242a5dee",
+      "valid": true
+    },
+    "solo_release": {
+      "errors": [],
+      "files": 69,
+      "methods": 11,
+      "publication_ready": false,
+      "schema_version": "far-solo-diagnostic-release-audit-v1",
+      "valid": true
+    }
+  },
+  "project_profile": "far_proposal_completion_status",
+  "schema_version": "far-project-status-snapshot-v1",
+  "single_author_machine_audited_diagnostic": {
+    "allowed_claim": "public single-author machine-audited diagnostic",
+    "complete": true,
+    "forbidden_claims": [
+      "human gold",
+      "human inter-annotator agreement",
+      "externally held blind-test result",
+      "strict AAAI submission readiness"
+    ]
+  },
+  "strict_aaai_submission": {
+    "blockers": [
+      "human_annotation",
+      "adjudicated_dev_matrix",
+      "final_blind_bundle",
+      "external_blind_returns",
+      "blind_test_attestation",
+      "trusted_test_scoring",
+      "release_archive",
+      "human_paper_review"
+    ],
+    "external_blockers": [
+      "adjudicated_dev_matrix",
+      "blind_test_attestation",
+      "external_blind_returns",
+      "final_blind_bundle",
+      "human_annotation",
+      "human_paper_review",
+      "trusted_test_scoring"
+    ],
+    "ready": false,
+    "template_evidence_used_for_status_only": true
+  }
+}

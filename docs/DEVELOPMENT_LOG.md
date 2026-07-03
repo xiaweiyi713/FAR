@@ -1019,3 +1019,20 @@ and revised-answer hashes. The table answers the practical single-author
 question: if only a small amount of review time appears later, which rows should
 be inspected first? It remains `publication_gold:false` in interpretation and
 does not alter the strict submission gate.
+
+## 2026-07-03: Generated dual-track project status snapshot
+
+Added `falsirag-project-status` plus the tracked
+`reports/project_status_snapshot.md` and `.json` outputs. The snapshot reads
+current repository evidence instead of copying prose from the plan: benchmark
+validation, the 69-file solo diagnostic release verifier, frozen FEVER binary
+verification, the 122-row review-priority table, reader-facing report files, and
+the fail-closed strict submission readiness audit against the tracked template.
+
+The generated status ledger records the single-author machine-audited
+diagnostic track as complete while keeping the strict AAAI submission track
+false with explicit blockers for human annotation, adjudicated dev runs, final
+blind bundle, external returns, attestation, trusted scoring, release archive,
+and human paper review. It is intentionally a lightweight status audit; the
+full `scripts/release_check.sh` gate remains responsible for release-package and
+paper-build validation.

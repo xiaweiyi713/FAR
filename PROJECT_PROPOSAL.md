@@ -4,7 +4,7 @@
 > 目标会议：**AAAI-27 主会**（[官方 CFP，2026-06-29 核验](https://aaai.org/conference/aaai/aaai-27/main-technical-track-call/)：摘要 2026-07-21 / 全文 2026-07-28 / 补充 2026-07-31；正文最多 7 页、含参考文献最多 9 页）
 > 本文是 FAR 的完整项目企划：研究问题 / 方法 / 目录结构 / 技术栈 / 基准 / 实验 / 时间线 / **VeraRAG 复用映射（精确到文件）** / 风险对冲。
 
-> **执行状态**：企划到实现的逐项证据见 [`docs/PROPOSAL_TRACEABILITY.md`](docs/PROPOSAL_TRACEABILITY.md)。代码、候选基准、运行器、统计和论文骨架已实现。项目现分成两条互不混淆的验收路径：① 单作者机器审计诊断路径已可完整自动验收；② AAAI 严格投稿路径仍要求真实独立双标注/仲裁、外部保管盲测和冻结多模型结果，机器结果不能伪装成这些外部角色。
+> **执行状态**：企划到实现的逐项证据见 [`docs/PROPOSAL_TRACEABILITY.md`](docs/PROPOSAL_TRACEABILITY.md)。代码、候选基准、运行器、统计和论文骨架已实现；机器生成的当前状态账本见 [`reports/project_status_snapshot.md`](reports/project_status_snapshot.md)。项目现分成两条互不混淆的验收路径：① 单作者机器审计诊断路径已可完整自动验收；② AAAI 严格投稿路径仍要求真实独立双标注/仲裁、外部保管盲测和冻结多模型结果，机器结果不能伪装成这些外部角色。
 
 ---
 

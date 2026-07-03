@@ -72,12 +72,17 @@ flowchart LR
 | Blind test | Gold-free bundle, custody protocol, return validator, and trusted scorer implemented; external execution pending |
 | Solo study profile | Automated readiness passes; 69-file, 11-method diagnostic evidence bundle is tracked and self-verifying |
 | External transfer | Frozen 100-pair FEVER binary diagnostic is public; accuracy 0.72 and low recall disclose limited transfer |
-| Report | Single-author machine-audited diagnostic report and review-priority CSV are tracked under [reports/](reports/) |
+| Report | Single-author diagnostic report, review-priority CSV, and generated project-status snapshot are tracked under [reports/](reports/) |
 | Paper | Anonymous AAAI-27 draft and checklist compile; final empirical cells and human review pending |
 
 The authoritative requirement-by-requirement status is
 [docs/COMPLETION_AUDIT.md](docs/COMPLETION_AUDIT.md). Diagnostic scores must not
 be copied into the paper's final table.
+
+For a generated status ledger, see
+[reports/project_status_snapshot.md](reports/project_status_snapshot.md). It
+confirms the single-author diagnostic track is complete while the strict AAAI
+submission track remains blocked on real external evidence.
 
 ## Installation
 
