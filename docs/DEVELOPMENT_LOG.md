@@ -18,6 +18,23 @@ reports. The importer now assigns every document the same
 Tests enforce both invariants. The anonymized corpus SHA-256 is
 `219269fedcdc21c9bd87b045a5afd1e7ce60c22ea21f4c1e8ded9c7658d61496`.
 
+The anonymized rerun then passed both one-row stages from clean commit
+`fa3b344767c07d03cc21119adc2509fd7e54aba1`:
+
+- initial answer: signature
+  `7fcdc3e1884b9f0dc3559c7135a7e90ed3acacf48ff037d5ad171b1defc4ba8e`,
+  prediction SHA-256
+  `23705228e2ed73dad802679bebc4194dd4a7dac22af059cc4f0c96b92b636c2e`;
+- full FAR: signature
+  `f97f621155e143123b45212efabb85a777faee2e1abd41ff6538c7b3184a175e`,
+  prediction SHA-256
+  `cf0fa9e09046ec6046d4a12c12b5e375f4b9590e4e0b70cc501926e03db5e438`.
+
+The completed FAR row used only item-local document IDs and contained neither
+runtime document-type metadata nor type-bearing source names. The formal Phase A
+suite was restarted from zero after this validation; no invalidated checkpoint
+was reused.
+
 ## 2026-07-04: RAMDocs closed-corpus GPU smoke and Phase A launch
 
 The pinned 500-row RAMDocs import was rebuilt at Hugging Face revision
