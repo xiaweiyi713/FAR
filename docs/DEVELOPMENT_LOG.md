@@ -53,6 +53,21 @@ described as a human factuality judgement.
 The active protocol SHA-256 after this clarification is
 `a38d048eb280eb7e3f0fdb316f3a57a298c983a22549712bcfa9c6e937c6c9f2`.
 
+## 2026-07-04: deviation — freeze joint consensus and author self-consistency
+
+This clarification occurred before jury aggregation and before author
+adjudication. Type-level G-K remains unchanged. Promotion of an unadjudicated
+jury row now requires a joint majority over conflict presence, conflict type,
+revision action, and revised-answer acceptability, preventing an incoherent gold
+row assembled from unrelated field-wise votes. The author G-S score uses exact
+agreement over the same four categorical fields; free text is intentionally
+excluded. The 20% second-pass sample is fixed as 12 rows from each of the five
+construction categories (60 total), selected deterministically without exposing
+round-one labels.
+
+The active protocol SHA-256 after this clarification is
+`e629d57e0d495380c4090943c7ad694740ad0e6e130d8f1dfd0d57507141d6c1`.
+
 ## 2026-06-29: formal retrieval/conflict stack cutoff
 
 Scope: the 60-item development split only. The held-out test inputs and labels
