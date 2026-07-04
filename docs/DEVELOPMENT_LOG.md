@@ -1,5 +1,31 @@
 # Development Decision Log
 
+## 2026-07-04: RAMDocs closed-corpus GPU smoke and Phase A launch
+
+The pinned 500-row RAMDocs import was rebuilt at Hugging Face revision
+`9c041bfd158c603b615883d9a931b00cbc141494`. It contains 2,766 documents and a
+frozen 350/150 development/test split. The test input file exposes only
+`id/question/split`; no test scoring was run.
+
+On the D:-backed Windows GPU host, a clean-checkout Qwen3.5 9B initialization
+pilot completed 3/3 samples with zero errors and no hidden labels loaded. Its run
+signature is `de7782c49b7e6028312cf7bf681ec7c7d7a77b7b398058302f694a3f92c4e599`
+and prediction SHA-256 is
+`3d649c0b242e78d77e8627a1d2f0ae1afed2ccd04b0ad7636e96520f59a58388`.
+
+A separate full-FAR smoke was intentionally interrupted after the first durable
+checkpoint. That completed row loaded the pinned NLI model, generated six
+LLM-marked typed queries, produced two revision traces, used only `RAM0001-*`
+documents, contained no thinking text, and finished in 83.2 seconds. It is a
+runtime smoke, not a paper result.
+
+The complete RAMDocs development suite was then launched in tmux session
+`far-ramdocs-phase-a`, writing to `/mnt/d/FAR-outputs/ramdocs_dev_v1`. It runs
+from clean Git commit `171d943a0bc9e1e595008eaaf37186e70c8e608f` and resumes from
+incrementally flushed checkpoints. The G-A stop rule remains authoritative: no
+jury annotation, held-out scoring, or upgraded paper packaging begins unless
+the completed development comparison passes G-A.
+
 ## 2026-07-04: 2+4 protocol preregistered
 
 The zero-budget replacement for the unavailable independent-human annotation

@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import shutil
+import tempfile
 from collections import Counter
 from itertools import combinations
 from pathlib import Path
@@ -237,18 +238,58 @@ def build_jury_consensus(
     return report
 
 
+def verify_jury_consensus(
+    data_dir: Path,
+    juror_dirs: list[Path],
+    output_dir: Path,
+) -> dict[str, Any]:
+    errors: list[str] = []
+    try:
+        tracked_report = json.loads(
+            (output_dir / "jury_consensus_report.json").read_text(encoding="utf-8")
+        )
+        tracked_rows = output_dir / str(tracked_report["jury_consensus_rows"])
+        if sha256_file(tracked_rows) != tracked_report.get("jury_consensus_rows_sha256"):
+            errors.append("tracked jury consensus rows fingerprint mismatch")
+        with tempfile.TemporaryDirectory(prefix="far-jury-verify-") as temporary:
+            rebuilt_dir = Path(temporary) / "consensus"
+            rebuilt = build_jury_consensus(data_dir, juror_dirs, rebuilt_dir)
+            rebuilt_rows = rebuilt_dir / str(rebuilt["jury_consensus_rows"])
+            if rebuilt != tracked_report:
+                errors.append("jury consensus report differs from recomputation")
+            if rebuilt_rows.read_bytes() != tracked_rows.read_bytes():
+                errors.append("jury consensus rows differ from recomputation")
+    except (FileNotFoundError, json.JSONDecodeError, KeyError, TypeError, ValueError) as exc:
+        errors.append(str(exc))
+    return {
+        "schema_version": "far-jury-consensus-audit-v1",
+        "valid": not errors,
+        "errors": errors,
+        "gate_k_passed": (
+            tracked_report.get("gate_k_passed") if "tracked_report" in locals() else False
+        ),
+    }
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--data-dir", type=Path, required=True)
     parser.add_argument("--juror-dir", type=Path, action="append", required=True)
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--overwrite", action="store_true")
+    parser.add_argument("--verify", action="store_true")
     args = parser.parse_args()
-    result = build_jury_consensus(
-        args.data_dir, args.juror_dir, args.output_dir, overwrite=args.overwrite
+    result = (
+        verify_jury_consensus(args.data_dir, args.juror_dir, args.output_dir)
+        if args.verify
+        else build_jury_consensus(
+            args.data_dir, args.juror_dir, args.output_dir, overwrite=args.overwrite
+        )
     )
     print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
-    if not result["gate_k_passed"]:
+    if args.verify and not result["valid"]:
+        raise SystemExit(1)
+    if not args.verify and not result["gate_k_passed"]:
         raise SystemExit(2)
 
 

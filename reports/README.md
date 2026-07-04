@@ -14,3 +14,7 @@ This directory contains durable, versioned reports derived from tracked project 
   [machine-readable JSON](solo_paper_readiness.json): the explicitly relaxed
   paper gate. It permits only the narrow typed-control mechanism claim and
   requires disclosure of negative ablations and all non-human/non-blind limits.
+- The project-status snapshot also exposes the preregistered 2+4 profile:
+  RAMDocs upstream-label validation, cross-family LLM jury, author-blind
+  adjudication, multi-model jury-gold rescoring, and commit-bound one-shot tests.
+  It remains fail-closed until every corresponding evidence artifact exists.

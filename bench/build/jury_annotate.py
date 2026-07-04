@@ -186,6 +186,59 @@ def annotate_juror(
     return manifest
 
 
+def verify_juror(packet_dir: Path, output_dir: Path) -> dict[str, Any]:
+    errors: list[str] = []
+    try:
+        verify_active_protocol()
+        manifest = json.loads(
+            (output_dir / "jury_annotation_manifest.json").read_text(encoding="utf-8")
+        )
+        packet_sha = sha256_file(packet_dir / "packet_manifest.json")
+        path = output_dir / str(manifest["annotation_file"])
+        rows = read_jsonl(path)
+        juror_id = str(manifest["juror_id"])
+        family = str(manifest["model_family"])
+        if manifest.get("schema_version") != "far-jury-annotation-manifest-v1":
+            errors.append("unsupported jury annotation manifest schema")
+        if manifest.get("protocol_fingerprint") != PROTOCOL_ACTIVE_SHA256:
+            errors.append("jury annotation uses a stale protocol")
+        if manifest.get("prompt_sha256") != PROMPT_SHA256:
+            errors.append("jury annotation prompt fingerprint mismatch")
+        if manifest.get("source_packet_sha256") != packet_sha:
+            errors.append("jury annotation source packet fingerprint mismatch")
+        if family.lower() in SYSTEM_MODEL_FAMILIES:
+            errors.append("jury annotation family overlaps system families")
+        if sha256_file(path) != manifest.get("annotation_sha256"):
+            errors.append("jury annotation file fingerprint mismatch")
+        ids = [str(row.get("sample_id", "")) for row in rows]
+        if len(ids) != len(set(ids)) or len(rows) != manifest.get("samples"):
+            errors.append("jury annotation rows are duplicate or incomplete")
+        for row in rows:
+            if row.get("juror_id") != juror_id or row.get("model_family") != family:
+                errors.append("jury annotation row identity mismatch")
+                break
+            annotation = row.get("jury_annotation", {})
+            normalized = _normalise_prediction(annotation, str(row.get("sample_id", "")))
+            if normalized["conflict_type"] not in {*JURY_TYPES, "no_conflict"}:
+                errors.append("jury annotation contains an out-of-space conflict type")
+                break
+            if normalized["conflict_present"] and not normalized["suggested_revised_answer"]:
+                errors.append("conflict-positive jury annotation lacks a revision")
+                break
+        fallbacks = sum(_is_fallback(row) for row in rows)
+        if fallbacks != manifest.get("fallbacks"):
+            errors.append("jury fallback count mismatch")
+    except (FileNotFoundError, json.JSONDecodeError, KeyError, TypeError, ValueError) as exc:
+        errors.append(str(exc))
+    return {
+        "schema_version": "far-jury-annotation-audit-v1",
+        "valid": not errors,
+        "errors": errors,
+        "samples": len(rows) if "rows" in locals() else 0,
+        "fallbacks": fallbacks if "fallbacks" in locals() else 0,
+    }
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--packet-dir", type=Path, required=True)
@@ -197,19 +250,26 @@ def main() -> None:
     parser.add_argument("--overwrite", action="store_true")
     parser.add_argument("--resume", action="store_true")
     parser.add_argument("--retry-fallbacks", action="store_true")
+    parser.add_argument("--verify", action="store_true")
     args = parser.parse_args()
-    result = annotate_juror(
-        args.packet_dir,
-        args.config,
-        args.output_dir,
-        juror_id=args.juror_id,
-        model_family=args.model_family,
-        limit=args.limit,
-        overwrite=args.overwrite,
-        resume=args.resume,
-        retry_fallbacks=args.retry_fallbacks,
+    result = (
+        verify_juror(args.packet_dir, args.output_dir)
+        if args.verify
+        else annotate_juror(
+            args.packet_dir,
+            args.config,
+            args.output_dir,
+            juror_id=args.juror_id,
+            model_family=args.model_family,
+            limit=args.limit,
+            overwrite=args.overwrite,
+            resume=args.resume,
+            retry_fallbacks=args.retry_fallbacks,
+        )
     )
     print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
+    if args.verify and not result["valid"]:
+        raise SystemExit(1)
 
 
 if __name__ == "__main__":

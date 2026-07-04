@@ -14,8 +14,12 @@ from bench.build.jury_adjudication import (
     freeze_round1,
     freeze_round2,
 )
-from bench.build.jury_annotate import PROMPT_SHA256
-from bench.build.jury_consensus import build_jury_consensus, fleiss_kappa
+from bench.build.jury_annotate import PROMPT_SHA256, verify_juror
+from bench.build.jury_consensus import (
+    build_jury_consensus,
+    fleiss_kappa,
+    verify_jury_consensus,
+)
 from experiments.protocol_2plus4 import PROTOCOL_ACTIVE_SHA256
 
 
@@ -64,6 +68,7 @@ def _jury_dir(
             "protocol_fingerprint": PROTOCOL_ACTIVE_SHA256,
             "prompt_sha256": PROMPT_SHA256,
             "source_packet_sha256": packet_sha,
+            "samples": len(rows),
             "fallbacks": 0,
             "annotation_file": filename,
             "annotation_sha256": sha256_file(directory / filename),
@@ -136,6 +141,8 @@ def test_jury_consensus_and_delayed_author_adjudication(tmp_path: Path) -> None:
     consensus = build_jury_consensus(data, jurors, consensus_dir)
     assert consensus["gate_k_passed"] is True
     assert consensus["dispositions"] == {"disputed": 1, "unanimous": 2}
+    assert all(verify_juror(packet, directory)["valid"] for directory in jurors)
+    assert verify_jury_consensus(data, jurors, consensus_dir)["valid"] is True
 
     adjudication = tmp_path / "adjudication"
     started = datetime(2026, 7, 4, tzinfo=timezone.utc)
@@ -178,3 +185,10 @@ def test_jury_rejects_system_family_overlap(tmp_path: Path) -> None:
     write_json(manifest_path, manifest)
     with pytest.raises(ValueError, match="overlaps"):
         build_jury_consensus(data, jurors, tmp_path / "consensus")
+
+
+def test_jury_verifier_rejects_tampering(tmp_path: Path) -> None:
+    _, packet, jurors = _fixture(tmp_path)
+    path = jurors[0] / "jury_annotations_J1.jsonl"
+    path.write_text(path.read_text(encoding="utf-8") + "{}\n", encoding="utf-8")
+    assert verify_juror(packet, jurors[0])["valid"] is False

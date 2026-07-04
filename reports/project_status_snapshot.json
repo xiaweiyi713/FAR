@@ -98,7 +98,7 @@
     },
     "reader_reports": {
       "files": {
-        "reports/README.md": "dbd703731278f89ea399138de314d7622cc0bbdb26181cb6276b9768aca2ebdd",
+        "reports/README.md": "b0bc2cacc94fa61fbb833f24a404ef1c1ebf6129c46ba56384677604e3647677",
         "reports/single_author_diagnostic_report.md": "98483f531dafe03d5a0526a12be877ac95a1ba53ad2c948932dfcd533d1508c3",
         "reports/solo_human_review_priority.csv": "bb036eb51e27d4b654978dd2bd0a2330422c58bf7bc2e6769fced165242a5dee",
         "reports/solo_paper_readiness.json": "89766c350a749b007c08c17ec57d81391318b559517ee5fcb7f31a9c18430b73",
