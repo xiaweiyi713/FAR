@@ -81,9 +81,13 @@ G-A stop path without accessing test.
 
 The in-flight formal suite was stopped before this scorer change was admitted;
 the replacement output directory had zero completed rows. No prior formal or
-smoke output is eligible for G-A. The complete 350-item development suite will
-restart from zero only from the clean commit containing this metric and its
-tests.
+smoke output is eligible for G-A. The complete 350-item development suite was
+restarted from zero from clean commit
+`73109746a0780db788fa1d8e72fcea1ce4abc703` in tmux session
+`far-ramdocs-phase-a`, with a previously absent
+`/mnt/d/FAR-outputs/ramdocs_dev_v1` directory. The first initial-answer
+checkpoint was durably written, confirming the D:-backed Qwen/Ollama path is
+making progress. This is an execution checkpoint, not a scored result.
 
 ## 2026-07-04: RAMDocs closed-corpus GPU smoke and Phase A launch
 
