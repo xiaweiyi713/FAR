@@ -1329,3 +1329,31 @@ sample, and uses a new cache namespace so the replacement formal run cannot
 reuse responses from the abandoned attempt. The abandoned output directory must
 not be used as evidence; the replacement run starts from an empty output tree
 and binds to the new commit/config hash.
+
+## 2026-07-04: RAMDocs dev checkpoint recovery during Phase A
+
+During heartbeat monitoring, the replacement RAMDocs dev run was found without
+the `far-ramdocs-phase-a` tmux session or a live Python suite process. The
+output tree remained intact: initial answers were complete at 350/350, FAR was
+complete with 350 predictions and an evaluation report, and
+`far_minus_typed_conflict` had a partial checkpoint at 275/350. No suite
+manifest existed, so G-A was not evaluated.
+
+The immediate recovery failed because the Ollama service had also stopped and
+`http://localhost:11434` refused the model-identity inspection request. Ollama
+was restarted in tmux session `far-ollama-2plus4` with
+`OLLAMA_MODELS=/mnt/d/FAR-models/ollama`, exposing the pinned `qwen3.5:9b`
+model from D:. A second recovery attempt failed before writing additional
+samples because the manual tmux command did not inherit the D:-backed
+HuggingFace cache variables, so the pinned NLI model could not be resolved in
+offline mode.
+
+The formal suite was then restarted again from the same output directory and
+commit after sourcing `scripts/windows_gpu_env.sh`, restoring
+`HF_HOME=/mnt/d/FAR-models/huggingface`,
+`HUGGINGFACE_HUB_CACHE=/mnt/d/FAR-models/huggingface/hub`, and
+`OLLAMA_MODELS=/mnt/d/FAR-models/ollama`. The existing checkpoints make this a
+resume of the same replacement run, not a new scored attempt. The transient
+tracebacks are preserved in `/mnt/d/FAR-outputs/ramdocs_dev_v1.log` as recovery
+diagnostics; they occurred before additional samples were appended after the
+D:-cache environment was restored.
