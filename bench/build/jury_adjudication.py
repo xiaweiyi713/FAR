@@ -144,6 +144,10 @@ def _completed_rows(path: Path, expected_ids: set[str]) -> dict[str, dict[str, A
         if not sample_id or sample_id in rows:
             raise ValueError("completed adjudication has missing or duplicate sample IDs")
         row["author_annotation"] = _validated_annotation(row, "author_annotation")
+        if row["author_annotation"]["conflict_present"] and not str(
+            row["author_annotation"].get("revised_answer", "")
+        ).strip():
+            raise ValueError(f"{sample_id}: conflict-positive adjudication needs a revision")
         rows[sample_id] = row
     if set(rows) != expected_ids:
         raise ValueError("completed adjudication does not exactly cover the packet")

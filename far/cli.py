@@ -223,3 +223,24 @@ def jury_adjudication_main() -> None:
     from bench.build.jury_adjudication import main
 
     main()
+
+
+def ramdocs_suite_main() -> None:
+    _prefer_far_repo()
+    from experiments.ramdocs_suite import main
+
+    main()
+
+
+def model_matrix_main() -> None:
+    _prefer_far_repo()
+    from experiments.model_matrix import main
+
+    main()
+
+
+def jury_rescore_main() -> None:
+    _prefer_far_repo()
+    from experiments.jury_rescore import main
+
+    main()

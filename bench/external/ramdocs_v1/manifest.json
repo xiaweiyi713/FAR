@@ -23,7 +23,7 @@
     "tasks.jsonl": "d1d816c5d2045e0b2b09067fbb2938936644d33170f3a3bfa40960d43e5d9ce5"
   },
   "license": "MIT",
-  "protocol_fingerprint": "0b4c69868339cb018d8a83ada2663dc3047f251e4ea41d09b2ec92dde0f1769b",
+  "protocol_fingerprint": "e0221cfa9569ba089136fd017c1175ad282643c4c773b5f661f42ba95c9d7d00",
   "protocol_original_fingerprint": "2cbb2452d2ea1f167a844e63b52bee4e15e3b8bf2adad7feb5dc86dd1d41c7fe",
   "publication_gold": false,
   "schema_version": "far-ramdocs-import-v1",

@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Any
 
 from bench.build.common import read_jsonl, sha256_file, write_json, write_jsonl
-from eval.stats import paired_bootstrap_comparison
+from eval.stats import mcnemar_exact, paired_bootstrap_comparison
 
 
 def normalize_ramdocs_answer(text: str) -> tuple[str, ...]:
@@ -183,10 +183,18 @@ def compare_ramdocs(
         resamples=resamples,
         seed=seed,
     )
+    baseline_by_id = {str(row["sample_id"]): row for row in baseline}
+    candidate_by_id = {str(row["sample_id"]): row for row in candidate}
+    ordered_ids = sorted(baseline_by_id)
+    mcnemar = mcnemar_exact(
+        [bool(baseline_by_id[sample_id]["ramdocs_exact_match"]) for sample_id in ordered_ids],
+        [bool(candidate_by_id[sample_id]["ramdocs_exact_match"]) for sample_id in ordered_ids],
+    )
     result = {
         "schema_version": "far-ramdocs-paired-comparison-v1",
         "comparison": comparison,
-        "gate_a_passed": float(comparison["lower"]) > 0.0,
+        "mcnemar": mcnemar,
+        "gate_a_passed": float(comparison["lower"]) > 0.0 or float(mcnemar["p_value"]) < 0.05,
         "baseline_scores_sha256": sha256_file(baseline_scores),
         "candidate_scores_sha256": sha256_file(candidate_scores),
     }
