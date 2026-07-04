@@ -10,7 +10,7 @@
 |---|---|---|
 | 预注册 | 完成 | 原始提交 `84bbbfd`；所有澄清均为独立 `deviation:` 提交 |
 | RAMDocs 导入 | 完成 | 500 题、2766 文档、MIT、HF revision `9c041b…`；350/150 已冻结 |
-| RAMDocs dev | 运行中 | Windows GPU tmux `far-ramdocs-phase-a`；从干净提交 `7310974` 和空输出目录启动，输出位于 `/mnt/d/FAR-outputs/ramdocs_dev_v1` |
+| RAMDocs dev | 运行中 | Windows GPU tmux `far-ramdocs-phase-a`；正式替代运行绑定代码提交 `08e04c6`、D: 盘缓存环境和输出目录 `/mnt/d/FAR-outputs/ramdocs_dev_v1`；服务中断后按 checkpoint 恢复，尚无 `suite_manifest.json` |
 | G-A | 待 dev 完成 | 自动选择六基线中 exact match 最高者，执行配对 bootstrap 与 McNemar |
 | G-K 陪审团 | 工具完成、执行待 G-A | 六分类主门；失败时按协议降级为二分类 |
 | G-S 作者复标 | 工具完成、尚未开始 | round 2 在 round 1 冻结后 14 天前会被代码拒绝 |
