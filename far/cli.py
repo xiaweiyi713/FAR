@@ -181,3 +181,45 @@ def solo_paper_readiness_main() -> None:
     from experiments.solo_paper_readiness import main
 
     main()
+
+
+def build_ramdocs_main() -> None:
+    _prefer_far_repo()
+    from bench.build.ramdocs import main
+
+    main()
+
+
+def evaluate_ramdocs_main() -> None:
+    _prefer_far_repo()
+    from eval.ramdocs import main
+
+    main()
+
+
+def run_ramdocs_main() -> None:
+    _prefer_far_repo()
+    from experiments.run_ramdocs import main
+
+    main()
+
+
+def jury_annotate_main() -> None:
+    _prefer_far_repo()
+    from bench.build.jury_annotate import main
+
+    main()
+
+
+def jury_consensus_main() -> None:
+    _prefer_far_repo()
+    from bench.build.jury_consensus import main
+
+    main()
+
+
+def jury_adjudication_main() -> None:
+    _prefer_far_repo()
+    from bench.build.jury_adjudication import main
+
+    main()

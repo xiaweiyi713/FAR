@@ -1,0 +1,11 @@
+llm:
+  enabled: true
+  provider: ollama
+  model: llama3.1:8b
+  base_url: http://localhost:11434
+  temperature: 0.0
+  max_tokens: 900
+  unload_after_sample: true
+  cache_enabled: true
+  cache_path: /mnt/d/FAR-outputs/cache/jury_llama31.sqlite3
+  cache_namespace: far-jury-llama31-8b-v1

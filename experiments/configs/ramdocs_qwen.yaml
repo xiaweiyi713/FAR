@@ -1,0 +1,35 @@
+run:
+  split: dev
+  top_k_per_query: 2
+  conflict_detector: vera
+conflict_graph:
+  enable_nli: true
+  require_nli: true
+  nli_model: cross-encoder/nli-distilroberta-base
+  nli_revision: b14d131f9d32668a5e6a982729b57ff6ed5dfcbd
+  nli_local_files_only: true
+  enable_nli_batching: true
+  enable_nli_candidate_filter: true
+  enable_source_reliability_conflict: true
+  enable_scope_conflict: true
+  enable_granularity_conflict: true
+  enable_entity_lexicon_conflict: true
+  entity_lexicon_similarity: 0.55
+retrieval:
+  backend: lexical
+  scope: per_sample_closed_corpus
+llm:
+  enabled: true
+  provider: ollama
+  model: qwen3.5:9b
+  base_url: http://localhost:11434
+  temperature: 0.0
+  max_tokens: 1200
+  think: false
+  unload_after_sample: true
+  cache_enabled: true
+  cache_path: /mnt/d/FAR-outputs/cache/ramdocs_qwen.sqlite3
+  cache_namespace: far-ramdocs-qwen3.5-9b-v1
+statistics:
+  bootstrap_resamples: 2000
+  bootstrap_seed: 1729

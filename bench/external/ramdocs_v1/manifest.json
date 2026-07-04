@@ -1,0 +1,40 @@
+{
+  "counts": {
+    "dev": 350,
+    "document_types": {
+      "correct": 1918,
+      "misinfo": 307,
+      "noise": 541
+    },
+    "documents": 2766,
+    "questions": 500,
+    "test": 150
+  },
+  "dataset_id": "HanNight/RAMDocs",
+  "dataset_revision": "9c041bfd158c603b615883d9a931b00cbc141494",
+  "evidence_status": "external_upstream_labeled_not_independent_human_iaa",
+  "externally_held_blind": false,
+  "files": {
+    "CARD.md": "8d8cbd3e9eb1fee78b58b45069975a31c3f93d041ae5aeeff9a88cd371cc4501",
+    "LICENSES.md": "c93b6e30be9fc5920dc42b56d2cd756df02fbbcc015586657b8ddf1b75bceafa",
+    "corpus.jsonl": "692a6942c21c39a8443b7d64ee5aaeeca4a8554573539ffad0bb83e736bd012d",
+    "splits/dev.jsonl": "412e65b77dec89da9358499c39a714876606958373f3ae0f284a5b2fb20d6a9f",
+    "splits/test_inputs.jsonl": "e6a1654e0099850c06c322a6c80666200a4534c48724a4fa828ab9b1b5f67489",
+    "tasks.jsonl": "d1d816c5d2045e0b2b09067fbb2938936644d33170f3a3bfa40960d43e5d9ce5"
+  },
+  "license": "MIT",
+  "protocol_fingerprint": "0b4c69868339cb018d8a83ada2663dc3047f251e4ea41d09b2ec92dde0f1769b",
+  "protocol_original_fingerprint": "2cbb2452d2ea1f167a844e63b52bee4e15e3b8bf2adad7feb5dc86dd1d41c7fe",
+  "publication_gold": false,
+  "schema_version": "far-ramdocs-import-v1",
+  "split": {
+    "dev_samples": 350,
+    "group_key": "question/sample_id",
+    "method": "python-random-shuffle-v1",
+    "seed": 1729,
+    "test_frozen": true
+  },
+  "upstream_code_commit": "d44454c9ebb0bf513d8236a03decc9fb58704cad",
+  "upstream_filename": "RAMDocs_test.jsonl",
+  "upstream_sha256": "c67f699c97349f00cf1bd08d1dbf8ca1d0cc38c306715c93a10a4f961dcf28b7"
+}

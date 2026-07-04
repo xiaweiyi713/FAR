@@ -1,0 +1,10 @@
+llm:
+  enabled: true
+  provider: deepseek
+  model: deepseek-chat
+  api_key_env: DEEPSEEK_API_KEY
+  temperature: 0.0
+  max_tokens: 900
+  cache_enabled: true
+  cache_path: outputs/cache/jury_deepseek.sqlite3
+  cache_namespace: far-jury-deepseek-chat-v1
