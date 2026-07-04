@@ -79,6 +79,23 @@ in each category. The 14-day minimum and G-S threshold remain unchanged.
 The active protocol SHA-256 after this correction is
 `0b4c69868339cb018d8a83ada2663dc3047f251e4ea41d09b2ec92dde0f1769b`.
 
+## 2026-07-04: deviation — resolve current DeepSeek model and fallback accounting
+
+This change occurred before any new jury or model-matrix run. The planned
+`DeepSeek V4-Flash` identifier is not an available model identifier in the
+project's current DeepSeek adapter. J1 is pinned to the provider's
+`deepseek-chat` API model, preserving the DeepSeek family boundary. The API key
+previously pasted into chat is treated as compromised and is not reused; a
+rotated environment-only credential is required before J1 can run.
+
+For the matrix's preregistered 30% structured-output exclusion rule, a sample is
+counted as a fallback if any generated query lacks the runner's `llm:` tactic
+marker or any changed revision lacks the configured-LLM realization marker.
+This trace-derived definition is frozen before Mistral or Gemma execution.
+
+The active protocol SHA-256 after this change is
+`e0221cfa9569ba089136fd017c1175ad282643c4c773b5f661f42ba95c9d7d00`.
+
 ## 2026-06-29: formal retrieval/conflict stack cutoff
 
 Scope: the 60-item development split only. The held-out test inputs and labels
