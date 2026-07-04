@@ -58,6 +58,19 @@ project-status ledger's freshness, and inclusion of the reports in the source
 distribution. The ledger-only read-only check is
 `uv run falsirag-project-status --verify`.
 
+For the user-authorized paper profile with no human annotators, run:
+
+```bash
+uv run falsirag-solo-paper-readiness
+```
+
+This validates the fingerprinted solo evidence and checks that the paper uses
+only the supported typed-versus-untyped mechanism claim. It fails if pending
+cells return or if the refutation, boundary, typed-revision, FEVER, non-human,
+non-blind, or single-model limitations are removed. A passing result certifies
+only `single_author_machine_audited_paper`; it does not satisfy strict AAAI
+readiness.
+
 Generate and validate the declared-dependency CycloneDX 1.5 SBOM before a
 release build:
 

@@ -10,3 +10,7 @@ This directory contains durable, versioned reports derived from tracked project 
   [machine-readable JSON](project_status_snapshot.json): a generated ledger
   separating the complete single-author diagnostic track from the still-blocked
   strict AAAI submission track.
+- [Single-author machine-audited paper readiness](solo_paper_readiness.md) and
+  [machine-readable JSON](solo_paper_readiness.json): the explicitly relaxed
+  paper gate. It permits only the narrow typed-control mechanism claim and
+  requires disclosure of negative ablations and all non-human/non-blind limits.

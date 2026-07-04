@@ -4,7 +4,7 @@
 > 目标会议：**AAAI-27 主会**（[官方 CFP，2026-06-29 核验](https://aaai.org/conference/aaai/aaai-27/main-technical-track-call/)：摘要 2026-07-21 / 全文 2026-07-28 / 补充 2026-07-31；正文最多 7 页、含参考文献最多 9 页）
 > 本文是 FAR 的完整项目企划：研究问题 / 方法 / 目录结构 / 技术栈 / 基准 / 实验 / 时间线 / **VeraRAG 复用映射（精确到文件）** / 风险对冲。
 
-> **执行状态**：企划到实现的逐项证据见 [`docs/PROPOSAL_TRACEABILITY.md`](docs/PROPOSAL_TRACEABILITY.md)。代码、候选基准、运行器、统计和论文骨架已实现；机器生成的当前状态账本见 [`reports/project_status_snapshot.md`](reports/project_status_snapshot.md)。项目现分成两条互不混淆的验收路径：① 单作者机器审计诊断路径已可完整自动验收；② AAAI 严格投稿路径仍要求真实独立双标注/仲裁、外部保管盲测和冻结多模型结果，机器结果不能伪装成这些外部角色。
+> **执行状态**：企划到实现的逐项证据见 [`docs/PROPOSAL_TRACEABILITY.md`](docs/PROPOSAL_TRACEABILITY.md)。代码、候选基准、运行器、统计和论文均已实现；机器生成的当前状态账本见 [`reports/project_status_snapshot.md`](reports/project_status_snapshot.md)。项目现分成三条互不混淆的验收路径：① 单作者机器审计诊断路径已完整自动验收；② 用户授权放宽后的单作者机器审计论文路径已就绪，只允许 typed-vs-untyped 的窄机制主张并强制披露负消融；③ AAAI 严格路径仍要求真实独立双标注/仲裁、外部保管盲测和冻结多模型结果。前两条不伪装成第三条。
 
 ---
 
@@ -222,14 +222,14 @@ FAR/
 
 全部带 **bootstrap CI + McNemar 配对检验**（复用）。**留盲 test 报告主结果**；加 case study + 小规模人工校验。
 
-### 预期结果结构（论文里这样呈现，数值待跑）
-> *FAR improves typed conflict detection F1 by 15–25 points, reduces unsupported/overclaimed statements by 20–35%, and improves revision accuracy especially on temporal and causal-overclaim tasks, over vanilla / multi-query / reflective baselines; ablations show **typed** conflict and **refutation** queries each contribute.*
+### 当前证据与收窄后的论文主张
+> 在 60 条 machine-seeded、机器审计的 Qwen3.5 9B dev 诊断上，FAR 相比 matched untyped ablation 的 answer correctness 高 0.078、typed conflict F1 高 0.420、revision accuracy 高 0.217；这支持 **typed conflict control** 这一窄机制主张。去掉 refutation 或 boundary 没有降低 answer correctness，去掉 typed revision 反而提高 answer correctness 但让修订指标归零，因此论文不得声称每个查询/修订组件都有正边际贡献。
 
 ---
 
 ## 9. 项目规划（自 2026-06-29 起四周倒排到 AAAI-27 全文）
 
-> ⚠️ **现实提醒**：从 2026-06-29 到正文截止只有 29 天。工程脚手架和 300 条候选集已经完成，剩余长杆是**独立标注、冻结的多模型实验、typed 消融和外部盲测**。每周设 Go/No-Go；未通过就收缩论文主张，而不是用诊断结果补表。
+> ⚠️ **现实提醒**：严格 AAAI 路径的剩余长杆仍是**独立标注、冻结的多模型实验和外部盲测**。由于项目没有可用真人，当前执行选择了透明的单作者机器审计论文路径：允许使用完整 dev 诊断，但必须把主张收窄并保留严格路径未完成的声明。
 
 | 日期 | 目标 | 产出 / Go-No-Go |
 |---|---|---|
@@ -277,7 +277,7 @@ FAR/
 
 ## 12. 当前执行入口
 
-1. **已完成**形式检索/冲突栈的 60 条 CPU dev 诊断并冻结 top-k、模型版本和失败分析；结果仅用于开发，不填投稿主表。
+1. **已完成**形式检索/冲突栈的 60 条 CPU dev 诊断并冻结 top-k、模型版本和失败分析；该早期 CPU 诊断不进入论文表格，论文仅使用后来冻结并完整校验的 Qwen 11 方法 dev 套件。
 2. **已完成**本地 Qwen2.5 的 300/300 非金标预标注与 Label Studio 预测包（重试后仅 1 条保守 fallback）；另已生成 300/300 规则弱标注和机器一致性审计。当前统一 consensus 口径为 178 条 machine-confirmed、122 条 machine-disputed；争议条目全部保留，不反写构造标签。这些产物明确为 `publication_gold: false`，只能用于机器审计或提速复核，不能替代双人标注。曾在对话中暴露的 API key 不写入仓库，必须轮换后才可用于云模型。
 3. **外部待办**：两位标注者独立完成盲包、仲裁并冻结 benchmark；机器建议只用于提速，不能计作独立人工标签或 Cohen's κ。
 4. **已完成 Qwen dev 六基线诊断**：本地 Qwen3.5 9B 已通过 D:-backed、关闭思考、按样本卸载的真实管线验收；原始 60 条 dev 主方法已无错误完成并被门禁标为非投稿诊断结果。实体类 dev 失败分析已修复两个独立缺口：LLM claim 缺少确定性 typed 属性/允许新增词汇，以及运行器丢弃语料公开实体元数据；后者新增的高精度 fallback 在 train+dev 隔离审计中为 20/48 实体、0/194 非实体误报。另已修复 untyped 包装器逐文档检测、未保持 FAR 批量冲突图的消融公平性缺口；旧 untyped 队列在 44/60 停止并完整保留。提交 `96e32b7` 的修正版 FAR + 当时冻结的 5 基线 + 4 消融全套已在 Windows GPU 上从零重跑；之后用当前 main 补完第 6 个 CounterRefine-style closest-neighbor 控制项并 reports-only 合并。现在 corrected FAR、四项消融和六个基线均为 60/60、零错误、非 partial，本地 `outputs/remote_qwen_six_baseline_suite/` 的 11 个 run/eval bundle 全部通过 `experiments.validate_results`。核心 dev 对照：FAR 预测 SHA `992a4cf027db5491feef2a57210d8a9395be61798c0ff84b29760d495bc96b56`，untyped 预测 SHA `26e6ae372d54a8dea30dd8a892a68a4ba425d91bf341366b21ce309d6d928658`，CounterRefine 预测 SHA `483f08eca2c34431ac81e87dcac2277433afc5e24e858475742d5c162a6b8c57`，suite manifest SHA `dccd854c74d3eec109fb879e0c0d1fb838763694adc655b24eb83219807c4467`。FAR answer correctness 为 0.7974，高于六个 baseline（CounterRefine 0.7102），counter-evidence recall 0.9833，高于 CounterRefine 0.8833；FAR 相比 untyped 在 answer correctness 上高 7.83pt，在 revision accuracy 上高 21.67pt，typed conflict F1 为 0.420 vs 0。其余消融仍是混合诊断：`minus_refutation_query` 和 `minus_boundary_query` 在该 dev 集上没有伤害主指标，`minus_typed_revision` 的 answer correctness 更高但 revision accuracy / action correctness 归零。这说明当前证据只强支持“typed conflict control / trace 对修订机制重要”，尚不能声称每个查询/修订子模块都单调增益。所有这些仍绑定 machine-seeded dev，`publication_ready:false`，只能作为机制诊断和 Go/No-Go 证据。隔离审计、事故目录和旧队列不作为论文结果；DeepSeek V4-Flash 与 Qwen3.7 Plus 仍需轮换后的云凭据。
@@ -289,5 +289,6 @@ FAR/
 10. **已公开单作者诊断证据包**：`diagnostics/solo_v1/` 追踪 69 个指纹文件，包括 300 条机器审计记录、11 个方法各 60 条完整 dev 预测、scores、evaluation reports、两表三图和无金标 test 技术审计，总计约 4.5 MB。`falsirag-solo-release verify diagnostics/solo_v1` 会重算文件集合/指纹、run signature、预测与报告绑定、scores 绑定及所有非投稿声明；删除、增加、篡改文件，使用 symlink，或把 `publication_ready` / `publication_gold` 升级为真都会失败。它解决了“结论只存在本机 ignored outputs”的复核缺口，但严格投稿门禁仍完全不受影响。
 11. **已冻结外部 FEVER 二分类迁移诊断**：100 对可见 external slice 的 SUPPORTS/REFUTES 与 gold evidence 继承自真人标注的 FEVER；四个 typed sampling bucket 仍是机器启发式，只作描述性分层，不当 typed gold。`falsirag-eval-fever-binary` 对规则与 VeraRAG NLI 检测器做逐对评测、分层 bootstrap、McNemar、来源/配置/预测指纹及全量重算校验。两者 accuracy 均为 0.72；NLI recall 0.40（规则 0.30）、F1 0.533（规则 0.462），但 paired accuracy 差为 0（95% CI [-0.05, 0.05]，McNemar `p=1.0`）。这是一项诚实的低召回负面迁移结果，已冻结在 `diagnostics/fever_binary_v1/`，不在同一 100 对上继续调参，也不冒充完整 FAR、typed gold、外部盲测或投稿主结果。
 12. **已完成单作者诊断技术报告**：`reports/single_author_diagnostic_report.md` 把公开证据包、Qwen dev 11 方法、机器一致性审计、三张诊断图和 FEVER 负面迁移结果整理成可直接阅读的技术报告。报告明确允许的主张是 machine-audited synthetic-benchmark diagnostic；同时显式排除 human gold、human IAA、外部盲测、三模型泛化和 AAAI 主表结论。这使“找不到真人标注者”时项目仍有一个完整、公开、可复核的降级交付物，但不改变严格投稿门禁。
+13. **已启用放宽后的单作者机器审计论文路径**：`falsirag-solo-paper-readiness` 直接读取冻结的 11 方法 dev 结果、四项消融、FEVER 负迁移和 `paper/main.tex`。当前 `ready:true`，但 `strict_aaai_submission_ready:false`。论文已经填入实际 Qwen dev 表格，核心 claim 收窄为 typed-vs-untyped 机制信号，并逐字强制披露：refutation/boundary 无 answer correctness 增益、typed revision 存在答案分数与修订行为的权衡、FEVER 配对准确率无提升、标签非真人金标、评测非外部盲测、结果不支持多模型泛化。作为事后稳健性检查，60 条 dev 中 35 条 machine-confirmed 的 typed answer 增益为 +0.101（95% CI [0.039, 0.161]），25 条 machine-disputed 为 +0.047（[0.001, 0.094]）；方向一致但类别不均衡，不能冒充独立标签验证。任何删除这些限制或恢复 `PENDING-EMPIRICAL-RUN` 的修改都会使门禁失败。
 
-> 一句话收尾：**FAR 的成败不在工程量（VeraRAG 已给你 70%），而在两点——(1) typed conflict control 是否在 adjudicated gold 上稳定提升修订质量；(2) CounterRefine/RARR 等近邻基线下，这个 typed-control 增益是否仍成立。当前 machine-seeded dev 已支持 typed-vs-untyped，但 refutation/boundary/typed-revision 子模块结果混合；正式论文必须按 gold/test 结果收窄或改写主张。**
+> 一句话收尾：**当前证据足以支持“typed conflict control 在单模型、机器审计 dev 诊断中优于 matched untyped control”，不足以支持“所有三类查询和 typed revision 都提升答案准确率”，也不足以支持真人金标、外部盲测或多模型泛化。论文已按这条证据边界完成收窄。**

@@ -16,15 +16,17 @@
 \begin{document}
 \maketitle
 
-\section{Schema and Promotion Contract}
+\section{Schema and Machine-Audit Contract}
 We provide the full machine-readable schema, deterministic build scripts,
 source/corpus fingerprints, source-document-group split manifest, and masked
 test inputs. A handoff command writes a gold-free directory containing only a
 sanitized corpus, five-field operational test rows, and fingerprints. Test
 runners do not evaluate this directory; they return unscored predictions to a
-trusted scorer. Machine seeds are never considered publication gold. Promotion
-requires two independent complete annotation files, adjudication of all items,
-reported agreement, and externally governed one-shot test execution.
+trusted scorer. The present paper profile does not claim this test as externally
+blind. Machine seeds are never considered human gold. Instead, construction
+labels are audited by a structured Qwen2.5 signal and deterministic weak
+supervision. The artifact discloses 178 jointly confirmed and 122 disputed rows;
+machine agreement is not reported as human IAA or adjudication.
 
 \section{Implementation and Failure Handling}
 Every run signature covers YAML configuration, split-specific operational
@@ -48,10 +50,25 @@ Because candidates share source contexts, final reporting also resamples
 source-document dependency groups. Undefined overclaim scores are excluded,
 not treated as zeros.
 
+\section{Executed Diagnostic Configuration}
+We ran one complete inference pass per method over the same 60 development
+items; there was no repeated model sampling or best-of-$n$ selection. Qwen3.5
+9B ran through Ollama at temperature 0, with thinking disabled, a 1,200-token
+output cap, and model unload after each sample to bound WSL memory. The host used
+WSL2 with an NVIDIA RTX 4060 Laptop GPU (8,188 MiB VRAM); the generator stayed
+on GPU while retrieval, reranking, and NLI ran on CPU. Retrieval used two
+documents per query, BM25 ($k_1=1.5$, $b=0.75$), BGE-base-en-v1.5 dense scores,
+0.4/0.6 sparse/dense fusion, and BGE-reranker-base over 20 candidates. The
+NLI model was nli-distilroberta-base. Model asset revisions, the Ollama model
+digest, YAML hash, implementation hash, operating-system string, predictions,
+and report hashes are retained in the public diagnostic bundle. Statistical
+resampling used 2,000 draws with seed 1729.
+
 \section{Reproducibility Checklist Status}
 Code, configurations, package lock, deterministic seeds, fingerprints, metric
-definitions, and smoke tests are present. Compute cost, final model identifiers,
-human demographics/training, agreement values, and full results remain pending
-the corresponding real processes and will be added before submission.
+definitions, and smoke tests are present. The reported result is explicitly a
+single-model development diagnostic on construction-derived labels. No human
+participant demographics, human agreement values, external blind-test result,
+or multi-model claim is reported because those processes were not performed.
 
 \end{document}

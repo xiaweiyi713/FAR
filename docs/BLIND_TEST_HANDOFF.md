@@ -197,5 +197,6 @@ Before using test numbers in the paper:
 - result validation passes;
 - paper tables and figures are regenerated only from validated scored reports.
 
-If any check fails, report the failure and do not replace
-`PENDING-EMPIRICAL-RUN` cells with those numbers.
+If any check fails, report the failure and do not use those numbers in a strict
+blind-test table. The relaxed machine-audited paper has a separate, explicitly
+development-only table governed by `falsirag-solo-paper-readiness`.

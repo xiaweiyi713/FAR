@@ -21,9 +21,11 @@
     },
     "reader_reports": {
       "files": {
-        "reports/README.md": "003e3ea1629f5858c601fce2bb2a09b47abf356bf844340fc928a031e31eb357",
-        "reports/single_author_diagnostic_report.md": "076534b0000e3dd37d4c67b89788cf46a662670c0f5e3a6f6283d476497d8f2c",
-        "reports/solo_human_review_priority.csv": "bb036eb51e27d4b654978dd2bd0a2330422c58bf7bc2e6769fced165242a5dee"
+        "reports/README.md": "dbd703731278f89ea399138de314d7622cc0bbdb26181cb6276b9768aca2ebdd",
+        "reports/single_author_diagnostic_report.md": "98483f531dafe03d5a0526a12be877ac95a1ba53ad2c948932dfcd533d1508c3",
+        "reports/solo_human_review_priority.csv": "bb036eb51e27d4b654978dd2bd0a2330422c58bf7bc2e6769fced165242a5dee",
+        "reports/solo_paper_readiness.json": "f23d93f9ebf5d6b2e254153380db34439039d4216e66af75005e3b5a91c52cd9",
+        "reports/solo_paper_readiness.md": "b098d53fa974a06d9c00c1f3953978ed6bde9de53df91366f42320d4c9d19d7b"
       },
       "missing": [],
       "valid": true
@@ -39,6 +41,178 @@
       "sha256": "bb036eb51e27d4b654978dd2bd0a2330422c58bf7bc2e6769fced165242a5dee",
       "valid": true
     },
+    "solo_paper_readiness": {
+      "allowed_claim": "On a construction-derived, machine-audited 60-item Qwen development diagnostic, typed conflict control improves over its untyped ablation.",
+      "claim_scope": {
+        "checks": {
+          "boundary_ablation_not_positive": true,
+          "far_exceeds_all_six_baselines_on_answer": true,
+          "refutation_ablation_not_positive": true,
+          "typed_answer_advantage": true,
+          "typed_answer_advantage_same_direction_by_machine_disposition": true,
+          "typed_conflict_f1_advantage": true,
+          "typed_revision_accuracy_advantage": true,
+          "typed_revision_answer_tradeoff": true
+        },
+        "forbidden_stale_claims": [],
+        "label_sensitivity": {
+          "machine_confirmed": {
+            "answer_correctness": {
+              "candidate_minus_baseline": 0.10103567393680682,
+              "confidence": 0.95,
+              "higher_is_better": true,
+              "lower": 0.03874194135508742,
+              "method": "paired-stratified-percentile-bootstrap-v1",
+              "metric": "answer_correctness",
+              "pairs": 35,
+              "probability_candidate_better": 0.9995,
+              "resamples": 2000,
+              "seed": 1729,
+              "upper": 0.16119639296876234
+            },
+            "categories": {
+              "causal_overclaim": 8,
+              "entity_confusion": 2,
+              "multi_source_conflict": 4,
+              "numerical_conflict": 9,
+              "temporal_shift": 12
+            },
+            "revision_accuracy": {
+              "candidate_minus_baseline": 0.2,
+              "confidence": 0.95,
+              "higher_is_better": true,
+              "lower": 0.08571428571428572,
+              "method": "paired-stratified-percentile-bootstrap-v1",
+              "metric": "revision_accuracy",
+              "pairs": 35,
+              "probability_candidate_better": 1.0,
+              "resamples": 2000,
+              "seed": 1729,
+              "upper": 0.3142857142857143
+            },
+            "samples": 35,
+            "typed_conflict_correct": {
+              "candidate_minus_baseline": 0.6,
+              "confidence": 0.95,
+              "higher_is_better": true,
+              "lower": 0.45714285714285713,
+              "method": "paired-stratified-percentile-bootstrap-v1",
+              "metric": "typed_conflict_correct",
+              "pairs": 35,
+              "probability_candidate_better": 1.0,
+              "resamples": 2000,
+              "seed": 1729,
+              "upper": 0.7428571428571429
+            }
+          },
+          "machine_disputed": {
+            "answer_correctness": {
+              "candidate_minus_baseline": 0.04654290175188592,
+              "confidence": 0.95,
+              "higher_is_better": true,
+              "lower": 0.0007076627789660504,
+              "method": "paired-stratified-percentile-bootstrap-v1",
+              "metric": "answer_correctness",
+              "pairs": 25,
+              "probability_candidate_better": 0.976,
+              "resamples": 2000,
+              "seed": 1729,
+              "upper": 0.09404731616237859
+            },
+            "categories": {
+              "causal_overclaim": 4,
+              "entity_confusion": 10,
+              "multi_source_conflict": 8,
+              "numerical_conflict": 3
+            },
+            "revision_accuracy": {
+              "candidate_minus_baseline": 0.24,
+              "confidence": 0.95,
+              "higher_is_better": true,
+              "lower": 0.08,
+              "method": "paired-stratified-percentile-bootstrap-v1",
+              "metric": "revision_accuracy",
+              "pairs": 25,
+              "probability_candidate_better": 0.9995,
+              "resamples": 2000,
+              "seed": 1729,
+              "upper": 0.4
+            },
+            "samples": 25,
+            "typed_conflict_correct": {
+              "candidate_minus_baseline": 0.48,
+              "confidence": 0.95,
+              "higher_is_better": true,
+              "lower": 0.32,
+              "method": "paired-stratified-percentile-bootstrap-v1",
+              "metric": "typed_conflict_correct",
+              "pairs": 25,
+              "probability_candidate_better": 1.0,
+              "resamples": 2000,
+              "seed": 1729,
+              "upper": 0.68
+            }
+          }
+        },
+        "missing_required_disclosures": [],
+        "observed": {
+          "far_answer_correctness": 0.7973782240376361,
+          "minus_boundary_answer_correctness": 0.8013551728186074,
+          "minus_refutation_answer_correctness": 0.8262613305723462,
+          "minus_typed_revision_answer_correctness": 0.873361070934565,
+          "minus_typed_revision_revision_accuracy": 0.0,
+          "typed_minus_untyped_answer_correctness": 0.0783303521930897,
+          "typed_minus_untyped_conflict_f1": 0.42038216560509556,
+          "typed_minus_untyped_revision_accuracy": 0.21666666666666667
+        },
+        "valid": true
+      },
+      "evidence": {
+        "fever_binary": {
+          "errors": [],
+          "publication_ready_main_result": false,
+          "schema_version": "far-fever-binary-evaluation-audit-v1",
+          "valid": true
+        },
+        "paper_checklist_sha256": "e3b92d8cc9e056eb1ebba33e91c6b338a6bbbb29e34e19abe7f3eb94c42b967a",
+        "paper_main_sha256": "c47afa9090b62da0b87904ef9e017c8541a7a616edaa2972671ea919633780bc",
+        "paper_supplement_sha256": "17a325914f811c66aa97ce5c996ca8365fb793b2b45fc284baa98b0d8b57aefb",
+        "solo_release": {
+          "errors": [],
+          "files": 69,
+          "methods": 11,
+          "publication_ready": false,
+          "schema_version": "far-solo-diagnostic-release-audit-v1",
+          "valid": true
+        }
+      },
+      "forbidden_claims": [
+        "human inter-annotator agreement",
+        "human adjudication",
+        "externally held blind test",
+        "publication-grade benchmark gold",
+        "positive marginal contribution from every FAR component",
+        "multi-model or external-domain generality"
+      ],
+      "gates": {
+        "claim_scope_matches_observed_ablations": true,
+        "frozen_fever_negative_transfer_disclosed": true,
+        "tracked_solo_evidence": true
+      },
+      "ready": true,
+      "required_limitations": [
+        "labels are not human-validated gold",
+        "evaluation is not externally blind",
+        "one local model does not establish multi-model generality",
+        "refutation and boundary query ablations do not support positive marginal claims",
+        "typed revision trades lower answer correctness for non-zero revision behavior",
+        "FEVER binary transfer shows no paired accuracy gain",
+        "machine-disposition sensitivity is post-hoc and not independent label validation"
+      ],
+      "schema_version": "far-solo-paper-readiness-v1",
+      "strict_aaai_submission_ready": false,
+      "study_profile": "single_author_machine_audited_paper"
+    },
     "solo_release": {
       "errors": [],
       "files": 69,
@@ -49,7 +223,7 @@
     }
   },
   "project_profile": "far_proposal_completion_status",
-  "schema_version": "far-project-status-snapshot-v1",
+  "schema_version": "far-project-status-snapshot-v2",
   "single_author_machine_audited_diagnostic": {
     "allowed_claim": "public single-author machine-audited diagnostic",
     "complete": true,
@@ -59,6 +233,20 @@
       "externally held blind-test result",
       "strict AAAI submission readiness"
     ]
+  },
+  "single_author_machine_audited_paper": {
+    "allowed_claim": "On a construction-derived, machine-audited 60-item Qwen development diagnostic, typed conflict control improves over its untyped ablation.",
+    "ready": true,
+    "required_limitations": [
+      "labels are not human-validated gold",
+      "evaluation is not externally blind",
+      "one local model does not establish multi-model generality",
+      "refutation and boundary query ablations do not support positive marginal claims",
+      "typed revision trades lower answer correctness for non-zero revision behavior",
+      "FEVER binary transfer shows no paired accuracy gain",
+      "machine-disposition sensitivity is post-hoc and not independent label validation"
+    ],
+    "strict_aaai_submission_ready": false
   },
   "strict_aaai_submission": {
     "blockers": [

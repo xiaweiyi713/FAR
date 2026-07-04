@@ -20,7 +20,7 @@
 \maketitle
 
 \begin{abstract}
-Retrieval-augmented language agents typically search for evidence that supports an emerging answer, while reflection remains weakly grounded in retrievable counter-evidence. We introduce Falsification-Augmented Retrieval (FAR), a control framework that decomposes an initial answer into dependent claims, assigns typed evidence requirements, retrieves support, refutation, and boundary evidence, and revises each claim according to temporal, entity, numerical, causal, source-reliability, definition, or counter-evidence conflicts. FAR exposes the claim-evidence map and a before/after revision trace. We also define FalsiRAG-Bench, a controlled evaluation protocol in which falsifying evidence is present in the corpus and revision actions are annotated. The current artifact contains a balanced 300-item machine-seeded candidate set, strict promotion to double-annotated and adjudicated gold, six transparent baselines, four component ablations, and paired statistical inference. This draft states the method and evaluation contract; final performance claims are intentionally withheld until independent annotation and frozen multi-model experiments are complete.
+Retrieval-augmented language agents typically seek evidence that supports an emerging answer, while reflection remains weakly grounded in retrievable counter-evidence. We introduce Falsification-Augmented Retrieval (FAR), which decomposes an answer into dependent claims, assigns typed evidence requirements, retrieves support, refutation, and boundary evidence, and exposes a typed revision trace. We evaluate a deliberately narrow claim on a 60-item Qwen3.5 9B single-model development diagnostic drawn from a 300-item machine-audited synthetic benchmark. FAR obtains 0.797 answer correctness and 0.420 typed-conflict F1. Against an otherwise matched untyped ablation, typed control improves answer correctness by 0.078 (95\% paired bootstrap [0.034, 0.124]), typed-conflict F1 by 0.420, and revision accuracy by 0.217. Component evidence is mixed: removing refutation or boundary queries does not hurt answer correctness, and removing typed revision raises answer correctness while eliminating measured revision behavior. A visible FEVER binary transfer check shows no paired accuracy gain. We therefore claim only a machine-audited mechanism signal for typed conflict control, not human-validated gold, external blindness, or multi-model generality.
 \end{abstract}
 
 \section{Introduction}
@@ -30,11 +30,11 @@ We study \emph{falsification-guided retrieval}: given an initial answer, activel
 
 FAR makes this loop explicit. It (1) builds a claim dependency graph, (2) assigns positive typed evidence requirements, (3) generates support, refutation, and boundary queries, and (4) applies a typed revision with an auditable trace. We contribute an evaluation protocol, FalsiRAG-Bench, that places counter-evidence inside the retrieval corpus and scores whether it is found and used correctly. Our intended contributions are:
 \begin{itemize}
-    \item a general falsification-guided RAG task and end-to-end FAR framework;
-    \item typed conflict as a shared retrieval and revision control signal; and
-    \item a benchmark and evaluation contract isolating counter-evidence retrieval and revision.
+    \item an explicit falsification-guided RAG framework with auditable claim, evidence, conflict, and revision traces;
+    \item evidence that typed conflict is useful as a control representation relative to a matched untyped alternative; and
+    \item a reproducible machine-audited synthetic benchmark and evaluation contract that makes both positive and negative component evidence visible.
 \end{itemize}
-The empirical contribution remains conditional on the preregistered typed-versus-untyped ablation. We withhold that claim until the frozen experiments are complete.
+The empirical claim is intentionally narrower than the full architecture: the present evidence supports typed conflict control, not a positive marginal contribution from every query family or revision component.
 
 \section{Related Work}
 Active retrieval and post-hoc repair are not new. FLARE retrieves from predicted upcoming sentences when generation confidence is low \cite{jiang2023flare}; Self-RAG learns reflection tokens for retrieval and critique \cite{asai2024selfrag}; and CRAG triggers corrective retrieval after assessing retrieval quality \cite{yan2024crag}. RARR researches attribution for generated claims and edits unsupported text while preserving the draft \cite{gao2023rarr}. Chain-of-Verification asks independent verification questions \cite{dhuliawala2024cove}, while RQ-RAG learns query rewriting, decomposition, and disambiguation \cite{chan2024rqrag}.
@@ -61,7 +61,7 @@ where $q_i^{+}$ seeks corroboration, $q_i^{-}$ seeks an observation incompatible
 Retrieved passages are compared with the claim using high-precision rules or the layered VeraRAG conflict graph. FAR maps detected relations to seven control types. A fixed priority policy chooses an action: correct time, requalify entity, replace number, downgrade causality, prefer reliable source, clarify definition, retract, or qualify uncertainty. An optional language model realizes the selected action but cannot select a different policy. Every trace records before and after text, action, conflict types, evidence IDs, rationale, and confidence. No retrieved counter-evidence is treated as absence of a detected conflict, not proof of the claim.
 
 \section{FalsiRAG-Bench}
-The benchmark schema contains question, erroneous initial answer, atomic claims and dependencies, gold evidence, counter-evidence with the refuted claim, typed conflict, expected revision, split, provenance, and annotation status.
+The benchmark schema contains question, erroneous initial answer, atomic claims and dependencies, construction-reference evidence, counter-evidence with the refuted claim, typed conflict, expected revision, split, provenance, and annotation status.
 
 \begin{table}[t]
 \centering
@@ -81,43 +81,47 @@ Multi-source conflict & 60 \\
 \label{tab:data}
 \end{table}
 
-The current build derives evidence-backed candidates from VeraBench v1.1.2, with controlled perturbations and explicitly marked synthetic causal-boundary or low-reliability passages. It contains 175 documents, including 120 controlled synthetic documents. A source-document dependency group is assigned wholly to train, development, or test; the realization is 182/60/58 and has zero group leakage. A bundle builder emits only five-field test inputs and a sanitized corpus without construction or dependency metadata. Test runners can execute from this gold-free bundle and emit unscored, fingerprinted predictions; genuine organizational blindness and one-shot execution still require an external custodian.
+The current build derives evidence-backed candidates from VeraBench v1.1.2, with controlled perturbations and explicitly marked synthetic causal-boundary or low-reliability passages. It contains 175 documents, including 120 controlled synthetic documents. A source-document dependency group is assigned wholly to train, development, or test; the realization is 182/60/58 and has zero group leakage. The present study reports only the 60-item development split. A separate five-field test bundle is frozen for future work but is not treated as externally blind evidence.
 
-All 300 labels are \texttt{machine\_seeded}. Two independent annotators must label conflict presence/type, revision action, and answer acceptability before adjudication. Promotion requires complete adjudication and reported Cohen's $\kappa$ for conflict presence, type, and action. The current construction check obtains 0.91 lexical counter-evidence recall@10 when pooling all three query families. This only verifies that counter-evidence is retrievable; it is not a FAR performance result.
+All 300 labels are \texttt{machine\_seeded}; they are not human-validated gold. We audit them with two distinct signals that are blind to construction roles: Qwen2.5 7B structured preannotation (299/300 non-fallback outputs) and deterministic weak supervision (211/300 non-abstentions). Both signals exactly confirm the construction conflict type and action for 178 items; 122 items are disclosed as machine-disputed rather than silently relabeled. This machine agreement is quality evidence, not human inter-annotator agreement or adjudication. The construction check obtains 0.91 lexical counter-evidence recall@10 when pooling all three query families; this verifies corpus retrievability, not FAR performance.
 
 \section{Experimental Design}
-We will evaluate DeepSeek V4-Flash, Qwen3.7 Plus (2026-05-26), and a locally hashed Qwen3.5 9B model with matched retrieval settings. Baselines are Vanilla RAG, Multi-query RAG, Reflective RAG, closed-corpus CRAG-style and CounterRefine-style reproductions, and a Self-RAG-style inference approximation. The three style names explicitly avoid claiming equivalence to official trained or web-retrieval systems.
+We evaluate a locally hashed Qwen3.5 9B model with matched retrieval settings. Baselines are Vanilla RAG, Multi-query RAG, Reflective RAG, closed-corpus CRAG-style and CounterRefine-style reproductions, and a Self-RAG-style inference approximation. The three style names explicitly avoid claiming equivalence to official trained or web-retrieval systems. This is a single-model development diagnostic; it does not establish multi-model generality.
 
 Ablations remove typed conflict (untyped contradiction and generic queries), refutation queries, boundary queries, or typed revision. The primary gate compares typed and untyped FAR on aligned examples. Metrics are answer soft F1, unsupported claim rate, evidence precision, typed conflict F1, revision accuracy, overclaim reduction, and counter-evidence recall. We report category-stratified bootstrap confidence intervals, dependency-group sensitivity intervals, paired bootstrap differences, and exact McNemar tests for revision success.
 
-\begin{table*}[t]
+\begin{table}[t]
 \centering
 \small
-\begin{tabular}{lcccccc}
-\toprule
-Method & Answer & Typed F1 & Revision & Overclaim & Counter Recall & Unsupported \\
-\midrule
-Vanilla RAG & \multicolumn{6}{c}{PENDING-EMPIRICAL-RUN} \\
-Multi-query RAG & \multicolumn{6}{c}{PENDING-EMPIRICAL-RUN} \\
-Reflective RAG & \multicolumn{6}{c}{PENDING-EMPIRICAL-RUN} \\
-CRAG-style reproduction & \multicolumn{6}{c}{PENDING-EMPIRICAL-RUN} \\
-Self-RAG-style reproduction & \multicolumn{6}{c}{PENDING-EMPIRICAL-RUN} \\
-CounterRefine-style reproduction & \multicolumn{6}{c}{PENDING-EMPIRICAL-RUN} \\
-FAR & \multicolumn{6}{c}{PENDING-EMPIRICAL-RUN} \\
-\bottomrule
-\end{tabular}
-\caption{Preregistered main table. Values will be populated only from validated, complete, frozen test reports.}
+\resizebox{\columnwidth}{!}{\input{../diagnostics/solo_v1/experiments/artifacts/main_results.tex}}
+\caption{Machine-seeded Qwen development diagnostic ($n=60$). ``Style'' baselines are scoped reproductions. These are not blind-test or human-gold results.}
 \label{tab:main}
-\end{table*}
+\end{table}
 
-\section{Analysis Protocol}
-Before test access, we will inspect development retrieval recall, typed-conflict errors, and revision traces by category. The required analysis includes the main table, component ablation table, category gain plot, revision-trace case, and counter-evidence recall plot. The artifact builder accepts only fingerprint-bound reports; partial inputs mark every output diagnostic. If typed conflict does not outperform untyped control under paired inference, we will not preserve the central positive claim: the paper becomes a diagnostic or negative result.
+\begin{table}[t]
+\centering
+\small
+\resizebox{\columnwidth}{!}{\input{../diagnostics/solo_v1/experiments/artifacts/ablation_results.tex}}
+\caption{Component ablations on the same diagnostic. The mixed results motivate our narrowed claim.}
+\label{tab:ablations}
+\end{table}
+
+\section{Diagnostic Results}
+FAR reaches 0.797 answer correctness, above the strongest baseline value of 0.772 from the CRAG-style reproduction, and retrieves counter-evidence for 0.983 of examples (Table~\ref{tab:main}). Its absolute revision accuracy is only 0.217, so the result is not evidence of a generally reliable automatic correction system.
+
+The strongest controlled result is typed versus untyped conflict. FAR improves answer correctness by 0.078; reversing the sign reported by the ablation-centered evaluator gives a 95\% paired stratified bootstrap interval of [0.034, 0.124]. Typed-conflict F1 changes from 0 to 0.420 and revision accuracy from 0 to 0.217. Exact McNemar tests on revision success and typed-conflict correctness give $p=0.00024$ and $p<10^{-9}$, respectively. This supports typed conflict as a useful control signal on this diagnostic.
+
+As a post-hoc label-audit sensitivity check, we stratify the same paired comparison by machine-consensus disposition. The answer-correctness difference remains positive on the machine-confirmed subset ($n=35$), +0.101 with 95\% bootstrap [0.039, 0.161], and on the machine-disputed subset ($n=25$), +0.047 [0.001, 0.094]. Thus the aggregate direction is not produced only by disputed labels. The subsets are small and category-imbalanced, and their dispositions are machine signals against the same construction reference; this is a sensitivity analysis, not independent label validation.
+
+The remaining ablations contradict a stronger component-wise story. Removing refutation queries does not reduce answer correctness (0.826 versus 0.797), despite a small counter-evidence recall decrease. Removing boundary queries is also neutral on answer correctness (0.801 versus 0.797). Removing typed revision increases answer correctness to 0.873 while reducing revision accuracy and revision-action correctness to zero. Typed revision therefore provides explicit revision behavior at an answer-score cost; it is not supported as an unconditional accuracy improvement. We report these outcomes as negative or mixed evidence rather than attributing gains to all three query families or every repair stage.
+
+On a visible 100-pair FEVER SUPPORTS/REFUTES transfer diagnostic, the heuristic and NLI detectors both obtain 0.72 accuracy. NLI raises conflict recall from 0.30 to 0.40, but the paired accuracy difference is 0 with a 95\% bootstrap interval of $[-0.05,0.05]$ and McNemar $p=1.0$. This does not validate typed FAR behavior outside the controlled benchmark.
 
 \section{Limitations and Responsible Use}
-The candidate set reuses a small controlled source corpus, includes synthetic passages, and has correlated variants. Its current labels are not human gold, and its local test is frozen rather than externally blind. Rule conflict detectors are high precision but incomplete; model detectors inherit calibration and domain-shift risk. Retrieval failure can hide a true counterexample, while spurious low-quality contradictions can induce over-correction. The benchmark is not current factual advice and is unsuitable for medical, legal, financial, or policy decisions. Final authors remain responsible for checking all text, citations, experiments, and AAAI disclosure requirements.
+The candidate set reuses a small controlled source corpus, includes synthetic passages, and has correlated variants. Its labels are not human-validated gold, the reported split is development data, and evaluation is not externally blind. The machine audit measures agreement with construction labels and cannot reveal errors shared by construction, the LLM signal, and deterministic rules. Results come from one local model and do not establish multi-model generality. Rule conflict detectors are high precision but incomplete; model detectors inherit calibration and domain-shift risk. Retrieval failure can hide a true counterexample, while spurious low-quality contradictions can induce over-correction. The benchmark is not current factual advice and is unsuitable for medical, legal, financial, or policy decisions. Final authors remain responsible for checking all text, citations, experiments, and AAAI disclosure requirements.
 
 \section{Conclusion}
-FAR turns ``what could make this answer wrong?'' into a typed, retrievable control protocol. Its value depends on two empirical facts still to be established: falsifying queries must recover useful counter-evidence, and typed control must improve revision over an untyped alternative. The released artifact makes those claims directly testable and prevents incomplete annotation or diagnostic runs from masquerading as final evidence.
+FAR turns ``what could make this answer wrong?'' into a typed, retrievable control protocol. On the released machine-audited development diagnostic, typed conflict control outperforms a matched untyped alternative, while the refutation, boundary, and typed-revision ablations do not support a uniformly positive component story. The result is a narrow, reproducible mechanism signal---not human-gold, blind-test, external-domain, or multi-model evidence.
 
 \bibliography{references}
 \end{document}

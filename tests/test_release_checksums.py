@@ -286,4 +286,6 @@ def test_source_archive_includes_reader_facing_reports(tmp_path: Path) -> None:
         "reports/project_status_snapshot.md",
         "reports/single_author_diagnostic_report.md",
         "reports/solo_human_review_priority.csv",
+        "reports/solo_paper_readiness.json",
+        "reports/solo_paper_readiness.md",
     }

@@ -18,9 +18,10 @@ from bench.build.common import sha256_file, write_json
 from bench.build.validate_bench import validate as validate_benchmark
 from experiments.diagnostic_release import verify_solo_release
 from experiments.evaluate_fever_binary import verify_evaluation as verify_fever_binary
+from experiments.solo_paper_readiness import audit as audit_solo_paper_readiness
 from experiments.submission_readiness import audit as audit_submission_readiness
 
-SNAPSHOT_SCHEMA_VERSION = "far-project-status-snapshot-v1"
+SNAPSHOT_SCHEMA_VERSION = "far-project-status-snapshot-v2"
 SNAPSHOT_AUDIT_SCHEMA_VERSION = "far-project-status-snapshot-audit-v1"
 
 
@@ -66,7 +67,9 @@ def _reader_reports(root: Path) -> dict[str, Any]:
     report = root / "reports/single_author_diagnostic_report.md"
     priority = root / "reports/solo_human_review_priority.csv"
     readme = root / "reports/README.md"
-    required = [report, priority, readme]
+    solo_paper_json = root / "reports/solo_paper_readiness.json"
+    solo_paper_markdown = root / "reports/solo_paper_readiness.md"
+    required = [report, priority, readme, solo_paper_json, solo_paper_markdown]
     missing = [path.relative_to(root).as_posix() for path in required if not path.is_file()]
     return {
         "valid": not missing,
@@ -88,6 +91,7 @@ def build_status_snapshot(root: Path) -> dict[str, Any]:
     )
     priority = _priority_table(root, root / "reports/solo_human_review_priority.csv")
     reports = _reader_reports(root)
+    solo_paper = audit_solo_paper_readiness(root)
     submission = audit_submission_readiness(root, _json(root / "submission/evidence.template.json"))
     strict_external_blockers = sorted(
         set(submission["blockers"])
@@ -118,6 +122,12 @@ def build_status_snapshot(root: Path) -> dict[str, Any]:
                 "strict AAAI submission readiness",
             ],
         },
+        "single_author_machine_audited_paper": {
+            "ready": bool(solo_paper["ready"]),
+            "allowed_claim": solo_paper["allowed_claim"],
+            "strict_aaai_submission_ready": False,
+            "required_limitations": solo_paper["required_limitations"],
+        },
         "strict_aaai_submission": {
             "ready": bool(submission["ready"]),
             "blockers": submission["blockers"],
@@ -140,15 +150,19 @@ def build_status_snapshot(root: Path) -> dict[str, Any]:
             "fever_binary": fever_binary,
             "review_priority": priority,
             "reader_reports": reports,
+            "solo_paper_readiness": solo_paper,
         },
     }
 
 
 def render_markdown(snapshot: dict[str, Any]) -> str:
     diagnostic = snapshot["single_author_machine_audited_diagnostic"]
+    paper_profile = snapshot["single_author_machine_audited_paper"]
     strict = snapshot["strict_aaai_submission"]
     evidence = snapshot["evidence"]
     diagnostic_status = str(diagnostic["complete"]).lower()
+    paper_profile_status = str(paper_profile["ready"]).lower()
+    paper_profile_meaning = "Narrow typed-control mechanism claim with mandatory negative ablations"
     strict_status = str(strict["ready"]).lower()
     strict_meaning = (
         "Requires real external evidence and cannot be satisfied by templates or machine labels"
@@ -185,6 +199,7 @@ ledger for the project proposal, not a submission waiver.
 | Track | Status | Meaning |
 |---|---|---|
 | Single-author machine-audited diagnostic | `{diagnostic_status}` | {diagnostic["allowed_claim"]} |
+| Single-author machine-audited paper | `{paper_profile_status}` | {paper_profile_meaning} |
 | Strict AAAI submission | `{strict_status}` | {strict_meaning} |
 
 ## Current evidence

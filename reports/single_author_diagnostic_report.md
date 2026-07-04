@@ -187,7 +187,7 @@ What remains uncertain:
 
 1. Use this report as the single-author public deliverable if no annotators are available.
 2. If any small amount of human review becomes available, start with [`reports/solo_human_review_priority.csv`](solo_human_review_priority.csv), not the full 300 rows.
-3. Keep the strict AAAI paper draft conservative: leave empirical cells pending until human annotation, external custody, and final multi-model runs exist.
+3. The relaxed single-author paper may use these complete dev results only with the machine-audited, non-blind, single-model qualifiers and negative ablations enforced by `falsirag-solo-paper-readiness`; the strict AAAI profile remains pending.
 4. If time allows, target revision reliability next rather than broad detector tuning. The current evidence shows retrieval is relatively strong, while revision accuracy is the visible bottleneck.
 5. Do not tune on the frozen FEVER 100-pair diagnostic. If external development is needed, create a separate development split and reserve a new frozen evaluation slice.
 6. Rotate any exposed API keys before cloud experiments. The repository should only use environment variables or local ignored secrets.

@@ -8,6 +8,7 @@ ledger for the project proposal, not a submission waiver.
 | Track | Status | Meaning |
 |---|---|---|
 | Single-author machine-audited diagnostic | `true` | public single-author machine-audited diagnostic |
+| Single-author machine-audited paper | `true` | Narrow typed-control mechanism claim with mandatory negative ablations |
 | Strict AAAI submission | `false` | Requires real external evidence and cannot be satisfied by templates or machine labels |
 
 ## Current evidence

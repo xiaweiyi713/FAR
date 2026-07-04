@@ -236,6 +236,25 @@ intentionally high-bias and sparse, while the LLM preannotator attempts the full
 schema. The disagreements are therefore useful as a review queue, not as a
 negative result or a replacement for two human annotators.
 
+## Relaxed paper profile
+
+When no human annotators are available, FAR can produce a transparent
+single-author machine-audited paper rather than leaving every empirical cell
+blank. Run:
+
+```bash
+uv run falsirag-solo-paper-readiness
+```
+
+This profile does not turn automatic labels into human gold. It accepts the
+frozen construction labels only with the full machine-consensus audit and
+requires all 122 disputed rows to remain disclosed. It permits one narrow
+positive result---typed FAR versus its matched untyped ablation on the complete
+Qwen dev diagnostic---and requires the paper to retain the negative/mixed
+refutation, boundary, typed-revision, and FEVER findings. The command returns
+`ready:true` only for `single_author_machine_audited_paper`; strict AAAI
+readiness remains false.
+
 ## References
 
 - Label Studio prediction imports:

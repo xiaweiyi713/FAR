@@ -174,3 +174,10 @@ def project_status_main() -> None:
     from experiments.project_status import main
 
     main()
+
+
+def solo_paper_readiness_main() -> None:
+    _prefer_far_repo()
+    from experiments.solo_paper_readiness import main
+
+    main()

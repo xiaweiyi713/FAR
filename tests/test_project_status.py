@@ -25,6 +25,8 @@ def test_project_status_keeps_dual_track_claim_boundary() -> None:
     snapshot = build_status_snapshot(ROOT)
 
     assert snapshot["single_author_machine_audited_diagnostic"]["complete"] is True
+    assert snapshot["single_author_machine_audited_paper"]["ready"] is True
+    assert snapshot["single_author_machine_audited_paper"]["strict_aaai_submission_ready"] is False
     assert snapshot["strict_aaai_submission"]["ready"] is False
     assert snapshot["evidence"]["solo_release"]["valid"] is True
     assert snapshot["evidence"]["fever_binary"]["valid"] is True

@@ -15,6 +15,7 @@ EXPECTED_ENTRY_POINTS = {
     "falsirag-project-status",
     "falsirag-run",
     "falsirag-scan-secrets",
+    "falsirag-solo-paper-readiness",
     "falsirag-validate-bench",
 }
 

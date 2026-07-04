@@ -1068,3 +1068,28 @@ package metadata/imports, required console entry points, the packaged offline
 configuration, and the complete packaged candidate benchmark with its frozen
 0.91 counter-evidence recall. The public CI diagnostic job runs the same check,
 closing the gap between source-tree tests and actually installable artifacts.
+
+## 2026-07-04: Relaxed machine-audited paper profile
+
+The user authorized a transparent relaxation because no independent human
+annotators are available. Added `falsirag-solo-paper-readiness` as a profile
+that is deliberately separate from strict AAAI readiness. It verifies the
+tracked 69-file solo release, frozen FEVER diagnostic, exact paper source, and
+the observed four-way ablation pattern. The gate requires the paper to state
+that refutation and boundary removal do not hurt answer correctness and that
+removing typed revision raises answer correctness while zeroing revision
+metrics. It rejects pending empirical cells and broad component claims.
+
+The paper now includes the fingerprinted Qwen dev main and ablation tables. Its
+positive claim is limited to typed-versus-untyped control: +0.078 answer
+correctness, +0.420 typed-conflict F1, and +0.217 revision accuracy. It also
+reports the FEVER paired-accuracy null result and explicitly disclaims human
+gold, external blindness, and multi-model generality. The relaxed profile is
+ready; the original strict human/external gate is unchanged and false.
+
+A post-hoc machine-disposition sensitivity check further separates the 60 dev
+rows into 35 machine-confirmed and 25 machine-disputed examples. FAR's paired
+answer-correctness advantage over untyped remains positive in both groups:
++0.101 (95% bootstrap [0.039, 0.161]) and +0.047 ([0.001, 0.094]),
+respectively. The paper reports this only as a category-imbalanced sensitivity
+analysis, not independent label validation.
