@@ -26,10 +26,11 @@ llm:
   temperature: 0.0
   max_tokens: 1200
   think: false
-  unload_after_sample: true
+  keep_alive: 24h
+  unload_after_sample: false
   cache_enabled: true
   cache_path: /mnt/d/FAR-outputs/cache/ramdocs_qwen.sqlite3
-  cache_namespace: far-ramdocs-qwen3.5-9b-v1
+  cache_namespace: far-ramdocs-qwen3.5-9b-v2-keepalive
 statistics:
   bootstrap_resamples: 2000
   bootstrap_seed: 1729

@@ -1312,3 +1312,20 @@ readiness generator now rounds derived sensitivity statistics to 15 decimal
 places at its serialization boundary. Explicit clean environments on Python
 3.10 and 3.11 reproduce the same tracked reports without weakening equality
 checks.
+
+## 2026-07-04: RAMDocs formal dev runtime restart
+
+The first RAMDocs dev formal attempt on the Windows GPU was stopped before any
+scored suite output existed. At diagnosis it had only a partial initial-answer
+checkpoint, no oracle metadata leakage, no duplicate samples, and no logged
+errors, but the Qwen Ollama configuration used `unload_after_sample: true`. That setting forced
+the 9B model to unload after every RAMDocs item and reload for the next item,
+turning a runtime hygiene choice into a multi-day bottleneck.
+
+This is a runtime-only deviation: data, split, prompts, model tag, temperature,
+metrics, baselines, G-A rule, and test access policy are unchanged. The RAMDocs
+Qwen config now keeps the model alive for 24 hours, does not unload after each
+sample, and uses a new cache namespace so the replacement formal run cannot
+reuse responses from the abandoned attempt. The abandoned output directory must
+not be used as evidence; the replacement run starts from an empty output tree
+and binds to the new commit/config hash.
