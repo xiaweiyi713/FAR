@@ -52,24 +52,41 @@ def rescore_family(
     output_dir: Path,
     *,
     family: str,
+    split: str = "dev",
 ) -> dict[str, Any]:
     verify_active_protocol()
     output_dir.mkdir(parents=True, exist_ok=True)
     overlay_path = output_dir / "jury_benchmark.jsonl"
     overlay = _overlay_benchmark(data_dir, labels_dir, overlay_path)
-    dev_ids = {str(row["id"]) for row in overlay if row["split"] == "dev"}
-    if not dev_ids:
-        raise ValueError("jury labels leave no development samples")
-    method_sources = {
-        "far": suite_dir / "runs" / "far" / "predictions.jsonl",
-        "minus_typed_conflict": suite_dir / "runs" / "minus_typed_conflict" / "predictions.jsonl",
-    }
+    selected_ids = {str(row["id"]) for row in overlay if row["split"] == split}
+    if not selected_ids:
+        raise ValueError(f"jury labels leave no {split} samples")
+    suite = json.loads((suite_dir / "suite_manifest.json").read_text(encoding="utf-8"))
+    selected_methods = (
+        ["far", "minus_typed_conflict"]
+        if split == "dev"
+        else [str(method) for method in suite.get("methods", [])]
+    )
+
+    def source_for(method: str) -> Path:
+        if method in {
+            "vanilla_rag",
+            "multi_query_rag",
+            "reflective_rag",
+            "crag_style_reproduction",
+            "self_rag_style_reproduction",
+            "counterrefine_style_reproduction",
+        }:
+            return suite_dir / "runs" / "baselines" / method / "predictions.jsonl"
+        return suite_dir / "runs" / method / "predictions.jsonl"
+
+    method_sources = {method: source_for(method) for method in selected_methods}
     report_paths: dict[str, str] = {}
     prediction_hashes: dict[str, str] = {}
     for method, source in method_sources.items():
-        rows = [row for row in read_jsonl(source) if str(row["sample_id"]) in dev_ids]
-        if {str(row["sample_id"]) for row in rows} != dev_ids:
-            raise ValueError(f"{family}/{method}: predictions do not cover jury-labelled dev")
+        rows = [row for row in read_jsonl(source) if str(row["sample_id"]) in selected_ids]
+        if {str(row["sample_id"]) for row in rows} != selected_ids:
+            raise ValueError(f"{family}/{method}: predictions do not cover jury-labelled {split}")
         predictions_path = output_dir / method / "predictions.jsonl"
         write_jsonl(predictions_path, rows)
         evaluation_dir = output_dir / method / "evaluation"
@@ -93,7 +110,9 @@ def rescore_family(
         "protocol_fingerprint": PROTOCOL_ACTIVE_SHA256,
         "family": family,
         "model_identity": identity.get("llm_runtime"),
-        "samples": len(dev_ids),
+        "split": split,
+        "samples": len(selected_ids),
+        "methods": selected_methods,
         "jury_benchmark_sha256": sha256_file(overlay_path),
         "jury_labels_manifest_sha256": sha256_file(labels_dir / "manifest.json"),
         "source_suite_manifest_sha256": sha256_file(suite_dir / "suite_manifest.json"),
@@ -114,6 +133,7 @@ def main() -> None:
     parser.add_argument("--suite-dir", type=Path, required=True)
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--family", choices=("qwen", "mistral", "google"), required=True)
+    parser.add_argument("--split", choices=("dev", "test"), default="dev")
     args = parser.parse_args()
     result = rescore_family(
         args.data_dir,
@@ -121,6 +141,7 @@ def main() -> None:
         args.suite_dir,
         args.output_dir,
         family=args.family,
+        split=args.split,
     )
     print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
 

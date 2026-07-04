@@ -47,6 +47,9 @@ def prepare_intent(
         "methods": sorted(methods),
         "protocol_fingerprint": PROTOCOL_ACTIVE_SHA256,
         "benchmark_input_sha256": sha256_file(benchmark_input),
+        "expected_samples": sum(
+            bool(line.strip()) for line in benchmark_input.read_text(encoding="utf-8").splitlines()
+        ),
         "data_manifest_sha256": sha256_file(data_manifest),
         "prepared_from_git_commit": _git("rev-parse", "HEAD"),
         "externally_held": False,
@@ -82,7 +85,12 @@ def committed_intent(intent_path: Path) -> dict[str, Any]:
     return {"intent": local, "committed_in": commit, "path": relative}
 
 
-def seal_run(intent_path: Path, suite_manifest_path: Path, output_path: Path) -> dict[str, Any]:
+def seal_run(
+    intent_path: Path,
+    suite_manifest_path: Path,
+    score_manifest_path: Path,
+    output_path: Path,
+) -> dict[str, Any]:
     committed = committed_intent(intent_path)
     intent = committed["intent"]
     suite = json.loads(suite_manifest_path.read_text(encoding="utf-8"))
@@ -92,6 +100,11 @@ def seal_run(intent_path: Path, suite_manifest_path: Path, output_path: Path) ->
         raise ValueError("one-shot suite must cover the complete test split")
     if set(suite.get("methods", [])) != set(intent["methods"]):
         raise ValueError("one-shot suite method set differs from committed intent")
+    score = json.loads(score_manifest_path.read_text(encoding="utf-8"))
+    if score.get("split") != "test":
+        raise ValueError("one-shot score manifest is not a test evaluation")
+    if score.get("samples") != intent.get("expected_samples"):
+        raise ValueError("one-shot score count differs from committed intent")
     current = _git("rev-parse", "HEAD")
     ancestor = (
         subprocess.run(
@@ -111,6 +124,8 @@ def seal_run(intent_path: Path, suite_manifest_path: Path, output_path: Path) ->
         "intent_commit": committed["committed_in"],
         "evaluation_commit": current,
         "suite_manifest_sha256": sha256_file(suite_manifest_path),
+        "score_manifest_sha256": sha256_file(score_manifest_path),
+        "scored_samples": score["samples"],
         "methods": intent["methods"],
         "one_shot": True,
         "externally_held": False,
@@ -135,6 +150,7 @@ def main() -> None:
     seal = subparsers.add_parser("seal")
     seal.add_argument("--intent", type=Path, required=True)
     seal.add_argument("--suite-manifest", type=Path, required=True)
+    seal.add_argument("--score-manifest", type=Path, required=True)
     seal.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     if args.command == "prepare":
@@ -148,7 +164,12 @@ def main() -> None:
     elif args.command == "verify-committed":
         result = committed_intent(args.intent)
     else:
-        result = seal_run(args.intent, args.suite_manifest, args.output)
+        result = seal_run(
+            args.intent,
+            args.suite_manifest,
+            args.score_manifest,
+            args.output,
+        )
     print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
 
 

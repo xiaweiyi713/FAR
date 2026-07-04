@@ -43,6 +43,8 @@ def _suite_row(family: str, suite_dir: Path) -> dict[str, Any]:
     suite = json.loads((suite_dir / "matrix_family_manifest.json").read_text(encoding="utf-8"))
     if suite.get("jury_gold") is not True or suite.get("publication_gold") is not False:
         raise ValueError(f"{family}: matrix input is not a jury-gold rescore bundle")
+    if suite.get("split") != "dev":
+        raise ValueError(f"{family}: model matrix requires development rescoring")
     if suite.get("family") != family or suite.get("protocol_fingerprint") != PROTOCOL_ACTIVE_SHA256:
         raise ValueError(f"{family}: matrix input identity mismatch")
     untyped_report = json.loads(

@@ -50,6 +50,19 @@ that lexicon-assisted signal. NLI, temporal, numerical, source consistency,
 scope, and granularity checks remain enabled. This is a pre-evaluation data
 adapter decision; no development score existed when it was made.
 
+The fully no-oracle smoke passed from clean commit
+`ee27a3061dd1ed5c792f44fa42cb2361ae0c03f6`. Its initial-answer signature is
+`8108ce2e39a89f0fedd20935269d6fb3781632ad57defaee72ca2a1451a2cff5`
+(prediction SHA-256
+`20f513f4fdd5af474319f889fa61d8710b8ef1a0f6e8c575513c176091939d1f`),
+and its FAR signature is
+`de2c9e9d412a5f9a1371047fff32d95620f0f049ac13e69a091cbdd1fd2767c2`
+(prediction SHA-256
+`031d1985491a7dcf674e67cb88de91f6e5acd1e53d65db507f8ad3de9e1c988e`).
+The row used only item-local IDs, generated nine typed queries, and exposed no
+document type, type-bearing source name, or upstream disambiguated entity. The
+formal suite was launched again from zero only after these checks passed.
+
 ## 2026-07-04: RAMDocs closed-corpus GPU smoke and Phase A launch
 
 The pinned 500-row RAMDocs import was rebuilt at Hugging Face revision

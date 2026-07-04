@@ -40,6 +40,7 @@ def _family_bundle(root: Path, family: str, gain: float = 0.1) -> Path:
             "schema_version": "far-jury-family-rescore-v1",
             "protocol_fingerprint": PROTOCOL_ACTIVE_SHA256,
             "family": family,
+            "split": "dev",
             "model_identity": {"model": f"{family}-model"},
             "structured_fallback": {
                 "samples": 60,
@@ -126,5 +127,6 @@ def test_one_shot_intent_binds_clean_commit_and_inputs(
     intent = prepare_intent("ramdocs", benchmark, manifest, ["far", "baseline"], output)
     assert intent["one_shot"] is True
     assert intent["externally_held"] is False
+    assert intent["expected_samples"] == 1
     assert intent["prepared_from_git_commit"] == "a" * 40
     assert json.loads(output.read_text(encoding="utf-8"))["intent_id"] == intent["intent_id"]

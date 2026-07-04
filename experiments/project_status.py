@@ -100,7 +100,9 @@ def build_status_snapshot(root: Path) -> dict[str, Any]:
         root / "bench/labels_jury_v1/manifest.json",
         root / "diagnostics/jury_v1/model_matrix.json",
         root / "diagnostics/jury_v1/falsirag_test/one_shot_seal.json",
+        root / "diagnostics/jury_v1/falsirag_test/matrix_family_manifest.json",
         root / "diagnostics/ramdocs_v1/test/one_shot_seal.json",
+        root / "diagnostics/ramdocs_v1/test/suite_manifest.json",
         root / "paper/main.tex",
     )
     submission = audit_submission_readiness(root, _json(root / "submission/evidence.template.json"))

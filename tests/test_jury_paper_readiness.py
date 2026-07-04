@@ -17,7 +17,9 @@ def test_jury_readiness_fails_closed_while_execution_artifacts_are_missing(
         tmp_path / "jury-labels.json",
         tmp_path / "matrix.json",
         tmp_path / "falsirag-seal.json",
+        tmp_path / "falsirag-score.json",
         tmp_path / "ramdocs-seal.json",
+        tmp_path / "ramdocs-score.json",
         ROOT / "paper/main.tex",
     )
     assert report["ready"] is False
@@ -42,7 +44,9 @@ def test_jury_readiness_rejects_human_or_external_claim_upgrade(tmp_path: Path) 
         tmp_path / "labels.json",
         tmp_path / "matrix.json",
         tmp_path / "falsirag.json",
+        tmp_path / "falsirag-score.json",
         tmp_path / "ramdocs.json",
+        tmp_path / "ramdocs-score.json",
         paper,
     )
     assert report["ready"] is False

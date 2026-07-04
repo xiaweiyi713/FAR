@@ -55,7 +55,9 @@ def audit(
     jury_labels_manifest: Path,
     matrix_report: Path,
     falsirag_test_seal: Path,
+    falsirag_test_score: Path,
     ramdocs_test_seal: Path,
+    ramdocs_test_score: Path,
     paper_main: Path,
 ) -> dict[str, Any]:
     errors: list[str] = []
@@ -115,11 +117,14 @@ def audit(
     if not checks["three_family_matrix_ready"]:
         errors.append("three-family jury-gold typed-control matrix is not ready")
 
-    for target, path in (
-        ("falsirag", falsirag_test_seal),
-        ("ramdocs", ramdocs_test_seal),
+    for target, path, score_path, expected_samples in (
+        ("falsirag", falsirag_test_seal, falsirag_test_score, 58),
+        ("ramdocs", ramdocs_test_seal, ramdocs_test_score, 150),
     ):
         seal = _safe_json(path, errors, f"{target} one-shot seal")
+        score_hash_matches = score_path.is_file() and seal.get(
+            "score_manifest_sha256"
+        ) == sha256_file(score_path)
         passed = (
             seal.get("schema_version") == "far-one-shot-seal-v1"
             and seal.get("target") == target
@@ -127,6 +132,8 @@ def audit(
             and seal.get("externally_held") is False
             and seal.get("fingerprint_chain_valid") is True
             and seal.get("protocol_fingerprint") == PROTOCOL_ACTIVE_SHA256
+            and seal.get("scored_samples") == expected_samples
+            and score_hash_matches
         )
         checks[f"{target}_one_shot_complete"] = passed
         if not passed:
@@ -210,6 +217,16 @@ def main() -> None:
         type=Path,
         default=ROOT / "diagnostics/ramdocs_v1/test/one_shot_seal.json",
     )
+    parser.add_argument(
+        "--falsirag-test-score",
+        type=Path,
+        default=ROOT / "diagnostics/jury_v1/falsirag_test/matrix_family_manifest.json",
+    )
+    parser.add_argument(
+        "--ramdocs-test-score",
+        type=Path,
+        default=ROOT / "diagnostics/ramdocs_v1/test/suite_manifest.json",
+    )
     parser.add_argument("--paper-main", type=Path, default=ROOT / "paper/main.tex")
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()
@@ -220,7 +237,9 @@ def main() -> None:
         args.jury_labels_manifest,
         args.matrix_report,
         args.falsirag_test_seal,
+        args.falsirag_test_score,
         args.ramdocs_test_seal,
+        args.ramdocs_test_score,
         args.paper_main,
     )
     if args.output:

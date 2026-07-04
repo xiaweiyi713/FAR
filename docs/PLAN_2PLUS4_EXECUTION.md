@@ -81,5 +81,6 @@ CounterRefine-style；`falsirag-jury-rescore` 用 jury labels 重算，
 `falsirag-model-matrix` 汇总三家族方向与回退率。
 
 test 前先用 `falsirag-one-shot prepare` 写 intent，提交该 intent 后才运行预测；
-完成后用 `falsirag-one-shot seal` 绑定 intent commit、evaluation commit 和 suite
-指纹。该机制是本地防篡改证据，不得称为外部保管盲测。
+完成后用 `falsirag-one-shot seal` 同时绑定 intent commit、evaluation commit、
+suite 指纹和实际评分 manifest。seal 还会核对提交前冻结的样本数与评分数。
+该机制是本地防篡改证据，不得称为外部保管盲测。
