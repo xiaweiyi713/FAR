@@ -35,6 +35,13 @@ runtime document-type metadata nor type-bearing source names. The formal Phase A
 suite was restarted from zero after this validation; no invalidated checkpoint
 was reused.
 
+A final pre-run audit then noticed that the runtime loader still exposed the
+upstream `disambig_entity` list through document metadata. Because FAR can build
+an entity lexicon from that field while baselines cannot, the loader was tightened
+again to pass an empty metadata mapping for every RAMDocs runtime document. The
+second restart was stopped before its first checkpoint, so it produced no row to
+invalidate. Scorer-side corpus metadata remains available only after prediction.
+
 ## 2026-07-04: RAMDocs closed-corpus GPU smoke and Phase A launch
 
 The pinned 500-row RAMDocs import was rebuilt at Hugging Face revision

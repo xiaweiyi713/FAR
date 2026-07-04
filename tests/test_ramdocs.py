@@ -82,6 +82,11 @@ def test_ramdocs_builder_is_pinned_and_hides_test_labels(
         for document in documents
     )
     assert all(
+        document.metadata == {}
+        for documents in runtime_documents.values()
+        for document in documents
+    )
+    assert all(
         set(row) == {"id", "question", "split"}
         for row in read_jsonl(output / "splits" / "test_inputs.jsonl")
     )

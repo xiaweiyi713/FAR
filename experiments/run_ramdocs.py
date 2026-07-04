@@ -64,9 +64,7 @@ def _documents(data_dir: Path) -> dict[str, list[EvidenceDocument]]:
                 source=str(row["source"]),
                 date=None,
                 url=None,
-                metadata={
-                    "entities": list(row.get("entities", [])),
-                },
+                metadata={},
             )
         )
     return grouped
