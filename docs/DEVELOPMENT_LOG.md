@@ -34,6 +34,25 @@ protocol SHA-256 after this clarification is
 `45b1ca998a09c2349fe805805730117791f4b90663d0241ebbbc513074d51fd7`;
 the original preregistered fingerprint remains recorded above.
 
+## 2026-07-04: deviation — make jury label space and support proxy explicit
+
+This clarification occurred before any jury annotation and before any RAMDocs
+scoring. The benchmark has five positive conflict types, but blind jurors must be
+allowed to conclude that no conflict exists. G-K therefore uses the honest
+six-label space (five positive types plus `no_conflict`) rather than forcing a
+positive label. The preregistered binary fallback and all thresholds are
+unchanged.
+
+RAMDocs does not provide claim-level support annotations for generated answers.
+The auxiliary “unsupported claim rate” is consequently renamed and frozen as an
+unsupported-sentence lexical proxy: split the answer into non-empty sentences,
+compute normalised token F1 against every upstream `correct` document, and mark a
+sentence unsupported when its maximum F1 is below 0.50. This diagnostic is not
+described as a human factuality judgement.
+
+The active protocol SHA-256 after this clarification is
+`a38d048eb280eb7e3f0fdb316f3a57a298c983a22549712bcfa9c6e937c6c9f2`.
+
 ## 2026-06-29: formal retrieval/conflict stack cutoff
 
 Scope: the 60-item development split only. The held-out test inputs and labels
