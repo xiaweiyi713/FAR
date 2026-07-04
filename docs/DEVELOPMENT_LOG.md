@@ -68,6 +68,17 @@ round-one labels.
 The active protocol SHA-256 after this clarification is
 `e629d57e0d495380c4090943c7ad694740ad0e6e130d8f1dfd0d57507141d6c1`.
 
+## 2026-07-04: deviation — stratify the 20% repeat within disputed rows
+
+This correction occurred before any jury result or author adjudication existed.
+The author only adjudicates the disputed layer, so a fixed 12 rows per original
+construction category could exceed the available disputed rows. The repeat is
+therefore the deterministic, category-stratified ceiling of 20% of disputed rows
+in each category. The 14-day minimum and G-S threshold remain unchanged.
+
+The active protocol SHA-256 after this correction is
+`0b4c69868339cb018d8a83ada2663dc3047f251e4ea41d09b2ec92dde0f1769b`.
+
 ## 2026-06-29: formal retrieval/conflict stack cutoff
 
 Scope: the 60-item development split only. The held-out test inputs and labels

@@ -170,8 +170,8 @@ Llama 本地。**执行 G-K 判定**；不达标走二分类降级预案。
 1. 复用 `annotate_packet` 盲标基建：隐藏陪审员投票、隐藏系统输出、
    隐藏构造标签来源、随机打乱顺序。
 2. 第一遍全量仲裁 → 冻结。
-3. ≥ 14 天后，按五个构造类别各固定抽取 12 条（共 60 条，即 20%）做
-   第二遍 → **执行 G-S 判定**。
+3. ≥ 14 天后，在每个构造类别的 disputed 项中按固定种子抽取 20%
+   （逐类向上取整）做第二遍 → **执行 G-S 判定**。
 4. 产出 `bench/labels_jury_v1/`：manifest 标记
    `label_provenance: cross_family_llm_jury_plus_author_blind_adjudication`，
    新增独立等级 `jury_gold: true`；`publication_gold` 保持 `false`
