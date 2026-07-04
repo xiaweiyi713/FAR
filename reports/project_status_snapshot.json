@@ -15,8 +15,7 @@
       "falsirag one-shot seal: [Errno 2] No such file or directory: 'diagnostics/jury_v1/falsirag_test/one_shot_seal.json'",
       "falsirag committed one-shot test chain is incomplete",
       "ramdocs one-shot seal: [Errno 2] No such file or directory: 'diagnostics/ramdocs_v1/test/one_shot_seal.json'",
-      "ramdocs committed one-shot test chain is incomplete",
-      "paper missing mandatory 2+4 disclosures: ['cross-family LLM jury', 'author-blind adjudication', 'not externally held', 'refutation and boundary', 'upstream labels', '7--9B']"
+      "ramdocs committed one-shot test chain is incomplete"
     ],
     "human_gate_replaced_for_this_profile": true,
     "ready": false,
@@ -52,7 +51,7 @@
         "gate_k_jury_passed": false,
         "gate_s_author_passed": false,
         "jury_labels_valid": false,
-        "paper_disclosures_complete": false,
+        "paper_disclosures_complete": true,
         "paper_forbidden_claims_absent": true,
         "ramdocs_dev_suite_valid": false,
         "ramdocs_import_valid": true,
@@ -75,26 +74,18 @@
         "falsirag one-shot seal: [Errno 2] No such file or directory: 'diagnostics/jury_v1/falsirag_test/one_shot_seal.json'",
         "falsirag committed one-shot test chain is incomplete",
         "ramdocs one-shot seal: [Errno 2] No such file or directory: 'diagnostics/ramdocs_v1/test/one_shot_seal.json'",
-        "ramdocs committed one-shot test chain is incomplete",
-        "paper missing mandatory 2+4 disclosures: ['cross-family LLM jury', 'author-blind adjudication', 'not externally held', 'refutation and boundary', 'upstream labels', '7--9B']"
+        "ramdocs committed one-shot test chain is incomplete"
       ],
       "evidence": {
         "jury_consensus_sha256": null,
         "jury_labels_manifest_sha256": null,
         "matrix_report_sha256": null,
-        "paper_sha256": "c47afa9090b62da0b87904ef9e017c8541a7a616edaa2972671ea919633780bc",
+        "paper_sha256": "8f1de85858c16cb12c13f1b0e3c7f8e0db44b345a99189f11e8410733fa432ad",
         "ramdocs_manifest_sha256": "5cd9ff842789afd69fa8e64ff89c0f85eca2f8bc934aa4c694aeec92388074df"
       },
       "forbidden_claims_found": [],
       "human_gate_replaced_for_this_profile": true,
-      "missing_disclosures": [
-        "cross-family LLM jury",
-        "author-blind adjudication",
-        "not externally held",
-        "refutation and boundary",
-        "upstream labels",
-        "7--9B"
-      ],
+      "missing_disclosures": [],
       "protocol_fingerprint": "e0221cfa9569ba089136fd017c1175ad282643c4c773b5f661f42ba95c9d7d00",
       "ready": false,
       "schema_version": "far-jury-paper-readiness-v1",
@@ -106,7 +97,7 @@
         "reports/README.md": "b0bc2cacc94fa61fbb833f24a404ef1c1ebf6129c46ba56384677604e3647677",
         "reports/single_author_diagnostic_report.md": "98483f531dafe03d5a0526a12be877ac95a1ba53ad2c948932dfcd533d1508c3",
         "reports/solo_human_review_priority.csv": "bb036eb51e27d4b654978dd2bd0a2330422c58bf7bc2e6769fced165242a5dee",
-        "reports/solo_paper_readiness.json": "89766c350a749b007c08c17ec57d81391318b559517ee5fcb7f31a9c18430b73",
+        "reports/solo_paper_readiness.json": "38df51c57502db31c1293c0823a246bbb289675c317c0397141e1b59ac647b5b",
         "reports/solo_paper_readiness.md": "b098d53fa974a06d9c00c1f3953978ed6bde9de53df91366f42320d4c9d19d7b"
       },
       "missing": [],
@@ -257,7 +248,7 @@
           "valid": true
         },
         "paper_checklist_sha256": "e3b92d8cc9e056eb1ebba33e91c6b338a6bbbb29e34e19abe7f3eb94c42b967a",
-        "paper_main_sha256": "c47afa9090b62da0b87904ef9e017c8541a7a616edaa2972671ea919633780bc",
+        "paper_main_sha256": "8f1de85858c16cb12c13f1b0e3c7f8e0db44b345a99189f11e8410733fa432ad",
         "paper_supplement_sha256": "17a325914f811c66aa97ce5c996ca8365fb793b2b45fc284baa98b0d8b57aefb",
         "solo_release": {
           "errors": [],
