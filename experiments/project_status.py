@@ -18,10 +18,11 @@ from bench.build.common import sha256_file, write_json
 from bench.build.validate_bench import validate as validate_benchmark
 from experiments.diagnostic_release import verify_solo_release
 from experiments.evaluate_fever_binary import verify_evaluation as verify_fever_binary
+from experiments.jury_paper_readiness import audit as audit_jury_paper_readiness
 from experiments.solo_paper_readiness import audit as audit_solo_paper_readiness
 from experiments.submission_readiness import audit as audit_submission_readiness
 
-SNAPSHOT_SCHEMA_VERSION = "far-project-status-snapshot-v2"
+SNAPSHOT_SCHEMA_VERSION = "far-project-status-snapshot-v3"
 SNAPSHOT_AUDIT_SCHEMA_VERSION = "far-project-status-snapshot-audit-v1"
 
 
@@ -92,6 +93,16 @@ def build_status_snapshot(root: Path) -> dict[str, Any]:
     priority = _priority_table(root, root / "reports/solo_human_review_priority.csv")
     reports = _reader_reports(root)
     solo_paper = audit_solo_paper_readiness(root)
+    jury_paper = audit_jury_paper_readiness(
+        root / "bench/external/ramdocs_v1",
+        root / "diagnostics/ramdocs_v1/dev",
+        root / "diagnostics/jury_v1/consensus/jury_consensus_report.json",
+        root / "bench/labels_jury_v1/manifest.json",
+        root / "diagnostics/jury_v1/model_matrix.json",
+        root / "diagnostics/jury_v1/falsirag_test/one_shot_seal.json",
+        root / "diagnostics/ramdocs_v1/test/one_shot_seal.json",
+        root / "paper/main.tex",
+    )
     submission = audit_submission_readiness(root, _json(root / "submission/evidence.template.json"))
     strict_external_blockers = sorted(
         set(submission["blockers"])
@@ -128,6 +139,12 @@ def build_status_snapshot(root: Path) -> dict[str, Any]:
             "strict_aaai_submission_ready": False,
             "required_limitations": solo_paper["required_limitations"],
         },
+        "cross_family_jury_external_validation_paper": {
+            "ready": bool(jury_paper["ready"]),
+            "human_gate_replaced_for_this_profile": True,
+            "strict_independent_human_profile_ready": False,
+            "blockers": jury_paper["errors"],
+        },
         "strict_aaai_submission": {
             "ready": bool(submission["ready"]),
             "blockers": submission["blockers"],
@@ -151,6 +168,7 @@ def build_status_snapshot(root: Path) -> dict[str, Any]:
             "review_priority": priority,
             "reader_reports": reports,
             "solo_paper_readiness": solo_paper,
+            "jury_paper_readiness": jury_paper,
         },
     }
 
@@ -158,12 +176,17 @@ def build_status_snapshot(root: Path) -> dict[str, Any]:
 def render_markdown(snapshot: dict[str, Any]) -> str:
     diagnostic = snapshot["single_author_machine_audited_diagnostic"]
     paper_profile = snapshot["single_author_machine_audited_paper"]
+    jury_profile = snapshot["cross_family_jury_external_validation_paper"]
     strict = snapshot["strict_aaai_submission"]
     evidence = snapshot["evidence"]
     diagnostic_status = str(diagnostic["complete"]).lower()
     paper_profile_status = str(paper_profile["ready"]).lower()
     paper_profile_meaning = "Narrow typed-control mechanism claim with mandatory negative ablations"
     strict_status = str(strict["ready"]).lower()
+    jury_profile_status = str(jury_profile["ready"]).lower()
+    jury_profile_meaning = (
+        "Preregistered external upstream-label validation plus cross-family LLM jury"
+    )
     strict_meaning = (
         "Requires real external evidence and cannot be satisfied by templates or machine labels"
     )
@@ -200,6 +223,7 @@ ledger for the project proposal, not a submission waiver.
 |---|---|---|
 | Single-author machine-audited diagnostic | `{diagnostic_status}` | {diagnostic["allowed_claim"]} |
 | Single-author machine-audited paper | `{paper_profile_status}` | {paper_profile_meaning} |
+| Cross-family jury + external validation paper | `{jury_profile_status}` | {jury_profile_meaning} |
 | Strict AAAI submission | `{strict_status}` | {strict_meaning} |
 
 ## Current evidence
@@ -226,8 +250,10 @@ External-role blockers:
 ## Claim boundary
 
 The completed local track may be described as a public single-author,
-machine-audited diagnostic. It must not be described as human gold, human IAA,
-externally held blind-test evidence, or strict AAAI submission readiness.
+machine-audited diagnostic; it must not be described as human gold. The 2+4
+track replaces the unavailable human gate only for its explicitly named profile;
+it remains LLM jury + author adjudication, not human IAA or externally held
+blind-test evidence.
 """
 
 

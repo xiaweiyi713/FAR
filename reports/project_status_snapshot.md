@@ -9,6 +9,7 @@ ledger for the project proposal, not a submission waiver.
 |---|---|---|
 | Single-author machine-audited diagnostic | `true` | public single-author machine-audited diagnostic |
 | Single-author machine-audited paper | `true` | Narrow typed-control mechanism claim with mandatory negative ablations |
+| Cross-family jury + external validation paper | `false` | Preregistered external upstream-label validation plus cross-family LLM jury |
 | Strict AAAI submission | `false` | Requires real external evidence and cannot be satisfied by templates or machine labels |
 
 ## Current evidence
@@ -48,5 +49,7 @@ External-role blockers:
 ## Claim boundary
 
 The completed local track may be described as a public single-author,
-machine-audited diagnostic. It must not be described as human gold, human IAA,
-externally held blind-test evidence, or strict AAAI submission readiness.
+machine-audited diagnostic; it must not be described as human gold. The 2+4
+track replaces the unavailable human gate only for its explicitly named profile;
+it remains LLM jury + author adjudication, not human IAA or externally held
+blind-test evidence.

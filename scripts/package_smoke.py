@@ -12,6 +12,8 @@ import far
 from bench.build.validate_bench import validate
 
 EXPECTED_ENTRY_POINTS = {
+    "falsirag-build-ramdocs",
+    "falsirag-jury-paper-readiness",
     "falsirag-project-status",
     "falsirag-run",
     "falsirag-scan-secrets",

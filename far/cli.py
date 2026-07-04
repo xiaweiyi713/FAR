@@ -244,3 +244,24 @@ def jury_rescore_main() -> None:
     from experiments.jury_rescore import main
 
     main()
+
+
+def one_shot_main() -> None:
+    _prefer_far_repo()
+    from experiments.one_shot import main
+
+    main()
+
+
+def jury_paper_readiness_main() -> None:
+    _prefer_far_repo()
+    from experiments.jury_paper_readiness import main
+
+    main()
+
+
+def evidence_2plus4_main() -> None:
+    _prefer_far_repo()
+    from experiments.evidence_2plus4 import main
+
+    main()

@@ -306,7 +306,17 @@ def main() -> None:
             overwrite=args.overwrite,
         )
     else:
-        result = verify_solo_release(args.bundle_dir)
+        manifest_path = args.bundle_dir / "bundle_manifest.json"
+        manifest = _json(manifest_path) if manifest_path.is_file() else {}
+        if manifest.get("schema_version") == "far-ramdocs-evidence-release-v1":
+            from experiments.evidence_2plus4 import verify_ramdocs_release
+
+            result = verify_ramdocs_release(
+                args.bundle_dir,
+                Path("bench/external/ramdocs_v1"),
+            )
+        else:
+            result = verify_solo_release(args.bundle_dir)
     print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
     if args.command == "verify" and not result["valid"]:
         raise SystemExit(1)
