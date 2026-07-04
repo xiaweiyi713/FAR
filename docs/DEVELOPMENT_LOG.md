@@ -1093,3 +1093,11 @@ answer-correctness advantage over untyped remains positive in both groups:
 +0.101 (95% bootstrap [0.039, 0.161]) and +0.047 ([0.001, 0.094]),
 respectively. The paper reports this only as a category-imbalanced sensitivity
 analysis, not independent label validation.
+
+The first public CI run exposed cross-version report drift at approximately
+1e-17: Python 3.10/3.11 and 3.12/3.13 summed the same paired values to slightly
+different final binary floats, so exact tracked-JSON equality failed. The
+readiness generator now rounds derived sensitivity statistics to 15 decimal
+places at its serialization boundary. Explicit clean environments on Python
+3.10 and 3.11 reproduce the same tracked reports without weakening equality
+checks.

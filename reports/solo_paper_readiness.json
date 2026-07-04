@@ -15,17 +15,17 @@
     "label_sensitivity": {
       "machine_confirmed": {
         "answer_correctness": {
-          "candidate_minus_baseline": 0.10103567393680682,
+          "candidate_minus_baseline": 0.101035673936807,
           "confidence": 0.95,
           "higher_is_better": true,
-          "lower": 0.03874194135508742,
+          "lower": 0.038741941355087,
           "method": "paired-stratified-percentile-bootstrap-v1",
           "metric": "answer_correctness",
           "pairs": 35,
           "probability_candidate_better": 0.9995,
           "resamples": 2000,
           "seed": 1729,
-          "upper": 0.16119639296876234
+          "upper": 0.161196392968762
         },
         "categories": {
           "causal_overclaim": 8,
@@ -38,43 +38,43 @@
           "candidate_minus_baseline": 0.2,
           "confidence": 0.95,
           "higher_is_better": true,
-          "lower": 0.08571428571428572,
+          "lower": 0.085714285714286,
           "method": "paired-stratified-percentile-bootstrap-v1",
           "metric": "revision_accuracy",
           "pairs": 35,
           "probability_candidate_better": 1.0,
           "resamples": 2000,
           "seed": 1729,
-          "upper": 0.3142857142857143
+          "upper": 0.314285714285714
         },
         "samples": 35,
         "typed_conflict_correct": {
           "candidate_minus_baseline": 0.6,
           "confidence": 0.95,
           "higher_is_better": true,
-          "lower": 0.45714285714285713,
+          "lower": 0.457142857142857,
           "method": "paired-stratified-percentile-bootstrap-v1",
           "metric": "typed_conflict_correct",
           "pairs": 35,
           "probability_candidate_better": 1.0,
           "resamples": 2000,
           "seed": 1729,
-          "upper": 0.7428571428571429
+          "upper": 0.742857142857143
         }
       },
       "machine_disputed": {
         "answer_correctness": {
-          "candidate_minus_baseline": 0.04654290175188592,
+          "candidate_minus_baseline": 0.046542901751886,
           "confidence": 0.95,
           "higher_is_better": true,
-          "lower": 0.0007076627789660504,
+          "lower": 0.000707662778966,
           "method": "paired-stratified-percentile-bootstrap-v1",
           "metric": "answer_correctness",
           "pairs": 25,
           "probability_candidate_better": 0.976,
           "resamples": 2000,
           "seed": 1729,
-          "upper": 0.09404731616237859
+          "upper": 0.094047316162379
         },
         "categories": {
           "causal_overclaim": 4,

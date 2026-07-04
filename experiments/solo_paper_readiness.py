@@ -47,6 +47,17 @@ def _metric(rows: dict[str, dict[str, str]], method: str, metric: str) -> float:
     return float(rows[method][metric])
 
 
+def _stable_floats(value: Any) -> Any:
+    """Normalize insignificant cross-Python float summation differences."""
+    if isinstance(value, float):
+        return round(value, 15)
+    if isinstance(value, dict):
+        return {key: _stable_floats(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [_stable_floats(item) for item in value]
+    return value
+
+
 def _label_sensitivity(root: Path) -> dict[str, Any]:
     consensus_rows = read_jsonl(
         root / "diagnostics/solo_v1/machine_annotation/machine_consensus_rows.jsonl"
@@ -66,19 +77,21 @@ def _label_sensitivity(root: Path) -> dict[str, Any]:
         for row in far_subset:
             category = str(row["category"])
             categories[category] = categories.get(category, 0) + 1
-        result[disposition] = {
-            "samples": len(far_subset),
-            "categories": dict(sorted(categories.items())),
-            "answer_correctness": paired_bootstrap_comparison(
-                untyped_subset, far_subset, "answer_correctness"
-            ),
-            "revision_accuracy": paired_bootstrap_comparison(
-                untyped_subset, far_subset, "revision_accuracy"
-            ),
-            "typed_conflict_correct": paired_bootstrap_comparison(
-                untyped_subset, far_subset, "typed_conflict_correct"
-            ),
-        }
+        result[disposition] = _stable_floats(
+            {
+                "samples": len(far_subset),
+                "categories": dict(sorted(categories.items())),
+                "answer_correctness": paired_bootstrap_comparison(
+                    untyped_subset, far_subset, "answer_correctness"
+                ),
+                "revision_accuracy": paired_bootstrap_comparison(
+                    untyped_subset, far_subset, "revision_accuracy"
+                ),
+                "typed_conflict_correct": paired_bootstrap_comparison(
+                    untyped_subset, far_subset, "typed_conflict_correct"
+                ),
+            }
+        )
     return result
 
 
