@@ -139,11 +139,7 @@ def build_jury_consensus(
     binary_fleiss = fleiss_kappa(binary_ratings)
     zero_fallbacks = sum(int(item.get("fallbacks", 0)) for item in manifests) == 0
     primary_gate = min(pairwise.values()) >= 0.50 and type_fleiss >= 0.45 and zero_fallbacks
-    binary_gate = (
-        min(pairwise_binary.values()) >= 0.50
-        and binary_fleiss >= 0.45
-        and zero_fallbacks
-    )
+    binary_gate = min(pairwise_binary.values()) >= 0.50 and binary_fleiss >= 0.45 and zero_fallbacks
 
     consensus_rows: list[dict[str, Any]] = []
     disposition_counts: Counter[str] = Counter()

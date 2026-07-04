@@ -68,9 +68,7 @@ def build_ramdocs_release(
             f"runs/{method}/{name}"
             for name in ("predictions.jsonl", "run_identity.json", "run_manifest.json")
         )
-        names.extend(
-            f"evaluations/{method}/{name}" for name in ("scores.jsonl", "report.json")
-        )
+        names.extend(f"evaluations/{method}/{name}" for name in ("scores.jsonl", "report.json"))
         if method != "far":
             names.append(f"comparisons/far_vs_{method}.json")
     for name in names:

@@ -57,10 +57,7 @@ def _family_bundle(root: Path, family: str, gain: float = 0.1) -> Path:
 def test_model_matrix_requires_three_included_families_and_same_direction(
     tmp_path: Path,
 ) -> None:
-    suites = {
-        family: _family_bundle(tmp_path, family)
-        for family in ("qwen", "mistral", "google")
-    }
+    suites = {family: _family_bundle(tmp_path, family) for family in ("qwen", "mistral", "google")}
     report = build_matrix(suites, tmp_path / "matrix.json")
     assert report["minimum_matrix_passed"] is True
     assert report["three_family_claim_ready"] is True

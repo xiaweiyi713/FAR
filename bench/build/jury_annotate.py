@@ -49,12 +49,16 @@ def _prompt(row: dict[str, Any]) -> str:
     )
 
 
-PROMPT_SHA256 = hashlib.sha256(_prompt({
-    "question": "{question}",
-    "initial_answer": "{initial_answer}",
-    "claims": "{claims}",
-    "evidence": "{evidence}",
-}).encode("utf-8")).hexdigest()
+PROMPT_SHA256 = hashlib.sha256(
+    _prompt(
+        {
+            "question": "{question}",
+            "initial_answer": "{initial_answer}",
+            "claims": "{claims}",
+            "evidence": "{evidence}",
+        }
+    ).encode("utf-8")
+).hexdigest()
 
 
 def _is_fallback(row: dict[str, Any]) -> bool:
@@ -140,9 +144,7 @@ def annotate_juror(
                 annotation = _normalise_prediction(raw, sample_id)
                 if annotation["conflict_type"] not in {*JURY_TYPES, "no_conflict"}:
                     raise ValueError(f"{sample_id}: conflict type is outside the jury label space")
-                if annotation["conflict_present"] and not annotation[
-                    "suggested_revised_answer"
-                ]:
+                if annotation["conflict_present"] and not annotation["suggested_revised_answer"]:
                     raise ValueError(f"{sample_id}: conflict-positive jury row needs a revision")
             except Exception as exc:
                 annotation = _fallback_prediction(exc)

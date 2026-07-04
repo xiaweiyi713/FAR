@@ -89,8 +89,8 @@ def audit(
 
     labels = _safe_json(jury_labels_manifest, errors, "jury labels")
     labels_path = jury_labels_manifest.parent / str(labels.get("labels_file", "labels.jsonl"))
-    labels_fingerprint_valid = (
-        labels_path.is_file() and sha256_file(labels_path) == labels.get("labels_sha256")
+    labels_fingerprint_valid = labels_path.is_file() and sha256_file(labels_path) == labels.get(
+        "labels_sha256"
     )
     checks["gate_s_author_passed"] = labels.get("gate_s_passed") is True
     checks["jury_labels_valid"] = (
@@ -181,9 +181,7 @@ def audit(
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
-        "--ramdocs-data", type=Path, default=ROOT / "bench/external/ramdocs_v1"
-    )
+    parser.add_argument("--ramdocs-data", type=Path, default=ROOT / "bench/external/ramdocs_v1")
     parser.add_argument(
         "--ramdocs-dev-suite", type=Path, default=ROOT / "diagnostics/ramdocs_v1/dev"
     )

@@ -188,9 +188,7 @@ def _far_prediction(
         retriever,
         conflict_detector=_detector(config, documents),
         text_generator=generator,
-        top_k_per_query=min(
-            len(documents), int(config.get("run", {}).get("top_k_per_query", 5))
-        ),
+        top_k_per_query=min(len(documents), int(config.get("run", {}).get("top_k_per_query", 5))),
     )
     result = pipeline.run(question, initial_answer)
     primary = _primary_trace(result.revision_trace)
@@ -313,9 +311,7 @@ def main() -> None:
         subparser.add_argument(
             "--config", type=Path, default=ROOT / "experiments/configs/ramdocs_qwen.yaml"
         )
-        subparser.add_argument(
-            "--data-dir", type=Path, default=ROOT / "bench/external/ramdocs_v1"
-        )
+        subparser.add_argument("--data-dir", type=Path, default=ROOT / "bench/external/ramdocs_v1")
         subparser.add_argument("--output-dir", type=Path, required=True)
         subparser.add_argument("--split", choices=("dev", "test"), default="dev")
         subparser.add_argument("--limit", type=int)

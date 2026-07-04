@@ -100,8 +100,7 @@ def build_round1(
         key=lambda row: stable_rank(ROUND1_SEED, "author-blind-round1", row["sample_id"]),
     )
     packet_rows = [
-        _blank_row(blind_rows[str(row["sample_id"])], round_name="round1")
-        for row in ordered
+        _blank_row(blind_rows[str(row["sample_id"])], round_name="round1") for row in ordered
     ]
     packet_path = output_dir / "round1_packet.jsonl"
     write_jsonl(packet_path, packet_rows)
@@ -144,9 +143,10 @@ def _completed_rows(path: Path, expected_ids: set[str]) -> dict[str, dict[str, A
         if not sample_id or sample_id in rows:
             raise ValueError("completed adjudication has missing or duplicate sample IDs")
         row["author_annotation"] = _validated_annotation(row, "author_annotation")
-        if row["author_annotation"]["conflict_present"] and not str(
-            row["author_annotation"].get("revised_answer", "")
-        ).strip():
+        if (
+            row["author_annotation"]["conflict_present"]
+            and not str(row["author_annotation"].get("revised_answer", "")).strip()
+        ):
             raise ValueError(f"{sample_id}: conflict-positive adjudication needs a revision")
         rows[sample_id] = row
     if set(rows) != expected_ids:
@@ -276,9 +276,7 @@ def _load_juror_rows(directory: Path) -> tuple[str, dict[str, dict[str, Any]]]:
     path = directory / str(manifest["annotation_file"])
     if sha256_file(path) != manifest.get("annotation_sha256"):
         raise ValueError("juror annotation fingerprint mismatch")
-    return str(manifest["juror_id"]), {
-        str(row["sample_id"]): row for row in read_jsonl(path)
-    }
+    return str(manifest["juror_id"]), {str(row["sample_id"]): row for row in read_jsonl(path)}
 
 
 def compile_jury_labels(

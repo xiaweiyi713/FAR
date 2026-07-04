@@ -42,15 +42,19 @@ def _source(path: Path) -> None:
 
 
 def test_ramdocs_strict_match_requires_all_gold_and_no_wrong() -> None:
-    assert score_ramdocs_answer("The Alpha; BETA.", ["alpha", "beta"], ["gamma"])[
-        "ramdocs_exact_match"
-    ] == 1.0
-    assert score_ramdocs_answer("alpha", ["alpha", "beta"], ["gamma"])[
-        "ramdocs_exact_match"
-    ] == 0.0
-    assert score_ramdocs_answer("alpha beta gamma", ["alpha", "beta"], ["gamma"])[
-        "ramdocs_exact_match"
-    ] == 0.0
+    assert (
+        score_ramdocs_answer("The Alpha; BETA.", ["alpha", "beta"], ["gamma"])[
+            "ramdocs_exact_match"
+        ]
+        == 1.0
+    )
+    assert score_ramdocs_answer("alpha", ["alpha", "beta"], ["gamma"])["ramdocs_exact_match"] == 0.0
+    assert (
+        score_ramdocs_answer("alpha beta gamma", ["alpha", "beta"], ["gamma"])[
+            "ramdocs_exact_match"
+        ]
+        == 0.0
+    )
     assert score_ramdocs_answer("notable", ["notable"], ["no"])["wrong_answer_exclusion"] == 1.0
     assert unsupported_sentence_rate("alpha beta", ["alpha beta gamma"]) == 0.0
     assert unsupported_sentence_rate("unrelated words", ["alpha beta gamma"]) == 1.0

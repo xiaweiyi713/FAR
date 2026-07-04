@@ -93,10 +93,13 @@ def seal_run(intent_path: Path, suite_manifest_path: Path, output_path: Path) ->
     if set(suite.get("methods", [])) != set(intent["methods"]):
         raise ValueError("one-shot suite method set differs from committed intent")
     current = _git("rev-parse", "HEAD")
-    ancestor = subprocess.run(
-        ["git", "merge-base", "--is-ancestor", committed["committed_in"], current],
-        cwd=ROOT,
-    ).returncode == 0
+    ancestor = (
+        subprocess.run(
+            ["git", "merge-base", "--is-ancestor", committed["committed_in"], current],
+            cwd=ROOT,
+        ).returncode
+        == 0
+    )
     if not ancestor:
         raise ValueError("committed one-shot intent is not an ancestor of the evaluation commit")
     seal = {

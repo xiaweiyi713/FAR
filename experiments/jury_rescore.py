@@ -27,16 +27,12 @@ def _overlay_benchmark(data_dir: Path, labels_dir: Path, output_path: Path) -> l
         row = dict(benchmark[sample_id])
         annotation = labels[sample_id]["gold_annotation"]
         revised = str(
-            annotation.get("revised_answer")
-            or annotation.get("suggested_revised_answer")
-            or ""
+            annotation.get("revised_answer") or annotation.get("suggested_revised_answer") or ""
         ).strip()
         if not revised:
             raise ValueError(f"{sample_id}: jury gold lacks a revised-answer reference")
         row["conflict_type"] = (
-            str(annotation["conflict_type"])
-            if annotation["conflict_present"]
-            else "no_conflict"
+            str(annotation["conflict_type"]) if annotation["conflict_present"] else "no_conflict"
         )
         row["expected_revision"] = {
             "action": str(annotation["revision_action"]),
@@ -66,10 +62,7 @@ def rescore_family(
         raise ValueError("jury labels leave no development samples")
     method_sources = {
         "far": suite_dir / "runs" / "far" / "predictions.jsonl",
-        "minus_typed_conflict": suite_dir
-        / "runs"
-        / "minus_typed_conflict"
-        / "predictions.jsonl",
+        "minus_typed_conflict": suite_dir / "runs" / "minus_typed_conflict" / "predictions.jsonl",
     }
     report_paths: dict[str, str] = {}
     prediction_hashes: dict[str, str] = {}

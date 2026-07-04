@@ -22,8 +22,7 @@ def _fallback_rate(predictions_path: Path) -> dict[str, Any]:
         queries = metadata.get("retrieval_trace", [])
         revisions = metadata.get("revision_trace", [])
         query_fallback = any(
-            not str(item.get("query", {}).get("tactic", "")).startswith("llm:")
-            for item in queries
+            not str(item.get("query", {}).get("tactic", "")).startswith("llm:") for item in queries
         )
         revision_fallback = any(
             item.get("changed") is True
@@ -41,9 +40,7 @@ def _fallback_rate(predictions_path: Path) -> dict[str, Any]:
 
 
 def _suite_row(family: str, suite_dir: Path) -> dict[str, Any]:
-    suite = json.loads(
-        (suite_dir / "matrix_family_manifest.json").read_text(encoding="utf-8")
-    )
+    suite = json.loads((suite_dir / "matrix_family_manifest.json").read_text(encoding="utf-8"))
     if suite.get("jury_gold") is not True or suite.get("publication_gold") is not False:
         raise ValueError(f"{family}: matrix input is not a jury-gold rescore bundle")
     if suite.get("family") != family or suite.get("protocol_fingerprint") != PROTOCOL_ACTIVE_SHA256:
@@ -64,9 +61,7 @@ def _suite_row(family: str, suite_dir: Path) -> dict[str, Any]:
         "family": family,
         "model": suite.get("model_identity", {}).get("model"),
         "model_identity": suite.get("model_identity"),
-        "suite_manifest_sha256": sha256_file(
-            suite_dir / "matrix_family_manifest.json"
-        ),
+        "suite_manifest_sha256": sha256_file(suite_dir / "matrix_family_manifest.json"),
         "typed_minus_untyped_answer_correctness": -float(answer["candidate_minus_baseline"]),
         "typed_minus_untyped_answer_ci": [-float(answer["upper"]), -float(answer["lower"])],
         "typed_minus_untyped_conflict_f1": -float(conflict["candidate_minus_baseline"]),
