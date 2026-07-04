@@ -152,7 +152,7 @@ def build_ramdocs(
                     "doc_id": doc_id,
                     "title": f"RAMDocs evidence for {sample_id}",
                     "content": str(document["text"]),
-                    "source": f"ramdocs_{document_type}",
+                    "source": "ramdocs_anonymous_document",
                     "url": None,
                     "date": None,
                     "author": "HanNight/RAMDocs",

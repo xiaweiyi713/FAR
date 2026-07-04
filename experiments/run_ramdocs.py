@@ -66,7 +66,6 @@ def _documents(data_dir: Path) -> dict[str, list[EvidenceDocument]]:
                 url=None,
                 metadata={
                     "entities": list(row.get("entities", [])),
-                    "document_type": metadata.get("document_type"),
                 },
             )
         )

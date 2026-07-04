@@ -13,6 +13,7 @@ from eval.ramdocs import (
     score_ramdocs_answer,
     unsupported_sentence_rate,
 )
+from experiments.run_ramdocs import _documents
 
 
 def _source(path: Path) -> None:
@@ -71,6 +72,15 @@ def test_ramdocs_builder_is_pinned_and_hides_test_labels(
     assert manifest["counts"]["dev"] == 350
     assert manifest["counts"]["test"] == 150
     assert manifest["publication_gold"] is False
+    assert {row["source"] for row in read_jsonl(output / "corpus.jsonl")} == {
+        "ramdocs_anonymous_document"
+    }
+    runtime_documents = _documents(output)
+    assert all(
+        "document_type" not in document.metadata
+        for documents in runtime_documents.values()
+        for document in documents
+    )
     assert all(
         set(row) == {"id", "question", "split"}
         for row in read_jsonl(output / "splits" / "test_inputs.jsonl")

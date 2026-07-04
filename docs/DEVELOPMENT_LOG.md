@@ -1,5 +1,23 @@
 # Development Decision Log
 
+## 2026-07-04: RAMDocs document-type leakage caught before scoring
+
+Operational QA found that the first RAMDocs import encoded upstream document
+types in the `source` strings (`ramdocs_correct`, `ramdocs_misinfo`, and
+`ramdocs_noise`) and retained the type in runtime metadata. Although the
+initial-answer prompt did not print either field, FAR's source-reliability layer
+could in principle consume the source name. Any G-A result produced under that
+representation would therefore be vulnerable to label leakage.
+
+The formal queue was stopped before it left initial-answer generation. Its 14
+completed initial answers and the earlier one-row FAR smoke are preserved under
+the `invalid_type_leak_20260704` / pilot output names and are excluded from all
+reports. The importer now assigns every document the same
+`ramdocs_anonymous_document` source, and the operational loader strips
+`document_type` while retaining types only in the scorer-side corpus metadata.
+Tests enforce both invariants. The anonymized corpus SHA-256 is
+`219269fedcdc21c9bd87b045a5afd1e7ce60c22ea21f4c1e8ded9c7658d61496`.
+
 ## 2026-07-04: RAMDocs closed-corpus GPU smoke and Phase A launch
 
 The pinned 500-row RAMDocs import was rebuilt at Hugging Face revision
