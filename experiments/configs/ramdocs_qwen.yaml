@@ -13,7 +13,7 @@ conflict_graph:
   enable_source_reliability_conflict: true
   enable_scope_conflict: true
   enable_granularity_conflict: true
-  enable_entity_lexicon_conflict: true
+  enable_entity_lexicon_conflict: false
   entity_lexicon_similarity: 0.55
 retrieval:
   backend: lexical

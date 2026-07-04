@@ -42,6 +42,14 @@ again to pass an empty metadata mapping for every RAMDocs runtime document. The
 second restart was stopped before its first checkpoint, so it produced no row to
 invalidate. Scorer-side corpus metadata remains available only after prediction.
 
+The first no-oracle FAR smoke then failed closed before inference because the
+formal conflict config still required `enable_entity_lexicon_conflict` while the
+fair runtime lexicon was intentionally empty. RAMDocs has no system-visible,
+non-oracle entity lexicon, so its dedicated config now explicitly disables only
+that lexicon-assisted signal. NLI, temporal, numerical, source consistency,
+scope, and granularity checks remain enabled. This is a pre-evaluation data
+adapter decision; no development score existed when it was made.
+
 ## 2026-07-04: RAMDocs closed-corpus GPU smoke and Phase A launch
 
 The pinned 500-row RAMDocs import was rebuilt at Hugging Face revision

@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 
 import pytest
+import yaml
 
 from bench.build.common import read_jsonl, sha256_file, write_jsonl
 from bench.build.ramdocs import UPSTREAM_SHA256, build_ramdocs, verify_ramdocs
@@ -14,6 +15,14 @@ from eval.ramdocs import (
     unsupported_sentence_rate,
 )
 from experiments.run_ramdocs import _documents
+
+
+def test_ramdocs_config_disables_oracle_entity_lexicon() -> None:
+    root = Path(__file__).resolve().parents[1]
+    config = yaml.safe_load(
+        (root / "experiments/configs/ramdocs_qwen.yaml").read_text(encoding="utf-8")
+    )
+    assert config["conflict_graph"]["enable_entity_lexicon_conflict"] is False
 
 
 def _source(path: Path) -> None:
