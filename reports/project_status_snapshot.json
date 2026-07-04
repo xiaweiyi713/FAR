@@ -8,6 +8,8 @@
       "jury labels: [Errno 2] No such file or directory: 'bench/labels_jury_v1/manifest.json'",
       "G-S author self-consistency gate has not passed",
       "compiled jury label layer is missing, stale, or unsafe",
+      "label sensitivity: [Errno 2] No such file or directory: 'diagnostics/jury_v1/qwen_sensitivity/sensitivity_report.json'",
+      "construction/jury/unanimous sensitivity report is not ready",
       "model matrix: [Errno 2] No such file or directory: 'diagnostics/jury_v1/model_matrix.json'",
       "three-family jury-gold typed-control matrix is not ready",
       "falsirag one-shot seal: [Errno 2] No such file or directory: 'diagnostics/jury_v1/falsirag_test/one_shot_seal.json'",
@@ -55,7 +57,8 @@
         "ramdocs_dev_suite_valid": false,
         "ramdocs_import_valid": true,
         "ramdocs_one_shot_complete": false,
-        "three_family_matrix_ready": false
+        "three_family_matrix_ready": false,
+        "three_view_label_sensitivity_ready": false
       },
       "errors": [
         "RAMDocs dev: [Errno 2] No such file or directory: 'diagnostics/ramdocs_v1/dev/suite_manifest.json'",
@@ -65,6 +68,8 @@
         "jury labels: [Errno 2] No such file or directory: 'bench/labels_jury_v1/manifest.json'",
         "G-S author self-consistency gate has not passed",
         "compiled jury label layer is missing, stale, or unsafe",
+        "label sensitivity: [Errno 2] No such file or directory: 'diagnostics/jury_v1/qwen_sensitivity/sensitivity_report.json'",
+        "construction/jury/unanimous sensitivity report is not ready",
         "model matrix: [Errno 2] No such file or directory: 'diagnostics/jury_v1/model_matrix.json'",
         "three-family jury-gold typed-control matrix is not ready",
         "falsirag one-shot seal: [Errno 2] No such file or directory: 'diagnostics/jury_v1/falsirag_test/one_shot_seal.json'",

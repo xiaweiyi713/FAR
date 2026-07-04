@@ -13,6 +13,21 @@ from experiments.model_matrix import _fallback_rate
 from experiments.protocol_2plus4 import PROTOCOL_ACTIVE_SHA256, verify_active_protocol
 
 
+def _prediction_source(suite_dir: Path, method: str) -> Path:
+    source_method = "vanilla_rag" if method == "vanilla" else method
+    if method in {
+        "vanilla",
+        "vanilla_rag",
+        "multi_query_rag",
+        "reflective_rag",
+        "crag_style_reproduction",
+        "self_rag_style_reproduction",
+        "counterrefine_style_reproduction",
+    }:
+        return suite_dir / "runs" / "baselines" / source_method / "predictions.jsonl"
+    return suite_dir / "runs" / source_method / "predictions.jsonl"
+
+
 def _overlay_benchmark(data_dir: Path, labels_dir: Path, output_path: Path) -> list[dict[str, Any]]:
     labels_manifest = json.loads((labels_dir / "manifest.json").read_text(encoding="utf-8"))
     labels_path = labels_dir / str(labels_manifest["labels_file"])
@@ -62,25 +77,11 @@ def rescore_family(
     if not selected_ids:
         raise ValueError(f"jury labels leave no {split} samples")
     suite = json.loads((suite_dir / "suite_manifest.json").read_text(encoding="utf-8"))
-    selected_methods = (
-        ["far", "minus_typed_conflict"]
-        if split == "dev"
-        else [str(method) for method in suite.get("methods", [])]
-    )
+    selected_methods = [str(method) for method in suite.get("methods", [])]
+    if not {"far", "minus_typed_conflict"}.issubset(selected_methods):
+        raise ValueError("jury rescoring requires FAR and its untyped ablation")
 
-    def source_for(method: str) -> Path:
-        if method in {
-            "vanilla_rag",
-            "multi_query_rag",
-            "reflective_rag",
-            "crag_style_reproduction",
-            "self_rag_style_reproduction",
-            "counterrefine_style_reproduction",
-        }:
-            return suite_dir / "runs" / "baselines" / method / "predictions.jsonl"
-        return suite_dir / "runs" / method / "predictions.jsonl"
-
-    method_sources = {method: source_for(method) for method in selected_methods}
+    method_sources = {method: _prediction_source(suite_dir, method) for method in selected_methods}
     report_paths: dict[str, str] = {}
     prediction_hashes: dict[str, str] = {}
     for method, source in method_sources.items():

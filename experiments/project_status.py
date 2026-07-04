@@ -98,6 +98,7 @@ def build_status_snapshot(root: Path) -> dict[str, Any]:
         root / "diagnostics/ramdocs_v1/dev",
         root / "diagnostics/jury_v1/consensus/jury_consensus_report.json",
         root / "bench/labels_jury_v1/manifest.json",
+        root / "diagnostics/jury_v1/qwen_sensitivity/sensitivity_report.json",
         root / "diagnostics/jury_v1/model_matrix.json",
         root / "diagnostics/jury_v1/falsirag_test/one_shot_seal.json",
         root / "diagnostics/jury_v1/falsirag_test/matrix_family_manifest.json",

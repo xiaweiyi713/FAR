@@ -127,6 +127,11 @@ def test_ramdocs_evaluation_and_paired_gate(tmp_path: Path) -> None:
                 "content": "beta",
                 "metadata": {"document_type": "correct"},
             },
+            {
+                "doc_id": "D3",
+                "content": "omega",
+                "metadata": {"document_type": "misinfo"},
+            },
         ],
     )
     write_jsonl(
@@ -138,7 +143,7 @@ def test_ramdocs_evaluation_and_paired_gate(tmp_path: Path) -> None:
                 "category": "ambiguity_misinformation",
                 "gold_answers": ["alpha"],
                 "wrong_answers": ["omega"],
-                "document_ids": ["D1"],
+                "document_ids": ["D1", "D3"],
             },
             {
                 "id": "R2",
@@ -162,7 +167,12 @@ def test_ramdocs_evaluation_and_paired_gate(tmp_path: Path) -> None:
     write_jsonl(
         candidate_predictions,
         [
-            {"sample_id": "R1", "method": "far", "answer": "alpha"},
+            {
+                "sample_id": "R1",
+                "method": "far",
+                "answer": "alpha",
+                "predicted_conflict_types": ["source_reliability"],
+            },
             {"sample_id": "R2", "method": "far", "answer": "beta"},
         ],
     )
@@ -172,6 +182,8 @@ def test_ramdocs_evaluation_and_paired_gate(tmp_path: Path) -> None:
     )
     assert baseline_report["metrics"]["ramdocs_exact_match"] == 0.0
     assert candidate_report["metrics"]["ramdocs_exact_match"] == 1.0
+    assert candidate_report["metrics"]["misinformation_conflict_detected"] == 1.0
+    assert candidate_report["misinformation_items"] == 1
     comparison = compare_ramdocs(
         tmp_path / "base" / "scores.jsonl",
         tmp_path / "candidate" / "scores.jsonl",

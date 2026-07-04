@@ -67,7 +67,7 @@ flowchart LR
 | FalsiRAG-Bench | 300 条五类均衡候选样本、175 篇语料文档；构造校验通过 |
 | 标签 | 300/300 为构造标签；机器审计确认 178 条、争议 122 条；dev 分层后 typed 优势在 35 条确认与 25 条争议子集方向一致 |
 | 开发集实验 | Qwen3.5 9B 上的 FAR、6 个基线和 4 个消融均已完成；typed-vs-untyped 为正，其余消融为混合或负结果 |
-| 2+4 外部验证 | RAMDocs 500 条已钉死 revision 并冻结 350/150 dev/test；Qwen dev 正式套件正在 D 盘 GPU 执行 |
+| 2+4 外部验证 | RAMDocs 500 条已钉死 revision 并冻结 350/150 dev/test；评分辅助指标已补齐，Qwen dev 正式套件待在 D 盘 GPU 从零重启 |
 | 跨家族陪审团 | 标注、六分类/二分类 κ、Fleiss κ、联合多数票、盲态仲裁及 14 天自一致门均已实现；按 G-A 停止规则等待执行 |
 | 正式多模型矩阵 | Qwen / Mistral / Gemma 的 jury-gold 复评与 >30% 结构化回退剔除门已实现，等待 Phase A 与仲裁标签 |
 | 盲测 | 无金标测试包、保管协议、回传校验器和可信评分器均已实现；等待外部执行 |
@@ -76,7 +76,8 @@ flowchart LR
 | 报告 | 单作者诊断报告、复核优先级 CSV 和项目状态快照位于 [reports/](reports/) |
 | 论文 | 单作者机器审计版本已填入完整 dev 表格并收窄主张；宽松门禁通过，严格 AAAI 门禁仍未通过 |
 
-逐项权威状态见 [项目完成度审计](docs/COMPLETION_AUDIT.md)。论文中的诊断结果必须始终带有机器审计、
+逐项权威状态见 [项目完成度审计](docs/COMPLETION_AUDIT.md)和
+[2+4 协议可追溯性矩阵](docs/PLAN_2PLUS4_TRACEABILITY.md)。论文中的诊断结果必须始终带有机器审计、
 dev、单模型、非盲测限定，不得改写为真人金标或跨模型结论。
 
 机器生成的当前状态账本见
@@ -116,6 +117,9 @@ uv run falsirag-jury-consensus \
 # 查看最终 2+4 论文门；制品不齐时会失败关闭
 uv run falsirag-jury-paper-readiness
 ```
+
+Qwen 的 11 方法预测会在不重新调用模型的情况下分别按完整 jury gold 与
+unanimous-only 标签重算；`falsirag-jury-sensitivity` 生成三口径敏感性表。
 
 所有正式制品都绑定 [PLAN_2PLUS4.md](docs/PLAN_2PLUS4.md) 的活动 SHA-256。
 任何留出评测前的变更必须使用 `deviation:` 提交并写入开发日志；留出评测后不再允许偏离。

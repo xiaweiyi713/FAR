@@ -116,7 +116,7 @@ def evaluate_ramdocs(
     for sample_id in sorted(tasks):
         task = tasks[sample_id]
         prediction = predictions[sample_id]
-        metrics = score_ramdocs_answer(
+        sample_metrics: dict[str, Any] = score_ramdocs_answer(
             str(prediction["answer"]),
             [str(item) for item in task["gold_answers"]],
             [str(item) for item in task["wrong_answers"]],
@@ -126,8 +126,17 @@ def evaluate_ramdocs(
             for doc_id in map(str, task["document_ids"])
             if corpus[doc_id].get("metadata", {}).get("document_type") == "correct"
         ]
-        metrics["unsupported_sentence_rate"] = unsupported_sentence_rate(
+        sample_metrics["unsupported_sentence_rate"] = unsupported_sentence_rate(
             str(prediction["answer"]), correct_documents
+        )
+        has_misinformation = any(
+            corpus[doc_id].get("metadata", {}).get("document_type") == "misinfo"
+            for doc_id in map(str, task["document_ids"])
+        )
+        sample_metrics["misinformation_conflict_detected"] = (
+            float(bool(prediction.get("predicted_conflict_types", [])))
+            if has_misinformation
+            else None
         )
         scores.append(
             {
@@ -135,18 +144,20 @@ def evaluate_ramdocs(
                 "method": str(prediction.get("method", "unknown")),
                 "category": str(task["category"]),
                 "split": split,
-                **metrics,
+                **sample_metrics,
             }
         )
-    metrics = {
-        name: sum(float(row[name]) for row in scores) / len(scores)
-        for name in (
-            "ramdocs_exact_match",
-            "gold_answer_coverage",
-            "wrong_answer_exclusion",
-            "unsupported_sentence_rate",
-        )
-    }
+    metric_names = (
+        "ramdocs_exact_match",
+        "gold_answer_coverage",
+        "wrong_answer_exclusion",
+        "unsupported_sentence_rate",
+        "misinformation_conflict_detected",
+    )
+    aggregate_metrics: dict[str, float | None] = {}
+    for name in metric_names:
+        values = [float(row[name]) for row in scores if row.get(name) is not None]
+        aggregate_metrics[name] = sum(values) / len(values) if values else None
     output_dir.mkdir(parents=True, exist_ok=True)
     scores_path = output_dir / "scores.jsonl"
     write_jsonl(scores_path, scores)
@@ -156,8 +167,11 @@ def evaluate_ramdocs(
         "samples": len(scores),
         "partial": allow_partial,
         "method": scores[0]["method"],
-        "metrics": metrics,
+        "metrics": aggregate_metrics,
         "scoring_protocol": "all_normalized_gold_answers_and_no_normalized_wrong_answers",
+        "misinformation_items": sum(
+            row["misinformation_conflict_detected"] is not None for row in scores
+        ),
         "publication_gold": False,
         "provenance": {
             "tasks_sha256": sha256_file(tasks_path),

@@ -265,3 +265,10 @@ def evidence_2plus4_main() -> None:
     from experiments.evidence_2plus4 import main
 
     main()
+
+
+def jury_sensitivity_main() -> None:
+    _prefer_far_repo()
+    from experiments.jury_sensitivity import main
+
+    main()

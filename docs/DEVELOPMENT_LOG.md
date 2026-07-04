@@ -70,6 +70,21 @@ strictly positive observed FAR-minus-baseline exact-match difference together
 with `p < 0.05`; the alternative bootstrap path still requires a lower bound
 above zero. A reverse-comparison regression test prevents directionless passage.
 
+The same requirement audit caught a missing A2 auxiliary: conflict reporting on
+items that contain upstream `misinfo` documents. The scorer now reports
+`misinformation_conflict_detected` only on that weak-truth subset and records its
+denominator separately. This uses scorer-side metadata after prediction; the
+runtime remains blind to document type. A complete three-item, eight-method
+offline suite then exercised initialization, all run directories, partial
+scoring, every paired comparison, strongest-baseline selection, and the failed
+G-A stop path without accessing test.
+
+The in-flight formal suite was stopped before this scorer change was admitted;
+the replacement output directory had zero completed rows. No prior formal or
+smoke output is eligible for G-A. The complete 350-item development suite will
+restart from zero only from the clean commit containing this metric and its
+tests.
+
 ## 2026-07-04: RAMDocs closed-corpus GPU smoke and Phase A launch
 
 The pinned 500-row RAMDocs import was rebuilt at Hugging Face revision

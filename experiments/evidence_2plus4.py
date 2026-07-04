@@ -137,6 +137,123 @@ def verify_ramdocs_release(bundle_dir: Path, data_dir: Path) -> dict[str, Any]:
     }
 
 
+def build_jury_release(
+    consensus_dir: Path,
+    labels_dir: Path,
+    sensitivity_dir: Path,
+    family_dirs: dict[str, Path],
+    matrix_report: Path,
+    output_dir: Path,
+    *,
+    falsirag_test_dir: Path | None = None,
+    overwrite: bool = False,
+) -> dict[str, Any]:
+    verify_active_protocol()
+    if set(family_dirs) != {"qwen", "mistral", "google"}:
+        raise ValueError("jury release requires qwen, mistral, and google family bundles")
+    _owned_replace(output_dir, "far-jury-evidence-release-v1", overwrite)
+    for source, name in (
+        (consensus_dir, "consensus"),
+        (labels_dir, "labels"),
+        (sensitivity_dir, "qwen_sensitivity"),
+    ):
+        shutil.copytree(source, output_dir / name, dirs_exist_ok=True)
+    for family, source in sorted(family_dirs.items()):
+        shutil.copytree(
+            source,
+            output_dir / "model_families" / family,
+            dirs_exist_ok=True,
+        )
+    _copy(matrix_report, output_dir / "model_matrix.json")
+    if falsirag_test_dir is not None:
+        shutil.copytree(
+            falsirag_test_dir,
+            output_dir / "falsirag_test",
+            dirs_exist_ok=True,
+        )
+    (output_dir / "README.md").write_text(
+        "# FAR 2+4 jury evidence release\n\n"
+        "This bundle contains cross-family LLM jury agreement, author-blind "
+        "adjudication-derived labels, three-view sensitivity, and jury-gold model "
+        "rescoring. `jury_gold` is not independent human gold or human IAA.\n",
+        encoding="utf-8",
+    )
+    matrix = json.loads(matrix_report.read_text(encoding="utf-8"))
+    labels = json.loads((labels_dir / "manifest.json").read_text(encoding="utf-8"))
+    consensus = json.loads(
+        (consensus_dir / "jury_consensus_report.json").read_text(encoding="utf-8")
+    )
+    manifest = {
+        "schema_version": "far-jury-evidence-release-v1",
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "study_profile": "cross_family_llm_jury_plus_author_blind_adjudication",
+        "protocol_fingerprint": PROTOCOL_ACTIVE_SHA256,
+        "gate_k_passed": consensus.get("gate_k_passed"),
+        "gate_s_passed": labels.get("gate_s_passed"),
+        "three_family_claim_ready": matrix.get("three_family_claim_ready"),
+        "jury_gold": True,
+        "publication_gold": False,
+        "human_iaa": False,
+        "externally_held": False,
+        "files": _files(output_dir),
+    }
+    write_json(output_dir / "bundle_manifest.json", manifest)
+    audit = verify_jury_release(output_dir)
+    if not audit["valid"]:
+        raise ValueError(f"created jury release is invalid: {audit['errors']}")
+    return manifest
+
+
+def verify_jury_release(bundle_dir: Path) -> dict[str, Any]:
+    errors: list[str] = []
+    try:
+        verify_active_protocol()
+        manifest = json.loads((bundle_dir / "bundle_manifest.json").read_text(encoding="utf-8"))
+        consensus = json.loads(
+            (bundle_dir / "consensus/jury_consensus_report.json").read_text(encoding="utf-8")
+        )
+        labels = json.loads((bundle_dir / "labels/manifest.json").read_text(encoding="utf-8"))
+        sensitivity = json.loads(
+            (bundle_dir / "qwen_sensitivity/sensitivity_report.json").read_text(encoding="utf-8")
+        )
+        matrix = json.loads((bundle_dir / "model_matrix.json").read_text(encoding="utf-8"))
+    except (FileNotFoundError, json.JSONDecodeError, ValueError) as exc:
+        return {
+            "schema_version": "far-jury-evidence-release-audit-v1",
+            "valid": False,
+            "errors": [str(exc)],
+        }
+    if manifest.get("schema_version") != "far-jury-evidence-release-v1":
+        errors.append("unsupported jury evidence release schema")
+    if manifest.get("files") != _files(bundle_dir):
+        errors.append("jury evidence bundle file set or fingerprints differ")
+    if manifest.get("protocol_fingerprint") != PROTOCOL_ACTIVE_SHA256:
+        errors.append("jury release uses a stale protocol")
+    if consensus.get("gate_k_passed") is not True or consensus.get("zero_fallbacks") is not True:
+        errors.append("embedded G-K evidence is not ready")
+    if labels.get("gate_s_passed") is not True or labels.get("jury_gold") is not True:
+        errors.append("embedded G-S/jury labels are not ready")
+    if sensitivity.get("schema_version") != "far-jury-label-sensitivity-v1":
+        errors.append("embedded label sensitivity report is missing")
+    if matrix.get("three_family_claim_ready") is not True:
+        errors.append("embedded three-family matrix is not ready")
+    unsafe = any(
+        item.get("publication_gold") is not False or item.get("human_iaa") is not False
+        for item in (manifest, labels, sensitivity)
+    )
+    if unsafe:
+        errors.append("jury release contains an unsafe human-gold claim")
+    return {
+        "schema_version": "far-jury-evidence-release-audit-v1",
+        "valid": not errors,
+        "errors": errors,
+        "gate_k_passed": manifest.get("gate_k_passed"),
+        "gate_s_passed": manifest.get("gate_s_passed"),
+        "three_family_claim_ready": manifest.get("three_family_claim_ready"),
+        "publication_gold": False,
+    }
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -148,19 +265,44 @@ def main() -> None:
     verify = subparsers.add_parser("verify-ramdocs")
     verify.add_argument("--data-dir", type=Path, required=True)
     verify.add_argument("--bundle-dir", type=Path, required=True)
+    build_jury = subparsers.add_parser("build-jury")
+    build_jury.add_argument("--consensus-dir", type=Path, required=True)
+    build_jury.add_argument("--labels-dir", type=Path, required=True)
+    build_jury.add_argument("--sensitivity-dir", type=Path, required=True)
+    build_jury.add_argument(
+        "--family-dir", action="append", nargs=2, metavar=("FAMILY", "PATH"), required=True
+    )
+    build_jury.add_argument("--matrix-report", type=Path, required=True)
+    build_jury.add_argument("--falsirag-test-dir", type=Path)
+    build_jury.add_argument("--output-dir", type=Path, required=True)
+    build_jury.add_argument("--overwrite", action="store_true")
+    verify_jury = subparsers.add_parser("verify-jury")
+    verify_jury.add_argument("--bundle-dir", type=Path, required=True)
     args = parser.parse_args()
-    result = (
-        build_ramdocs_release(
+    if args.command == "build-ramdocs":
+        result = build_ramdocs_release(
             args.data_dir,
             args.suite_dir,
             args.output_dir,
             overwrite=args.overwrite,
         )
-        if args.command == "build-ramdocs"
-        else verify_ramdocs_release(args.bundle_dir, args.data_dir)
-    )
+    elif args.command == "verify-ramdocs":
+        result = verify_ramdocs_release(args.bundle_dir, args.data_dir)
+    elif args.command == "build-jury":
+        result = build_jury_release(
+            args.consensus_dir,
+            args.labels_dir,
+            args.sensitivity_dir,
+            {str(family): Path(path) for family, path in args.family_dir},
+            args.matrix_report,
+            args.output_dir,
+            falsirag_test_dir=args.falsirag_test_dir,
+            overwrite=args.overwrite,
+        )
+    else:
+        result = verify_jury_release(args.bundle_dir)
     print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
-    if args.command == "verify-ramdocs" and not result["valid"]:
+    if args.command.startswith("verify-") and not result["valid"]:
         raise SystemExit(1)
 
 

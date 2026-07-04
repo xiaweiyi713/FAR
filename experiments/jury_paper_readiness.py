@@ -53,6 +53,7 @@ def audit(
     ramdocs_dev_suite: Path,
     jury_consensus_report: Path,
     jury_labels_manifest: Path,
+    sensitivity_report: Path,
     matrix_report: Path,
     falsirag_test_seal: Path,
     falsirag_test_score: Path,
@@ -106,6 +107,16 @@ def audit(
         errors.append("G-S author self-consistency gate has not passed")
     if not checks["jury_labels_valid"]:
         errors.append("compiled jury label layer is missing, stale, or unsafe")
+
+    sensitivity = _safe_json(sensitivity_report, errors, "label sensitivity")
+    checks["three_view_label_sensitivity_ready"] = (
+        sensitivity.get("schema_version") == "far-jury-label-sensitivity-v1"
+        and sensitivity.get("protocol_fingerprint") == PROTOCOL_ACTIVE_SHA256
+        and set(sensitivity.get("views", {})) == {"construction", "jury_gold", "unanimous_only"}
+        and bool(sensitivity.get("rows"))
+    )
+    if not checks["three_view_label_sensitivity_ready"]:
+        errors.append("construction/jury/unanimous sensitivity report is not ready")
 
     matrix = _safe_json(matrix_report, errors, "model matrix")
     checks["three_family_matrix_ready"] = (
@@ -203,6 +214,11 @@ def main() -> None:
         default=ROOT / "bench/labels_jury_v1/manifest.json",
     )
     parser.add_argument(
+        "--sensitivity-report",
+        type=Path,
+        default=ROOT / "diagnostics/jury_v1/qwen_sensitivity/sensitivity_report.json",
+    )
+    parser.add_argument(
         "--matrix-report",
         type=Path,
         default=ROOT / "diagnostics/jury_v1/model_matrix.json",
@@ -235,6 +251,7 @@ def main() -> None:
         args.ramdocs_dev_suite,
         args.jury_consensus_report,
         args.jury_labels_manifest,
+        args.sensitivity_report,
         args.matrix_report,
         args.falsirag_test_seal,
         args.falsirag_test_score,
