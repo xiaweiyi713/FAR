@@ -1,5 +1,19 @@
 # Development Decision Log
 
+## 2026-07-04: 2+4 protocol preregistered
+
+The zero-budget replacement for the unavailable independent-human annotation
+path is preregistered in `docs/PLAN_2PLUS4.md`. The protocol file is committed
+without implementation-driven changes and has SHA-256
+`2cbb2452d2ea1f167a844e63b52bee4e15e3b8bf2adad7feb5dc86dd1d41c7fe`.
+
+The new evidence path combines (1) external evaluation on a benchmark carrying
+upstream answer/document labels and (2) a cross-family LLM jury followed by
+author-blind adjudication. It does not relabel either component as independent
+human annotation, human IAA, externally held blind testing, or publication-grade
+human gold. Any later protocol clarification follows the deviation rules in
+section 7 of the preregistration document.
+
 ## 2026-06-29: formal retrieval/conflict stack cutoff
 
 Scope: the 60-item development split only. The held-out test inputs and labels
