@@ -63,6 +63,13 @@ The row used only item-local IDs, generated nine typed queries, and exposed no
 document type, type-bearing source name, or upstream disambiguated entity. The
 formal suite was launched again from zero only after these checks passed.
 
+Before any RAMDocs score existed, a statistical audit caught that the first G-A
+implementation accepted any exact McNemar `p < 0.05`, even when the candidate
+was significantly worse. Because the test is two-sided, the gate now requires a
+strictly positive observed FAR-minus-baseline exact-match difference together
+with `p < 0.05`; the alternative bootstrap path still requires a lower bound
+above zero. A reverse-comparison regression test prevents directionless passage.
+
 ## 2026-07-04: RAMDocs closed-corpus GPU smoke and Phase A launch
 
 The pinned 500-row RAMDocs import was rebuilt at Hugging Face revision

@@ -149,7 +149,11 @@ def initialize_answers(
         baseline = VanillaRAG(retriever, generator, top_k=len(sample_documents))
         started = time.perf_counter()
         with generator_sample_scope(generator):
-            prediction = baseline.run(sample_id, str(row["question"]), "")
+            prediction = baseline.run(
+                sample_id,
+                str(row["question"]),
+                "" if generator is not None else "No evidence-grounded answer was generated.",
+            )
         result = prediction.to_dict()
         result["method"] = "ramdocs_initial_vanilla"
         result["metadata"] = {

@@ -180,3 +180,55 @@ def test_ramdocs_evaluation_and_paired_gate(tmp_path: Path) -> None:
     )
     assert comparison["gate_a_passed"] is True
     assert json.loads((tmp_path / "comparison.json").read_text())["schema_version"].endswith("v1")
+
+    reverse = compare_ramdocs(
+        tmp_path / "candidate" / "scores.jsonl",
+        tmp_path / "base" / "scores.jsonl",
+        tmp_path / "reverse.json",
+        resamples=50,
+    )
+    assert reverse["comparison"]["candidate_minus_baseline"] < 0
+    assert reverse["gate_a_passed"] is False
+
+
+def test_ramdocs_evaluation_rejects_unmarked_partial_predictions(tmp_path: Path) -> None:
+    tasks = tmp_path / "tasks.jsonl"
+    corpus = tmp_path / "corpus.jsonl"
+    predictions = tmp_path / "predictions.jsonl"
+    write_jsonl(
+        tasks,
+        [
+            {
+                "id": sample_id,
+                "split": "dev",
+                "category": "ambiguity_noise",
+                "gold_answers": [sample_id],
+                "wrong_answers": [],
+                "document_ids": [f"D{sample_id}"],
+            }
+            for sample_id in ("A", "B")
+        ],
+    )
+    write_jsonl(
+        corpus,
+        [
+            {
+                "doc_id": f"D{sample_id}",
+                "content": sample_id,
+                "metadata": {"document_type": "correct"},
+            }
+            for sample_id in ("A", "B")
+        ],
+    )
+    write_jsonl(predictions, [{"sample_id": "A", "method": "far", "answer": "A"}])
+    with pytest.raises(ValueError, match="exactly"):
+        evaluate_ramdocs(tasks, predictions, corpus, tmp_path / "strict")
+    report = evaluate_ramdocs(
+        tasks,
+        predictions,
+        corpus,
+        tmp_path / "partial",
+        allow_partial=True,
+    )
+    assert report["samples"] == 1
+    assert report["partial"] is True

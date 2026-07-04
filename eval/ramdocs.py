@@ -103,11 +103,14 @@ def evaluate_ramdocs(
     output_dir: Path,
     *,
     split: str = "dev",
+    allow_partial: bool = False,
 ) -> dict[str, Any]:
     tasks = _unique([row for row in read_jsonl(tasks_path) if row["split"] == split], "id")
     predictions = _unique(read_jsonl(predictions_path), "sample_id")
     corpus = _unique(read_jsonl(corpus_path), "doc_id")
-    if set(tasks) != set(predictions):
+    if allow_partial and set(predictions).issubset(tasks):
+        tasks = {sample_id: tasks[sample_id] for sample_id in predictions}
+    elif set(tasks) != set(predictions):
         raise ValueError("RAMDocs evaluation requires exactly the selected split predictions")
     scores: list[dict[str, Any]] = []
     for sample_id in sorted(tasks):
@@ -151,6 +154,7 @@ def evaluate_ramdocs(
         "schema_version": "far-ramdocs-evaluation-v1",
         "split": split,
         "samples": len(scores),
+        "partial": allow_partial,
         "method": scores[0]["method"],
         "metrics": metrics,
         "scoring_protocol": "all_normalized_gold_answers_and_no_normalized_wrong_answers",
@@ -194,7 +198,10 @@ def compare_ramdocs(
         "schema_version": "far-ramdocs-paired-comparison-v1",
         "comparison": comparison,
         "mcnemar": mcnemar,
-        "gate_a_passed": float(comparison["lower"]) > 0.0 or float(mcnemar["p_value"]) < 0.05,
+        "gate_a_passed": float(comparison["lower"]) > 0.0
+        or (
+            float(comparison["candidate_minus_baseline"]) > 0.0 and float(mcnemar["p_value"]) < 0.05
+        ),
         "baseline_scores_sha256": sha256_file(baseline_scores),
         "candidate_scores_sha256": sha256_file(candidate_scores),
     }
@@ -211,6 +218,7 @@ def main() -> None:
     evaluate_parser.add_argument("--corpus", type=Path, required=True)
     evaluate_parser.add_argument("--output-dir", type=Path, required=True)
     evaluate_parser.add_argument("--split", choices=("dev", "test"), default="dev")
+    evaluate_parser.add_argument("--allow-partial", action="store_true")
     compare_parser = subparsers.add_parser("compare")
     compare_parser.add_argument("--baseline-scores", type=Path, required=True)
     compare_parser.add_argument("--candidate-scores", type=Path, required=True)
@@ -225,6 +233,7 @@ def main() -> None:
             args.corpus,
             args.output_dir,
             split=args.split,
+            allow_partial=args.allow_partial,
         )
     else:
         result = compare_ramdocs(

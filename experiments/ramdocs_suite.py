@@ -70,6 +70,7 @@ def run_suite(
             data_dir / "corpus.jsonl",
             evaluation_dir,
             split=split,
+            allow_partial=limit is not None,
         )
         reports[method] = sha256_file(evaluation_dir / "report.json")
         run_manifests[method] = sha256_file(run_dir / "run_manifest.json")
