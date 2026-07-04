@@ -14,6 +14,26 @@ human annotation, human IAA, externally held blind testing, or publication-grade
 human gold. Any later protocol clarification follows the deviation rules in
 section 7 of the preregistration document.
 
+## 2026-07-04: deviation — clarify RAMDocs provenance and exact match
+
+This clarification occurred before any RAMDocs development or held-out scoring.
+Source inspection pinned the Hugging Face dataset at revision
+`9c041bfd158c603b615883d9a931b00cbc141494` and the upstream code repository at
+commit `d44454c9ebb0bf513d8236a03decc9fb58704cad`. RAMDocs contains 500 questions
+under MIT. Its valid answers derive from AmbigDocs, while misinformation is
+constructed by answer/entity replacement and noise is retrieved. It is therefore
+an independently published, upstream-labeled external benchmark, not a clean
+substitute for independent human IAA or publication-grade human gold.
+
+The paper specifies strict exact match as containing every gold answer and no
+incorrect/misleading answer, but the public repository does not include a
+standalone official scorer. Before implementation, the active protocol freezes a
+normalised containment implementation of that published criterion and requires
+separate gold-coverage and wrong-answer-exclusion diagnostics. The active
+protocol SHA-256 after this clarification is
+`45b1ca998a09c2349fe805805730117791f4b90663d0241ebbbc513074d51fd7`;
+the original preregistered fingerprint remains recorded above.
+
 ## 2026-06-29: formal retrieval/conflict stack cutoff
 
 Scope: the 60-item development split only. The held-out test inputs and labels
