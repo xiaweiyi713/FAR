@@ -23,11 +23,15 @@
 ```bash
 uv run falsirag-build-ramdocs verify \
   --output-dir bench/external/ramdocs_v1
+```
 
-uv run falsirag-ramdocs-suite run \
-  --config experiments/configs/ramdocs_qwen.yaml \
-  --data-dir bench/external/ramdocs_v1 \
-  --output-dir outputs/ramdocs_dev_v1
+正式 Windows GPU 运行或 checkpoint 恢复使用 D: 盘脚本；它会启动 D: 盘
+Ollama、继承 D: 盘 HuggingFace cache，并复用同一个输出目录续跑：
+
+```bash
+ssh windows-gpu
+cd /mnt/d/FAR-workspace/FAR-2plus4
+scripts/start_windows_ramdocs_suite.sh
 ```
 
 运行器只向模型加载当前题目的文档。`test_inputs.jsonl` 只有
