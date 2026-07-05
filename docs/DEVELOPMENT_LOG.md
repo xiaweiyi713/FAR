@@ -1625,3 +1625,11 @@ evidence bundle verified successfully, releasing the GPU.
   新行。尚无 `run_manifest.json` 或 `predictions.jsonl`，因此仍未完成，不能
   finalize/verify 或改判 G-A。
 - 未访问或运行任何 test，未切换远端 detached 工作树，未改变运行配置。
+
+## 2026-07-05 — Round 2 持续推进到 114/350
+
+- 23:12 +08:00 复核远端：两个 systemd user services 仍 active，GPU 约
+  7.9 GiB / 94%，checkpoint 已推进到 114/350，最后观测样本为 `RAM0156`，
+  且 `final_answer_consolidation.applied=true`。
+- 尚无 `run_manifest.json` 或 `predictions.jsonl`，因此 Round 2 尚未完成，不能
+  finalize/verify 或改判 G-A。未访问或运行任何 test。
