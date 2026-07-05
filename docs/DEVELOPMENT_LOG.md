@@ -1491,7 +1491,7 @@ counts for Multi-Query on FAR-only rows are 11 and 6. This identifies answer
 selection and wrong-answer suppression, rather than conflict detection alone,
 as the immediate dev bottleneck. The formal services were disabled after the
 evidence bundle verified successfully, releasing the GPU.
-# 2026-07-05 — RAMDocs dev Round 2 方法修订（评测前）
+## 2026-07-05 — RAMDocs dev Round 2 方法修订（评测前）
 
 - Round 1 已完成并触发 G-A 停止规则；Phase B、jury gold、多模型矩阵与
   RAMDocs/FalsiRAG test 继续禁止执行。
@@ -1510,3 +1510,18 @@ evidence bundle verified successfully, releasing the GPU.
   做配对比较。D 盘作业由 `far-ramdocs-round2.service` 执行，Windows watchdog
   只在 `ramdocs_dev_v2.keep-running` marker 存在且 GPU 空闲时恢复它，并在 FAR
   run manifest 完成后停止 Ollama、释放 GPU。
+
+## 2026-07-05 — 修复 G-K 二分类降级的端到端语义
+
+- 完成实现审计时发现：旧版 `jury_consensus` 在六分类 κ 失败、二分类 κ
+  通过时，只把报告字段设为 `active_label_granularity=binary`，样本多数票、联合
+  多数与 disputed 分层仍使用六分类冲突类型。这不满足预注册的“降级为二分类
+  冲突标签重算”。
+- 现已让二分类回退实际使用 `conflict/no_conflict` 投票，并在联合多数中移除
+  未获一致支持的类型字段；原始类型票仍单独留痕。编译标签显式记录
+  `label_granularity`，二分类标签不再继承某个陪审员的具体类型作为类型金标。
+- 评分层新增 corpus-level `conflict_presence_f1`、bootstrap 与配对比较；敏感性
+  和多模型矩阵按标签粒度选择 presence-F1 或 typed-conflict-F1。论文 readiness
+  同时核验实际使用的粒度和相应冲突指标，继续禁止把二分类回退写成类型一致性。
+- 这是对冻结协议既有降级预案的实现修复，不修改 G-K 阈值、家族隔离、G-S、
+  G-A 或停止规则；当前 G-A 未通过，Phase B 仍未执行。

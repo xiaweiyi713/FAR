@@ -34,6 +34,9 @@ def _overlay_benchmark(data_dir: Path, labels_dir: Path, output_path: Path) -> l
     if sha256_file(labels_path) != labels_manifest.get("labels_sha256"):
         raise ValueError("jury label fingerprint mismatch")
     labels = {str(row["sample_id"]): row for row in read_jsonl(labels_path)}
+    label_granularity = str(labels_manifest.get("label_granularity", "six_class"))
+    if label_granularity not in {"six_class", "binary"}:
+        raise ValueError("jury labels use an unsupported label granularity")
     benchmark = {str(row["id"]): row for row in read_jsonl(data_dir / "falsirag_bench.jsonl")}
     if set(labels) - set(benchmark):
         raise ValueError("jury labels contain unknown benchmark samples")
@@ -54,6 +57,7 @@ def _overlay_benchmark(data_dir: Path, labels_dir: Path, output_path: Path) -> l
             "revised_answer": revised,
         }
         row["annotation_status"] = "jury_gold"
+        row["jury_label_granularity"] = label_granularity
         row["label_provenance"] = labels[sample_id]["label_provenance"]
         overlay.append(row)
     write_jsonl(output_path, overlay)
@@ -122,6 +126,9 @@ def rescore_family(
         "structured_fallback": _fallback_rate(method_sources["far"]),
         "publication_gold": False,
         "jury_gold": True,
+        "label_granularity": json.loads(
+            (labels_dir / "manifest.json").read_text(encoding="utf-8")
+        ).get("label_granularity", "six_class"),
     }
     write_json(output_dir / "matrix_family_manifest.json", manifest)
     return manifest

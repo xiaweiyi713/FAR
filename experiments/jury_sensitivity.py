@@ -12,13 +12,34 @@ from bench.build.common import read_jsonl, sha256_file, write_json, write_jsonl
 from experiments.jury_rescore import rescore_family
 from experiments.protocol_2plus4 import PROTOCOL_ACTIVE_SHA256, verify_active_protocol
 
-METRICS = ("answer_correctness", "typed_conflict_f1", "revision_accuracy")
+SIX_CLASS_METRICS = ("answer_correctness", "typed_conflict_f1", "revision_accuracy")
+BINARY_METRICS = ("answer_correctness", "conflict_presence_f1", "revision_accuracy")
 
 
-def _report_metrics(path: Path) -> dict[str, float]:
+def _presence_f1(scores_path: Path) -> float:
+    rows = read_jsonl(scores_path)
+    true_positives = sum(
+        bool(row.get("predicted_conflict_count"))
+        for row in rows
+        if bool(row.get("gold_conflict_present"))
+    )
+    predicted = sum(bool(row.get("predicted_conflict_count")) for row in rows)
+    gold = sum(bool(row.get("gold_conflict_present")) for row in rows)
+    precision = true_positives / predicted if predicted else 0.0
+    recall = true_positives / gold if gold else 0.0
+    return 2 * precision * recall / (precision + recall) if precision + recall else 0.0
+
+
+def _report_metrics(path: Path, metric_names: tuple[str, ...]) -> dict[str, float]:
     report = json.loads(path.read_text(encoding="utf-8"))
-    metrics = report["aggregate"]["metrics"]
-    return {name: float(metrics[name]) for name in METRICS}
+    values = report["aggregate"]["metrics"]
+    result: dict[str, float] = {}
+    for name in metric_names:
+        if name == "conflict_presence_f1" and values.get(name) is None:
+            result[name] = _presence_f1(path.with_name("scores.jsonl"))
+        else:
+            result[name] = float(values[name])
+    return result
 
 
 def _construction_report(suite_dir: Path, method: str) -> Path:
@@ -47,11 +68,17 @@ def build_sensitivity(
     output_dir.mkdir(parents=True, exist_ok=True)
 
     labels_manifest = json.loads((labels_dir / "manifest.json").read_text(encoding="utf-8"))
+    label_granularity = str(labels_manifest.get("label_granularity", "six_class"))
+    if label_granularity not in {"six_class", "binary"}:
+        raise ValueError("jury labels use an unsupported label granularity")
+    metric_names = BINARY_METRICS if label_granularity == "binary" else SIX_CLASS_METRICS
     labels_path = labels_dir / str(labels_manifest["labels_file"])
     labels = read_jsonl(labels_path)
     consensus_report = json.loads(
         (consensus_dir / "jury_consensus_report.json").read_text(encoding="utf-8")
     )
+    if consensus_report.get("active_label_granularity") != label_granularity:
+        raise ValueError("jury labels and consensus disagree on label granularity")
     consensus_path = consensus_dir / str(consensus_report["jury_consensus_rows"])
     if sha256_file(consensus_path) != consensus_report.get("jury_consensus_rows_sha256"):
         raise ValueError("jury consensus rows fingerprint mismatch")
@@ -100,12 +127,16 @@ def build_sensitivity(
         rows.append(
             {
                 "method": method,
-                "construction": _report_metrics(_construction_report(suite_dir, method)),
+                "construction": _report_metrics(
+                    _construction_report(suite_dir, method), metric_names
+                ),
                 "jury_gold": _report_metrics(
-                    output_dir / "jury_gold" / method / "evaluation" / "report.json"
+                    output_dir / "jury_gold" / method / "evaluation" / "report.json",
+                    metric_names,
                 ),
                 "unanimous_only": _report_metrics(
-                    output_dir / "unanimous_only" / method / "evaluation" / "report.json"
+                    output_dir / "unanimous_only" / method / "evaluation" / "report.json",
+                    metric_names,
                 ),
             }
         )
@@ -113,6 +144,8 @@ def build_sensitivity(
         "schema_version": "far-jury-label-sensitivity-v1",
         "protocol_fingerprint": PROTOCOL_ACTIVE_SHA256,
         "family": family,
+        "label_granularity": label_granularity,
+        "metrics": list(metric_names),
         "views": {
             "construction": "controlled_benchmark_construction",
             "jury_gold": "cross_family_llm_jury_plus_author_blind_adjudication",

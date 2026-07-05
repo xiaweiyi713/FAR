@@ -190,6 +190,7 @@ def build_jury_release(
         "protocol_fingerprint": PROTOCOL_ACTIVE_SHA256,
         "gate_k_passed": consensus.get("gate_k_passed"),
         "gate_s_passed": labels.get("gate_s_passed"),
+        "label_granularity": labels.get("label_granularity"),
         "three_family_claim_ready": matrix.get("three_family_claim_ready"),
         "jury_gold": True,
         "publication_gold": False,

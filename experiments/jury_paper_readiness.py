@@ -10,6 +10,7 @@ from typing import Any
 from bench.build.common import sha256_file, write_json
 from bench.build.ramdocs import verify_ramdocs
 from experiments.protocol_2plus4 import PROTOCOL_ACTIVE_SHA256, ROOT, verify_active_protocol
+from experiments.ramdocs_round2 import verify_round
 from experiments.ramdocs_suite import verify_suite
 
 REQUIRED_DISCLOSURES = (
@@ -60,6 +61,9 @@ def audit(
     ramdocs_test_seal: Path,
     ramdocs_test_score: Path,
     paper_main: Path,
+    *,
+    ramdocs_round2_dir: Path | None = None,
+    ramdocs_round2_config: Path | None = None,
 ) -> dict[str, Any]:
     errors: list[str] = []
     checks: dict[str, bool] = {}
@@ -76,8 +80,24 @@ def audit(
 
     ramdocs_dev = verify_suite(ramdocs_dev_suite, ramdocs_data)
     checks["ramdocs_dev_suite_valid"] = ramdocs_dev.get("valid") is True
-    checks["gate_a_external_passed"] = ramdocs_dev.get("gate_a_passed") is True
     errors.extend(f"RAMDocs dev: {item}" for item in ramdocs_dev.get("errors", []))
+    gate_a_passed = ramdocs_dev.get("gate_a_passed") is True
+    if (
+        not gate_a_passed
+        and ramdocs_round2_dir is not None
+        and ramdocs_round2_config is not None
+        and (ramdocs_round2_dir / "round_manifest.json").is_file()
+    ):
+        round2 = verify_round(
+            ramdocs_data,
+            ramdocs_dev_suite,
+            ramdocs_round2_dir,
+            ramdocs_round2_config,
+        )
+        checks["ramdocs_dev_round2_valid"] = round2.get("valid") is True
+        errors.extend(f"RAMDocs Round 2: {item}" for item in round2.get("errors", []))
+        gate_a_passed = round2.get("valid") is True and round2.get("gate_a_passed") is True
+    checks["gate_a_external_passed"] = gate_a_passed
     if not checks["gate_a_external_passed"]:
         errors.append("G-A external validation gate has not passed")
 
@@ -122,7 +142,8 @@ def audit(
     checks["three_family_matrix_ready"] = (
         matrix.get("three_family_claim_ready") is True
         and matrix.get("typed_answer_gain_same_direction") is True
-        and matrix.get("typed_conflict_gain_same_direction") is True
+        and matrix.get("conflict_gain_same_direction") is True
+        and matrix.get("label_granularity") in {"six_class", "binary"}
         and matrix.get("protocol_fingerprint") == PROTOCOL_ACTIVE_SHA256
     )
     if not checks["three_family_matrix_ready"]:
@@ -185,6 +206,12 @@ def audit(
                 if (ramdocs_data / "manifest.json").is_file()
                 else None
             ),
+            "ramdocs_round2_manifest_sha256": (
+                sha256_file(ramdocs_round2_dir / "round_manifest.json")
+                if ramdocs_round2_dir is not None
+                and (ramdocs_round2_dir / "round_manifest.json").is_file()
+                else None
+            ),
             "jury_consensus_sha256": (
                 sha256_file(jury_consensus_report) if jury_consensus_report.is_file() else None
             ),
@@ -202,6 +229,14 @@ def main() -> None:
     parser.add_argument("--ramdocs-data", type=Path, default=ROOT / "bench/external/ramdocs_v1")
     parser.add_argument(
         "--ramdocs-dev-suite", type=Path, default=ROOT / "diagnostics/ramdocs_v1/dev"
+    )
+    parser.add_argument(
+        "--ramdocs-round2-dir", type=Path, default=ROOT / "diagnostics/ramdocs_v2/dev"
+    )
+    parser.add_argument(
+        "--ramdocs-round2-config",
+        type=Path,
+        default=ROOT / "experiments/configs/ramdocs_qwen_round2.yaml",
     )
     parser.add_argument(
         "--jury-consensus-report",
@@ -258,6 +293,8 @@ def main() -> None:
         args.ramdocs_test_seal,
         args.ramdocs_test_score,
         args.paper_main,
+        ramdocs_round2_dir=args.ramdocs_round2_dir,
+        ramdocs_round2_config=args.ramdocs_round2_config,
     )
     if args.output:
         write_json(args.output, result)

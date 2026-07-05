@@ -15,7 +15,7 @@
 | A3 六基线 + typed/untyped | `experiments/ramdocs_suite.py`、`diagnostics/ramdocs_v1/dev` | 8×350 证据完成 |
 | A4 G-A、最强基线、bootstrap、McNemar 与停止规则 | `diagnostics/ramdocs_v1/dev/suite_manifest.json`、`diagnostics/ramdocs_v1/error_analysis` | 证据完成；G-A 失败，停止规则触发 |
 | B1 三陪审员独立结构化标注 | `bench/build/jury_annotate.py` | 已实现；G-A 失败，禁止执行 |
-| B1/B2 Cohen/Fleiss κ、联合多数、二分降级、G-K | `bench/build/jury_consensus.py` | 已实现；停止规则阻挡，未执行 |
+| B1/B2 Cohen/Fleiss κ、联合多数、二分降级、G-K | `bench/build/jury_consensus.py` | 已实现；二分降级会切换实际投票、联合多数、标签粒度与后续 presence-F1，不把任一陪审员类型冒充类型金标；停止规则阻挡，未执行 |
 | B3 作者盲态仲裁、14 天强制间隔、分层 20% 重标、G-S | `bench/build/jury_adjudication.py` | 已实现；停止规则阻挡，未执行 |
 | B3 `jury_gold: true` / `publication_gold: false` | `bench/build/jury_adjudication.py` | 已实现；无标签层生成 |
 | B4 已冻结 11 方法全量复评 | `experiments/jury_rescore.py` | 已实现；无 jury labels，未执行 |

@@ -134,6 +134,7 @@ def paired_bootstrap_comparison(
 
 
 def _typed_conflict_f1(rows: list[dict[str, Any]]) -> float:
+    rows = [row for row in rows if row.get("typed_conflict_correct") is not None]
     true_positives = sum(
         int(row["typed_conflict_correct"])
         for row in rows
@@ -143,6 +144,103 @@ def _typed_conflict_f1(rows: list[dict[str, Any]]) -> float:
     gold = sum(bool(row.get("gold_conflict_present", True)) for row in rows)
     denominator = predicted + gold
     return 2 * true_positives / denominator if denominator else 0.0
+
+
+def _conflict_presence_f1(rows: list[dict[str, Any]]) -> float:
+    true_positives = sum(
+        int(bool(row.get("predicted_conflict_count")))
+        for row in rows
+        if bool(row.get("gold_conflict_present", True))
+    )
+    predicted = sum(bool(row.get("predicted_conflict_count")) for row in rows)
+    gold = sum(bool(row.get("gold_conflict_present", True)) for row in rows)
+    denominator = predicted + gold
+    return 2 * true_positives / denominator if denominator else 0.0
+
+
+def stratified_conflict_presence_f1_ci(
+    rows: list[dict[str, Any]],
+    *,
+    resamples: int = 2000,
+    confidence: float = 0.95,
+    seed: int = 1729,
+    strata_key: str = "category",
+) -> dict[str, Any]:
+    if not rows or resamples < 1:
+        raise ValueError("bootstrap requires rows and at least one resample")
+    strata: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for row in rows:
+        strata[str(row[strata_key])].append(row)
+    rng = random.Random(seed)
+    estimates = [
+        _conflict_presence_f1(
+            [
+                rng.choice(values)
+                for _, values in sorted(strata.items())
+                for _ in range(len(values))
+            ]
+        )
+        for _ in range(resamples)
+    ]
+    alpha = (1.0 - confidence) / 2.0
+    return {
+        "method": "stratified-percentile-bootstrap-conflict-presence-f1-v1",
+        "metric": "conflict_presence_f1",
+        "estimate": _conflict_presence_f1(rows),
+        "lower": _percentile(estimates, alpha),
+        "upper": _percentile(estimates, 1.0 - alpha),
+        "confidence": confidence,
+        "resamples": resamples,
+        "seed": seed,
+        "strata": {key: len(values) for key, values in sorted(strata.items())},
+    }
+
+
+def paired_conflict_presence_f1_comparison(
+    baseline_rows: list[dict[str, Any]],
+    candidate_rows: list[dict[str, Any]],
+    *,
+    resamples: int = 2000,
+    confidence: float = 0.95,
+    seed: int = 1729,
+) -> dict[str, Any]:
+    baseline = {str(row["sample_id"]): row for row in baseline_rows}
+    candidate = {str(row["sample_id"]): row for row in candidate_rows}
+    if set(baseline) != set(candidate) or not baseline:
+        raise ValueError("paired comparison requires identical non-empty sample IDs")
+    by_category: dict[str, list[tuple[dict[str, Any], dict[str, Any]]]] = defaultdict(list)
+    for sample_id in sorted(baseline):
+        by_category[str(candidate[sample_id]["category"])].append(
+            (baseline[sample_id], candidate[sample_id])
+        )
+    rng = random.Random(seed)
+    differences = []
+    for _ in range(resamples):
+        sampled = [
+            rng.choice(values)
+            for _, values in sorted(by_category.items())
+            for _ in range(len(values))
+        ]
+        differences.append(
+            _conflict_presence_f1([candidate_row for _, candidate_row in sampled])
+            - _conflict_presence_f1([baseline_row for baseline_row, _ in sampled])
+        )
+    observed = _conflict_presence_f1(candidate_rows) - _conflict_presence_f1(baseline_rows)
+    alpha = (1.0 - confidence) / 2.0
+    return {
+        "method": "paired-stratified-percentile-bootstrap-conflict-presence-f1-v1",
+        "metric": "conflict_presence_f1",
+        "candidate_minus_baseline": observed,
+        "lower": _percentile(differences, alpha),
+        "upper": _percentile(differences, 1.0 - alpha),
+        "higher_is_better": True,
+        "probability_candidate_better": sum(value > 0 for value in differences)
+        / len(differences),
+        "confidence": confidence,
+        "resamples": resamples,
+        "seed": seed,
+        "pairs": len(baseline),
+    }
 
 
 def stratified_typed_conflict_f1_ci(
@@ -344,6 +442,44 @@ def dependency_cluster_typed_conflict_f1_ci(
         "method": "source-dependency-cluster-bootstrap-typed-f1-v1",
         "metric": "typed_conflict_f1",
         "estimate": _typed_conflict_f1(rows),
+        "lower": _percentile(estimates, alpha),
+        "upper": _percentile(estimates, 1.0 - alpha),
+        "confidence": confidence,
+        "resamples": resamples,
+        "seed": seed,
+        "clusters": len(clusters),
+    }
+
+
+def dependency_cluster_conflict_presence_f1_ci(
+    rows: list[dict[str, Any]],
+    *,
+    resamples: int = 2000,
+    confidence: float = 0.95,
+    seed: int = 1729,
+    cluster_key: str = "dependency_group",
+) -> dict[str, Any]:
+    if not rows or resamples < 1:
+        raise ValueError("cluster bootstrap requires rows and at least one resample")
+    clusters: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for row in rows:
+        cluster = row.get(cluster_key)
+        if cluster is not None:
+            clusters[str(cluster)].append(row)
+    if not clusters:
+        raise ValueError("conflict_presence_f1 has no clustered rows")
+    cluster_ids = sorted(clusters)
+    rng = random.Random(seed)
+    estimates = []
+    for _ in range(resamples):
+        sampled_ids = [rng.choice(cluster_ids) for _ in cluster_ids]
+        sampled = [row for cluster_id in sampled_ids for row in clusters[cluster_id]]
+        estimates.append(_conflict_presence_f1(sampled))
+    alpha = (1.0 - confidence) / 2.0
+    return {
+        "method": "source-dependency-cluster-bootstrap-conflict-presence-f1-v1",
+        "metric": "conflict_presence_f1",
+        "estimate": _conflict_presence_f1(rows),
         "lower": _percentile(estimates, alpha),
         "upper": _percentile(estimates, 1.0 - alpha),
         "confidence": confidence,

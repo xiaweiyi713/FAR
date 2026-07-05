@@ -112,6 +112,7 @@ def build_round1(
         "source_packet_sha256": sha256_file(packet_dir / "packet_manifest.json"),
         "source_consensus_sha256": sha256_file(consensus_dir / "jury_consensus_report.json"),
         "source_consensus_rows_sha256": report["jury_consensus_rows_sha256"],
+        "active_label_granularity": report.get("active_label_granularity"),
         "samples": len(packet_rows),
         "round1_seed": ROUND1_SEED,
         "round1_packet": packet_path.name,
@@ -289,6 +290,9 @@ def compile_jury_labels(
 ) -> dict[str, Any]:
     verify_active_protocol()
     report, consensus_rows = _consensus(consensus_dir)
+    label_granularity = str(report.get("active_label_granularity"))
+    if label_granularity not in {"six_class", "binary"}:
+        raise ValueError("jury consensus does not expose an active label granularity")
     consistency = json.loads(
         (adjudication_dir / "self_consistency_report.json").read_text(encoding="utf-8")
     )
@@ -318,6 +322,13 @@ def compile_jury_labels(
                 "revised_answer": source.get("suggested_revised_answer", ""),
             }
             provenance = "cross_family_llm_joint_majority"
+        if label_granularity == "binary":
+            annotation = {
+                **annotation,
+                "conflict_type": (
+                    "conflict" if annotation.get("conflict_present") else "no_conflict"
+                ),
+            }
         labels.append(
             {
                 "sample_id": sample_id,
@@ -344,6 +355,7 @@ def compile_jury_labels(
         "jury_gold": True,
         "publication_gold": False,
         "human_iaa": False,
+        "label_granularity": label_granularity,
         "gate_k_passed": report.get("gate_k_passed"),
         "gate_s_passed": consistency.get("gate_s_passed"),
         "samples": len(labels),

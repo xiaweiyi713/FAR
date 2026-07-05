@@ -187,6 +187,31 @@ def test_jury_rejects_system_family_overlap(tmp_path: Path) -> None:
         build_jury_consensus(data, jurors, tmp_path / "consensus")
 
 
+def test_jury_binary_fallback_changes_active_votes_and_joint_majority(tmp_path: Path) -> None:
+    data, packet, _ = _fixture(tmp_path)
+    packet_sha = sha256_file(packet / "packet_manifest.json")
+    sample_ids = ("S1", "S2", "S3")
+    jurors = [
+        _jury_dir(tmp_path, "B1", "deepseek", dict.fromkeys(sample_ids, "temporal"), packet_sha),
+        _jury_dir(tmp_path, "B2", "glm", dict.fromkeys(sample_ids, "entity"), packet_sha),
+        _jury_dir(tmp_path, "B3", "meta", dict.fromkeys(sample_ids, "numerical"), packet_sha),
+    ]
+    output = tmp_path / "binary_consensus"
+    report = build_jury_consensus(data, jurors, output)
+    assert report["gate_k_primary_passed"] is False
+    assert report["gate_k_binary_fallback_passed"] is True
+    assert report["active_label_granularity"] == "binary"
+    rows = [
+        json.loads(line)
+        for line in (output / "jury_consensus_rows.jsonl").read_text().splitlines()
+    ]
+    assert {row["majority_label"] for row in rows} == {"conflict"}
+    assert {tuple(row["joint_majority_fields"]) for row in rows} == {
+        ("conflict_present", "revision_action", "revised_answer_acceptable")
+    }
+    assert all(len(set(row["typed_juror_votes"].values())) == 3 for row in rows)
+
+
 def test_jury_verifier_rejects_tampering(tmp_path: Path) -> None:
     _, packet, jurors = _fixture(tmp_path)
     path = jurors[0] / "jury_annotations_J1.jsonl"

@@ -129,8 +129,13 @@ def score_sample(sample: dict[str, Any], prediction: PredictionRecord) -> dict[s
     gold_conflict_present = gold_conflict != "no_conflict"
     predicted_conflicts = set(prediction.predicted_conflict_types)
     conflict_presence_correct = bool(predicted_conflicts) == gold_conflict_present
+    binary_gold = gold_conflict == "conflict"
     typed_conflict_correct = (
-        gold_conflict in predicted_conflicts if gold_conflict_present else not predicted_conflicts
+        None
+        if binary_gold
+        else gold_conflict in predicted_conflicts
+        if gold_conflict_present
+        else not predicted_conflicts
     )
     answer_score = soft_f1(prediction.answer, reference)
     action_correct = prediction.revision_action == sample["expected_revision"]["action"]
@@ -147,7 +152,9 @@ def score_sample(sample: dict[str, Any], prediction: PredictionRecord) -> dict[s
         "evidence_recall": evidence_recall,
         "counter_evidence_recall": counter_recall,
         "conflict_detected": float(conflict_presence_correct),
-        "typed_conflict_correct": float(typed_conflict_correct),
+        "typed_conflict_correct": (
+            float(typed_conflict_correct) if typed_conflict_correct is not None else None
+        ),
         "gold_conflict_present": gold_conflict_present,
         "predicted_conflict_count": len(predicted_conflicts),
         "revision_action_correct": float(action_correct),
@@ -180,26 +187,51 @@ def aggregate_scores(rows: list[dict[str, Any]]) -> dict[str, Any]:
             result[name] = sum(values) / len(values) if values else 0.0
         return result
 
+    typed_rows = [row for row in rows if row.get("typed_conflict_correct") is not None]
     true_positives = sum(
         int(row["typed_conflict_correct"])
-        for row in rows
+        for row in typed_rows
         if bool(row.get("gold_conflict_present", True))
     )
-    predicted = sum(int(row["predicted_conflict_count"]) for row in rows)
-    gold = sum(bool(row.get("gold_conflict_present", True)) for row in rows)
+    predicted = sum(int(row["predicted_conflict_count"]) for row in typed_rows)
+    gold = sum(bool(row.get("gold_conflict_present", True)) for row in typed_rows)
     precision = true_positives / predicted if predicted else 0.0
     recall = true_positives / gold if gold else 0.0
     typed_f1 = 2 * precision * recall / (precision + recall) if precision + recall else 0.0
     by_category: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for row in rows:
         by_category[str(row["category"])].append(row)
+    presence_true_positives = sum(
+        int(bool(row["predicted_conflict_count"]))
+        for row in rows
+        if bool(row.get("gold_conflict_present", True))
+    )
+    presence_predicted = sum(bool(row["predicted_conflict_count"]) for row in rows)
+    presence_gold = sum(bool(row.get("gold_conflict_present", True)) for row in rows)
+    presence_precision = presence_true_positives / presence_predicted if presence_predicted else 0.0
+    presence_recall = presence_true_positives / presence_gold if presence_gold else 0.0
+    presence_f1 = (
+        2 * presence_precision * presence_recall / (presence_precision + presence_recall)
+        if presence_precision + presence_recall
+        else 0.0
+    )
     return {
         "samples": len(rows),
-        "metrics": {**means(rows), "typed_conflict_f1": typed_f1},
+        "metrics": {
+            **means(rows),
+            "typed_conflict_f1": typed_f1 if typed_rows else None,
+            "conflict_presence_f1": presence_f1,
+        },
         "typed_conflict_counts": {
             "true_positives": true_positives,
             "predicted": predicted,
             "gold": gold,
+            "scored_samples": len(typed_rows),
+        },
+        "conflict_presence_counts": {
+            "true_positives": presence_true_positives,
+            "predicted": presence_predicted,
+            "gold": presence_gold,
         },
         "by_category": {category: means(items) for category, items in sorted(by_category.items())},
     }

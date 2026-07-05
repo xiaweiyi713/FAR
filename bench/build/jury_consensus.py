@@ -74,6 +74,19 @@ def _joint(row: dict[str, Any]) -> tuple[bool, str, str, bool]:
     )
 
 
+def _binary_label(row: dict[str, Any]) -> str:
+    return "conflict" if bool(row["jury_annotation"]["conflict_present"]) else "no_conflict"
+
+
+def _binary_joint(row: dict[str, Any]) -> tuple[bool, str, bool]:
+    annotation = row["jury_annotation"]
+    return (
+        bool(annotation["conflict_present"]),
+        str(annotation["revision_action"]),
+        bool(annotation["revised_answer_acceptable"]),
+    )
+
+
 def build_jury_consensus(
     data_dir: Path,
     juror_dirs: list[Path],
@@ -140,25 +153,36 @@ def build_jury_consensus(
     zero_fallbacks = sum(int(item.get("fallbacks", 0)) for item in manifests) == 0
     primary_gate = min(pairwise.values()) >= 0.50 and type_fleiss >= 0.45 and zero_fallbacks
     binary_gate = min(pairwise_binary.values()) >= 0.50 and binary_fleiss >= 0.45 and zero_fallbacks
+    active_granularity = "six_class" if primary_gate else "binary" if binary_gate else None
 
     consensus_rows: list[dict[str, Any]] = []
     disposition_counts: Counter[str] = Counter()
     for index, sample_id in enumerate(ordered_ids):
-        labels = ratings[index]
+        typed_labels = ratings[index]
+        binary_labels = binary_ratings[index]
+        labels = binary_labels if active_granularity == "binary" else typed_labels
         counts = Counter(labels)
         label, votes = counts.most_common(1)[0]
         has_majority = votes >= 2
-        joint_votes = [rows[sample_id] for rows in rows_by_juror]
-        joint_counts = Counter(_joint(row) for row in joint_votes)
+        juror_rows = [rows[sample_id] for rows in rows_by_juror]
+        joint_function = _binary_joint if active_granularity == "binary" else _joint
+        joint_counts = Counter(joint_function(row) for row in juror_rows)
         majority_joint, joint_count = joint_counts.most_common(1)[0]
         has_joint_majority = joint_count >= 2
-        construction = str(benchmark[sample_id]["conflict_type"])
+        construction_type = str(benchmark[sample_id]["conflict_type"])
+        construction = (
+            "conflict"
+            if active_granularity == "binary" and construction_type != "no_conflict"
+            else "no_conflict"
+            if active_granularity == "binary"
+            else construction_type
+        )
         selected_juror: str | None = None
         if has_joint_majority:
             candidates = [
                 (float(row["jury_annotation"].get("confidence", 0.0)), juror_id)
-                for juror_id, row in zip(juror_ids, joint_votes, strict=True)
-                if _joint(row) == majority_joint
+                for juror_id, row in zip(juror_ids, juror_rows, strict=True)
+                if joint_function(row) == majority_joint
             ]
             selected_juror = max(candidates, key=lambda item: (item[0], item[1]))[1]
         if len(joint_counts) == 1 and label == construction:
@@ -172,15 +196,36 @@ def build_jury_consensus(
             {
                 "sample_id": sample_id,
                 "category": str(benchmark[sample_id]["category"]),
+                "active_label_granularity": active_granularity,
                 "juror_votes": {
+                    juror_id: (
+                        "conflict"
+                        if active_granularity == "binary"
+                        and labels_by_juror[juror_id][index] != "no_conflict"
+                        else labels_by_juror[juror_id][index]
+                    )
+                    for juror_id in juror_ids
+                },
+                "typed_juror_votes": {
                     juror_id: labels_by_juror[juror_id][index] for juror_id in juror_ids
                 },
                 "majority_label": label if has_majority else None,
                 "majority_votes": votes if has_majority else 0,
                 "joint_majority": list(majority_joint) if has_joint_majority else None,
+                "joint_majority_fields": (
+                    ["conflict_present", "revision_action", "revised_answer_acceptable"]
+                    if active_granularity == "binary"
+                    else [
+                        "conflict_present",
+                        "conflict_type",
+                        "revision_action",
+                        "revised_answer_acceptable",
+                    ]
+                ),
                 "joint_majority_votes": joint_count if has_joint_majority else 0,
                 "selected_juror_id": selected_juror if disposition != "disputed" else None,
                 "construction_label": construction,
+                "construction_type_label": construction_type,
                 "disposition": disposition,
                 "requires_author_adjudication": disposition == "disputed",
             }
@@ -221,9 +266,7 @@ def build_jury_consensus(
         "gate_k_primary_passed": primary_gate,
         "gate_k_binary_fallback_passed": binary_gate,
         "gate_k_passed": primary_gate or binary_gate,
-        "active_label_granularity": (
-            "six_class" if primary_gate else "binary" if binary_gate else None
-        ),
+        "active_label_granularity": active_granularity,
         "dispositions": dict(sorted(disposition_counts.items())),
         "jury_consensus_rows": rows_path.name,
         "jury_consensus_rows_sha256": sha256_file(rows_path),

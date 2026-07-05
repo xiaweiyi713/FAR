@@ -12,11 +12,14 @@ from bench.build.common import read_jsonl, sha256_file, write_json, write_jsonl
 from eval.metrics import PredictionRecord, aggregate_scores, score_sample
 from eval.stats import (
     dependency_cluster_bootstrap_ci,
+    dependency_cluster_conflict_presence_f1_ci,
     dependency_cluster_typed_conflict_f1_ci,
     mcnemar_exact,
     paired_bootstrap_comparison,
+    paired_conflict_presence_f1_comparison,
     paired_typed_conflict_f1_comparison,
     stratified_bootstrap_ci,
+    stratified_conflict_presence_f1_ci,
     stratified_typed_conflict_f1_ci,
 )
 
@@ -174,11 +177,15 @@ def evaluate(
         for metric in ROW_METRICS
         if any(row.get(metric) is not None for row in scores)
     }
-    intervals["typed_conflict_f1"] = stratified_typed_conflict_f1_ci(
-        scores,
-        resamples=resamples,
-        seed=seed,
+    intervals["conflict_presence_f1"] = stratified_conflict_presence_f1_ci(
+        scores, resamples=resamples, seed=seed
     )
+    if any(row.get("typed_conflict_correct") is not None for row in scores):
+        intervals["typed_conflict_f1"] = stratified_typed_conflict_f1_ci(
+            scores,
+            resamples=resamples,
+            seed=seed,
+        )
     dependency_intervals = {
         metric: dependency_cluster_bootstrap_ci(
             scores,
@@ -189,11 +196,17 @@ def evaluate(
         for metric in ROW_METRICS
         if any(row.get(metric) is not None for row in scores)
     }
-    dependency_intervals["typed_conflict_f1"] = dependency_cluster_typed_conflict_f1_ci(
-        scores,
-        resamples=resamples,
-        seed=seed,
+    dependency_intervals["conflict_presence_f1"] = (
+        dependency_cluster_conflict_presence_f1_ci(
+            scores, resamples=resamples, seed=seed
+        )
     )
+    if any(row.get("typed_conflict_correct") is not None for row in scores):
+        dependency_intervals["typed_conflict_f1"] = dependency_cluster_typed_conflict_f1_ci(
+            scores,
+            resamples=resamples,
+            seed=seed,
+        )
     comparison = None
     if baseline_scores_path is not None:
         baseline_scores = read_jsonl(baseline_scores_path)
@@ -223,12 +236,24 @@ def evaluate(
                 )
             )
         }
-        paired_metrics["typed_conflict_f1"] = paired_typed_conflict_f1_comparison(
-            baseline_scores,
-            scores,
-            resamples=resamples,
-            seed=seed,
+        paired_metrics["conflict_presence_f1"] = paired_conflict_presence_f1_comparison(
+            baseline_scores, scores, resamples=resamples, seed=seed
         )
+        if any(
+            baseline_row.get("typed_conflict_correct") is not None
+            and candidate_row.get("typed_conflict_correct") is not None
+            for baseline_row, candidate_row in zip(
+                sorted(baseline_scores, key=lambda row: str(row["sample_id"])),
+                sorted(scores, key=lambda row: str(row["sample_id"])),
+                strict=True,
+            )
+        ):
+            paired_metrics["typed_conflict_f1"] = paired_typed_conflict_f1_comparison(
+                baseline_scores,
+                scores,
+                resamples=resamples,
+                seed=seed,
+            )
         baseline_by_id = {row["sample_id"]: row for row in baseline_scores}
         score_by_id = {row["sample_id"]: row for row in scores}
         ordered_ids = sorted(score_by_id)

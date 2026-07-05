@@ -57,20 +57,38 @@ def _suite_row(family: str, suite_dir: Path) -> dict[str, Any]:
         raise ValueError(f"{family}: untyped report has no paired FAR comparison")
     metrics = comparison.get("metrics", {})
     answer = metrics["answer_correctness"]
-    conflict = metrics["typed_conflict_f1"]
+    label_granularity = str(suite.get("label_granularity", "six_class"))
+    if label_granularity not in {"six_class", "binary"}:
+        raise ValueError(f"{family}: unsupported jury label granularity")
+    conflict_metric = (
+        "conflict_presence_f1" if label_granularity == "binary" else "typed_conflict_f1"
+    )
+    conflict = metrics[conflict_metric]
     fallback = suite["structured_fallback"]
     return {
         "family": family,
         "model": suite.get("model_identity", {}).get("model"),
         "model_identity": suite.get("model_identity"),
+        "label_granularity": label_granularity,
+        "conflict_metric": conflict_metric,
         "suite_manifest_sha256": sha256_file(suite_dir / "matrix_family_manifest.json"),
         "typed_minus_untyped_answer_correctness": -float(answer["candidate_minus_baseline"]),
         "typed_minus_untyped_answer_ci": [-float(answer["upper"]), -float(answer["lower"])],
-        "typed_minus_untyped_conflict_f1": -float(conflict["candidate_minus_baseline"]),
-        "typed_minus_untyped_conflict_f1_ci": [
+        "typed_minus_untyped_conflict_score": -float(conflict["candidate_minus_baseline"]),
+        "typed_minus_untyped_conflict_score_ci": [
             -float(conflict["upper"]),
             -float(conflict["lower"]),
         ],
+        "typed_minus_untyped_conflict_f1": (
+            -float(conflict["candidate_minus_baseline"])
+            if label_granularity == "six_class"
+            else None
+        ),
+        "typed_minus_untyped_conflict_f1_ci": (
+            [-float(conflict["upper"]), -float(conflict["lower"])]
+            if label_granularity == "six_class"
+            else None
+        ),
         "structured_fallback": fallback,
         "excluded": float(fallback["fallback_rate"]) > 0.30,
         "exclusion_threshold": 0.30,
@@ -82,11 +100,19 @@ def build_matrix(suites: dict[str, Path], output_path: Path) -> dict[str, Any]:
     if set(suites) - {"qwen", "mistral", "google"}:
         raise ValueError("matrix contains an unregistered system family")
     rows = [_suite_row(family, directory) for family, directory in sorted(suites.items())]
+    granularities = {str(row["label_granularity"]) for row in rows}
+    if len(granularities) != 1:
+        raise ValueError("model matrix mixes incompatible jury label granularities")
+    label_granularity = next(iter(granularities)) if granularities else None
     included = [row for row in rows if not row["excluded"]]
     result = {
         "schema_version": "far-model-matrix-v1",
         "protocol_fingerprint": PROTOCOL_ACTIVE_SHA256,
         "rows": rows,
+        "label_granularity": label_granularity,
+        "conflict_metric": (
+            "conflict_presence_f1" if label_granularity == "binary" else "typed_conflict_f1"
+        ),
         "included_families": [row["family"] for row in included],
         "minimum_matrix_passed": "qwen" in {row["family"] for row in included}
         and len(included) >= 2,
@@ -94,8 +120,14 @@ def build_matrix(suites: dict[str, Path], output_path: Path) -> dict[str, Any]:
         == {"qwen", "mistral", "google"},
         "typed_answer_gain_same_direction": bool(included)
         and all(float(row["typed_minus_untyped_answer_correctness"]) > 0 for row in included),
-        "typed_conflict_gain_same_direction": bool(included)
-        and all(float(row["typed_minus_untyped_conflict_f1"]) > 0 for row in included),
+        "conflict_gain_same_direction": bool(included)
+        and all(float(row["typed_minus_untyped_conflict_score"]) > 0 for row in included),
+        "typed_conflict_gain_same_direction": (
+            bool(included)
+            and all(float(row["typed_minus_untyped_conflict_score"]) > 0 for row in included)
+            if label_granularity == "six_class"
+            else None
+        ),
         "publication_gold": False,
     }
     write_json(output_path, result)
