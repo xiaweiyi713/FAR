@@ -276,3 +276,8 @@ uv run falsirag-one-shot prepare \
 commit、evaluation commit、suite 指纹和实际评分 manifest。seal 还会核对目标、
 输入指纹、方法集以及 FalsiRAG 58 条 / RAMDocs 150 条的完整评分数。该机制是本地
 防篡改证据，不得称为外部保管盲测。
+
+正式 test 推理只能通过 `falsirag-suite` / `falsirag-ramdocs-suite`，并同时传入
+`--allow-test --one-shot-intent <已提交的 intent>`。底层 FAR、baseline 与 RAMDocs
+runner 使用进程内授权上下文；脱离经过验证的 suite 调用时，即使单独传
+`--allow-test` 也会在读取 `test_inputs.jsonl` 前失败关闭。

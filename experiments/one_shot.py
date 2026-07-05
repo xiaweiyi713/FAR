@@ -211,6 +211,26 @@ def committed_intent(intent_path: Path) -> dict[str, Any]:
     return {"intent": local, "committed_in": commit, "path": relative}
 
 
+def authorize_committed_intent(
+    intent_path: Path,
+    *,
+    target: str,
+    benchmark_input: Path,
+    data_manifest: Path,
+    methods: set[str],
+) -> dict[str, Any]:
+    committed = committed_intent(intent_path)
+    intent = committed["intent"]
+    if (
+        intent.get("target") != target
+        or intent.get("benchmark_input_sha256") != sha256_file(benchmark_input)
+        or intent.get("data_manifest_sha256") != sha256_file(data_manifest)
+        or set(intent.get("methods", [])) != methods
+    ):
+        raise ValueError("committed one-shot intent does not authorize this exact test suite")
+    return committed
+
+
 def seal_run(
     intent_path: Path,
     suite_manifest_path: Path,
@@ -226,6 +246,12 @@ def seal_run(
         raise ValueError("one-shot suite must cover the complete test split")
     if set(suite.get("methods", [])) != set(intent["methods"]):
         raise ValueError("one-shot suite method set differs from committed intent")
+    if (
+        suite.get("one_shot_intent_id") != intent.get("intent_id")
+        or suite.get("one_shot_intent_sha256") != sha256_file(intent_path)
+        or suite.get("one_shot_intent_commit") != committed.get("committed_in")
+    ):
+        raise ValueError("one-shot suite is not bound to the committed intent")
     if intent["target"] == "falsirag":
         if any(
             (

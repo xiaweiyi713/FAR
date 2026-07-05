@@ -29,6 +29,7 @@ from experiments.runner import (
     build_generator,
     generator_sample_scope,
     load_config,
+    require_test_authorization,
 )
 from far.adapters import InMemoryRetriever
 from far.models import EvidenceDocument
@@ -132,8 +133,7 @@ def initialize_answers(
     limit: int | None = None,
     allow_test: bool = False,
 ) -> dict[str, Any]:
-    if split == "test" and not allow_test:
-        raise ValueError("RAMDocs test initialization requires --allow-test one-shot authorization")
+    require_test_authorization(split, allow_test)
     config = load_config(config_path)
     rows = _select(_operational_rows(data_dir, split), limit)
     documents = _documents(data_dir)
@@ -297,8 +297,7 @@ def run_method(
 ) -> dict[str, Any]:
     if method not in METHODS:
         raise ValueError(f"unknown RAMDocs method: {method}")
-    if split == "test" and not allow_test:
-        raise ValueError("RAMDocs test run requires --allow-test one-shot authorization")
+    require_test_authorization(split, allow_test)
     config = load_config(config_path)
     rows = _select(_operational_rows(data_dir, split), limit)
     initial_rows = {str(row["sample_id"]): row for row in read_jsonl(initial_answers_path)}

@@ -1750,3 +1750,20 @@ evidence bundle verified successfully, releasing the GPU.
   交叉指纹。仍明确输出 `can_claim_human_iaa=false`。
 - 仅执行 AST 解析、模块导入、行长和 diff whitespace 检查，未运行测试套件或访问
   test。同期 Round 2 正常推进至 167/350（`RAM0229`），服务 active、无错误。
+
+## 2026-07-05 — 禁止 `--allow-test` 绕过已提交 intent
+
+- 继续审计发现 prepare 虽已要求完整 dev 证据，但底层 `run_suite`、FAR、baseline
+  与 RAMDocs runner 仍可仅凭 `--allow-test` 读取 test inputs，绕过 intent。停止规则
+  因而仍主要依赖操作者自律，而非执行入口。
+- 新增进程内 one-shot 授权上下文：FalsiRAG 与 RAMDocs 正式 test suite 必须同时
+  提供 `--allow-test` 和已提交的 `--one-shot-intent`。suite 会在读取测试输入前验证
+  target、58/150 条输入 SHA-256、数据 manifest、精确方法集、intent commit 与所有
+  pretest evidence；授权只在该 suite 调用的动态作用域内有效。
+- `load_run_inputs`、`select_samples` 与 RAMDocs initialize/run 现均要求该作用域。
+  因此直接调用底层 FAR、baseline 或 RAMDocs runner 时，即使传 `--allow-test` 也会
+  在 test 文件载入前失败。成功 suite manifest 会写入 intent ID、哈希与 commit，
+  seal 必须再次逐项匹配。
+- 执行文档已明确正式 test 只能走两个 suite 入口。仅完成 AST 解析、模块导入、行长
+  和 diff whitespace 检查，未运行测试套件或访问 test。同期 Round 2 正常推进至
+  171/350（`RAM0238`），GPU 约 7.8 GiB / 92%，服务 active、无错误。

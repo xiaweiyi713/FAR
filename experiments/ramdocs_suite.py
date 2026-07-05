@@ -9,8 +9,10 @@ from typing import Any
 
 from bench.build.common import read_jsonl, sha256_file, write_json
 from eval.ramdocs import compare_ramdocs, evaluate_ramdocs
+from experiments.one_shot import authorize_committed_intent
 from experiments.protocol_2plus4 import PROTOCOL_ACTIVE_SHA256, verify_active_protocol
 from experiments.run_ramdocs import METHODS, initialize_answers, run_method
+from experiments.runner import one_shot_test_scope
 
 REQUIRED_METHODS = (
     "far",
@@ -24,7 +26,7 @@ REQUIRED_METHODS = (
 )
 
 
-def run_suite(
+def _run_suite_authorized(
     config_path: Path,
     data_dir: Path,
     output_dir: Path,
@@ -125,6 +127,59 @@ def run_suite(
     return manifest
 
 
+def run_suite(
+    config_path: Path,
+    data_dir: Path,
+    output_dir: Path,
+    *,
+    methods: tuple[str, ...] = REQUIRED_METHODS,
+    split: str = "dev",
+    limit: int | None = None,
+    allow_test: bool = False,
+    one_shot_intent: Path | None = None,
+) -> dict[str, Any]:
+    if split != "test":
+        if one_shot_intent is not None:
+            raise ValueError("one-shot intent may only authorize the test split")
+        return _run_suite_authorized(
+            config_path,
+            data_dir,
+            output_dir,
+            methods=methods,
+            split=split,
+            limit=limit,
+            allow_test=allow_test,
+        )
+    if not allow_test or one_shot_intent is None or limit is not None:
+        raise ValueError("complete RAMDocs test suite requires --allow-test and --one-shot-intent")
+    committed = authorize_committed_intent(
+        one_shot_intent,
+        target="ramdocs",
+        benchmark_input=data_dir / "splits/test_inputs.jsonl",
+        data_manifest=data_dir / "manifest.json",
+        methods=set(methods),
+    )
+    with one_shot_test_scope():
+        manifest = _run_suite_authorized(
+            config_path,
+            data_dir,
+            output_dir,
+            methods=methods,
+            split="test",
+            limit=None,
+            allow_test=True,
+        )
+    manifest.update(
+        {
+            "one_shot_intent_id": committed["intent"]["intent_id"],
+            "one_shot_intent_sha256": sha256_file(one_shot_intent),
+            "one_shot_intent_commit": committed["committed_in"],
+        }
+    )
+    write_json(output_dir / "suite_manifest.json", manifest)
+    return manifest
+
+
 def verify_suite(output_dir: Path, data_dir: Path) -> dict[str, Any]:
     errors: list[str] = []
     try:
@@ -189,6 +244,7 @@ def main() -> None:
     run_parser.add_argument("--split", choices=("dev", "test"), default="dev")
     run_parser.add_argument("--limit", type=int)
     run_parser.add_argument("--allow-test", action="store_true")
+    run_parser.add_argument("--one-shot-intent", type=Path)
     verify_parser = subparsers.add_parser("verify")
     verify_parser.add_argument("--data-dir", type=Path, required=True)
     verify_parser.add_argument("--output-dir", type=Path, required=True)
@@ -202,6 +258,7 @@ def main() -> None:
             split=args.split,
             limit=args.limit,
             allow_test=args.allow_test,
+            one_shot_intent=args.one_shot_intent,
         )
         if args.command == "run"
         else verify_suite(args.output_dir, args.data_dir)

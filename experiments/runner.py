@@ -10,6 +10,7 @@ import platform
 import subprocess
 import sys
 from contextlib import contextmanager
+from contextvars import ContextVar
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -25,6 +26,25 @@ from far.models import EvidenceDocument
 from far.protocols import TextGenerator
 
 ROOT = Path(__file__).resolve().parents[1]
+_ONE_SHOT_TEST_AUTHORIZED: ContextVar[bool] = ContextVar(
+    "far_one_shot_test_authorized", default=False
+)
+
+
+@contextmanager
+def one_shot_test_scope() -> Any:
+    token = _ONE_SHOT_TEST_AUTHORIZED.set(True)
+    try:
+        yield
+    finally:
+        _ONE_SHOT_TEST_AUTHORIZED.reset(token)
+
+
+def require_test_authorization(split: str, allow_test: bool) -> None:
+    if split == "test" and (not allow_test or not _ONE_SHOT_TEST_AUTHORIZED.get()):
+        raise ValueError(
+            "test split requires --allow-test inside a verified committed one-shot intent"
+        )
 
 
 def load_config(path: Path) -> dict[str, Any]:
@@ -61,6 +81,8 @@ def load_run_inputs(
     """Load operational inputs, never full gold rows for the test split."""
 
     if split == "test":
+        if not _ONE_SHOT_TEST_AUTHORIZED.get():
+            raise ValueError("test inputs require a verified committed one-shot intent")
         samples = read_jsonl(data_dir / "splits" / "test_inputs.jsonl")
         if any(set(row) != BLIND_TEST_ALLOWED_FIELDS for row in samples):
             raise ValueError(
@@ -80,8 +102,7 @@ def select_samples(
     limit: int | None,
     allow_test: bool,
 ) -> list[dict[str, Any]]:
-    if split == "test" and not allow_test:
-        raise ValueError("test split requires explicit --allow-test final-reporting authorization")
+    require_test_authorization(split, allow_test)
     selected = sorted((row for row in samples if row["split"] == split), key=lambda row: row["id"])
     if limit is not None:
         if limit < 1:

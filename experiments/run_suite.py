@@ -12,10 +12,11 @@ from bench.build.common import sha256_file, write_json
 from eval.run_eval import evaluate
 from experiments.ablations import ABLATION_NAMES
 from experiments.build_artifacts import build as build_artifacts
+from experiments.one_shot import authorize_committed_intent
 from experiments.run_baselines import BASELINE_NAMES
 from experiments.run_baselines import run as run_baselines
 from experiments.run_far import run as run_far
-from experiments.runner import ROOT, load_config
+from experiments.runner import ROOT, load_config, one_shot_test_scope
 from experiments.validate_results import validate_result_bundle
 
 DEFAULT_ABLATIONS = tuple(name for name in ABLATION_NAMES if name != "full")
@@ -119,7 +120,7 @@ def _evaluate_and_validate(
     return report
 
 
-def run_suite(
+def _run_suite_authorized(
     config_path: Path,
     data_dir: Path,
     output_dir: Path,
@@ -353,6 +354,77 @@ def run_suite(
     return manifest
 
 
+def run_suite(
+    config_path: Path,
+    data_dir: Path,
+    output_dir: Path,
+    *,
+    split: str | None = None,
+    limit: int | None = None,
+    allow_test: bool = False,
+    baselines: tuple[str, ...] = BASELINE_NAMES,
+    ablations: tuple[str, ...] = DEFAULT_ABLATIONS,
+    resamples: int = 2000,
+    seed: int = 1729,
+    reports_only: bool = False,
+    one_shot_intent: Path | None = None,
+) -> dict[str, Any]:
+    selected_split = split or str(load_config(config_path).get("run", {}).get("split", "dev"))
+    if selected_split != "test":
+        if one_shot_intent is not None:
+            raise ValueError("one-shot intent may only authorize the test split")
+        return _run_suite_authorized(
+            config_path,
+            data_dir,
+            output_dir,
+            split=split,
+            limit=limit,
+            allow_test=allow_test,
+            baselines=baselines,
+            ablations=ablations,
+            resamples=resamples,
+            seed=seed,
+            reports_only=reports_only,
+        )
+    if not allow_test or one_shot_intent is None or limit is not None:
+        raise ValueError("complete test suite requires --allow-test and --one-shot-intent")
+    methods = {
+        "far",
+        *baselines,
+        *(ablation for ablation in ablations if ablation != "full"),
+    }
+    committed = authorize_committed_intent(
+        one_shot_intent,
+        target="falsirag",
+        benchmark_input=data_dir / "splits/test_inputs.jsonl",
+        data_manifest=data_dir / "manifest.json",
+        methods=methods,
+    )
+    with one_shot_test_scope():
+        manifest = _run_suite_authorized(
+            config_path,
+            data_dir,
+            output_dir,
+            split="test",
+            limit=None,
+            allow_test=True,
+            baselines=baselines,
+            ablations=ablations,
+            resamples=resamples,
+            seed=seed,
+            reports_only=reports_only,
+        )
+    manifest.update(
+        {
+            "one_shot_intent_id": committed["intent"]["intent_id"],
+            "one_shot_intent_sha256": sha256_file(one_shot_intent),
+            "one_shot_intent_commit": committed["committed_in"],
+        }
+    )
+    write_json(output_dir / "suite_manifest.json", manifest)
+    return manifest
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -365,6 +437,7 @@ def main() -> None:
     parser.add_argument("--split", choices=("train", "dev", "test"))
     parser.add_argument("--limit", type=int)
     parser.add_argument("--allow-test", action="store_true")
+    parser.add_argument("--one-shot-intent", type=Path)
     parser.add_argument("--baseline", choices=BASELINE_NAMES, action="append")
     parser.add_argument("--ablation", choices=ABLATION_NAMES, action="append")
     parser.add_argument("--resamples", type=int, default=2000)
@@ -389,6 +462,7 @@ def main() -> None:
         resamples=args.resamples,
         seed=args.seed,
         reports_only=args.reports_only,
+        one_shot_intent=args.one_shot_intent,
     )
     print(json.dumps(manifest, ensure_ascii=False, indent=2, sort_keys=True))
 
