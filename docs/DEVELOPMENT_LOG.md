@@ -1796,3 +1796,17 @@ evidence bundle verified successfully, releasing the GPU.
 - traceability 同时写明 test 读取需已提交 intent 动态授权，以及 jury release 必须
   从 juror/作者仲裁/源 suite 重算。23:47 +08:00 再次复核时 checkpoint 已继续到
   181/350（`RAM0255`），两个服务 active、日志无错误。未访问或运行任何 test。
+
+## 2026-07-05 — 补齐并诚实降级 Phase 0 三模型 smoke 状态
+
+- 逐项核查 `PLAN_2PLUS4.md` 的 Phase 0 产物时确认：仓库和远端均不存在 Mistral、
+  Gemma、Llama 三模型 smoke 记录；远端 Ollama 当前只有 `qwen3.5:9b`、`qwen2.5:7b`
+  与 `glm4:9b`。此前把整个 Phase 0 概括为“证据完成”会掩盖这一缺口。
+- 新增 `scripts/smoke_2plus4_models.sh`：只在 Windows RAMDocs 服务停止且 GPU 空闲时
+  运行，缺失模型只有显式 `--pull` 才下载，并要求 D: 至少 20 GiB 可用。模型目录沿用
+  `windows_gpu_env.sh` 的 D: 配置；短提示不读取 benchmark，每个家族输出协议指纹、
+  对应配置 SHA-256、模型摘要和 `benchmark_data_accessed=false` 的 JSON 记录。
+- 当前 Round 2 正在占用 GPU，因此没有执行或伪造 smoke；traceability 明确标记为
+  “工具完成、证据待执行”。脚本通过 shell 语法与 diff whitespace 检查，未运行
+  模型、测试套件或任何 test 数据。23:51 +08:00 只读复核时 Round 2 已继续到
+  189/350（`RAM0269`），两个服务 active、日志无错误。

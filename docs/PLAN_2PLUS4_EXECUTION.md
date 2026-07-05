@@ -16,7 +16,7 @@
 | G-S 作者复标 | 工具完成、禁止执行 | Phase B 未启动；不存在作者仲裁制品 |
 | 多模型矩阵 | 工具完成、禁止执行 | G-A 停止规则阻断 jury-gold 矩阵与投稿主张 |
 | 一次性 test | 工具完成、禁止执行 | dev 停止规则已触发，RAMDocs/FalsiRAG test 均未访问 |
-| Round 2 dev 方法迭代 | 运行中 | FAR-only 第二轮已在原 detached 工作树 `d8d5f40` 恢复；恢复后 checkpoint 已从 105/350 推进到至少 114/350，Ollama、RAMDocs runner 和 llama-server 均 active |
+| Round 2 dev 方法迭代 | 运行中 | FAR-only 第二轮已在原 detached 工作树 `d8d5f40` 恢复；恢复后 checkpoint 已从 105/350 推进到至少 189/350，Ollama、RAMDocs runner 和 llama-server 均 active |
 | 2+4 论文门 | 失败关闭 | 当前首轮 2+4 路线不可进入投稿包装；只有 Round 2 完成且 G-A 通过才可改判 |
 
 ## RAMDocs
@@ -25,6 +25,24 @@
 uv run falsirag-build-ramdocs verify \
   --output-dir bench/external/ramdocs_v1
 ```
+
+## Phase 0 本地模型 smoke
+
+Mistral、Gemma 与 Llama 的本地 smoke 只使用固定短提示，不读取任何 benchmark。
+Round 2 已终止并完成 finalize/verify、正式工作树允许切到最新 `main`、Windows GPU
+空闲且 D: 至少有 20 GiB 可用后执行：
+
+```bash
+ssh windows-gpu
+cd /mnt/d/FAR-workspace/FAR-2plus4
+git checkout --detach origin/main
+scripts/smoke_2plus4_models.sh --pull
+```
+
+脚本发现 RAMDocs 服务或其他 GPU 任务时以状态 75 退出等待；模型与输出均位于 D:，
+不会写入 C:。正式记录写到 `/mnt/d/FAR-outputs/model_smoke_2plus4/{mistral,google,meta}.json`，
+每份都绑定活动协议、Ollama 模型摘要，并固定 `benchmark_data_accessed=false`、
+`human_iaa=false`。不带 `--pull` 时只检查现有模型，不下载缺失镜像。
 
 正式 Windows GPU 运行或 checkpoint 恢复使用 D: 盘脚本；它会启动 D: 盘
 Ollama、继承 D: 盘 HuggingFace cache，并复用同一个输出目录续跑。长任务由
@@ -138,9 +156,9 @@ systemctl --user disable --now far-ramdocs-round2.service far-ollama-2plus4.serv
 Round 2 只改变 FAR 的最终答案合并层；初始答案和最强基线沿用 Round 1 的冻结
 制品并逐文件校验 SHA-256。FAR 350 条完成后执行：
 
-截至 2026-07-05 23:12 +08:00，远端 Round 2 FAR 已在原 detached 工作树
+截至 2026-07-05 23:51 +08:00，远端 Round 2 FAR 已在原 detached 工作树
 `d8d5f40` 恢复并确认推进。恢复时 checkpoint 为 105/350；随后写入到至少
-114/350，最后观测样本为 `RAM0156`。尚无 `run_manifest.json` 或
+189/350，最后观测样本为 `RAM0269`。尚无 `run_manifest.json` 或
 `predictions.jsonl`；`far-ollama-2plus4.service`、`far-ramdocs-round2.service`
 和 `llama-server` 均 active。恢复前曾因 GPU 被 VeraRAG/SelfRAG 占用而保留
 `/mnt/d/FAR-runtime/ramdocs_dev_v2.waiting-for-gpu`；恢复时未切换工作树。
