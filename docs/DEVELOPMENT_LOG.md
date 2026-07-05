@@ -1823,3 +1823,15 @@ evidence bundle verified successfully, releasing the GPU.
 - 已移除多余的 `After=default.target`，同步到远端用户 unit 并执行 daemon-reload。
   Ollama/Round 2 主 PID 在 reload 前后保持不变，未中断当前样本；`systemd-analyze
   --user verify` 无输出，checkpoint 随后推进至 224/350。未访问或运行任何 test。
+
+## 2026-07-06 — 收紧 Ollama 启动稳定性门禁
+
+- 回看持久化 run log 后确认，2026-07-05 23:56 +08:00 曾出现一次瞬时 Ollama
+  不可用：Round 2 的单次 `/api/tags` 预检查刚通过，Ollama 随即拒绝模型身份请求，
+  runner 失败退出；watchdog 于 23:57 先记录 GPU 等待，之后从同一 checkpoint 恢复。
+  该故障未写入错误行或损坏已有预测，但说明单点健康探针存在竞态。
+- Phase A 与 Round 2 units 现要求 `/api/tags` 连续三次成功（间隔 2 秒）才启动 runner；
+  任一次失败都会重新开始稳定窗口。已同步两个远端 unit 并 daemon-reload，当前 Round 2
+  PID `741` 在 reload 前后不变，`systemd-analyze --user verify` 无输出。
+- 部署后 checkpoint 继续推进至 226/350，两个服务 active，近 10 分钟无错误。未访问
+  或运行任何 test，也未改变实验方法、配置、checkpoint 或 G-A 判据。
