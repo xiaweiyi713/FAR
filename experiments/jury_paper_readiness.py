@@ -261,7 +261,7 @@ def main() -> None:
         "--ramdocs-dev-suite", type=Path, default=ROOT / "diagnostics/ramdocs_v1/dev"
     )
     parser.add_argument(
-        "--ramdocs-round2-dir", type=Path, default=ROOT / "diagnostics/ramdocs_v2/dev"
+        "--ramdocs-round2-dir", type=Path, default=ROOT / "diagnostics/ramdocs_v2/round2"
     )
     parser.add_argument(
         "--ramdocs-round2-config",

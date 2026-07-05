@@ -1525,3 +1525,12 @@ evidence bundle verified successfully, releasing the GPU.
   同时核验实际使用的粒度和相应冲突指标，继续禁止把二分类回退写成类型一致性。
 - 这是对冻结协议既有降级预案的实现修复，不修改 G-K 阈值、家族隔离、G-S、
   G-A 或停止规则；当前 G-A 未通过，Phase B 仍未执行。
+
+## 2026-07-05 — 对齐 Round 2 证据目录默认值
+
+- `falsirag-jury-paper-readiness` 的默认 Round 2 RAMDocs 证据目录曾指向
+  `diagnostics/ramdocs_v2/dev`，而 Round 2 release builder 与项目状态账本使用
+  `diagnostics/ramdocs_v2/round2`。这会让默认 readiness 检查在证据同步后漏看
+  已冻结的 Round 2 manifest。
+- 已将默认值改为 `diagnostics/ramdocs_v2/round2`，只影响证据发现路径，不修改
+  G-A 判据、停止规则、任何分数或任何 test 访问状态。
