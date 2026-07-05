@@ -1784,3 +1784,15 @@ evidence bundle verified successfully, releasing the GPU.
 - 执行文档已补充完整 build/verify 命令。仅执行 AST 解析、模块导入、行长和 diff
   whitespace 检查，未运行测试套件、模型或 test 数据。同期 Round 2 正常推进至
   177/350（`RAM0250`），服务 active、无错误。
+
+## 2026-07-05 — 对齐 README、论文与 2+4 状态账本
+
+- 状态审计发现 `paper/STATUS.md` 仍声称只有 relaxed 与 strict 两个 profile，未列出
+  已实现但尚未形成正式证据的 2+4 替代档位；traceability 也只记录 Round 1 G-A
+  失败，遗漏正在运行的 dev-only Round 2。
+- 论文状态页现明确区分三个档位：已就绪的单作者机器审计档位、尚在执行且不得称为
+  真人 IAA 的 2+4 档位、以及没有被 2+4 取代的严格真人/外部档位。README 与协议
+  矩阵同步记录 Round 2 至少 177/350、未 finalize、Phase B 仍关闭。
+- traceability 同时写明 test 读取需已提交 intent 动态授权，以及 jury release 必须
+  从 juror/作者仲裁/源 suite 重算。23:47 +08:00 再次复核时 checkpoint 已继续到
+  181/350（`RAM0255`），两个服务 active、日志无错误。未访问或运行任何 test。
