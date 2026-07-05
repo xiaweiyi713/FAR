@@ -1647,3 +1647,18 @@ evidence bundle verified successfully, releasing the GPU.
 - 新版 watchdog 在 Round 2 `run_manifest.json` 出现后会移除 marker 并停止
   Round 2/Ollama 服务；异常退出时则先遵守 GPU 占用门禁，再恢复同一 checkpoint。
   未访问或运行任何 test，未改变方法、配置、协议或 G-A 判据。
+
+## 2026-07-05 — 关闭 Round 2 完成 manifest 的竞态窗口
+
+- 进一步静态核查 runner 完成路径时确认：`CheckpointWriter.finalize()` 会先写基础
+  `run_manifest.json`，调用方随后才补写 `gold_loaded_by_runner=false` 等 RAMDocs
+  字段。旧 watchdog 只检查文件存在，理论上可能在两次原子写之间把基础 manifest
+  误判为完成并停止 runner。
+- watchdog 现仅在 Round 2 manifest 同时满足 `status=complete`、`partial=false`、
+  `split=dev`、`expected=completed=350`、`gold_loaded_by_runner=false` 时才删除 marker
+  并释放 GPU；JSON 不完整、字段缺失或系统 `python3` 不可用时均失败关闭并继续等待。
+  Round 1 既有完成语义保持不变。
+- 已通过 shell 语法检查，并把 D: 盘实际执行副本更新为 SHA-256
+  `a312bb944133010ca88b82fb2ad3b1cafad533dfbb585a1a06b3ee9f2dcf09f3`；远端
+  `/usr/bin/python3` 可用。同步时 Round 2 已推进到 129/350，两个服务仍 active，
+  尚无 manifest。未访问或运行任何 test 数据或测试套件。
