@@ -1731,3 +1731,22 @@ evidence bundle verified successfully, releasing the GPU.
   与 rescored predictions 指纹后才应用 `> 0.30` 剔除规则。
 - 仅执行 AST 解析、模块导入、行长和 diff whitespace 检查，未运行测试套件、模型
   或 test 数据。同期 Round 2 正常推进至 157/350（`RAM0213`），服务 active、无错误。
+
+## 2026-07-05 — 将 dev 门禁接入 one-shot intent 与论文 readiness
+
+- 最终路径审计发现 `falsirag-one-shot prepare` 原先只要求 clean worktree 和非空
+  method 列表，不核验 G-A/G-K/G-S 或 dev 分析是否完成；因此即使停止规则仍生效，
+  也能生成一个形式上有效的 test intent。
+- prepare 现强制读取并冻结四组前置证据：通过的 350 条 RAMDocs dev G-A manifest、
+  完整 300 条且 G-K/G-S 均通过的 jury labels、Qwen 三口径敏感性、包含三个系统
+  家族的 dev 矩阵。任一协议指纹、样本数、标签来源、哈希或门禁不符即拒绝生成
+  intent；FalsiRAG/RAMDocs test 输入条数必须分别为 58/150。
+- committed intent 新增四份前置证据哈希；seal 重新核对 intent schema、commit 祖先、
+  target、输入指纹、方法集、suite schema、gold 未载入状态、每方法完整预测数以及
+  score 样本数。执行文档已补全新的必需参数示例。
+- `falsirag-jury-paper-readiness` 不再只看自报布尔值：它会校验 consensus 行文件与
+  300 条标签、G-K/G-S/非真人来源、Qwen 11 方法敏感性子 manifest、三家族矩阵行、
+  共享 label hash，以及 FalsiRAG/RAMDocs 两套 test score 的目标 schema 和 seal
+  交叉指纹。仍明确输出 `can_claim_human_iaa=false`。
+- 仅执行 AST 解析、模块导入、行长和 diff whitespace 检查，未运行测试套件或访问
+  test。同期 Round 2 正常推进至 167/350（`RAM0229`），服务 active、无错误。

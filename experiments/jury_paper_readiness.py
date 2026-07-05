@@ -7,8 +7,10 @@ import json
 from pathlib import Path
 from typing import Any
 
-from bench.build.common import sha256_file, write_json
+from bench.build.common import read_jsonl, sha256_file, write_json
+from bench.build.jury_adjudication import _consensus
 from bench.build.ramdocs import verify_ramdocs
+from experiments.jury_rescore import QWEN_METHODS
 from experiments.protocol_2plus4 import PROTOCOL_ACTIVE_SHA256, ROOT, verify_active_protocol
 from experiments.ramdocs_round2 import verify_round
 from experiments.ramdocs_suite import verify_suite
@@ -102,26 +104,60 @@ def audit(
         errors.append("G-A external validation gate has not passed")
 
     consensus = _safe_json(jury_consensus_report, errors, "jury consensus")
+    try:
+        recomputed_consensus, consensus_rows = _consensus(jury_consensus_report.parent)
+        consensus_artifacts_valid = recomputed_consensus == consensus and len(consensus_rows) == 300
+    except (FileNotFoundError, json.JSONDecodeError, KeyError, TypeError, ValueError) as exc:
+        errors.append(f"jury consensus artifacts: {exc}")
+        consensus_artifacts_valid = False
     checks["gate_k_jury_passed"] = (
-        consensus.get("gate_k_passed") is True
+        consensus.get("schema_version") == "far-jury-consensus-v1"
+        and consensus.get("gate_k_passed") is True
         and consensus.get("zero_fallbacks") is True
         and consensus.get("protocol_fingerprint") == PROTOCOL_ACTIVE_SHA256
+        and consensus.get("publication_gold") is False
+        and consensus.get("human_iaa") is False
+        and consensus_artifacts_valid
     )
     if not checks["gate_k_jury_passed"]:
         errors.append("G-K jury agreement gate has not passed without fallbacks")
 
     labels = _safe_json(jury_labels_manifest, errors, "jury labels")
+    consensus_report_sha256 = (
+        sha256_file(jury_consensus_report) if jury_consensus_report.is_file() else None
+    )
+    labels_manifest_sha256 = (
+        sha256_file(jury_labels_manifest) if jury_labels_manifest.is_file() else None
+    )
     labels_path = jury_labels_manifest.parent / str(labels.get("labels_file", "labels.jsonl"))
     labels_fingerprint_valid = labels_path.is_file() and sha256_file(labels_path) == labels.get(
         "labels_sha256"
     )
+    label_rows = read_jsonl(labels_path) if labels_fingerprint_valid else []
+    label_ids = [str(row.get("sample_id", "")) for row in label_rows]
+    label_rows_valid = (
+        len(label_rows) == 300
+        and len(label_ids) == len(set(label_ids))
+        and all(
+            row.get("jury_gold") is True
+            and row.get("publication_gold") is False
+            and isinstance(row.get("gold_annotation"), dict)
+            for row in label_rows
+        )
+    )
     checks["gate_s_author_passed"] = labels.get("gate_s_passed") is True
     checks["jury_labels_valid"] = (
-        labels.get("jury_gold") is True
+        labels.get("schema_version") == "far-jury-labels-v1"
+        and labels.get("jury_gold") is True
         and labels.get("publication_gold") is False
         and labels.get("human_iaa") is False
         and labels.get("protocol_fingerprint") == PROTOCOL_ACTIVE_SHA256
+        and labels.get("gate_k_passed") is True
+        and labels.get("samples") == 300
+        and labels.get("excluded_disputed_samples") == []
+        and labels.get("consensus_report_sha256") == consensus_report_sha256
         and labels_fingerprint_valid
+        and label_rows_valid
     )
     if not checks["gate_s_author_passed"]:
         errors.append("G-S author self-consistency gate has not passed")
@@ -129,22 +165,55 @@ def audit(
         errors.append("compiled jury label layer is missing, stale, or unsafe")
 
     sensitivity = _safe_json(sensitivity_report, errors, "label sensitivity")
+    sensitivity_methods = {
+        str(row.get("method", ""))
+        for row in sensitivity.get("rows", [])
+        if isinstance(row, dict)
+    }
+    jury_rescore_manifest = sensitivity_report.parent / "jury_gold/matrix_family_manifest.json"
+    unanimous_rescore_manifest = (
+        sensitivity_report.parent / "unanimous_only/matrix_family_manifest.json"
+    )
+    sensitivity_samples = sensitivity.get("samples", {})
+    if not isinstance(sensitivity_samples, dict):
+        sensitivity_samples = {}
+    unanimous_dev_samples = sensitivity_samples.get("unanimous_only_dev")
     checks["three_view_label_sensitivity_ready"] = (
         sensitivity.get("schema_version") == "far-jury-label-sensitivity-v1"
         and sensitivity.get("protocol_fingerprint") == PROTOCOL_ACTIVE_SHA256
+        and sensitivity.get("family") == "qwen"
         and set(sensitivity.get("views", {})) == {"construction", "jury_gold", "unanimous_only"}
-        and bool(sensitivity.get("rows"))
+        and sensitivity_methods == QWEN_METHODS
+        and sensitivity_samples.get("jury_gold_dev") == 60
+        and isinstance(unanimous_dev_samples, int)
+        and 0 < unanimous_dev_samples <= 60
+        and jury_rescore_manifest.is_file()
+        and sensitivity.get("jury_rescore_manifest_sha256")
+        == sha256_file(jury_rescore_manifest)
+        and unanimous_rescore_manifest.is_file()
+        and sensitivity.get("unanimous_rescore_manifest_sha256")
+        == sha256_file(unanimous_rescore_manifest)
+        and sensitivity.get("publication_gold") is False
+        and sensitivity.get("human_iaa") is False
     )
     if not checks["three_view_label_sensitivity_ready"]:
         errors.append("construction/jury/unanimous sensitivity report is not ready")
 
     matrix = _safe_json(matrix_report, errors, "model matrix")
+    matrix_rows = [row for row in matrix.get("rows", []) if isinstance(row, dict)]
+    matrix_families = {str(row.get("family", "")) for row in matrix_rows}
     checks["three_family_matrix_ready"] = (
-        matrix.get("three_family_claim_ready") is True
+        matrix.get("schema_version") == "far-model-matrix-v1"
+        and matrix.get("three_family_claim_ready") is True
         and matrix.get("typed_answer_gain_same_direction") is True
         and matrix.get("conflict_gain_same_direction") is True
         and matrix.get("label_granularity") in {"six_class", "binary"}
         and matrix.get("protocol_fingerprint") == PROTOCOL_ACTIVE_SHA256
+        and matrix.get("jury_labels_manifest_sha256") == labels_manifest_sha256
+        and matrix_families == {"qwen", "mistral", "google"}
+        and set(matrix.get("included_families", [])) == matrix_families
+        and all(row.get("excluded") is False for row in matrix_rows)
+        and matrix.get("publication_gold") is False
     )
     if not checks["three_family_matrix_ready"]:
         errors.append("three-family jury-gold typed-control matrix is not ready")
@@ -184,9 +253,25 @@ def audit(
         ("ramdocs", ramdocs_test_seal, ramdocs_test_score, 150),
     ):
         seal = _safe_json(path, errors, f"{target} one-shot seal")
+        score = _safe_json(score_path, errors, f"{target} one-shot score")
         score_hash_matches = score_path.is_file() and seal.get(
             "score_manifest_sha256"
         ) == sha256_file(score_path)
+        score_valid = (
+            score.get("split") == "test"
+            and score.get("samples") == expected_samples
+            and (
+                target == "falsirag"
+                and score.get("schema_version") == "far-jury-family-rescore-v1"
+                and score.get("jury_gold") is True
+                and score.get("publication_gold") is False
+                and score.get("human_iaa") is False
+                or target == "ramdocs"
+                and score.get("schema_version") == "far-ramdocs-suite-v1"
+                and score.get("publication_gold") is False
+                and score.get("externally_held_blind") is False
+            )
+        )
         passed = (
             seal.get("schema_version") == "far-one-shot-seal-v1"
             and seal.get("target") == target
@@ -195,7 +280,11 @@ def audit(
             and seal.get("fingerprint_chain_valid") is True
             and seal.get("protocol_fingerprint") == PROTOCOL_ACTIVE_SHA256
             and seal.get("scored_samples") == expected_samples
+            and bool(seal.get("intent_id"))
+            and bool(seal.get("intent_commit"))
+            and bool(seal.get("evaluation_commit"))
             and score_hash_matches
+            and score_valid
         )
         checks[f"{target}_one_shot_complete"] = passed
         if not passed:
