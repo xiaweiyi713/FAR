@@ -1675,3 +1675,18 @@ evidence bundle verified successfully, releasing the GPU.
 - 仅完成 AST 语法解析和 diff whitespace 检查，未运行任何测试套件，也未执行
   陪审团。此变更不放宽 G-K 阈值，只防止不完整或篡改来源进入 κ 与多数票计算。
   同期 Round 2 正常推进至 131/350，两个服务 active，日志无错误。
+
+## 2026-07-05 — 禁止 G-S 失败时生成 `jury_gold`
+
+- 静态审计发现 `jury-adjudication compile` 原先在 G-S 未通过时会排除 disputed
+  样本，但仍生成带 `jury_gold: true` 的部分标签层。后续 paper readiness 虽会拒绝
+  G-S 失败，制品语义本身仍违反“G-S 通过后才能 compile”的预注册规则。
+- `compile` 现要求 G-K 与 G-S 均明确通过，否则直接失败且不创建标签目录；不再
+  生成排除 disputed 样本的伪 jury-gold 层。它会重新计算四字段联合自一致率，并
+  核对两轮冻结文件、协议指纹、来源 juror 身份/模型家族/annotation 指纹与 fallback
+  计数，不能只信任报告中的布尔值。
+- 14 天与 20% 分层重抽样也在 compile 时重新执行：验证 Round 2 创建时间晚于冻结
+  门槛，逐类按固定 seed 重建期望样本和顺序，并要求 completed 文件完整覆盖该冻结
+  packet。任何重复、缺失、替换或来源漂移均失败关闭。
+- 仅执行 AST 语法解析、行长和 diff whitespace 检查，未运行测试套件或陪审团，
+  未访问 test。同期 Round 2 正常推进至 136/350（`RAM0183`），服务 active、无错误。

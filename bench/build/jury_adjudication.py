@@ -14,6 +14,7 @@ from typing import Any
 
 from bench.annotations import _validated_annotation, stable_rank
 from bench.build.common import read_jsonl, sha256_file, write_json, write_jsonl
+from bench.build.jury_consensus import _load_juror
 from experiments.protocol_2plus4 import PROTOCOL_ACTIVE_SHA256, verify_active_protocol
 
 ROUND1_SEED = 314159
@@ -34,12 +35,26 @@ def _parse_time(value: str) -> datetime:
 
 def _consensus(consensus_dir: Path) -> tuple[dict[str, Any], dict[str, dict[str, Any]]]:
     report = json.loads((consensus_dir / "jury_consensus_report.json").read_text(encoding="utf-8"))
+    if report.get("schema_version") != "far-jury-consensus-v1":
+        raise ValueError("unsupported jury consensus schema")
+    if report.get("protocol_fingerprint") != PROTOCOL_ACTIVE_SHA256:
+        raise ValueError("jury consensus uses a stale protocol")
+    if report.get("publication_gold") is not False or report.get("human_iaa") is not False:
+        raise ValueError("jury consensus provenance flags are invalid")
     rows_path = consensus_dir / str(report["jury_consensus_rows"])
     if sha256_file(rows_path) != report.get("jury_consensus_rows_sha256"):
         raise ValueError("jury consensus rows fingerprint mismatch")
-    rows = {str(row["sample_id"]): row for row in read_jsonl(rows_path)}
+    source_rows = read_jsonl(rows_path)
+    rows = {str(row["sample_id"]): row for row in source_rows}
+    if len(rows) != len(source_rows):
+        raise ValueError("jury consensus contains duplicate sample IDs")
     if len(rows) != int(report.get("samples", -1)):
         raise ValueError("jury consensus sample count mismatch")
+    if any(
+        row.get("active_label_granularity") != report.get("active_label_granularity")
+        for row in rows.values()
+    ):
+        raise ValueError("jury consensus row granularity mismatch")
     return report, rows
 
 
@@ -272,12 +287,10 @@ def freeze_round2(output_dir: Path, completed_file: Path) -> dict[str, Any]:
     return report
 
 
-def _load_juror_rows(directory: Path) -> tuple[str, dict[str, dict[str, Any]]]:
-    manifest = json.loads((directory / "jury_annotation_manifest.json").read_text(encoding="utf-8"))
-    path = directory / str(manifest["annotation_file"])
-    if sha256_file(path) != manifest.get("annotation_sha256"):
-        raise ValueError("juror annotation fingerprint mismatch")
-    return str(manifest["juror_id"]), {str(row["sample_id"]): row for row in read_jsonl(path)}
+def _load_juror_rows(
+    directory: Path,
+) -> tuple[dict[str, Any], dict[str, dict[str, Any]]]:
+    return _load_juror(directory)
 
 
 def compile_jury_labels(
@@ -290,28 +303,142 @@ def compile_jury_labels(
 ) -> dict[str, Any]:
     verify_active_protocol()
     report, consensus_rows = _consensus(consensus_dir)
+    if report.get("gate_k_passed") is not True:
+        raise ValueError("G-K must pass before compiling jury gold")
     label_granularity = str(report.get("active_label_granularity"))
     if label_granularity not in {"six_class", "binary"}:
         raise ValueError("jury consensus does not expose an active label granularity")
     consistency = json.loads(
         (adjudication_dir / "self_consistency_report.json").read_text(encoding="utf-8")
     )
+    if consistency.get("schema_version") != "far-jury-author-self-consistency-v1":
+        raise ValueError("unsupported author self-consistency schema")
+    if consistency.get("protocol_fingerprint") != PROTOCOL_ACTIVE_SHA256:
+        raise ValueError("author self-consistency uses a stale protocol")
+    if consistency.get("human_iaa") is not False:
+        raise ValueError("author self-consistency must not be labeled human IAA")
+    if (
+        consistency.get("gate_s_passed") is not True
+        or float(consistency.get("self_consistency", -1.0)) < 0.80
+        or float(consistency.get("minimum_required", -1.0)) != 0.80
+    ):
+        raise ValueError("G-S must pass before compiling jury gold")
     freeze = json.loads((adjudication_dir / "round1_freeze.json").read_text(encoding="utf-8"))
+    if (
+        freeze.get("schema_version") != "far-jury-author-round1-freeze-v1"
+        or freeze.get("protocol_fingerprint") != PROTOCOL_ACTIVE_SHA256
+    ):
+        raise ValueError("round1 adjudication freeze is invalid or stale")
     round1_path = adjudication_dir / str(freeze["completed_file"])
     if sha256_file(round1_path) != freeze.get("completed_sha256"):
         raise ValueError("round1 adjudication fingerprint mismatch")
-    author = {str(row["sample_id"]): row for row in read_jsonl(round1_path)}
-    jurors = dict(_load_juror_rows(directory) for directory in juror_dirs)
-    if set(jurors) != {str(item["juror_id"]) for item in report["jurors"]}:
+    round1_rows = read_jsonl(round1_path)
+    author = {str(row["sample_id"]): row for row in round1_rows}
+    if len(author) != len(round1_rows):
+        raise ValueError("round1 adjudication contains duplicate sample IDs")
+    if consistency.get("round1_sha256") != sha256_file(round1_path):
+        raise ValueError("self-consistency report does not bind the frozen round1 file")
+    round2_path = adjudication_dir / str(consistency["round2_file"])
+    if sha256_file(round2_path) != consistency.get("round2_sha256"):
+        raise ValueError("round2 adjudication fingerprint mismatch")
+    round2_rows = read_jsonl(round2_path)
+    repeated = {str(row["sample_id"]): row for row in round2_rows}
+    if len(repeated) != len(round2_rows) or len(repeated) != consistency.get("samples"):
+        raise ValueError("round2 adjudication samples are duplicate or incomplete")
+    joint_fields = (
+        "conflict_present",
+        "conflict_type",
+        "revision_action",
+        "revised_answer_acceptable",
+    )
+    if consistency.get("joint_fields") != list(joint_fields):
+        raise ValueError("self-consistency joint fields do not match the protocol")
+    agreements = 0
+    for sample_id, row in repeated.items():
+        if sample_id not in author:
+            raise ValueError("round2 adjudication includes a sample absent from round1")
+        left = author[sample_id]["author_annotation"]
+        right = row["author_annotation"]
+        agreements += int(all(left.get(field) == right.get(field) for field in joint_fields))
+    rate = agreements / len(repeated) if repeated else 0.0
+    if (
+        agreements != consistency.get("joint_agreements")
+        or not math.isclose(rate, float(consistency.get("self_consistency", -1.0)))
+        or rate < 0.80
+    ):
+        raise ValueError("self-consistency report does not match frozen adjudications")
+    disputed_ids = {
+        sample_id
+        for sample_id, row in consensus_rows.items()
+        if row.get("disposition") == "disputed"
+    }
+    if set(author) != disputed_ids:
+        raise ValueError("round1 adjudication does not exactly cover disputed consensus rows")
+    repeat_manifest = json.loads(
+        (adjudication_dir / "round2_manifest.json").read_text(encoding="utf-8")
+    )
+    if any(
+        (
+            repeat_manifest.get("schema_version")
+            != "far-jury-author-round2-packet-v1",
+            repeat_manifest.get("protocol_fingerprint") != PROTOCOL_ACTIVE_SHA256,
+            repeat_manifest.get("source_round1_sha256") != freeze.get("completed_sha256"),
+            repeat_manifest.get("stratified_fraction") != 0.20,
+            repeat_manifest.get("seed") != ROUND2_SEED,
+            repeat_manifest.get("round1_labels_hidden") is not True,
+        )
+    ):
+        raise ValueError("round2 adjudication manifest violates the frozen protocol")
+    if _parse_time(str(repeat_manifest["created_at"])) < _parse_time(
+        str(freeze["round2_eligible_at"])
+    ):
+        raise ValueError("round2 adjudication was created before the 14-day interval")
+    repeat_packet = adjudication_dir / str(repeat_manifest["packet_file"])
+    if sha256_file(repeat_packet) != repeat_manifest.get("packet_sha256"):
+        raise ValueError("round2 adjudication packet fingerprint mismatch")
+    repeat_packet_rows = read_jsonl(repeat_packet)
+    repeat_packet_ids = [str(row["sample_id"]) for row in repeat_packet_rows]
+    if (
+        len(repeat_packet_ids) != len(set(repeat_packet_ids))
+        or len(repeat_packet_ids) != repeat_manifest.get("samples")
+        or set(repeated) != set(repeat_packet_ids)
+    ):
+        raise ValueError("round2 adjudication does not exactly cover its frozen packet")
+    by_category: dict[str, list[str]] = defaultdict(list)
+    for sample_id in disputed_ids:
+        by_category[str(consensus_rows[sample_id]["category"])].append(sample_id)
+    expected_repeat: list[str] = []
+    for category, sample_ids in sorted(by_category.items()):
+        ordered = sorted(sample_ids)
+        random.Random(f"{ROUND2_SEED}:{category}").shuffle(ordered)
+        expected_repeat.extend(ordered[: math.ceil(0.20 * len(ordered))])
+    expected_repeat.sort(
+        key=lambda sample_id: stable_rank(ROUND2_SEED, "author-blind-round2", sample_id)
+    )
+    if repeat_packet_ids != expected_repeat:
+        raise ValueError("round2 adjudication packet is not the deterministic stratified sample")
+    loaded_jurors = [_load_juror_rows(directory) for directory in juror_dirs]
+    jurors = {
+        str(manifest["juror_id"]): rows for manifest, rows in loaded_jurors
+    }
+    expected_jurors = {str(item["juror_id"]): item for item in report["jurors"]}
+    if len(jurors) != len(loaded_jurors) or set(jurors) != set(expected_jurors):
         raise ValueError("juror sources do not match consensus report")
-    use_disputed = consistency.get("gate_s_passed") is True
+    for manifest, _ in loaded_jurors:
+        tracked = expected_jurors[str(manifest["juror_id"])]
+        if any(
+            (
+                str(manifest.get("model_family", "")).lower()
+                != str(tracked.get("model_family", "")).lower(),
+                manifest.get("model") != tracked.get("model"),
+                manifest.get("annotation_sha256") != tracked.get("annotation_sha256"),
+                manifest.get("fallbacks") != tracked.get("fallbacks"),
+            )
+        ):
+            raise ValueError("juror source identity differs from consensus report")
     labels: list[dict[str, Any]] = []
-    excluded: list[str] = []
     for sample_id, consensus in sorted(consensus_rows.items()):
         if consensus["disposition"] == "disputed":
-            if not use_disputed:
-                excluded.append(sample_id)
-                continue
             annotation = author[sample_id]["author_annotation"]
             provenance = "author_blind_adjudication"
         else:
@@ -359,7 +486,7 @@ def compile_jury_labels(
         "gate_k_passed": report.get("gate_k_passed"),
         "gate_s_passed": consistency.get("gate_s_passed"),
         "samples": len(labels),
-        "excluded_disputed_samples": excluded,
+        "excluded_disputed_samples": [],
         "labels_file": labels_path.name,
         "labels_sha256": sha256_file(labels_path),
         "consensus_report_sha256": sha256_file(consensus_dir / "jury_consensus_report.json"),

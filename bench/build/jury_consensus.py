@@ -49,6 +49,10 @@ def _load_juror(directory: Path) -> tuple[dict[str, Any], dict[str, dict[str, An
     manifest = json.loads((directory / "jury_annotation_manifest.json").read_text(encoding="utf-8"))
     if manifest.get("schema_version") != "far-jury-annotation-manifest-v1":
         raise ValueError(f"{directory}: unsupported jury annotation manifest schema")
+    if manifest.get("protocol_fingerprint") != PROTOCOL_ACTIVE_SHA256:
+        raise ValueError(f"{directory}: jury annotation uses a stale protocol")
+    if manifest.get("prompt_sha256") != PROMPT_SHA256:
+        raise ValueError(f"{directory}: jury annotation prompt fingerprint mismatch")
     if manifest.get("complete") is not True:
         raise ValueError(f"{directory}: jury annotation manifest is incomplete")
     if (
