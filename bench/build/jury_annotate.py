@@ -202,6 +202,13 @@ def verify_juror(packet_dir: Path, output_dir: Path) -> dict[str, Any]:
         family = str(manifest["model_family"])
         if manifest.get("schema_version") != "far-jury-annotation-manifest-v1":
             errors.append("unsupported jury annotation manifest schema")
+        if manifest.get("complete") is not True:
+            errors.append("jury annotation manifest is incomplete")
+        if (
+            manifest.get("publication_gold") is not False
+            or manifest.get("human_annotator") is not False
+        ):
+            errors.append("jury annotation provenance flags are invalid")
         if manifest.get("protocol_fingerprint") != PROTOCOL_ACTIVE_SHA256:
             errors.append("jury annotation uses a stale protocol")
         if manifest.get("prompt_sha256") != PROMPT_SHA256:
@@ -213,11 +220,20 @@ def verify_juror(packet_dir: Path, output_dir: Path) -> dict[str, Any]:
         if sha256_file(path) != manifest.get("annotation_sha256"):
             errors.append("jury annotation file fingerprint mismatch")
         ids = [str(row.get("sample_id", "")) for row in rows]
-        if len(ids) != len(set(ids)) or len(rows) != manifest.get("samples"):
+        if (
+            len(ids) != len(set(ids))
+            or len(rows) != manifest.get("samples")
+            or len(rows) != manifest.get("expected_samples")
+        ):
             errors.append("jury annotation rows are duplicate or incomplete")
         for row in rows:
-            if row.get("juror_id") != juror_id or row.get("model_family") != family:
-                errors.append("jury annotation row identity mismatch")
+            if (
+                row.get("schema_version") != "far-jury-annotation-v1"
+                or row.get("juror_id") != juror_id
+                or row.get("model_family") != family
+                or row.get("publication_gold") is not False
+            ):
+                errors.append("jury annotation row identity or provenance mismatch")
                 break
             annotation = row.get("jury_annotation", {})
             normalized = _normalise_prediction(annotation, str(row.get("sample_id", "")))

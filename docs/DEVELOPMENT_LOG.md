@@ -1662,3 +1662,16 @@ evidence bundle verified successfully, releasing the GPU.
   `a312bb944133010ca88b82fb2ad3b1cafad533dfbb585a1a06b3ee9f2dcf09f3`；远端
   `/usr/bin/python3` 可用。同步时 Round 2 已推进到 129/350，两个服务仍 active，
   尚无 manifest。未访问或运行任何 test 数据或测试套件。
+
+## 2026-07-05 — 加固陪审团 G-K 输入的失败关闭校验
+
+- 静态审计发现 `jury_consensus` 原先依据 juror manifest 自报的 `fallbacks` 计算
+  `zero_fallbacks`；虽然独立 `jury-annotate --verify` 能发现计数不一致，consensus
+  入口本身未重新计数。损坏或误改的 manifest 因而存在让 G-K 错误放行的风险。
+- consensus 现从逐条 annotation 重新识别 fallback，并要求它与 manifest 计数
+  一致；同时强制校验 manifest 完整标志、期望/实际样本数、逐行 schema、juror
+  身份、模型家族和 `publication_gold=false` / `human_annotator=false` 来源标志。
+  独立 juror verifier 也增加同样的完整性与来源检查。
+- 仅完成 AST 语法解析和 diff whitespace 检查，未运行任何测试套件，也未执行
+  陪审团。此变更不放宽 G-K 阈值，只防止不完整或篡改来源进入 κ 与多数票计算。
+  同期 Round 2 正常推进至 131/350，两个服务 active，日志无错误。

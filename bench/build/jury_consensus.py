@@ -13,7 +13,7 @@ from typing import Any
 
 from bench.annotations import cohen_kappa
 from bench.build.common import read_jsonl, sha256_file, write_json, write_jsonl
-from bench.build.jury_annotate import JURY_TYPES, PROMPT_SHA256
+from bench.build.jury_annotate import JURY_TYPES, PROMPT_SHA256, _is_fallback
 from experiments.protocol_2plus4 import (
     PROTOCOL_ACTIVE_SHA256,
     SYSTEM_MODEL_FAMILIES,
@@ -47,15 +47,43 @@ def fleiss_kappa(ratings: list[list[str]]) -> float:
 
 def _load_juror(directory: Path) -> tuple[dict[str, Any], dict[str, dict[str, Any]]]:
     manifest = json.loads((directory / "jury_annotation_manifest.json").read_text(encoding="utf-8"))
+    if manifest.get("schema_version") != "far-jury-annotation-manifest-v1":
+        raise ValueError(f"{directory}: unsupported jury annotation manifest schema")
+    if manifest.get("complete") is not True:
+        raise ValueError(f"{directory}: jury annotation manifest is incomplete")
+    if (
+        manifest.get("publication_gold") is not False
+        or manifest.get("human_annotator") is not False
+    ):
+        raise ValueError(f"{directory}: jury source is mislabeled as human or publication gold")
     path = directory / str(manifest["annotation_file"])
     if sha256_file(path) != manifest.get("annotation_sha256"):
         raise ValueError(f"{directory}: jury annotation fingerprint mismatch")
     rows: dict[str, dict[str, Any]] = {}
+    juror_id = str(manifest.get("juror_id", ""))
+    family = str(manifest.get("model_family", ""))
+    if not juror_id or not family:
+        raise ValueError(f"{directory}: jury identity is missing")
     for row in read_jsonl(path):
         sample_id = str(row["sample_id"])
         if sample_id in rows:
             raise ValueError(f"{directory}: duplicate sample {sample_id}")
+        if (
+            row.get("schema_version") != "far-jury-annotation-v1"
+            or row.get("juror_id") != juror_id
+            or row.get("model_family") != family
+            or row.get("publication_gold") is not False
+        ):
+            raise ValueError(f"{directory}: jury row identity or provenance mismatch")
         rows[sample_id] = row
+    if (
+        len(rows) != manifest.get("samples")
+        or len(rows) != manifest.get("expected_samples")
+    ):
+        raise ValueError(f"{directory}: jury annotation rows are incomplete")
+    fallbacks = sum(_is_fallback(row) for row in rows.values())
+    if fallbacks != manifest.get("fallbacks"):
+        raise ValueError(f"{directory}: jury fallback count mismatch")
     return manifest, rows
 
 
