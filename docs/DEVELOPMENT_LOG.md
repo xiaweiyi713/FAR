@@ -1429,3 +1429,15 @@ checkpoint advanced from 334 to 339 without a new error. The tracked launcher
 now starts these services rather than tmux panes. `far-tmux-server.service`
 remains useful for interactive shells, but formal process survival no longer
 depends on tmux scope behavior.
+
+At 11:06 +08:00 both formal services were stopped again at Self-RAG-style row
+133. This event was not a runner failure: systemd recorded `Result=success`, no
+restart, an explicit stop of each unit, two reload requests from `systemctl`
+client processes, and removal of both enabled symlinks. That evidence is
+consistent with a client-issued `disable --now`, not automatic service cleanup
+or an experiment exception. The originating command cannot be attributed
+because process-exec auditing was not enabled; neither the tracked scripts nor
+the Windows scheduled tasks contain a matching stop/disable action. Both units
+were re-enabled and resumed from row 133 with the same formal identity. The new
+start marker contains the verified D:-backed environment, and the checkpoint
+advanced without a new runtime error.
