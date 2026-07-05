@@ -149,6 +149,31 @@ def audit(
     if not checks["three_family_matrix_ready"]:
         errors.append("three-family jury-gold typed-control matrix is not ready")
 
+    label_granularities = {
+        consensus.get("active_label_granularity"),
+        labels.get("label_granularity"),
+        sensitivity.get("label_granularity"),
+        matrix.get("label_granularity"),
+    }
+    checks["jury_label_granularity_consistent"] = (
+        len(label_granularities) == 1
+        and next(iter(label_granularities), None) in {"six_class", "binary"}
+    )
+    if checks["jury_label_granularity_consistent"]:
+        granularity = next(iter(label_granularities))
+        expected_metric = (
+            "conflict_presence_f1" if granularity == "binary" else "typed_conflict_f1"
+        )
+        checks["jury_conflict_metric_matches_granularity"] = (
+            matrix.get("conflict_metric") == expected_metric
+            and expected_metric in sensitivity.get("metrics", [])
+        )
+    else:
+        checks["jury_conflict_metric_matches_granularity"] = False
+        errors.append("jury consensus, labels, sensitivity, and matrix mix label granularities")
+    if not checks["jury_conflict_metric_matches_granularity"]:
+        errors.append("jury conflict metric does not match the active label granularity")
+
     for target, path, score_path, expected_samples in (
         ("falsirag", falsirag_test_seal, falsirag_test_score, 58),
         ("ramdocs", ramdocs_test_seal, ramdocs_test_score, 150),

@@ -238,6 +238,28 @@ def verify_jury_release(bundle_dir: Path) -> dict[str, Any]:
         errors.append("embedded label sensitivity report is missing")
     if matrix.get("three_family_claim_ready") is not True:
         errors.append("embedded three-family matrix is not ready")
+    granularities = {
+        consensus.get("active_label_granularity"),
+        labels.get("label_granularity"),
+        sensitivity.get("label_granularity"),
+        matrix.get("label_granularity"),
+        manifest.get("label_granularity"),
+    }
+    if len(granularities) != 1 or next(iter(granularities), None) not in {
+        "six_class",
+        "binary",
+    }:
+        errors.append("jury release mixes incompatible label granularities")
+    else:
+        expected_metric = (
+            "conflict_presence_f1"
+            if next(iter(granularities)) == "binary"
+            else "typed_conflict_f1"
+        )
+        metric_mismatch = matrix.get("conflict_metric") != expected_metric
+        sensitivity_mismatch = expected_metric not in sensitivity.get("metrics", [])
+        if metric_mismatch or sensitivity_mismatch:
+            errors.append("jury release conflict metric does not match label granularity")
     unsafe = any(
         item.get("publication_gold") is not False or item.get("human_iaa") is not False
         for item in (manifest, labels, sensitivity)
