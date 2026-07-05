@@ -85,6 +85,25 @@ systemctl --user disable --now far-ramdocs-phase-a.service far-ollama-2plus4.ser
   略低（0.5686 vs 0.5743），二者在 strict exact match 上抵消。
 - G-A 为 false，故 Phase B、jury gold、多模型矩阵和一次性 test 均未启动。
 
+Round 2 只改变 FAR 的最终答案合并层；初始答案和最强基线沿用 Round 1 的冻结
+制品并逐文件校验 SHA-256。FAR 350 条完成后执行：
+
+```bash
+uv run python -m experiments.ramdocs_round2 finalize \
+  --data-dir bench/external/ramdocs_v1 \
+  --round1-dir /mnt/d/FAR-outputs/ramdocs_dev_v1 \
+  --round2-dir /mnt/d/FAR-outputs/ramdocs_dev_v2 \
+  --config experiments/configs/ramdocs_qwen_round2.yaml
+uv run python -m experiments.ramdocs_round2 verify \
+  --data-dir bench/external/ramdocs_v1 \
+  --round1-dir /mnt/d/FAR-outputs/ramdocs_dev_v1 \
+  --round2-dir /mnt/d/FAR-outputs/ramdocs_dev_v2 \
+  --config experiments/configs/ramdocs_qwen_round2.yaml
+```
+
+只有 `round_manifest.json` 与 verifier 同时给出 `gate_a_passed=true` 才可进入
+Phase B；再次失败则按预注册规则降级论文，且仍不得访问 test。
+
 重建 dev 错误分析：
 
 ```bash
