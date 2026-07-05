@@ -1491,3 +1491,17 @@ counts for Multi-Query on FAR-only rows are 11 and 6. This identifies answer
 selection and wrong-answer suppression, rather than conflict detection alone,
 as the immediate dev bottleneck. The formal services were disabled after the
 evidence bundle verified successfully, releasing the GPU.
+# 2026-07-05 — RAMDocs dev Round 2 方法修订（评测前）
+
+- Round 1 已完成并触发 G-A 停止规则；Phase B、jury gold、多模型矩阵与
+  RAMDocs/FalsiRAG test 继续禁止执行。
+- dev 错误分析显示 FAR 与最强基线各有 16 个独占正确样本；FAR 的数值修订
+  在 discordant 样本上净增益为正，但 `retract` 动作净损失，且 225 个样本
+  两者共同错误。主要失败是多答案覆盖不足与错误候选未从最终答案中剔除。
+- Round 2 增加一个仅由配置启用的最终证据合并层。输入只包含问题、初始答案、
+  类型化修订草稿/轨迹以及已去除 `document_type` 元数据的闭集文档；不加载
+  `gold_answers` 或 `wrong_answers`。目标是按实体、时间、范围和独立证据支持
+  合并答案，并从最终文本中删除已拒绝候选。
+- Round 1 配置与证据保持不变。Round 2 使用
+  `experiments/configs/ramdocs_qwen_round2.yaml`、独立缓存 namespace 和独立输出
+  目录。正式 dev 重跑将记为第二轮；若 G-A 再次失败，严格执行论文降级规则。

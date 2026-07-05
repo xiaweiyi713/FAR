@@ -192,9 +192,73 @@ def _far_prediction(
         top_k_per_query=min(len(documents), int(config.get("run", {}).get("top_k_per_query", 5))),
     )
     result = pipeline.run(question, initial_answer)
+    answer = result.revised_answer
+    consolidation: dict[str, Any] | None = None
+    consolidation_config = config.get("run", {}).get("final_answer_consolidation", {})
+    if consolidation_config.get("enabled", False) and generator is not None:
+        max_document_chars = int(consolidation_config.get("max_document_chars", 1800))
+        if max_document_chars < 1:
+            raise ValueError("final_answer_consolidation.max_document_chars must be positive")
+        context = "\n".join(
+            f"[{item.evidence_id}] {item.title}: {item.text[:max_document_chars]}"
+            for item in documents
+        )
+        trace_context = "\n".join(
+            f"- {item.claim_id}: action={item.action.value}; before={item.before}; "
+            f"after={item.after}; conflicts={','.join(kind.value for kind in item.conflict_types) or 'none'}"
+            for item in result.revision_trace
+        )
+        prompt = (
+            f"Question: {question}\n"
+            f"Initial answer: {initial_answer}\n"
+            f"Typed revision draft: {result.revised_answer}\n"
+            f"Typed revision trace:\n{trace_context}\n"
+            f"Closed-corpus evidence:\n{context}\n\n"
+            "Produce the final answer to the question. Use only the supplied evidence. Resolve "
+            "conflicts by matching the question's entity, time, scope, and requested answer type, "
+            "and by comparing independent support across documents. Include every distinct answer "
+            "needed for a genuinely ambiguous question, but do not repeat rejected, contradicted, "
+            "wrong-entity, or wrong-scope alternatives even as caveats. State the answer directly "
+            "with its natural unit or semantic type (for example, people, profession, location), "
+            "keep it concise, and cite supporting evidence IDs. Do not describe your reasoning."
+        )
+        try:
+            consolidated = generator.complete(
+                prompt,
+                system_prompt=(
+                    "Consolidate an evidence-grounded answer after typed conflict revision. "
+                    "Do not use outside knowledge and do not expose deliberation."
+                ),
+                temperature=0.0,
+                max_tokens=int(consolidation_config.get("max_tokens", 500)),
+            ).strip()
+        except (RuntimeError, ValueError) as error:
+            consolidation = {
+                "applied": False,
+                "fallback": "typed_revision_draft",
+                "error_type": type(error).__name__,
+            }
+        else:
+            if consolidated:
+                answer = consolidated
+                consolidation = {
+                    "applied": True,
+                    "fallback": None,
+                    "draft_sha256": hashlib.sha256(
+                        result.revised_answer.encode("utf-8")
+                    ).hexdigest(),
+                    "answer_sha256": hashlib.sha256(answer.encode("utf-8")).hexdigest(),
+                    "document_ids": [item.evidence_id for item in documents],
+                }
+            else:
+                consolidation = {
+                    "applied": False,
+                    "fallback": "typed_revision_draft",
+                    "error_type": "empty_completion",
+                }
     primary = _primary_trace(result.revision_trace)
     return {
-        "answer": result.revised_answer,
+        "answer": answer,
         "evidence_ids": list(
             dict.fromkeys(
                 evidence.evidence_id
@@ -215,6 +279,7 @@ def _far_prediction(
             "claim_graph": result.claim_graph.to_dict(),
             "revision_trace": [item.to_dict() for item in result.revision_trace],
             "retrieval_trace": [item.to_dict() for item in result.retrieval_trace],
+            "final_answer_consolidation": consolidation,
         },
     }
 
