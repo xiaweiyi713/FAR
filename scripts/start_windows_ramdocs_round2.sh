@@ -35,6 +35,39 @@ cd "${FAR_ROOT}"
 source scripts/windows_gpu_env.sh
 mkdir -p "${OUTPUT_ROOT}" "${RUN_DIR}" "$(dirname "${RUN_MARKER}")"
 
+current_commit="$(git rev-parse HEAD)"
+dirty_status="$(git status --porcelain --untracked-files=all)"
+if [[ -f "${RUN_DIR}/run_identity.json" ]]; then
+  stored_commit="$(
+    python3 - "${RUN_DIR}/run_identity.json" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+identity = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+print((identity.get("source_revision") or {}).get("git_commit") or "")
+PY
+  )"
+  if [[ -n "${stored_commit}" && "${stored_commit}" != "${current_commit}" ]]; then
+    cat >&2 <<EOF
+refusing to resume Round 2 from a different Git commit.
+  existing run commit: ${stored_commit}
+  current checkout:     ${current_commit}
+Use the original detached checkout for this checkpoint, or start a new output
+directory after recording a new method-iteration round.
+EOF
+    exit 2
+  fi
+fi
+if [[ -n "${dirty_status}" ]]; then
+  cat >&2 <<EOF
+refusing to start a formal RAMDocs Round 2 run from a dirty worktree.
+The run identity binds the Git revision and dirty state; clean or stash local
+changes before starting/resuming this checkpoint.
+EOF
+  exit 2
+fi
+
 if [[ ! -f "${ROUND1_DIR}/suite_manifest.json" ]]; then
   echo "Round 1 suite manifest is required before Round 2: ${ROUND1_DIR}/suite_manifest.json" >&2
   exit 2
@@ -119,6 +152,6 @@ done
 echo "starting/resuming RAMDocs Round 2 as systemd user service: ${ROUND2_UNIT}"
 echo "checkpoint: ${RUN_DIR}/checkpoint.jsonl"
 echo "log: ${OUTPUT_DIR}.log"
-echo "commit: $(git rev-parse HEAD)"
+echo "commit: ${current_commit}"
 systemctl --user enable --now "${ROUND2_UNIT}"
 systemctl --user --no-pager --full status "${OLLAMA_UNIT}" "${ROUND2_UNIT}" || true

@@ -1575,3 +1575,17 @@ evidence bundle verified successfully, releasing the GPU.
 - 同步更新 `docs/PLAN_2PLUS4_EXECUTION.md`，把 Phase A 与 Round 2 的 unit
   安装、启动、状态查看和人工中止命令分开记录。此变更只补齐运维入口，不修改
   Round 2 方法、G-A/G-K/G-S 阈值、停止规则或任何 test 状态。
+
+## 2026-07-05 — 防止 Round 2 checkpoint 跨提交误续跑
+
+- 复核远端状态后确认：当前 105/350 的 Round 2 checkpoint 绑定在
+  `/mnt/d/FAR-workspace/FAR-2plus4` 的 detached commit `d8d5f40`，该工作树尚无
+  新增的 `start_windows_ramdocs_round2.sh`。由于 `CheckpointWriter` 会比较
+  `run_signature`，而正式 run identity 还绑定 clean Git revision，不能为了使用
+  新脚本切换到最新 `main` 或把脚本复制进旧工作树造成 dirty 状态。
+- 已给新 Round 2 launcher 增加防护：若 `run_identity.json` 已存在，它会读取
+  其中的 `source_revision.git_commit`，并拒绝从不同 commit 续跑；同时任何 dirty
+  worktree 都会 fail-closed。执行手册也明确当前未完成 checkpoint 应由 Windows
+  watchdog 或原 detached 工作树上的既有 systemd units 恢复。
+- 该修正只防止运维误操作，不改变现有 checkpoint、方法实现、配置、指标、G-A
+  判据或任何 test 状态。

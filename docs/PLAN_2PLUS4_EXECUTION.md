@@ -60,7 +60,20 @@ scripts/start_windows_ramdocs_round2.sh
 与 `far-ramdocs-round2.service`。若显存或利用率显示其他任务正在占用 GPU，它只
 写入 `/mnt/d/FAR-runtime/ramdocs_dev_v2.keep-running` 与
 `ramdocs_dev_v2.waiting-for-gpu`，然后退出；Windows watchdog 会在 GPU 空闲后
-恢复同一 checkpoint。
+恢复同一 checkpoint。若输出目录已有 `run_identity.json`，该脚本会拒绝用不同
+Git commit 或 dirty 工作树续跑，以避免 checkpoint 签名不一致。
+
+当前已经启动的 105/350 Round 2 checkpoint 绑定在远端 detached 工作树
+`d8d5f40`。恢复这一次未完成 checkpoint 前，**不要**为了使用新脚本而 checkout
+到最新 `main`，也不要把新脚本复制到 detached 工作树造成 dirty 状态。GPU 空闲时
+应让 Windows watchdog 自动恢复，或在保持原 detached 工作树不变的情况下直接启动
+既有 systemd units：
+
+```bash
+rm -f /mnt/d/FAR-runtime/ramdocs_dev_v2.waiting-for-gpu
+systemctl --user start far-ollama-2plus4.service
+systemctl --user start far-ramdocs-round2.service
+```
 
 查看状态与日志：
 
