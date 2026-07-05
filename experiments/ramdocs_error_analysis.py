@@ -282,8 +282,8 @@ def _write_markdown(path: Path, report: dict[str, Any]) -> None:
     lines.extend(
         [
             "",
-            "The complete 32-row discordant audit trail is in "
-            "`discordant_cases.jsonl`.",
+            f"The complete {outcomes['far_only'] + outcomes['baseline_only']}-row "
+            "discordant audit trail is in `discordant_cases.jsonl`.",
             "",
         ]
     )

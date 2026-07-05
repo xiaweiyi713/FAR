@@ -104,6 +104,19 @@ uv run python -m experiments.ramdocs_round2 verify \
 只有 `round_manifest.json` 与 verifier 同时给出 `gate_a_passed=true` 才可进入
 Phase B；再次失败则按预注册规则降级论文，且仍不得访问 test。
 
+若第二轮失败，生成冻结的跨轮错误分析：
+
+```bash
+uv run python -m experiments.ramdocs_round2_error_analysis \
+  --data-dir bench/external/ramdocs_v1 \
+  --round1-dir /mnt/d/FAR-outputs/ramdocs_dev_v1 \
+  --round2-dir /mnt/d/FAR-outputs/ramdocs_dev_v2 \
+  --config experiments/configs/ramdocs_qwen_round2.yaml \
+  --output-dir /mnt/d/FAR-outputs/ramdocs_dev_v2/error_analysis
+```
+
+该入口要求 Round 2 verifier 有效且 G-A 明确失败；否则拒绝生成“失败分析”。
+
 重建 dev 错误分析：
 
 ```bash
