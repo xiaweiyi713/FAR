@@ -1505,3 +1505,8 @@ evidence bundle verified successfully, releasing the GPU.
 - Round 1 配置与证据保持不变。Round 2 使用
   `experiments/configs/ramdocs_qwen_round2.yaml`、独立缓存 namespace 和独立输出
   目录。正式 dev 重跑将记为第二轮；若 G-A 再次失败，严格执行论文降级规则。
+- 仅 FAR 方法发生变化，因此 Round 2 复用 Round 1 已冻结且有 SHA-256 指纹的
+  初始答案与最强基线分数，只重跑 FAR 350 条；最终仍对同一 350 个 sample ID
+  做配对比较。D 盘作业由 `far-ramdocs-round2.service` 执行，Windows watchdog
+  只在 `ramdocs_dev_v2.keep-running` marker 存在且 GPU 空闲时恢复它，并在 FAR
+  run manifest 完成后停止 Ollama、释放 GPU。

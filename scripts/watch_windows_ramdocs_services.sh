@@ -11,13 +11,22 @@ fi
 
 training_user="wenyao"
 runtime_dir="/run/user/1001"
-marker="/mnt/d/FAR-runtime/ramdocs_dev_v1.keep-running"
-waiting_marker="/mnt/d/FAR-runtime/ramdocs_dev_v1.waiting-for-gpu"
-manifest="/mnt/d/FAR-outputs/ramdocs_dev_v1/suite_manifest.json"
-watchdog_log="/mnt/d/FAR-outputs/ramdocs_dev_v1.watchdog.log"
 nvidia_smi="/usr/lib/wsl/lib/nvidia-smi"
 ollama_unit="far-ollama-2plus4.service"
-suite_unit="far-ramdocs-phase-a.service"
+
+if [[ -f /mnt/d/FAR-runtime/ramdocs_dev_v2.keep-running ]]; then
+  marker="/mnt/d/FAR-runtime/ramdocs_dev_v2.keep-running"
+  waiting_marker="/mnt/d/FAR-runtime/ramdocs_dev_v2.waiting-for-gpu"
+  manifest="/mnt/d/FAR-outputs/ramdocs_dev_v2/runs/far/run_manifest.json"
+  watchdog_log="/mnt/d/FAR-outputs/ramdocs_dev_v2.watchdog.log"
+  suite_unit="far-ramdocs-round2.service"
+else
+  marker="/mnt/d/FAR-runtime/ramdocs_dev_v1.keep-running"
+  waiting_marker="/mnt/d/FAR-runtime/ramdocs_dev_v1.waiting-for-gpu"
+  manifest="/mnt/d/FAR-outputs/ramdocs_dev_v1/suite_manifest.json"
+  watchdog_log="/mnt/d/FAR-outputs/ramdocs_dev_v1.watchdog.log"
+  suite_unit="far-ramdocs-phase-a.service"
+fi
 
 user_systemctl() {
   runuser -u "${training_user}" -- env \
@@ -28,6 +37,7 @@ user_systemctl() {
 
 if [[ -f "${manifest}" ]]; then
   rm -f "${marker}" "${waiting_marker}"
+  user_systemctl disable --now "${suite_unit}" "${ollama_unit}" >/dev/null 2>&1 || true
   exit 0
 fi
 [[ -f "${marker}" ]] || exit 0
