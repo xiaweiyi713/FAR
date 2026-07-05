@@ -1767,3 +1767,20 @@ evidence bundle verified successfully, releasing the GPU.
 - 执行文档已明确正式 test 只能走两个 suite 入口。仅完成 AST 解析、模块导入、行长
   和 diff whitespace 检查，未运行测试套件或访问 test。同期 Round 2 正常推进至
   171/350（`RAM0238`），GPU 约 7.8 GiB / 92%，服务 active、无错误。
+
+## 2026-07-05 — 让 jury evidence release 可独立重算
+
+- 静态审计发现旧 `build-jury` 只复制 consensus、最终 labels、敏感性与复评结果，
+  未包含三位 juror 原始输出、作者 Round 1/2 仲裁或三个系统家族的源 suite；旧
+  verifier 因而只能检查 bundle 文件哈希和几个自报 gate 布尔值，无法重算 G-K/G-S。
+- `build-jury` 现强制接收完整 benchmark 路径，并复制三份独立 juror bundle、作者
+  盲态仲裁目录、consensus、compiled labels、Qwen/Mistral/Google 三个源 dev suite、
+  三个 jury-gold rescore、Qwen 敏感性和最终矩阵。bundle manifest 明确列出 juror
+  IDs 与系统家族，仍固定 `publication_gold=false`、`human_iaa=false`。
+- `verify-jury` 现在从包内源制品重新执行 consensus verifier，重新 compile G-S 后
+  的 300 条 labels，重算三个家族的 dev 分数、Qwen 三口径敏感性与模型矩阵，并与
+  跟踪结果逐 manifest/逐标签比较。任何来源缺失、仲裁漂移、模型预测漂移或报告
+  自报值不一致都会失败关闭。
+- 执行文档已补充完整 build/verify 命令。仅执行 AST 解析、模块导入、行长和 diff
+  whitespace 检查，未运行测试套件、模型或 test 数据。同期 Round 2 正常推进至
+  177/350（`RAM0250`），服务 active、无错误。

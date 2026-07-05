@@ -162,6 +162,7 @@ def build_matrix(suites: dict[str, Path], output_path: Path) -> dict[str, Any]:
             else None
         ),
         "publication_gold": False,
+        "human_iaa": False,
     }
     write_json(output_path, result)
     return result
