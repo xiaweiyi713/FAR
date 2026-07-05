@@ -1,0 +1,12 @@
+[Unit]
+Description=Persistent tmux server for FAR GPU jobs
+Documentation=man:tmux(1)
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/tmux -D
+Restart=always
+RestartSec=2s
+
+[Install]
+WantedBy=default.target

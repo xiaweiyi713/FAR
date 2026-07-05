@@ -1377,3 +1377,34 @@ The pinned `qwen3.5:9b` digest is unchanged, its 24-hour residency is active,
 and the checkpoint advanced from 86 to 94 without a new error. This remains a
 checkpoint continuation of the single replacement formal run; G-A has not yet
 been evaluated and Phase B has not started.
+
+## 2026-07-05: Windows training keepalive corrected for systemd linger
+
+Further monitoring established the cause of repeated simultaneous Ollama and
+suite termination. The WSL virtual machine remained online and the kernel had
+no OOM or NVIDIA error, but `loginctl` reported `Linger=no`. Roughly twelve
+seconds after the final SSH session disconnected, systemd stopped the user's
+tmux transient scopes. The suite therefore recorded `KeyboardInterrupt` while
+waiting for Ollama, and Ollama shut down at the same instant. Checkpoints were
+durable at CRAG-style rows 315, 318, and 320 across the diagnosis; no completed
+sample was lost or regenerated.
+
+The Windows scheduled task already ran a root WSL keepalive, but that only kept
+the VM alive. Its script now also executes `loginctl enable-linger wenyao` before
+starting SSH/Tailscale and retains the root VM keepalive loop. Linger preserves
+the user manager, but a second disconnect test showed that a tmux server first
+created inside an SSH login can still remain attached to that login's lifecycle.
+The final arrangement therefore runs the tmux server itself as the enabled
+`far-tmux-server.service` user unit with foreground `tmux -D`; training sessions
+are children of that persistent server rather than of an SSH session.
+
+A 40-second isolation test with every SSH connection closed confirmed that the
+systemd service PID and its tmux pane PID were unchanged. After installing and
+enabling the persistent unit, a second 45-second no-SSH test kept the formal
+Ollama and suite sessions alive and advanced CRAG-style from row 321 to 322 with
+no new error. The tracked PowerShell script, systemd unit, and launcher now
+document and enforce the durable setup: the launcher fails closed unless linger
+is enabled and the persistent tmux service is active. This is an operational
+reliability correction only: the formal output directory, code commit
+`08e04c6`, model/config fingerprints, data split, and scoring protocol are
+unchanged.

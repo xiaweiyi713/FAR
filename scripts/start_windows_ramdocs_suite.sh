@@ -20,6 +20,7 @@ DATA_DIR="${DATA_DIR:-bench/external/ramdocs_v1}"
 SPLIT="${SPLIT:-dev}"
 POLL_SECONDS="${POLL_SECONDS:-2}"
 API_TIMEOUT_SECONDS="${API_TIMEOUT_SECONDS:-5}"
+TMUX_SERVER_UNIT="${TMUX_SERVER_UNIT:-far-tmux-server.service}"
 
 if [[ ! -d "${FAR_ROOT}" ]]; then
   echo "FAR workspace not found: ${FAR_ROOT}" >&2
@@ -31,6 +32,32 @@ conda activate train
 cd "${FAR_ROOT}"
 source scripts/windows_gpu_env.sh
 mkdir -p "${OUTPUT_ROOT}" "$(dirname "${SUITE_LOG}")"
+
+linger="$(loginctl show-user "${USER}" -p Linger --value 2>/dev/null || true)"
+if [[ "${linger}" != "yes" ]]; then
+  cat >&2 <<EOF
+systemd linger is not enabled for ${USER}; detached tmux jobs may be interrupted
+after the last SSH session disconnects. From Windows PowerShell run:
+  wsl.exe -d Ubuntu-24.04 -u root -- loginctl enable-linger ${USER}
+Then rerun this launcher.
+EOF
+  exit 2
+fi
+
+if ! systemctl --user is-active --quiet "${TMUX_SERVER_UNIT}"; then
+  if ! systemctl --user cat "${TMUX_SERVER_UNIT}" >/dev/null 2>&1; then
+    cat >&2 <<EOF
+the persistent tmux server unit is not installed. Install it once with:
+  mkdir -p ~/.config/systemd/user
+  cp scripts/systemd/far-tmux-server.service ~/.config/systemd/user/
+  systemctl --user daemon-reload
+  systemctl --user enable --now far-tmux-server.service
+Then rerun this launcher.
+EOF
+    exit 2
+  fi
+  systemctl --user start "${TMUX_SERVER_UNIT}"
+fi
 
 if ! curl -fsS --max-time "${API_TIMEOUT_SECONDS}" "http://${OLLAMA_HOST}/api/tags" >/dev/null; then
   if tmux has-session -t "${OLLAMA_SESSION}" 2>/dev/null; then
