@@ -83,6 +83,17 @@ journalctl --user -fu far-ramdocs-phase-a.service
 journalctl --user -fu far-ramdocs-round2.service
 ```
 
+Round 2 专用只读健康检查：
+
+```bash
+scripts/check_windows_ramdocs_round2.sh
+```
+
+该脚本不会启动、停止或修改任何服务；它同时显示服务状态、checkpoint 行数与
+最新样本、GPU 使用、相关进程、Ollama `n_decoded` 尾部和 run log 错误。若
+checkpoint 暂时不增长但 `llama-server` 仍在运行、GPU 满载且 `n_decoded` 继续
+增加，应视为慢样本正在生成，不要重启或中断。
+
 `scripts/systemd/far-tmux-server.service` 只用于其他交互式 tmux 工作；正式
 RAMDocs 进程不再依赖 tmux。
 

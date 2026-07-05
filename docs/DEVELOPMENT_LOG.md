@@ -1603,3 +1603,14 @@ evidence bundle verified successfully, releasing the GPU.
   最后一条 `RAM0139`，尚无 `run_manifest.json` 或 `predictions.jsonl`。
 - 未切换远端工作树，未复制新脚本到旧 detached checkout，未访问或运行任何 test；
   后续需继续监控 checkpoint 是否从 105 前进，以及是否出现 Ollama/API 错误。
+
+## 2026-07-05 — 增加 Round 2 只读慢解码监控
+
+- 新增 `scripts/check_windows_ramdocs_round2.sh`，用于在 Windows/WSL GPU 主机上
+  只读检查 Round 2 状态：systemd 服务、keep-running/waiting marker、checkpoint
+  行数与最后样本、GPU、相关进程、Ollama `n_decoded` 尾部，以及 run log 错误。
+- 该脚本不启动、不停止、不重启服务，也不改 checkpoint。它的目的只是区分“当前
+  样本慢速解码但仍在推进”和“服务异常退出/卡死”，避免把长样本误处理为需要
+  重启的故障。当前 105/350 续跑样本属于前者：GPU 100%，`llama-server` CPU
+  时间增长，Ollama `n_decoded` 从 114 → 126 → 138。
+- 此变更不改变实验协议、方法、配置、阈值或任何 test 状态。
