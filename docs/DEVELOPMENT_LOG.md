@@ -1633,3 +1633,17 @@ evidence bundle verified successfully, releasing the GPU.
   且 `final_answer_consolidation.applied=true`。
 - 尚无 `run_manifest.json` 或 `predictions.jsonl`，因此 Round 2 尚未完成，不能
   finalize/verify 或改判 G-A。未访问或运行任何 test。
+
+## 2026-07-05 — 修复 Windows Round 2 watchdog 部署漂移
+
+- 23:20 +08:00 静态交接核查发现：仓库中的
+  `scripts/watch_windows_ramdocs_services.sh` 已支持优先识别 Round 2 marker，
+  但 Windows 实际循环调用的 `/mnt/d/FAR-tools/` 副本仍是只识别 Round 1 的旧版。
+  这不会中断当前运行，却会导致 Round 2 异常退出后无法按文档自动恢复。
+- 已仅同步该运维脚本到 D: 盘工具目录并设为可执行；本地与远端 SHA-256 均为
+  `c9c1296c33442402e6e772e67dd0c5b419019beaccfe7de9514db8cf2bde790f`。
+  正式实验工作树仍 clean 且保持 detached commit `d8d5f40`，checkpoint 未修改，
+  两个服务仍 active，同步后继续推进到 126/350。
+- 新版 watchdog 在 Round 2 `run_manifest.json` 出现后会移除 marker 并停止
+  Round 2/Ollama 服务；异常退出时则先遵守 GPU 占用门禁，再恢复同一 checkpoint。
+  未访问或运行任何 test，未改变方法、配置、协议或 G-A 判据。
