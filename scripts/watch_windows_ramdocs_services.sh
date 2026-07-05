@@ -4,6 +4,11 @@
 
 set -u
 
+if (( EUID != 0 )); then
+  echo "watch_windows_ramdocs_services.sh must run as WSL root" >&2
+  exit 2
+fi
+
 training_user="wenyao"
 runtime_dir="/run/user/1001"
 marker="/mnt/d/FAR-runtime/ramdocs_dev_v1.keep-running"
