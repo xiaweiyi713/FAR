@@ -1546,3 +1546,19 @@ evidence bundle verified successfully, releasing the GPU.
   Ollama 的硬依赖改为 `Wants=`。这只改变 D 盘 Windows GPU 作业的服务恢复
   行为，不修改实验协议、配置、指标、G-A/G-K/G-S 判据、checkpoint 或任何
   test 状态。
+
+## 2026-07-05 — Round 2 等待 GPU，不抢占 VeraRAG/SelfRAG
+
+- 22:43 +08:00 通过 `ssh windows-gpu` 复核：`far-ramdocs-round2.service` 与
+  `far-ollama-2plus4.service` 均为 inactive；`ramdocs_dev_v2.keep-running`
+  和 `ramdocs_dev_v2.waiting-for-gpu` marker 仍存在，说明 watchdog 仍应在
+  GPU 空闲后恢复 Round 2。
+- `/mnt/d/FAR-outputs/ramdocs_dev_v2/runs/far/checkpoint.jsonl` 为 105 行，
+  最后修改时间 2026-07-05 17:14 +08:00；尚无 Round 2 `run_manifest.json`
+  或 `predictions.jsonl`，因此不能 finalize、verify 或改判 G-A。
+- GPU 当时约 5681 MiB、25% utilization，被 VeraRAG/SelfRAG 的
+  `official_self_rag` test split 进程占用。按用户指令，FAR 不抢占 GPU，
+  不停止 VeraRAG/SelfRAG，也不切换正在运行用的 detached
+  `/mnt/d/FAR-workspace/FAR-2plus4` 工作树。
+- 未访问或运行任何 test；本条只记录运维状态，不改变 Round 2 方法、协议、
+  阈值或任何证据指纹。
