@@ -15,8 +15,8 @@ Write-Log "Starting WSL training keepalive."
 while ($true) {
   try {
     # Linger is required in addition to keeping the WSL VM alive. Without it,
-    # systemd can interrupt detached tmux panes shortly after the last SSH
-    # session for the training user disconnects.
+    # the training user's systemd services stop after the last SSH session
+    # disconnects. Formal jobs run as user services rather than SSH-owned panes.
     wsl.exe -d $Distro -u root -- bash -lc "loginctl enable-linger $TrainingUser; systemctl start tailscaled ssh; systemctl is-active tailscaled ssh; tailscale ip -4 || true" 2>&1 |
       ForEach-Object { Write-Log $_ }
 

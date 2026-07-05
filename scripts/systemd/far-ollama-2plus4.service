@@ -1,0 +1,15 @@
+[Unit]
+Description=FAR D-backed Ollama service for the 2+4 study
+After=default.target
+
+[Service]
+Type=simple
+WorkingDirectory=/mnt/d/FAR-workspace/FAR-2plus4
+ExecStart=/bin/bash -lc 'source ~/miniconda3/etc/profile.d/conda.sh; conda activate train; source scripts/windows_gpu_env.sh; exec ollama serve'
+Restart=on-failure
+RestartSec=5s
+StandardOutput=append:/mnt/d/FAR-outputs/far-ollama-2plus4.log
+StandardError=append:/mnt/d/FAR-outputs/far-ollama-2plus4.log
+
+[Install]
+WantedBy=default.target

@@ -10,7 +10,7 @@
 |---|---|---|
 | 预注册 | 完成 | 原始提交 `84bbbfd`；所有澄清均为独立 `deviation:` 提交 |
 | RAMDocs 导入 | 完成 | 500 题、2766 文档、MIT、HF revision `9c041b…`；350/150 已冻结 |
-| RAMDocs dev | 运行中 | Windows GPU tmux `far-ramdocs-phase-a`；正式替代运行绑定代码提交 `08e04c6`、D: 盘缓存环境和输出目录 `/mnt/d/FAR-outputs/ramdocs_dev_v1`；已启用 `wenyao` systemd linger 与常驻 `far-tmux-server.service`，并通过完全断开 SSH 的 PID 存活实测，继续从 checkpoint 写入，尚无 `suite_manifest.json` |
+| RAMDocs dev | 运行中 | Windows GPU 用户服务 `far-ollama-2plus4.service` 与 `far-ramdocs-phase-a.service`；正式替代运行绑定代码提交 `08e04c6`、D: 盘缓存环境和输出目录 `/mnt/d/FAR-outputs/ramdocs_dev_v1`；已启用 `wenyao` systemd linger，并通过完全断开 SSH 的服务 PID、零重启与 checkpoint 增长实测，尚无 `suite_manifest.json` |
 | G-A | 待 dev 完成 | 自动选择六基线中 exact match 最高者，执行配对 bootstrap 与 McNemar |
 | G-K 陪审团 | 工具完成、执行待 G-A | 六分类主门；失败时按协议降级为二分类 |
 | G-S 作者复标 | 工具完成、尚未开始 | round 2 在 round 1 冻结后 14 天前会被代码拒绝 |
@@ -26,25 +26,35 @@ uv run falsirag-build-ramdocs verify \
 ```
 
 正式 Windows GPU 运行或 checkpoint 恢复使用 D: 盘脚本；它会启动 D: 盘
-Ollama、继承 D: 盘 HuggingFace cache，并复用同一个输出目录续跑。启动器会
+Ollama、继承 D: 盘 HuggingFace cache，并复用同一个输出目录续跑。长任务由
+systemd 用户服务直接持有，不依赖 SSH 创建的 tmux pane scope。启动器会
 fail-closed 检查 systemd linger；Windows 登录保活任务应使用
-`scripts/keep-wsl-training-online.ps1`，否则最后一个 SSH 断开后 tmux 可能被
-systemd 回收：
+`scripts/keep-wsl-training-online.ps1`：
 
 ```bash
 mkdir -p ~/.config/systemd/user
-cp scripts/systemd/far-tmux-server.service ~/.config/systemd/user/
+cp scripts/systemd/far-ollama-2plus4.service ~/.config/systemd/user/
+cp scripts/systemd/far-ramdocs-phase-a.service ~/.config/systemd/user/
 systemctl --user daemon-reload
-systemctl --user enable --now far-tmux-server.service
 ```
 
-常驻 tmux server 与 linger 缺一不可；启动器会对两者 fail-closed。随后运行：
+随后运行：
 
 ```bash
 ssh windows-gpu
 cd /mnt/d/FAR-workspace/FAR-2plus4
 scripts/start_windows_ramdocs_suite.sh
 ```
+
+查看状态与日志：
+
+```bash
+systemctl --user status far-ollama-2plus4.service far-ramdocs-phase-a.service
+journalctl --user -fu far-ramdocs-phase-a.service
+```
+
+`scripts/systemd/far-tmux-server.service` 只用于其他交互式 tmux 工作；正式
+RAMDocs 进程不再依赖 tmux。
 
 运行器只向模型加载当前题目的文档。`test_inputs.jsonl` 只有
 `id/question/split`；未给 `--allow-test` 时 test 会被拒绝。

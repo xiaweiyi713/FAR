@@ -1408,3 +1408,24 @@ is enabled and the persistent tmux service is active. This is an operational
 reliability correction only: the formal output directory, code commit
 `08e04c6`, model/config fingerprints, data split, and scoring protocol are
 unchanged.
+
+## 2026-07-05: Formal WSL jobs moved from tmux panes to user services
+
+The persistent tmux server test isolated one more WSL/systemd lifecycle edge:
+linger kept the tmux server service alive, but panes created from an SSH client
+were still placed in transient `tmux-spawn-*.scope` units and stopped shortly
+after that login disconnected. The server PID survived while the Ollama and
+suite panes exited together. CRAG-style checkpoints remained durable at rows
+321 and 334, and the exits again occurred before an in-flight sample could be
+appended.
+
+The actual long-lived processes now run directly as enabled systemd user
+services: `far-ollama-2plus4.service` and `far-ramdocs-phase-a.service`. The
+suite unit requires Ollama, waits for its API, sources the committed D:-backed
+environment, appends to the existing formal log, resumes the same checkpoint,
+and restarts only on failure. With every SSH connection closed for 45 seconds,
+both service PIDs stayed unchanged, restart counters remained zero, and the
+checkpoint advanced from 334 to 339 without a new error. The tracked launcher
+now starts these services rather than tmux panes. `far-tmux-server.service`
+remains useful for interactive shells, but formal process survival no longer
+depends on tmux scope behavior.
