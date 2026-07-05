@@ -14,6 +14,7 @@ from typing import Any
 
 from bench.annotations import _validated_annotation, stable_rank
 from bench.build.common import read_jsonl, sha256_file, write_json, write_jsonl
+from bench.build.jury_annotate import _load_blind_packet
 from bench.build.jury_consensus import _load_juror
 from experiments.protocol_2plus4 import PROTOCOL_ACTIVE_SHA256, verify_active_protocol
 
@@ -58,14 +59,11 @@ def _consensus(consensus_dir: Path) -> tuple[dict[str, Any], dict[str, dict[str,
     return report, rows
 
 
-def _blind_sources(packet_dir: Path) -> tuple[dict[str, Any], dict[str, dict[str, Any]]]:
-    manifest_path = packet_dir / "packet_manifest.json"
-    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-    rows = {
-        str(row["sample_id"]): row
-        for row in read_jsonl(packet_dir / str(manifest["adjudication_file"]))
-    }
-    return manifest, rows
+def _blind_sources(
+    packet_dir: Path,
+) -> tuple[dict[str, Any], dict[str, dict[str, Any]], str]:
+    manifest, source_rows, source_sha256 = _load_blind_packet(packet_dir)
+    return manifest, {str(row["sample_id"]): row for row in source_rows}, source_sha256
 
 
 def _blank_row(source: dict[str, Any], *, round_name: str) -> dict[str, Any]:
@@ -98,7 +96,13 @@ def build_round1(
     report, consensus_rows = _consensus(consensus_dir)
     if report.get("gate_k_passed") is not True:
         raise ValueError("G-K must pass before author adjudication")
-    _, blind_rows = _blind_sources(packet_dir)
+    _, blind_rows, blind_rows_sha256 = _blind_sources(packet_dir)
+    if (
+        report.get("source_packet_sha256")
+        != sha256_file(packet_dir / "packet_manifest.json")
+        or report.get("source_adjudication_sha256") != blind_rows_sha256
+    ):
+        raise ValueError("author adjudication packet differs from the jury packet")
     disputed = [row for row in consensus_rows.values() if row["disposition"] == "disputed"]
     if not disputed:
         raise ValueError("jury consensus contains no disputed rows to adjudicate")
@@ -125,6 +129,7 @@ def build_round1(
         "created_at": created.isoformat(),
         "protocol_fingerprint": PROTOCOL_ACTIVE_SHA256,
         "source_packet_sha256": sha256_file(packet_dir / "packet_manifest.json"),
+        "source_adjudication_sha256": blind_rows_sha256,
         "source_consensus_sha256": sha256_file(consensus_dir / "jury_consensus_report.json"),
         "source_consensus_rows_sha256": report["jury_consensus_rows_sha256"],
         "active_label_granularity": report.get("active_label_granularity"),
@@ -152,12 +157,24 @@ def build_round1(
     return manifest
 
 
-def _completed_rows(path: Path, expected_ids: set[str]) -> dict[str, dict[str, Any]]:
+def _completed_rows(
+    path: Path,
+    expected_rows: dict[str, dict[str, Any]],
+) -> dict[str, dict[str, Any]]:
     rows: dict[str, dict[str, Any]] = {}
     for row in read_jsonl(path):
         sample_id = str(row.get("sample_id", ""))
         if not sample_id or sample_id in rows:
             raise ValueError("completed adjudication has missing or duplicate sample IDs")
+        expected = expected_rows.get(sample_id)
+        if expected is None:
+            raise ValueError("completed adjudication contains an unexpected sample")
+        if set(row) != set(expected) or any(
+            row.get(field) != expected.get(field)
+            for field in expected
+            if field != "author_annotation"
+        ):
+            raise ValueError(f"{sample_id}: completed adjudication modified blind fields")
         row["author_annotation"] = _validated_annotation(row, "author_annotation")
         if (
             row["author_annotation"]["conflict_present"]
@@ -165,7 +182,7 @@ def _completed_rows(path: Path, expected_ids: set[str]) -> dict[str, dict[str, A
         ):
             raise ValueError(f"{sample_id}: conflict-positive adjudication needs a revision")
         rows[sample_id] = row
-    if set(rows) != expected_ids:
+    if set(rows) != set(expected_rows):
         raise ValueError("completed adjudication does not exactly cover the packet")
     return rows
 
@@ -176,16 +193,35 @@ def freeze_round1(
     *,
     now: datetime | None = None,
 ) -> dict[str, Any]:
+    verify_active_protocol()
     manifest_path = output_dir / "adjudication_manifest.json"
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    if any(
+        (
+            manifest.get("schema_version") != "far-jury-author-adjudication-v1",
+            manifest.get("protocol_fingerprint") != PROTOCOL_ACTIVE_SHA256,
+            manifest.get("round1_seed") != ROUND1_SEED,
+            manifest.get("minimum_repeat_days") != 14,
+            manifest.get("jury_votes_hidden") is not True,
+            manifest.get("construction_labels_hidden") is not True,
+            manifest.get("system_outputs_hidden") is not True,
+            manifest.get("human_iaa") is not False,
+        )
+    ):
+        raise ValueError("round1 adjudication manifest violates the frozen protocol")
     packet_path = output_dir / str(manifest["round1_packet"])
     if sha256_file(packet_path) != manifest.get("round1_packet_sha256"):
         raise ValueError("round1 packet changed after creation")
     packet_rows = read_jsonl(packet_path)
-    completed = _completed_rows(completed_file, {str(row["sample_id"]) for row in packet_rows})
+    packet_by_id = {str(row["sample_id"]): row for row in packet_rows}
+    if len(packet_by_id) != len(packet_rows):
+        raise ValueError("round1 packet contains duplicate sample IDs")
+    completed = _completed_rows(completed_file, packet_by_id)
     destination = output_dir / "round1_completed.jsonl"
     write_jsonl(destination, [completed[sample_id] for sample_id in sorted(completed)])
     frozen_at = (now or _utcnow()).astimezone(timezone.utc)
+    if frozen_at < _parse_time(str(manifest["created_at"])):
+        raise ValueError("round1 adjudication cannot freeze before packet creation")
     freeze = {
         "schema_version": "far-jury-author-round1-freeze-v1",
         "frozen_at": frozen_at.isoformat(),
@@ -206,7 +242,13 @@ def build_round2(
     *,
     now: datetime | None = None,
 ) -> dict[str, Any]:
+    verify_active_protocol()
     freeze = json.loads((output_dir / "round1_freeze.json").read_text(encoding="utf-8"))
+    if (
+        freeze.get("schema_version") != "far-jury-author-round1-freeze-v1"
+        or freeze.get("protocol_fingerprint") != PROTOCOL_ACTIVE_SHA256
+    ):
+        raise ValueError("round1 adjudication freeze is invalid or stale")
     current = (now or _utcnow()).astimezone(timezone.utc)
     eligible_at = _parse_time(str(freeze["round2_eligible_at"]))
     if current < eligible_at:
@@ -214,8 +256,21 @@ def build_round2(
     completed_path = output_dir / str(freeze["completed_file"])
     if sha256_file(completed_path) != freeze.get("completed_sha256"):
         raise ValueError("round1 completion changed after freezing")
-    _, consensus_rows = _consensus(consensus_dir)
-    _, blind_rows = _blind_sources(packet_dir)
+    consensus_report, consensus_rows = _consensus(consensus_dir)
+    _, blind_rows, blind_rows_sha256 = _blind_sources(packet_dir)
+    adjudication_manifest = json.loads(
+        (output_dir / "adjudication_manifest.json").read_text(encoding="utf-8")
+    )
+    if (
+        adjudication_manifest.get("source_packet_sha256")
+        != sha256_file(packet_dir / "packet_manifest.json")
+        or adjudication_manifest.get("source_adjudication_sha256") != blind_rows_sha256
+        or adjudication_manifest.get("source_consensus_sha256")
+        != sha256_file(consensus_dir / "jury_consensus_report.json")
+        or adjudication_manifest.get("source_consensus_rows_sha256")
+        != consensus_report.get("jury_consensus_rows_sha256")
+    ):
+        raise ValueError("round2 packet source differs from the frozen round1 source")
     completed_ids = {str(row["sample_id"]) for row in read_jsonl(completed_path)}
     by_category: dict[str, list[str]] = defaultdict(list)
     for sample_id in completed_ids:
@@ -246,12 +301,26 @@ def build_round2(
 
 
 def freeze_round2(output_dir: Path, completed_file: Path) -> dict[str, Any]:
+    verify_active_protocol()
     manifest = json.loads((output_dir / "round2_manifest.json").read_text(encoding="utf-8"))
+    if any(
+        (
+            manifest.get("schema_version") != "far-jury-author-round2-packet-v1",
+            manifest.get("protocol_fingerprint") != PROTOCOL_ACTIVE_SHA256,
+            manifest.get("stratified_fraction") != 0.20,
+            manifest.get("seed") != ROUND2_SEED,
+            manifest.get("round1_labels_hidden") is not True,
+        )
+    ):
+        raise ValueError("round2 adjudication manifest violates the frozen protocol")
     packet_path = output_dir / str(manifest["packet_file"])
     if sha256_file(packet_path) != manifest.get("packet_sha256"):
         raise ValueError("round2 packet changed after creation")
     packet_rows = read_jsonl(packet_path)
-    completed = _completed_rows(completed_file, {str(row["sample_id"]) for row in packet_rows})
+    packet_by_id = {str(row["sample_id"]): row for row in packet_rows}
+    if len(packet_by_id) != len(packet_rows):
+        raise ValueError("round2 packet contains duplicate sample IDs")
+    completed = _completed_rows(completed_file, packet_by_id)
     destination = output_dir / "round2_completed.jsonl"
     write_jsonl(destination, [completed[sample_id] for sample_id in sorted(completed)])
     round1_freeze = json.loads((output_dir / "round1_freeze.json").read_text(encoding="utf-8"))
@@ -308,6 +377,30 @@ def compile_jury_labels(
     label_granularity = str(report.get("active_label_granularity"))
     if label_granularity not in {"six_class", "binary"}:
         raise ValueError("jury consensus does not expose an active label granularity")
+    adjudication_manifest_path = adjudication_dir / "adjudication_manifest.json"
+    adjudication_manifest = json.loads(adjudication_manifest_path.read_text(encoding="utf-8"))
+    if any(
+        (
+            adjudication_manifest.get("schema_version")
+            != "far-jury-author-adjudication-v1",
+            adjudication_manifest.get("protocol_fingerprint") != PROTOCOL_ACTIVE_SHA256,
+            adjudication_manifest.get("source_consensus_sha256")
+            != sha256_file(consensus_dir / "jury_consensus_report.json"),
+            adjudication_manifest.get("source_consensus_rows_sha256")
+            != report.get("jury_consensus_rows_sha256"),
+            adjudication_manifest.get("source_packet_sha256")
+            != report.get("source_packet_sha256"),
+            adjudication_manifest.get("source_adjudication_sha256")
+            != report.get("source_adjudication_sha256"),
+            adjudication_manifest.get("round1_seed") != ROUND1_SEED,
+            adjudication_manifest.get("minimum_repeat_days") != 14,
+            adjudication_manifest.get("jury_votes_hidden") is not True,
+            adjudication_manifest.get("construction_labels_hidden") is not True,
+            adjudication_manifest.get("system_outputs_hidden") is not True,
+            adjudication_manifest.get("human_iaa") is not False,
+        )
+    ):
+        raise ValueError("author adjudication manifest violates the frozen protocol")
     consistency = json.loads(
         (adjudication_dir / "self_consistency_report.json").read_text(encoding="utf-8")
     )
@@ -329,6 +422,25 @@ def compile_jury_labels(
         or freeze.get("protocol_fingerprint") != PROTOCOL_ACTIVE_SHA256
     ):
         raise ValueError("round1 adjudication freeze is invalid or stale")
+    frozen_at = _parse_time(str(freeze["frozen_at"]))
+    eligible_at = _parse_time(str(freeze["round2_eligible_at"]))
+    if (
+        frozen_at < _parse_time(str(adjudication_manifest["created_at"]))
+        or eligible_at != frozen_at + MINIMUM_REPEAT_DELAY
+    ):
+        raise ValueError("round1 freeze does not preserve the 14-day interval")
+    round1_packet = adjudication_dir / str(adjudication_manifest["round1_packet"])
+    if sha256_file(round1_packet) != adjudication_manifest.get("round1_packet_sha256"):
+        raise ValueError("round1 adjudication packet fingerprint mismatch")
+    round1_packet_rows = read_jsonl(round1_packet)
+    round1_packet_by_id = {
+        str(row["sample_id"]): row for row in round1_packet_rows
+    }
+    if (
+        len(round1_packet_by_id) != len(round1_packet_rows)
+        or len(round1_packet_by_id) != adjudication_manifest.get("samples")
+    ):
+        raise ValueError("round1 adjudication packet is duplicate or incomplete")
     round1_path = adjudication_dir / str(freeze["completed_file"])
     if sha256_file(round1_path) != freeze.get("completed_sha256"):
         raise ValueError("round1 adjudication fingerprint mismatch")
@@ -336,6 +448,16 @@ def compile_jury_labels(
     author = {str(row["sample_id"]): row for row in round1_rows}
     if len(author) != len(round1_rows):
         raise ValueError("round1 adjudication contains duplicate sample IDs")
+    if set(author) != set(round1_packet_by_id):
+        raise ValueError("round1 completion does not exactly cover its frozen packet")
+    for sample_id, row in author.items():
+        expected = round1_packet_by_id[sample_id]
+        if set(row) != set(expected) or any(
+            row.get(field) != expected.get(field)
+            for field in expected
+            if field != "author_annotation"
+        ):
+            raise ValueError("round1 completion modified blind packet fields")
     if consistency.get("round1_sha256") != sha256_file(round1_path):
         raise ValueError("self-consistency report does not bind the frozen round1 file")
     round2_path = adjudication_dir / str(consistency["round2_file"])
@@ -431,6 +553,7 @@ def compile_jury_labels(
                 str(manifest.get("model_family", "")).lower()
                 != str(tracked.get("model_family", "")).lower(),
                 manifest.get("model") != tracked.get("model"),
+                manifest.get("config_sha256") != tracked.get("config_sha256"),
                 manifest.get("annotation_sha256") != tracked.get("annotation_sha256"),
                 manifest.get("fallbacks") != tracked.get("fallbacks"),
             )

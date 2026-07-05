@@ -1690,3 +1690,23 @@ evidence bundle verified successfully, releasing the GPU.
   packet。任何重复、缺失、替换或来源漂移均失败关闭。
 - 仅执行 AST 语法解析、行长和 diff whitespace 检查，未运行测试套件或陪审团，
   未访问 test。同期 Round 2 正常推进至 136/350（`RAM0183`），服务 active、无错误。
+
+## 2026-07-05 — 让陪审团与作者仲裁绑定同一真实盲包
+
+- 盲态静态审计确认 juror manifest 原先只绑定 `packet_manifest.json`，未绑定实际被
+  读取的 `adjudications.jsonl`。若后者在运行之间被替换，三个 juror 仍可能声称
+  使用同一 packet；作者仲裁也没有强制与 juror 的实际输入逐文件一致。
+- 新增共享盲包加载器：要求 annotation packet schema、样本数和 sample ID 完整，
+  adjudication 模板不得已有 gold/adjudicator，顶层、claim 与 evidence 字段采用
+  白名单，禁止 construction label、evidence role 或额外系统输出混入。juror manifest
+  新增实际盲行文件 SHA-256；consensus 要求三者相同并把它传入报告，作者 Round 1/
+  Round 2 必须与该哈希及 packet manifest 哈希一致。
+- 作者 freeze 现在逐字段对照原 packet，仅允许 `author_annotation` 改变；compile
+  重新验证 Round 1/2 packet、完成文件、consensus、juror 配置与指纹链。任何题目、
+  证据、排序、隐藏字段或来源替换都会失败关闭。
+- 三个 jury YAML 新增明确的 `llm.model_family`（DeepSeek / GLM / Meta）；annotate
+  要求 CLI family 与配置完全一致并强制 temperature=0，不能把系统家族配置谎报成
+  陪审团家族。consensus 报告同时冻结配置 SHA-256。
+- 仅执行 AST/YAML 解析、模块导入、行长和 diff whitespace 检查，未运行测试套件、
+  陪审团或任何 test 数据。同期 Round 2 正常推进至 146/350（`RAM0197`），GPU
+  约 7.8 GiB / 94%，两个服务 active、日志无错误。

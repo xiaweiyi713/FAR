@@ -10,6 +10,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from bench.annotations import PACKET_VERSION
 from bench.build.auto_annotate import (
     _extract_json_object,
     _fallback_prediction,
@@ -26,6 +27,75 @@ from experiments.protocol_2plus4 import (
 from experiments.runner import build_generator, load_config
 
 JURY_TYPES = ("temporal", "entity", "numerical", "causal", "source_reliability")
+BLIND_SOURCE_FIELDS = {
+    "schema_version",
+    "sample_id",
+    "question",
+    "initial_answer",
+    "claims",
+    "evidence",
+    "adjudicator_id",
+    "gold_annotation",
+}
+
+
+def _load_blind_packet(
+    packet_dir: Path,
+) -> tuple[dict[str, Any], list[dict[str, Any]], str]:
+    manifest_path = packet_dir / "packet_manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    if manifest.get("schema_version") != PACKET_VERSION:
+        raise ValueError("unsupported blind annotation packet schema")
+    filename = str(manifest.get("adjudication_file", ""))
+    if not filename or Path(filename).name != filename:
+        raise ValueError("blind adjudication filename must be a local basename")
+    source_path = packet_dir / filename
+    rows = read_jsonl(source_path)
+    expected = int(manifest.get("samples", -1))
+    sample_ids = [str(row.get("sample_id", "")) for row in rows]
+    if (
+        len(rows) != expected
+        or any(not sample_id for sample_id in sample_ids)
+        or len(sample_ids) != len(set(sample_ids))
+    ):
+        raise ValueError("blind adjudication packet is duplicate or incomplete")
+    required_omissions = {
+        "category",
+        "split",
+        "conflict_type",
+        "expected_revision",
+        "source_metadata",
+        "annotation_status",
+        "evidence roles",
+    }
+    if not required_omissions.issubset(set(manifest.get("blind_fields_omitted", []))):
+        raise ValueError("blind packet does not declare all required hidden fields")
+    for row in rows:
+        sample_id = str(row["sample_id"])
+        if set(row) != BLIND_SOURCE_FIELDS or row.get("schema_version") != PACKET_VERSION:
+            raise ValueError(f"{sample_id}: blind packet exposes unexpected fields")
+        if str(row.get("adjudicator_id", "")).strip():
+            raise ValueError(f"{sample_id}: blind packet already identifies an adjudicator")
+        gold = row.get("gold_annotation")
+        if not isinstance(gold, dict) or any(
+            (
+                gold.get("conflict_present") is not None,
+                bool(str(gold.get("conflict_type", "")).strip()),
+                bool(str(gold.get("revision_action", "")).strip()),
+                gold.get("revised_answer_acceptable") is not None,
+                bool(str(gold.get("revised_answer", "")).strip()),
+                bool(str(gold.get("rationale", "")).strip()),
+            )
+        ):
+            raise ValueError(f"{sample_id}: blind packet contains a populated gold label")
+        if any(set(claim) != {"claim_id", "claim"} for claim in row.get("claims", [])):
+            raise ValueError(f"{sample_id}: blind packet claim structure is not role-free")
+        if any(
+            set(evidence) != {"evidence_id", "title", "source", "date", "text"}
+            for evidence in row.get("evidence", [])
+        ):
+            raise ValueError(f"{sample_id}: blind packet evidence exposes hidden metadata")
+    return manifest, rows, sha256_file(source_path)
 
 
 def _prompt(row: dict[str, Any]) -> str:
@@ -83,13 +153,19 @@ def annotate_juror(
     family = model_family.strip().lower()
     if not family or family in SYSTEM_MODEL_FAMILIES:
         raise ValueError("juror family must be non-empty and disjoint from system families")
+    config = load_config(config_path)
+    llm_config = config.get("llm", {})
+    configured_family = str(llm_config.get("model_family", "")).strip().lower()
+    if configured_family != family:
+        raise ValueError("juror family must match llm.model_family in the frozen config")
+    if float(llm_config.get("temperature", -1.0)) != 0.0:
+        raise ValueError("jury annotation requires temperature=0")
     if overwrite and resume:
         raise ValueError("overwrite and resume cannot both be true")
     if retry_fallbacks and not resume:
         raise ValueError("retry_fallbacks requires resume")
     packet_manifest_path = packet_dir / "packet_manifest.json"
-    packet_manifest = json.loads(packet_manifest_path.read_text(encoding="utf-8"))
-    source_rows = read_jsonl(packet_dir / str(packet_manifest["adjudication_file"]))
+    _, source_rows, source_adjudication_sha256 = _load_blind_packet(packet_dir)
     if limit is not None:
         if limit < 1:
             raise ValueError("limit must be positive")
@@ -120,7 +196,7 @@ def annotate_juror(
                 existing.append(row)
         write_jsonl(output_path, existing)
     completed_ids = {str(row["sample_id"]) for row in existing}
-    generator = build_generator(load_config(config_path))
+    generator = build_generator(config)
     if generator is None:
         raise RuntimeError("jury annotation requires an enabled LLM generator")
     with output_path.open("a" if output_path.exists() else "w", encoding="utf-8") as handle:
@@ -162,7 +238,6 @@ def annotate_juror(
 
     rows = read_jsonl(output_path)
     fallbacks = sum(_is_fallback(row) for row in rows)
-    config = load_config(config_path)
     manifest = {
         "schema_version": "far-jury-annotation-manifest-v1",
         "created_at": datetime.now(timezone.utc).isoformat(),
@@ -174,6 +249,7 @@ def annotate_juror(
         "protocol_original_fingerprint": PROTOCOL_ORIGINAL_SHA256,
         "prompt_sha256": PROMPT_SHA256,
         "source_packet_sha256": sha256_file(packet_manifest_path),
+        "source_adjudication_sha256": source_adjudication_sha256,
         "samples": len(rows),
         "expected_samples": len(source_rows),
         "complete": len(rows) == len(source_rows),
@@ -196,6 +272,7 @@ def verify_juror(packet_dir: Path, output_dir: Path) -> dict[str, Any]:
             (output_dir / "jury_annotation_manifest.json").read_text(encoding="utf-8")
         )
         packet_sha = sha256_file(packet_dir / "packet_manifest.json")
+        _, packet_rows, adjudication_sha = _load_blind_packet(packet_dir)
         path = output_dir / str(manifest["annotation_file"])
         rows = read_jsonl(path)
         juror_id = str(manifest["juror_id"])
@@ -215,6 +292,8 @@ def verify_juror(packet_dir: Path, output_dir: Path) -> dict[str, Any]:
             errors.append("jury annotation prompt fingerprint mismatch")
         if manifest.get("source_packet_sha256") != packet_sha:
             errors.append("jury annotation source packet fingerprint mismatch")
+        if manifest.get("source_adjudication_sha256") != adjudication_sha:
+            errors.append("jury annotation blind-row fingerprint mismatch")
         if family.lower() in SYSTEM_MODEL_FAMILIES:
             errors.append("jury annotation family overlaps system families")
         if sha256_file(path) != manifest.get("annotation_sha256"):
@@ -226,6 +305,8 @@ def verify_juror(packet_dir: Path, output_dir: Path) -> dict[str, Any]:
             or len(rows) != manifest.get("expected_samples")
         ):
             errors.append("jury annotation rows are duplicate or incomplete")
+        if set(ids) != {str(row["sample_id"]) for row in packet_rows}:
+            errors.append("jury annotation does not cover the current blind packet")
         for row in rows:
             if (
                 row.get("schema_version") != "far-jury-annotation-v1"

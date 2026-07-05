@@ -53,6 +53,15 @@ def _load_juror(directory: Path) -> tuple[dict[str, Any], dict[str, dict[str, An
         raise ValueError(f"{directory}: jury annotation uses a stale protocol")
     if manifest.get("prompt_sha256") != PROMPT_SHA256:
         raise ValueError(f"{directory}: jury annotation prompt fingerprint mismatch")
+    if any(
+        not str(manifest.get(field, "")).strip()
+        for field in (
+            "config_sha256",
+            "source_packet_sha256",
+            "source_adjudication_sha256",
+        )
+    ):
+        raise ValueError(f"{directory}: jury source fingerprints are incomplete")
     if manifest.get("complete") is not True:
         raise ValueError(f"{directory}: jury annotation manifest is incomplete")
     if (
@@ -145,6 +154,11 @@ def build_jury_consensus(
     source_packets = {str(item.get("source_packet_sha256")) for item in manifests}
     if len(source_packets) != 1:
         raise ValueError("jury sources do not share one frozen packet")
+    source_adjudications = {
+        str(item.get("source_adjudication_sha256", "")) for item in manifests
+    }
+    if len(source_adjudications) != 1 or not next(iter(source_adjudications)):
+        raise ValueError("jury sources do not share one frozen blind-row file")
     sample_sets = [set(rows) for rows in rows_by_juror]
     if not sample_sets[0] or any(samples != sample_sets[0] for samples in sample_sets[1:]):
         raise ValueError("jury sources do not have identical complete samples")
@@ -278,11 +292,13 @@ def build_jury_consensus(
         "study_profile": "cross_family_llm_jury",
         "protocol_fingerprint": PROTOCOL_ACTIVE_SHA256,
         "source_packet_sha256": next(iter(source_packets)),
+        "source_adjudication_sha256": next(iter(source_adjudications)),
         "jurors": [
             {
                 "juror_id": juror_id,
                 "model_family": family,
                 "model": manifest.get("model"),
+                "config_sha256": manifest.get("config_sha256"),
                 "annotation_sha256": manifest.get("annotation_sha256"),
                 "fallbacks": manifest.get("fallbacks"),
             }

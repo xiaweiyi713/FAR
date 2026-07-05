@@ -1,5 +1,6 @@
 llm:
   enabled: true
+  model_family: glm
   provider: ollama
   model: glm4:9b
   base_url: http://localhost:11434

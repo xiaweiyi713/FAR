@@ -1,5 +1,6 @@
 llm:
   enabled: true
+  model_family: meta
   provider: ollama
   model: llama3.1:8b
   base_url: http://localhost:11434

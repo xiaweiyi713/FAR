@@ -1,5 +1,6 @@
 llm:
   enabled: true
+  model_family: deepseek
   provider: deepseek
   model: deepseek-chat
   api_key_env: DEEPSEEK_API_KEY
