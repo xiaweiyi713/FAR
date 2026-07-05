@@ -170,8 +170,13 @@ def audit(
         )
     else:
         checks["jury_conflict_metric_matches_granularity"] = False
-        errors.append("jury consensus, labels, sensitivity, and matrix mix label granularities")
-    if not checks["jury_conflict_metric_matches_granularity"]:
+        errors.append(
+            "jury consensus, labels, sensitivity, and matrix label-granularity chain "
+            "is incomplete or inconsistent"
+        )
+    if checks["jury_label_granularity_consistent"] and not checks[
+        "jury_conflict_metric_matches_granularity"
+    ]:
         errors.append("jury conflict metric does not match the active label granularity")
 
     for target, path, score_path, expected_samples in (

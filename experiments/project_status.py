@@ -105,6 +105,8 @@ def build_status_snapshot(root: Path) -> dict[str, Any]:
         root / "diagnostics/ramdocs_v1/test/one_shot_seal.json",
         root / "diagnostics/ramdocs_v1/test/suite_manifest.json",
         root / "paper/main.tex",
+        ramdocs_round2_dir=root / "diagnostics/ramdocs_v2/round2",
+        ramdocs_round2_config=root / "diagnostics/ramdocs_v2/round2/config.yaml",
     )
     submission = audit_submission_readiness(root, _json(root / "submission/evidence.template.json"))
     strict_external_blockers = sorted(
