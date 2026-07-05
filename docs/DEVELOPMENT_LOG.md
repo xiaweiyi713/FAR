@@ -1614,3 +1614,14 @@ evidence bundle verified successfully, releasing the GPU.
   重启的故障。当前 105/350 续跑样本属于前者：GPU 100%，`llama-server` CPU
   时间增长，Ollama `n_decoded` 从 114 → 126 → 138。
 - 此变更不改变实验协议、方法、配置、阈值或任何 test 状态。
+
+## 2026-07-05 — Round 2 恢复后确认推进
+
+- 23:09 +08:00 复核远端：`far-ramdocs-round2.service` 与
+  `far-ollama-2plus4.service` 仍 active，GPU 约 7.9 GiB / 100%。恢复后
+  checkpoint 已从 105/350 推进到 108/350，最后观测样本为 `RAM0145`，且
+  `final_answer_consolidation.applied=true`。
+- 这确认了 22:53 恢复后的慢样本不是卡死；Ollama 样本内多次调用完成后已追加
+  新行。尚无 `run_manifest.json` 或 `predictions.jsonl`，因此仍未完成，不能
+  finalize/verify 或改判 G-A。
+- 未访问或运行任何 test，未切换远端 detached 工作树，未改变运行配置。

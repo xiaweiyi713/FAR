@@ -16,7 +16,7 @@
 | G-S 作者复标 | 工具完成、禁止执行 | Phase B 未启动；不存在作者仲裁制品 |
 | 多模型矩阵 | 工具完成、禁止执行 | G-A 停止规则阻断 jury-gold 矩阵与投稿主张 |
 | 一次性 test | 工具完成、禁止执行 | dev 停止规则已触发，RAMDocs/FalsiRAG test 均未访问 |
-| Round 2 dev 方法迭代 | 运行中 | FAR-only 第二轮已在原 detached 工作树 `d8d5f40` 恢复；恢复时 checkpoint 为 105/350，Ollama、RAMDocs runner 和 llama-server 均 active |
+| Round 2 dev 方法迭代 | 运行中 | FAR-only 第二轮已在原 detached 工作树 `d8d5f40` 恢复；恢复后 checkpoint 已从 105/350 推进到至少 108/350，Ollama、RAMDocs runner 和 llama-server 均 active |
 | 2+4 论文门 | 失败关闭 | 当前首轮 2+4 路线不可进入投稿包装；只有 Round 2 完成且 G-A 通过才可改判 |
 
 ## RAMDocs
@@ -138,9 +138,10 @@ systemctl --user disable --now far-ramdocs-round2.service far-ollama-2plus4.serv
 Round 2 只改变 FAR 的最终答案合并层；初始答案和最强基线沿用 Round 1 的冻结
 制品并逐文件校验 SHA-256。FAR 350 条完成后执行：
 
-截至 2026-07-05 22:53 +08:00，远端 Round 2 FAR 已在原 detached 工作树
-`d8d5f40` 恢复运行。恢复时 checkpoint 为 105/350，尚无 `run_manifest.json`
-或 `predictions.jsonl`；`far-ollama-2plus4.service`、`far-ramdocs-round2.service`
+截至 2026-07-05 23:09 +08:00，远端 Round 2 FAR 已在原 detached 工作树
+`d8d5f40` 恢复并确认推进。恢复时 checkpoint 为 105/350；随后写入到至少
+108/350，最后观测样本为 `RAM0145`。尚无 `run_manifest.json` 或
+`predictions.jsonl`；`far-ollama-2plus4.service`、`far-ramdocs-round2.service`
 和 `llama-server` 均 active。恢复前曾因 GPU 被 VeraRAG/SelfRAG 占用而保留
 `/mnt/d/FAR-runtime/ramdocs_dev_v2.waiting-for-gpu`；恢复时未切换工作树。
 
