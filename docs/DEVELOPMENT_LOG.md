@@ -1534,3 +1534,15 @@ evidence bundle verified successfully, releasing the GPU.
   已冻结的 Round 2 manifest。
 - 已将默认值改为 `diagnostics/ramdocs_v2/round2`，只影响证据发现路径，不修改
   G-A 判据、停止规则、任何分数或任何 test 访问状态。
+
+## 2026-07-05 — 修复 Windows GPU Ollama 自退出后的恢复策略
+
+- Round 2 运行到 105/350 时，`ollama serve` 在一次 `/api/generate` 500 后以
+  status 0 自退出；由于 `far-ollama-2plus4.service` 使用
+  `Restart=on-failure`，systemd 没有自动拉起 Ollama，而 RAMDocs runner 对
+  Ollama 使用硬 `Requires=`，因此被连带 `SIGTERM` 停止。没有 Python
+  traceback、OOM、CUDA error 或 test 访问。
+- 已将 Ollama unit 改为 `Restart=always`，并把 RAMDocs suite/round2 unit 对
+  Ollama 的硬依赖改为 `Wants=`。这只改变 D 盘 Windows GPU 作业的服务恢复
+  行为，不修改实验协议、配置、指标、G-A/G-K/G-S 判据、checkpoint 或任何
+  test 状态。

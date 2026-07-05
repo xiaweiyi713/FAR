@@ -1,6 +1,6 @@
 [Unit]
 Description=FAR RAMDocs dev Round 2 method revision
-Requires=far-ollama-2plus4.service
+Wants=far-ollama-2plus4.service
 After=far-ollama-2plus4.service
 
 [Service]
