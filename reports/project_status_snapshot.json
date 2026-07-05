@@ -1,7 +1,6 @@
 {
   "cross_family_jury_external_validation_paper": {
     "blockers": [
-      "RAMDocs dev: [Errno 2] No such file or directory: 'diagnostics/ramdocs_v1/dev/suite_manifest.json'",
       "G-A external validation gate has not passed",
       "jury consensus: [Errno 2] No such file or directory: 'diagnostics/jury_v1/consensus/jury_consensus_report.json'",
       "G-K jury agreement gate has not passed without fallbacks",
@@ -53,14 +52,13 @@
         "jury_labels_valid": false,
         "paper_disclosures_complete": true,
         "paper_forbidden_claims_absent": true,
-        "ramdocs_dev_suite_valid": false,
+        "ramdocs_dev_suite_valid": true,
         "ramdocs_import_valid": true,
         "ramdocs_one_shot_complete": false,
         "three_family_matrix_ready": false,
         "three_view_label_sensitivity_ready": false
       },
       "errors": [
-        "RAMDocs dev: [Errno 2] No such file or directory: 'diagnostics/ramdocs_v1/dev/suite_manifest.json'",
         "G-A external validation gate has not passed",
         "jury consensus: [Errno 2] No such file or directory: 'diagnostics/jury_v1/consensus/jury_consensus_report.json'",
         "G-K jury agreement gate has not passed without fallbacks",
@@ -80,7 +78,7 @@
         "jury_consensus_sha256": null,
         "jury_labels_manifest_sha256": null,
         "matrix_report_sha256": null,
-        "paper_sha256": "8f1de85858c16cb12c13f1b0e3c7f8e0db44b345a99189f11e8410733fa432ad",
+        "paper_sha256": "ba87e8b5731d776b5aaba9cb164f3907b624591e92d21a6a58f364f42606a023",
         "ramdocs_manifest_sha256": "5cd9ff842789afd69fa8e64ff89c0f85eca2f8bc934aa4c694aeec92388074df"
       },
       "forbidden_claims_found": [],
@@ -248,7 +246,7 @@
           "valid": true
         },
         "paper_checklist_sha256": "e3b92d8cc9e056eb1ebba33e91c6b338a6bbbb29e34e19abe7f3eb94c42b967a",
-        "paper_main_sha256": "8f1de85858c16cb12c13f1b0e3c7f8e0db44b345a99189f11e8410733fa432ad",
+        "paper_main_sha256": "ba87e8b5731d776b5aaba9cb164f3907b624591e92d21a6a58f364f42606a023",
         "paper_supplement_sha256": "17a325914f811c66aa97ce5c996ca8365fb793b2b45fc284baa98b0d8b57aefb",
         "solo_release": {
           "errors": [],

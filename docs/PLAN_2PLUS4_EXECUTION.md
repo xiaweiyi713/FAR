@@ -10,13 +10,13 @@
 |---|---|---|
 | 预注册 | 完成 | 原始提交 `84bbbfd`；所有澄清均为独立 `deviation:` 提交 |
 | RAMDocs 导入 | 完成 | 500 题、2766 文档、MIT、HF revision `9c041b…`；350/150 已冻结 |
-| RAMDocs dev | 运行中 | Windows GPU 用户服务 `far-ollama-2plus4.service` 与 `far-ramdocs-phase-a.service`；正式替代运行绑定代码提交 `08e04c6`、D: 盘缓存环境和输出目录 `/mnt/d/FAR-outputs/ramdocs_dev_v1`；已启用 `wenyao` systemd linger，并通过完全断开 SSH 的服务 PID、零重启与 checkpoint 增长实测，尚无 `suite_manifest.json` |
-| G-A | 待 dev 完成 | 自动选择六基线中 exact match 最高者，执行配对 bootstrap 与 McNemar |
-| G-K 陪审团 | 工具完成、执行待 G-A | 六分类主门；失败时按协议降级为二分类 |
-| G-S 作者复标 | 工具完成、尚未开始 | round 2 在 round 1 冻结后 14 天前会被代码拒绝 |
-| 多模型矩阵 | 工具与配置完成 | Qwen/Mistral/Gemma；只在 jury gold 上生成主张 |
-| 一次性 test | 工具完成、禁止提前运行 | intent 必须先提交 Git，再允许 seal 指纹链 |
-| 2+4 论文门 | 失败关闭 | `falsirag-jury-paper-readiness` 会列出尚缺制品 |
+| RAMDocs dev | 证据完成 | 8 方法 × 350 条、8 份报告和 7 组配对比较均完整；正式 verifier `valid=true`；冻结于 `diagnostics/ramdocs_v1/dev` |
+| G-A | **失败，停止规则已触发** | FAR 与最强 `multi_query_rag` 均为 0.3114；差 0；95% CI [-0.0286, 0.0314]；McNemar p=1.0 |
+| G-K 陪审团 | 工具完成、禁止执行 | G-A 未通过；没有陪审团输出或 jury gold |
+| G-S 作者复标 | 工具完成、禁止执行 | Phase B 未启动；不存在作者仲裁制品 |
+| 多模型矩阵 | 工具完成、禁止执行 | G-A 停止规则阻断 jury-gold 矩阵与投稿主张 |
+| 一次性 test | 工具完成、禁止执行 | dev 停止规则已触发，RAMDocs/FalsiRAG test 均未访问 |
+| 2+4 论文门 | 失败关闭 | 当前首轮 2+4 路线不可进入投稿包装 |
 
 ## RAMDocs
 
@@ -71,7 +71,33 @@ systemctl --user disable --now far-ramdocs-phase-a.service far-ollama-2plus4.ser
 运行器只向模型加载当前题目的文档。`test_inputs.jsonl` 只有
 `id/question/split`；未给 `--allow-test` 时 test 会被拒绝。
 
+## G-A 结果与停止规则
+
+正式证据包位于 [`diagnostics/ramdocs_v1/dev`](../diagnostics/ramdocs_v1/dev)，
+可复现错误分析位于
+[`diagnostics/ramdocs_v1/error_analysis`](../diagnostics/ramdocs_v1/error_analysis)。
+
+- FAR 与最强基线 `multi_query_rag` 的 strict exact match 均为 109/350
+  （0.3114）。
+- 配对结果：共同正确 93、FAR-only 16、baseline-only 16、共同错误 225。
+- 配对差 0；bootstrap 95% CI [-0.0286, 0.0314]；McNemar p=1.0。
+- FAR 的 gold coverage 略高（0.7510 vs 0.7457），但 wrong-answer exclusion
+  略低（0.5686 vs 0.5743），二者在 strict exact match 上抵消。
+- G-A 为 false，故 Phase B、jury gold、多模型矩阵和一次性 test 均未启动。
+
+重建 dev 错误分析：
+
+```bash
+uv run python -m experiments.ramdocs_error_analysis \
+  --data-dir bench/external/ramdocs_v1 \
+  --suite-dir diagnostics/ramdocs_v1/dev \
+  --output-dir diagnostics/ramdocs_v1/error_analysis
+```
+
 ## 陪审团
+
+> 当前首轮禁止执行以下命令：G-A 已失败。它们只保留为未来经过新一轮
+> dev 方法修订并重新通过 G-A 后的实现入口。
 
 三个 juror 必须使用同一 packet 和冻结 prompt：
 

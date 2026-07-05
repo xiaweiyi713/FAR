@@ -1462,3 +1462,32 @@ treated as another GPU workload and leaves FAR waiting; the transition is
 logged once on D:. If FAR's own Ollama is already active, its allocation is
 expected and the suite may resume. At deployment no other compute process was
 present, so the current formal run resumed immediately.
+
+## 2026-07-05: RAMDocs dev completed and G-A stop rule triggered
+
+The single replacement formal run completed all 350 dev samples for FAR, the
+typed-conflict ablation, and all six baselines. Every method has 350 predictions,
+a run manifest, and an evaluation report. The formal suite verifier returned
+`valid=true` with no fingerprint error, the frozen protocol fingerprint
+`e0221c…`, and data-manifest fingerprint `5cd9ff…`. No RAMDocs test input was
+accessed.
+
+FAR and the automatically selected strongest baseline, Multi-Query RAG, both
+scored 109/350 strict exact match (0.3114). Their paired difference is 0.0000,
+with bootstrap 95% CI [-0.0286, 0.0314] and exact McNemar p=1.0 (16 FAR-only,
+16 baseline-only). G-A is therefore false and the preregistered stop rule is
+active. No jury annotation, author adjudication, jury gold, multi-model matrix,
+or one-shot test evaluation was started; LLM jury tooling remains tooling, not
+human IAA.
+
+The verified 53-file RAMDocs evidence release is frozen at
+`diagnostics/ramdocs_v1/dev`. A deterministic dev error analysis is stored at
+`diagnostics/ramdocs_v1/error_analysis`: 93 rows are correct for both methods,
+225 fail for both, and the 32 discordant rows split evenly. FAR has slightly
+higher gold coverage (0.7510 vs 0.7457) but slightly lower wrong-answer
+exclusion (0.5686 vs 0.5743). Among the 16 baseline-only rows, FAR misses at
+least one gold answer in 11 and retains a wrong answer in 9; the analogous
+counts for Multi-Query on FAR-only rows are 11 and 6. This identifies answer
+selection and wrong-answer suppression, rather than conflict detection alone,
+as the immediate dev bottleneck. The formal services were disabled after the
+evidence bundle verified successfully, releasing the GPU.

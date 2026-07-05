@@ -1,0 +1,26 @@
+{
+  "baseline_scores_sha256": "e040bfbe92a17748db0af5f6754dba16d74d90f8b48315bc62521370c8729f18",
+  "candidate_scores_sha256": "2f7d150db0b0543ae1ef4c8e4f35b121ecfdb264b7788996827689581a2ca4a0",
+  "comparison": {
+    "candidate_minus_baseline": 0.0,
+    "confidence": 0.95,
+    "higher_is_better": true,
+    "lower": -0.028642857142857015,
+    "method": "paired-stratified-percentile-bootstrap-v1",
+    "metric": "ramdocs_exact_match",
+    "pairs": 350,
+    "probability_candidate_better": 0.475,
+    "resamples": 2000,
+    "seed": 1729,
+    "upper": 0.03142857142857143
+  },
+  "gate_a_passed": false,
+  "mcnemar": {
+    "baseline_only": 16,
+    "candidate_only": 16,
+    "discordant": 32,
+    "method": "exact-two-sided-mcnemar-v1",
+    "p_value": 1.0
+  },
+  "schema_version": "far-ramdocs-paired-comparison-v1"
+}

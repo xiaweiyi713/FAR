@@ -1,0 +1,58 @@
+{
+  "benchmark_input_sha256": "412e65b77dec89da9358499c39a714876606958373f3ae0f284a5b2fb20d6a9f",
+  "benchmark_manifest_sha256": "5cd9ff842789afd69fa8e64ff89c0f85eca2f8bc934aa4c694aeec92388074df",
+  "config_sha256": "a5e63643acab84ae26fc190d42931ac95b0fa4f84f9bec4aa7c3a70b18c9f6cb",
+  "corpus_sha256": "219269fedcdc21c9bd87b045a5afd1e7ce60c22ea21f4c1e8ded9c7658d61496",
+  "implementation_sha256": "39aeaf26103a199111bbaec677c02438c0a391c9b2c763059a7786c0f7dd0e9d",
+  "initial_answers_sha256": "5fbcea9b6b2a6cc1136e87d8bb7a2335feebe8b5e2f5b1f54afcd78a7abbbc6b",
+  "limit": null,
+  "llm": {
+    "base_url": "http://localhost:11434",
+    "cache_enabled": true,
+    "cache_namespace": "far-ramdocs-qwen3.5-9b-v2-keepalive",
+    "cache_path": "/mnt/d/FAR-outputs/cache/ramdocs_qwen.sqlite3",
+    "enabled": true,
+    "keep_alive": "24h",
+    "max_tokens": 1200,
+    "model": "qwen3.5:9b",
+    "provider": "ollama",
+    "temperature": 0.0,
+    "think": false,
+    "unload_after_sample": false
+  },
+  "llm_runtime": {
+    "enabled": true,
+    "model": "qwen3.5:9b",
+    "ollama_model": {
+      "details": {
+        "context_length": 262144,
+        "embedding_length": 4096,
+        "families": [
+          "qwen35"
+        ],
+        "family": "qwen35",
+        "format": "gguf",
+        "parameter_size": "9.7B",
+        "parent_model": "",
+        "quantization_level": "Q4_K_M"
+      },
+      "digest": "6488c96fa5faab64bb65cbd30d4289e20e6130ef535a93ef9a49f42eda893ea7",
+      "model": "qwen3.5:9b",
+      "modified_at": "2026-06-30T09:16:22.0970027+08:00",
+      "size": 6594474711
+    },
+    "provider": "ollama"
+  },
+  "method": "far",
+  "retrieval": {
+    "backend": "per_sample_closed_lexical",
+    "scope": "one RAMDocs item"
+  },
+  "run_signature": "01d3bbc72678eec76f1ee4cb3abb3beef3b165004a1348d79304ae9d1f2dda86",
+  "schema_version": "far-ramdocs-run-signature-v1",
+  "source_revision": {
+    "git_commit": "08e04c6c4e744593657d3352940221066764e46f",
+    "git_dirty": false
+  },
+  "split": "dev"
+}
