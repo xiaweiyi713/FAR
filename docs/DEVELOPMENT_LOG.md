@@ -1562,3 +1562,16 @@ evidence bundle verified successfully, releasing the GPU.
   `/mnt/d/FAR-workspace/FAR-2plus4` 工作树。
 - 未访问或运行任何 test；本条只记录运维状态，不改变 Round 2 方法、协议、
   阈值或任何证据指纹。
+
+## 2026-07-05 — 补齐 Round 2 安全恢复入口
+
+- 新增 `scripts/start_windows_ramdocs_round2.sh`，用于在 Windows/WSL GPU 主机上
+  恢复 `/mnt/d/FAR-outputs/ramdocs_dev_v2/runs/far` 的 FAR-only Round 2
+  checkpoint。该脚本复用 D: 盘模型/cache 配置和 systemd user services。
+- 启动器会先确认 Round 1 suite manifest 已存在、Round 2 尚无
+  `run_manifest.json`、systemd linger 与 `far-ollama-2plus4.service` /
+  `far-ramdocs-round2.service` 均已安装。GPU 忙时只写入 keep-running 与
+  waiting-for-gpu marker，不启动 FAR 或 Ollama；GPU 空闲时才启动服务。
+- 同步更新 `docs/PLAN_2PLUS4_EXECUTION.md`，把 Phase A 与 Round 2 的 unit
+  安装、启动、状态查看和人工中止命令分开记录。此变更只补齐运维入口，不修改
+  Round 2 方法、G-A/G-K/G-S 阈值、停止规则或任何 test 状态。

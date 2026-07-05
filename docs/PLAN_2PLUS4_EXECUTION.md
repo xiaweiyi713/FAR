@@ -36,10 +36,11 @@ fail-closed 检查 systemd linger；Windows 登录保活任务应使用
 mkdir -p ~/.config/systemd/user
 cp scripts/systemd/far-ollama-2plus4.service ~/.config/systemd/user/
 cp scripts/systemd/far-ramdocs-phase-a.service ~/.config/systemd/user/
+cp scripts/systemd/far-ramdocs-round2.service ~/.config/systemd/user/
 systemctl --user daemon-reload
 ```
 
-随后运行：
+Phase A 首轮完整 suite 使用：
 
 ```bash
 ssh windows-gpu
@@ -47,11 +48,26 @@ cd /mnt/d/FAR-workspace/FAR-2plus4
 scripts/start_windows_ramdocs_suite.sh
 ```
 
+Round 2 FAR-only dev 方法迭代使用：
+
+```bash
+ssh windows-gpu
+cd /mnt/d/FAR-workspace/FAR-2plus4
+scripts/start_windows_ramdocs_round2.sh
+```
+
+`start_windows_ramdocs_round2.sh` 只在 GPU 空闲时启动 `far-ollama-2plus4.service`
+与 `far-ramdocs-round2.service`。若显存或利用率显示其他任务正在占用 GPU，它只
+写入 `/mnt/d/FAR-runtime/ramdocs_dev_v2.keep-running` 与
+`ramdocs_dev_v2.waiting-for-gpu`，然后退出；Windows watchdog 会在 GPU 空闲后
+恢复同一 checkpoint。
+
 查看状态与日志：
 
 ```bash
-systemctl --user status far-ollama-2plus4.service far-ramdocs-phase-a.service
+systemctl --user status far-ollama-2plus4.service far-ramdocs-phase-a.service far-ramdocs-round2.service
 journalctl --user -fu far-ramdocs-phase-a.service
+journalctl --user -fu far-ramdocs-round2.service
 ```
 
 `scripts/systemd/far-tmux-server.service` 只用于其他交互式 tmux 工作；正式
@@ -67,6 +83,15 @@ marker 存在且 `suite_manifest.json` 尚未生成时恢复被意外 stop/disab
 ```bash
 rm -f /mnt/d/FAR-runtime/ramdocs_dev_v1.keep-running
 systemctl --user disable --now far-ramdocs-phase-a.service far-ollama-2plus4.service
+```
+
+Round 2 使用独立 marker `/mnt/d/FAR-runtime/ramdocs_dev_v2.keep-running` 和
+等待标记 `/mnt/d/FAR-runtime/ramdocs_dev_v2.waiting-for-gpu`；若需人工中止
+Round 2，必须先删除 marker，再停止服务：
+
+```bash
+rm -f /mnt/d/FAR-runtime/ramdocs_dev_v2.keep-running /mnt/d/FAR-runtime/ramdocs_dev_v2.waiting-for-gpu
+systemctl --user disable --now far-ramdocs-round2.service far-ollama-2plus4.service
 ```
 
 运行器只向模型加载当前题目的文档。`test_inputs.jsonl` 只有
