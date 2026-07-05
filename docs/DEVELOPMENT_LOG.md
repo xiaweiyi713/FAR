@@ -1710,3 +1710,24 @@ evidence bundle verified successfully, releasing the GPU.
 - 仅执行 AST/YAML 解析、模块导入、行长和 diff whitespace 检查，未运行测试套件、
   陪审团或任何 test 数据。同期 Round 2 正常推进至 146/350（`RAM0197`），GPU
   约 7.8 GiB / 94%，两个服务 active、日志无错误。
+
+## 2026-07-05 — 修复 jury-gold 复评与三家族矩阵的输入门禁
+
+- B4 静态审计发现合法 `no_conflict` jury annotation 通常没有建议修订文本，但
+  `_overlay_benchmark` 原先要求每条标签都必须提供 revised answer，导致完整标签层
+  仍无法复评。现将无冲突样本的参考答案明确设为原始 initial answer；冲突样本仍
+  必须提供作者/陪审员修订文本。
+- 完整 jury labels 现必须通过 G-K/G-S、覆盖完整 300 条 benchmark、无 excluded
+  disputed 样本，且 manifest/逐行 `jury_gold=true`、`publication_gold=false`、
+  `human_iaa=false` 与哈希均一致。`unanimous_only` 仅作为带来源指纹的显式子集视图，
+  不再允许任意部分标签伪装为完整 jury gold。
+- Qwen rescore 强制精确包含预注册 11 方法；Mistral/Google 强制精确包含 FAR、
+  untyped、CRAG-style、CounterRefine-style 四方法。每个预测文件必须匹配原 suite
+  的 run-manifest SHA-256、完整行数和模型 family；FAR 总是先评分，避免 untyped
+  配对比较依赖尚未生成的 baseline scores。
+- 三口径敏感性固定为 Qwen，并重新校验 consensus、labels 与原 construction report
+  指纹。模型矩阵现在必须同时提供 Qwen/Mistral/Google 三个输入、绑定同一 jury
+  labels manifest，重新计算 FAR sample-level 结构化回退率，并验证 untyped report
+  与 rescored predictions 指纹后才应用 `> 0.30` 剔除规则。
+- 仅执行 AST 解析、模块导入、行长和 diff whitespace 检查，未运行测试套件、模型
+  或 test 数据。同期 Round 2 正常推进至 157/350（`RAM0213`），服务 active、无错误。

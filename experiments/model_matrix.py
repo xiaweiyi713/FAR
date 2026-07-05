@@ -16,6 +16,11 @@ from experiments.protocol_2plus4 import (
 
 def _fallback_rate(predictions_path: Path) -> dict[str, Any]:
     rows = read_jsonl(predictions_path)
+    sample_ids = [str(row.get("sample_id", "")) for row in rows]
+    if not rows or any(not sample_id for sample_id in sample_ids):
+        raise ValueError("fallback audit requires non-empty predictions with sample IDs")
+    if len(sample_ids) != len(set(sample_ids)):
+        raise ValueError("fallback audit predictions contain duplicate sample IDs")
     fallback_ids: list[str] = []
     for row in rows:
         metadata = row.get("metadata", {})
@@ -41,7 +46,12 @@ def _fallback_rate(predictions_path: Path) -> dict[str, Any]:
 
 def _suite_row(family: str, suite_dir: Path) -> dict[str, Any]:
     suite = json.loads((suite_dir / "matrix_family_manifest.json").read_text(encoding="utf-8"))
-    if suite.get("jury_gold") is not True or suite.get("publication_gold") is not False:
+    if (
+        suite.get("schema_version") != "far-jury-family-rescore-v1"
+        or suite.get("jury_gold") is not True
+        or suite.get("publication_gold") is not False
+        or suite.get("human_iaa") is not False
+    ):
         raise ValueError(f"{family}: matrix input is not a jury-gold rescore bundle")
     if suite.get("split") != "dev":
         raise ValueError(f"{family}: model matrix requires development rescoring")
@@ -52,6 +62,13 @@ def _suite_row(family: str, suite_dir: Path) -> dict[str, Any]:
             encoding="utf-8"
         )
     )
+    untyped_report_path = (
+        suite_dir / "minus_typed_conflict" / "evaluation" / "report.json"
+    )
+    if suite.get("reports", {}).get("minus_typed_conflict") != sha256_file(
+        untyped_report_path
+    ):
+        raise ValueError(f"{family}: untyped rescore report fingerprint mismatch")
     comparison = untyped_report.get("comparison")
     if not isinstance(comparison, dict):
         raise ValueError(f"{family}: untyped report has no paired FAR comparison")
@@ -64,7 +81,14 @@ def _suite_row(family: str, suite_dir: Path) -> dict[str, Any]:
         "conflict_presence_f1" if label_granularity == "binary" else "typed_conflict_f1"
     )
     conflict = metrics[conflict_metric]
-    fallback = suite["structured_fallback"]
+    far_predictions = suite_dir / "far" / "predictions.jsonl"
+    if suite.get("rescored_prediction_sha256", {}).get("far") != sha256_file(
+        far_predictions
+    ):
+        raise ValueError(f"{family}: rescored FAR prediction fingerprint mismatch")
+    fallback = _fallback_rate(far_predictions)
+    if fallback != suite.get("structured_fallback"):
+        raise ValueError(f"{family}: structured fallback audit mismatch")
     return {
         "family": family,
         "model": suite.get("model_identity", {}).get("model"),
@@ -97,9 +121,17 @@ def _suite_row(family: str, suite_dir: Path) -> dict[str, Any]:
 
 def build_matrix(suites: dict[str, Path], output_path: Path) -> dict[str, Any]:
     verify_active_protocol()
-    if set(suites) - {"qwen", "mistral", "google"}:
-        raise ValueError("matrix contains an unregistered system family")
+    if set(suites) != {"qwen", "mistral", "google"}:
+        raise ValueError("matrix requires exactly the three preregistered system families")
     rows = [_suite_row(family, directory) for family, directory in sorted(suites.items())]
+    source_label_hashes = {
+        json.loads((directory / "matrix_family_manifest.json").read_text(encoding="utf-8")).get(
+            "jury_labels_manifest_sha256"
+        )
+        for directory in suites.values()
+    }
+    if len(source_label_hashes) != 1 or not next(iter(source_label_hashes)):
+        raise ValueError("model families were not rescored against one frozen jury label set")
     granularities = {str(row["label_granularity"]) for row in rows}
     if len(granularities) != 1:
         raise ValueError("model matrix mixes incompatible jury label granularities")
@@ -109,6 +141,7 @@ def build_matrix(suites: dict[str, Path], output_path: Path) -> dict[str, Any]:
         "schema_version": "far-model-matrix-v1",
         "protocol_fingerprint": PROTOCOL_ACTIVE_SHA256,
         "rows": rows,
+        "jury_labels_manifest_sha256": next(iter(source_label_hashes)),
         "label_granularity": label_granularity,
         "conflict_metric": (
             "conflict_presence_f1" if label_granularity == "binary" else "typed_conflict_f1"

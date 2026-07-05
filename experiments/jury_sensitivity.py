@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from bench.build.common import read_jsonl, sha256_file, write_json, write_jsonl
+from bench.build.jury_adjudication import _consensus
 from experiments.jury_rescore import rescore_family
 from experiments.protocol_2plus4 import PROTOCOL_ACTIVE_SHA256, verify_active_protocol
 
@@ -58,6 +59,8 @@ def build_sensitivity(
     overwrite: bool = False,
 ) -> dict[str, Any]:
     verify_active_protocol()
+    if family != "qwen":
+        raise ValueError("the preregistered three-view sensitivity analysis is Qwen-only")
     if output_dir.exists() and any(output_dir.iterdir()):
         if not overwrite:
             raise FileExistsError(f"{output_dir} exists; pass --overwrite")
@@ -73,18 +76,24 @@ def build_sensitivity(
         raise ValueError("jury labels use an unsupported label granularity")
     metric_names = BINARY_METRICS if label_granularity == "binary" else SIX_CLASS_METRICS
     labels_path = labels_dir / str(labels_manifest["labels_file"])
+    if sha256_file(labels_path) != labels_manifest.get("labels_sha256"):
+        raise ValueError("jury label fingerprint mismatch")
     labels = read_jsonl(labels_path)
-    consensus_report = json.loads(
-        (consensus_dir / "jury_consensus_report.json").read_text(encoding="utf-8")
-    )
+    consensus_report, consensus_rows = _consensus(consensus_dir)
+    if (
+        consensus_report.get("gate_k_passed") is not True
+        or labels_manifest.get("consensus_report_sha256")
+        != sha256_file(consensus_dir / "jury_consensus_report.json")
+    ):
+        raise ValueError("jury labels do not bind the passing consensus report")
     if consensus_report.get("active_label_granularity") != label_granularity:
         raise ValueError("jury labels and consensus disagree on label granularity")
     consensus_path = consensus_dir / str(consensus_report["jury_consensus_rows"])
     if sha256_file(consensus_path) != consensus_report.get("jury_consensus_rows_sha256"):
         raise ValueError("jury consensus rows fingerprint mismatch")
     unanimous_ids = {
-        str(row["sample_id"])
-        for row in read_jsonl(consensus_path)
+        sample_id
+        for sample_id, row in consensus_rows.items()
         if row["disposition"] == "unanimous"
     }
     unanimous_rows = [row for row in labels if str(row["sample_id"]) in unanimous_ids]
@@ -122,6 +131,11 @@ def build_sensitivity(
         family=family,
         split="dev",
     )
+    suite_manifest = json.loads((suite_dir / "suite_manifest.json").read_text(encoding="utf-8"))
+    for method in jury_manifest["methods"]:
+        report_path = _construction_report(suite_dir, method)
+        if suite_manifest.get("reports", {}).get(method) != sha256_file(report_path):
+            raise ValueError(f"construction report fingerprint mismatch: {method}")
     rows: list[dict[str, Any]] = []
     for method in jury_manifest["methods"]:
         rows.append(
