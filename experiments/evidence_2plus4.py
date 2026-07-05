@@ -11,6 +11,7 @@ from typing import Any
 
 from bench.build.common import sha256_file, write_json
 from experiments.protocol_2plus4 import PROTOCOL_ACTIVE_SHA256, verify_active_protocol
+from experiments.ramdocs_round2 import verify_round
 from experiments.ramdocs_suite import verify_suite
 
 
@@ -41,7 +42,7 @@ def _files(root: Path) -> dict[str, str]:
     return {
         path.relative_to(root).as_posix(): sha256_file(path)
         for path in sorted(root.rglob("*"))
-        if path.is_file() and path.name != "bundle_manifest.json"
+        if path.is_file() and path != root / "bundle_manifest.json"
     }
 
 
@@ -133,6 +134,100 @@ def verify_ramdocs_release(bundle_dir: Path, data_dir: Path) -> dict[str, Any]:
         "samples": manifest.get("samples"),
         "methods": len(manifest.get("methods", [])),
         "gate_a_passed": manifest.get("gate_a_passed"),
+        "publication_gold": False,
+    }
+
+
+def build_ramdocs_round2_release(
+    data_dir: Path,
+    round1_dir: Path,
+    round2_dir: Path,
+    config_path: Path,
+    output_dir: Path,
+    *,
+    overwrite: bool = False,
+) -> dict[str, Any]:
+    verify_active_protocol()
+    source_audit = verify_round(data_dir, round1_dir, round2_dir, config_path)
+    if source_audit.get("valid") is not True:
+        raise ValueError(f"RAMDocs Round 2 is invalid: {source_audit.get('errors', [])}")
+    _owned_replace(output_dir, "far-ramdocs-round2-evidence-release-v1", overwrite)
+    shutil.copytree(round1_dir, output_dir / "round1", dirs_exist_ok=True)
+    shutil.copytree(round2_dir, output_dir / "round2", dirs_exist_ok=True)
+    _copy(config_path, output_dir / "round2" / "config.yaml")
+    decision = json.loads((round2_dir / "round_manifest.json").read_text(encoding="utf-8"))
+    (output_dir / "README.md").write_text(
+        "# RAMDocs dev Round 2 evidence release\n\n"
+        "This bundle contains the complete frozen Round 1 suite and the dev-only Round 2 "
+        "FAR method iteration. The strongest Round 1 baseline and initial answers are reused "
+        "by SHA-256. It contains no RAMDocs test result, human IAA, or publication-grade "
+        "human gold.\n",
+        encoding="utf-8",
+    )
+    bundle = {
+        "schema_version": "far-ramdocs-round2-evidence-release-v1",
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "study_profile": "external_upstream_labeled_dev_method_iteration",
+        "protocol_fingerprint": PROTOCOL_ACTIVE_SHA256,
+        "round": 2,
+        "split": "dev",
+        "samples": 350,
+        "gate_a_passed": decision.get("gate_a_passed"),
+        "stop_rule_triggered": decision.get("stop_rule_triggered"),
+        "test_accessed": False,
+        "publication_gold": False,
+        "human_iaa": False,
+        "externally_held": False,
+        "files": _files(output_dir),
+    }
+    write_json(output_dir / "bundle_manifest.json", bundle)
+    audit = verify_ramdocs_round2_release(output_dir, data_dir)
+    if audit.get("valid") is not True:
+        raise ValueError(f"created RAMDocs Round 2 release is invalid: {audit.get('errors', [])}")
+    return bundle
+
+
+def verify_ramdocs_round2_release(bundle_dir: Path, data_dir: Path) -> dict[str, Any]:
+    errors: list[str] = []
+    try:
+        verify_active_protocol()
+        manifest = json.loads((bundle_dir / "bundle_manifest.json").read_text(encoding="utf-8"))
+    except (FileNotFoundError, json.JSONDecodeError, ValueError) as exc:
+        return {
+            "schema_version": "far-ramdocs-round2-evidence-release-audit-v1",
+            "valid": False,
+            "errors": [str(exc)],
+        }
+    if manifest.get("schema_version") != "far-ramdocs-round2-evidence-release-v1":
+        errors.append("unsupported RAMDocs Round 2 evidence release schema")
+    if manifest.get("files") != _files(bundle_dir):
+        errors.append("RAMDocs Round 2 bundle file set or fingerprints differ")
+    audit = verify_round(
+        data_dir,
+        bundle_dir / "round1",
+        bundle_dir / "round2",
+        bundle_dir / "round2" / "config.yaml",
+    )
+    errors.extend(audit.get("errors", []))
+    if audit.get("valid") is not True:
+        errors.append("embedded RAMDocs Round 2 evidence is invalid")
+    if manifest.get("gate_a_passed") is not audit.get("gate_a_passed"):
+        errors.append("RAMDocs Round 2 bundle G-A state disagrees with its evidence")
+    if manifest.get("protocol_fingerprint") != PROTOCOL_ACTIVE_SHA256:
+        errors.append("RAMDocs Round 2 release uses a stale protocol")
+    if manifest.get("test_accessed") is not False:
+        errors.append("RAMDocs Round 2 release must remain dev-only")
+    if manifest.get("publication_gold") is not False or manifest.get("human_iaa") is not False:
+        errors.append("RAMDocs Round 2 release contains an unsafe provenance claim")
+    return {
+        "schema_version": "far-ramdocs-round2-evidence-release-audit-v1",
+        "valid": not errors,
+        "errors": errors,
+        "round": manifest.get("round"),
+        "split": manifest.get("split"),
+        "samples": manifest.get("samples"),
+        "gate_a_passed": manifest.get("gate_a_passed"),
+        "stop_rule_triggered": manifest.get("stop_rule_triggered"),
         "publication_gold": False,
     }
 
@@ -288,6 +383,16 @@ def main() -> None:
     verify = subparsers.add_parser("verify-ramdocs")
     verify.add_argument("--data-dir", type=Path, required=True)
     verify.add_argument("--bundle-dir", type=Path, required=True)
+    build_round2 = subparsers.add_parser("build-ramdocs-round2")
+    build_round2.add_argument("--data-dir", type=Path, required=True)
+    build_round2.add_argument("--round1-dir", type=Path, required=True)
+    build_round2.add_argument("--round2-dir", type=Path, required=True)
+    build_round2.add_argument("--config", type=Path, required=True)
+    build_round2.add_argument("--output-dir", type=Path, required=True)
+    build_round2.add_argument("--overwrite", action="store_true")
+    verify_round2 = subparsers.add_parser("verify-ramdocs-round2")
+    verify_round2.add_argument("--data-dir", type=Path, required=True)
+    verify_round2.add_argument("--bundle-dir", type=Path, required=True)
     build_jury = subparsers.add_parser("build-jury")
     build_jury.add_argument("--consensus-dir", type=Path, required=True)
     build_jury.add_argument("--labels-dir", type=Path, required=True)
@@ -311,6 +416,17 @@ def main() -> None:
         )
     elif args.command == "verify-ramdocs":
         result = verify_ramdocs_release(args.bundle_dir, args.data_dir)
+    elif args.command == "build-ramdocs-round2":
+        result = build_ramdocs_round2_release(
+            args.data_dir,
+            args.round1_dir,
+            args.round2_dir,
+            args.config,
+            args.output_dir,
+            overwrite=args.overwrite,
+        )
+    elif args.command == "verify-ramdocs-round2":
+        result = verify_ramdocs_round2_release(args.bundle_dir, args.data_dir)
     elif args.command == "build-jury":
         result = build_jury_release(
             args.consensus_dir,

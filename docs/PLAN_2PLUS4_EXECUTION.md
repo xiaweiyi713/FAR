@@ -117,6 +117,23 @@ uv run python -m experiments.ramdocs_round2_error_analysis \
 
 该入口要求 Round 2 verifier 有效且 G-A 明确失败；否则拒绝生成“失败分析”。
 
+Round 2 判定和（若失败）错误分析完成后，冻结完整跨轮证据包：
+
+```bash
+uv run falsirag-2plus4-release build-ramdocs-round2 \
+  --data-dir bench/external/ramdocs_v1 \
+  --round1-dir /mnt/d/FAR-outputs/ramdocs_dev_v1 \
+  --round2-dir /mnt/d/FAR-outputs/ramdocs_dev_v2 \
+  --config experiments/configs/ramdocs_qwen_round2.yaml \
+  --output-dir /mnt/d/FAR-outputs/diagnostics/ramdocs_v2
+uv run falsirag-2plus4-release verify-ramdocs-round2 \
+  --data-dir bench/external/ramdocs_v1 \
+  --bundle-dir /mnt/d/FAR-outputs/diagnostics/ramdocs_v2
+```
+
+该 bundle 内嵌完整 Round 1、Round 2、配置和逐文件指纹；无论 G-A 通过或失败
+都可冻结，但必须保持 `test_accessed=false`、`human_iaa=false`。
+
 重建 dev 错误分析：
 
 ```bash
