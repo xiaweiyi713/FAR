@@ -1357,3 +1357,23 @@ resume of the same replacement run, not a new scored attempt. The transient
 tracebacks are preserved in `/mnt/d/FAR-outputs/ramdocs_dev_v1.log` as recovery
 diagnostics; they occurred before additional samples were appended after the
 D:-cache environment was restored.
+
+## 2026-07-05: RAMDocs dev resumed after Windows/WSL restart
+
+Heartbeat inspection found that both formal tmux sessions and their processes
+had disappeared after the Windows/WSL environment restarted. The last durable
+write was `crag_style_reproduction` row 86 at 01:10 +08:00. Initial answers and
+the first five completed method outputs remained intact, no suite manifest had
+been created, and the formal worktree was still clean at `08e04c6`. The kernel
+log contained no OOM, killed-process, NVIDIA Xid, or other experiment failure;
+the formal log also contained no new traceback after the previously documented
+D:-cache recovery marker.
+
+Ollama was restarted in `far-ollama-2plus4` with its model store on D:, then the
+suite was resumed in `far-ramdocs-phase-a` from the same output directory and
+commit after sourcing `scripts/windows_gpu_env.sh`. Process inspection confirmed
+that the live Python process uses the D:-backed HuggingFace and Ollama paths.
+The pinned `qwen3.5:9b` digest is unchanged, its 24-hour residency is active,
+and the checkpoint advanced from 86 to 94 without a new error. This remains a
+checkpoint continuation of the single replacement formal run; G-A has not yet
+been evaluated and Phase B has not started.
