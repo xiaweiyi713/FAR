@@ -1810,3 +1810,16 @@ evidence bundle verified successfully, releasing the GPU.
   “工具完成、证据待执行”。脚本通过 shell 语法与 diff whitespace 检查，未运行
   模型、测试套件或任何 test 数据。23:51 +08:00 只读复核时 Round 2 已继续到
   189/350（`RAM0269`），两个服务 active、日志无错误。
+
+## 2026-07-06 — 修复 WSL 重启时的 systemd ordering cycle
+
+- Windows/WSL 于 07:47 +08:00 重启。keep-running watchdog 在登录后把 Ollama 与
+  Round 2 从同一 checkpoint 自动恢复，07:53 已继续写入 221/350，确认没有丢行；
+  systemd unit 自身 `NRestarts=0`，不是应用崩溃。
+- 启动 journal 同时报告 `default.target → far-ramdocs-round2 → far-ollama-2plus4 →
+  default.target` ordering cycle。根因是 Ollama unit 同时 `WantedBy=default.target`
+  又声明 `After=default.target`；systemd 会删除 Round 2 的初始启动 job，再依赖
+  watchdog 补救。
+- 已移除多余的 `After=default.target`，同步到远端用户 unit 并执行 daemon-reload。
+  Ollama/Round 2 主 PID 在 reload 前后保持不变，未中断当前样本；`systemd-analyze
+  --user verify` 无输出，checkpoint 随后推进至 224/350。未访问或运行任何 test。

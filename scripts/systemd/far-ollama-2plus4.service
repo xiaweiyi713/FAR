@@ -1,6 +1,5 @@
 [Unit]
 Description=FAR D-backed Ollama service for the 2+4 study
-After=default.target
 
 [Service]
 Type=simple
