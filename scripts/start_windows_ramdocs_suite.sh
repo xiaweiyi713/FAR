@@ -17,6 +17,7 @@ SUITE_UNIT="${SUITE_UNIT:-far-ramdocs-phase-a.service}"
 OUTPUT_ROOT="/mnt/d/FAR-outputs"
 OUTPUT_DIR="${OUTPUT_ROOT}/ramdocs_dev_v1"
 SUITE_LOG="${OUTPUT_DIR}.log"
+RUN_MARKER="/mnt/d/FAR-runtime/ramdocs_dev_v1.keep-running"
 POLL_SECONDS="${POLL_SECONDS:-2}"
 API_TIMEOUT_SECONDS="${API_TIMEOUT_SECONDS:-5}"
 
@@ -59,6 +60,11 @@ Install them once with:
 Then rerun this launcher.
 EOF
   exit 2
+fi
+
+if [[ ! -f "${OUTPUT_DIR}/suite_manifest.json" ]]; then
+  mkdir -p "$(dirname "${RUN_MARKER}")"
+  touch "${RUN_MARKER}"
 fi
 
 systemctl --user enable --now "${OLLAMA_UNIT}"

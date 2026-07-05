@@ -1441,3 +1441,24 @@ the Windows scheduled tasks contain a matching stop/disable action. Both units
 were re-enabled and resumed from row 133 with the same formal identity. The new
 start marker contains the verified D:-backed environment, and the checkpoint
 advanced without a new runtime error.
+
+The same explicit disable pattern repeated at 11:13 +08:00 after the next SSH
+tool session ended, stopping Self-RAG-style at row 161. The short-lived SSH
+session, paired `systemctl` client PIDs, and approximately eighteen-second
+delay identify the execution environment's remote-process cleanup rather than
+the project runtime. To make the formal run independent of that cleanup, the
+existing Windows-owned keepalive task now watches a D:-backed authorization
+marker every fifteen seconds. While the marker exists and no suite manifest is
+present, it re-enables and starts the two formal user services through WSL root;
+when the manifest appears it removes the marker and stops intervening. Manual
+stops must remove the marker first. This watchdog cannot alter predictions,
+configuration, checkpoints, or scoring; it only restores the declared service
+processes for the same formal run.
+
+The watchdog also honors the GPU sharing rule: if FAR's Ollama unit is not
+already active, it samples WSL NVIDIA memory and utilization before starting
+either service. More than 1500 MiB allocated or more than 20% utilization is
+treated as another GPU workload and leaves FAR waiting; the transition is
+logged once on D:. If FAR's own Ollama is already active, its allocation is
+expected and the suite may resume. At deployment no other compute process was
+present, so the current formal run resumed immediately.

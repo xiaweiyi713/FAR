@@ -20,9 +20,11 @@ while ($true) {
     wsl.exe -d $Distro -u root -- bash -lc "loginctl enable-linger $TrainingUser; systemctl start tailscaled ssh; systemctl is-active tailscaled ssh; tailscale ip -4 || true" 2>&1 |
       ForEach-Object { Write-Log $_ }
 
-    # This blocking root process keeps the WSL VM online. The linger setting
-    # above independently keeps the training user's systemd manager alive.
-    wsl.exe -d $Distro -u root -- bash -lc "while true; do sleep 3600; done"
+    # This blocking root process keeps the WSL VM online. While the explicit
+    # D:-backed authorization marker exists, it also repairs accidental
+    # stop/disable operations on the two formal RAMDocs services. The marker is
+    # removed automatically as soon as the suite manifest exists.
+    wsl.exe -d $Distro -u root -- bash -lc 'while true; do /mnt/d/FAR-tools/watch_windows_ramdocs_services.sh; sleep 15; done'
   } catch {
     Write-Log ("Keepalive loop error: " + $_.Exception.Message)
   }

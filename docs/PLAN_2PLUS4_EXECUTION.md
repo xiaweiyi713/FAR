@@ -56,6 +56,18 @@ journalctl --user -fu far-ramdocs-phase-a.service
 `scripts/systemd/far-tmux-server.service` 只用于其他交互式 tmux 工作；正式
 RAMDocs 进程不再依赖 tmux。
 
+启动器会创建 D: 盘授权 marker
+`/mnt/d/FAR-runtime/ramdocs_dev_v1.keep-running`。Windows 保活任务只在该
+marker 存在且 `suite_manifest.json` 尚未生成时恢复被意外 stop/disable 的
+两个正式服务。若 FAR 尚未占用 GPU，watchdog 会先检查显存与利用率；检测到
+其他任务时等待，GPU 空闲才启动。suite 完成后自动删除 marker。若需人工
+中止，必须先删除 marker，再停止服务：
+
+```bash
+rm -f /mnt/d/FAR-runtime/ramdocs_dev_v1.keep-running
+systemctl --user disable --now far-ramdocs-phase-a.service far-ollama-2plus4.service
+```
+
 运行器只向模型加载当前题目的文档。`test_inputs.jsonl` 只有
 `id/question/split`；未给 `--allow-test` 时 test 会被拒绝。
 
