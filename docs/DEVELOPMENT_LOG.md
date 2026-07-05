@@ -1589,3 +1589,17 @@ evidence bundle verified successfully, releasing the GPU.
   watchdog 或原 detached 工作树上的既有 systemd units 恢复。
 - 该修正只防止运维误操作，不改变现有 checkpoint、方法实现、配置、指标、G-A
   判据或任何 test 状态。
+
+## 2026-07-05 — 恢复 Round 2 FAR-only dev 运行
+
+- 22:52 +08:00 复核远端 GPU：VeraRAG/SelfRAG 计算进程已结束，`nvidia-smi`
+  只显示 Xwayland 图形进程；按用户“无任务则直接上进程”的指令，保持
+  `/mnt/d/FAR-workspace/FAR-2plus4` 在 detached commit `d8d5f40` 且 clean 的状态，
+  删除 `ramdocs_dev_v2.waiting-for-gpu` marker，并直接启动既有
+  `far-ollama-2plus4.service` 与 `far-ramdocs-round2.service`。
+- 22:53 +08:00 两个服务均为 active；`ollama serve`、`python -m
+  experiments.run_ramdocs ... --method far --split dev` 和 `llama-server` 均在运行，
+  GPU 显存约 7.6–7.9 GiB、利用率最高 100%。恢复时 checkpoint 仍为 105/350，
+  最后一条 `RAM0139`，尚无 `run_manifest.json` 或 `predictions.jsonl`。
+- 未切换远端工作树，未复制新脚本到旧 detached checkout，未访问或运行任何 test；
+  后续需继续监控 checkpoint 是否从 105 前进，以及是否出现 Ollama/API 错误。
