@@ -2119,3 +2119,41 @@ evidence bundle verified successfully, releasing the GPU.
 - 截至本条记录，WS2 尚未运行 calibration 或任何正式样本，未启动 GPU 模型、未生成
   family-dev prediction，也未访问或评测 held-out/test；当前检查仅为合成测试、配置静态
   校验和 dev-only input view 回归。
+
+## 2026-07-06 — WS2 在 D: 盘启动 Mistral calibration
+
+- 将已推送的 `bd57585` 通过 Git bundle 部署到 Windows D: 的全新干净工作树
+  `/mnt/d/FAR-workspace/FAR-longterm`；远端 GitHub fetch 曾卡住，安全终止后未改动冻结
+  提交。dev-only view 在 `/mnt/d/FAR-outputs/family_dev_input_v1` 验证为 60 条、无
+  train/test，dev 与 corpus SHA 均符合预注册。
+- 旧 `far-ollama-2plus4` 会被已完成分支的 watchdog 正确停止，因此另建 transient
+  `far-ollama-family-dev`，仍从 D: 的 Ollama 模型目录服务；三个 tag 的运行时 digest
+  均与预注册一致。`far-family-dev` 按 Mistral → Google → Meta 顺序运行并可从各自
+  checkpoint 恢复。
+- 首次 transient 启动命令的 shell 循环变量被提前展开为空，argparse 在加载模型前退出，
+  未写 prediction；随后改为三个显式 family 命令。当前 Mistral 两臂 5 条 calibration
+  已开始，首个样本为 `F0182`，GPU 正常占用。该运维修正不改方法、配置、digest、样本、
+  指标、G-F/G-P 或 claim level。
+
+## 2026-07-06 — 完成 WS6-0/1/2/4 首轮仓库收敛
+
+- 体积审计：`diagnostics/` 约 29 MiB，全仓 tracked 文件约 35 MiB，最大单文件约 2.1
+  MiB，均远低于约 200 MiB 迁移阈值；当前不启用 Git LFS、不迁移 GitHub Release，避免
+  无必要破坏已有 verifier 路径。
+- 将历史 `output/pdf` 两份本地 PDF 移入已忽略的 `outputs/pdf`，删除空的 legacy
+  `output/`，并在 `.gitignore` 明确忽略 `/output/`；今后临时运行统一使用 `outputs/`。
+- 新增 `docs/CONTRIBUTING.md`，制度化“新正式实验先过 G-P、新论文制品必须有独立重算
+  verifier + fail-closed 合成测试 + provenance + 复现命令”的约定。
+- 新增 `scripts/check_markdown_links.py` 与合成测试，并接入 public-diagnostic CI；本地首次
+  检查所有 tracked Markdown 交叉引用通过。维护结果写入
+  `reports/repository_maintenance.md`，不改变任何研究事实或 held-out 状态。
+
+## 2026-07-06 — WS4 主线改为 TMLR 机制与边界论文
+
+- README 和 `paper/STATUS.md` 现在明确：AAAI-27 严格档保留工具但不再投入，只有未来
+  真正获得两名独立真人标注者、独立仲裁和外部保管方才可重启；LLM jury 不替代这些角色。
+- 论文摘要、结果、限制与结论加入已冻结 WS1 数字：226 条六桶、完整检索子集 null、集合
+  F1 null、四假设均不支持，以及 34 个 typed 正增益全部位于 changed revision 路径。
+  中心叙事从“效应位于 detection”改为“revision 同时中介局部收益和更大的异质性伤害”。
+- 当前稿仍保留可编译的 AAAI 工作格式，待 WS2/WS3 结果落定后迁移正式 TMLR 模板；内容
+  主张已先完成收窄。跨家族运行未完成前，论文仍明确不声称 multi-model generality。

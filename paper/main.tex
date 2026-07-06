@@ -20,7 +20,7 @@
 \maketitle
 
 \begin{abstract}
-Retrieval-augmented language agents typically seek evidence that supports an emerging answer, while reflection remains weakly grounded in retrievable counter-evidence. We introduce Falsification-Augmented Retrieval (FAR), which decomposes an answer into dependent claims, assigns typed evidence requirements, retrieves support, refutation, and boundary evidence, and exposes a typed revision trace. We evaluate a deliberately narrow claim on a 60-item Qwen3.5 9B single-model development diagnostic drawn from a 300-item machine-audited synthetic benchmark. FAR obtains 0.797 answer correctness and 0.420 typed-conflict F1. Against an otherwise matched untyped ablation, typed control improves answer correctness by 0.078 (95\% paired bootstrap [0.034, 0.124]), typed-conflict F1 by 0.420, and revision accuracy by 0.217. Component evidence is mixed: removing refutation or boundary queries does not hurt answer correctness, and removing typed revision raises answer correctness while eliminating measured revision behavior. A visible FEVER binary transfer check shows no paired accuracy gain. We therefore claim only a machine-audited mechanism signal for typed conflict control, not human-validated gold, external blindness, or multi-model generality.
+Retrieval-augmented language agents typically seek evidence that supports an emerging answer, while reflection remains weakly grounded in retrievable counter-evidence. We introduce Falsification-Augmented Retrieval (FAR), which decomposes an answer into dependent claims, assigns typed evidence requirements, retrieves support, refutation, and boundary evidence, and exposes a typed revision trace. On a 60-item Qwen3.5 9B machine-audited development diagnostic, typed control improves answer correctness over an otherwise matched untyped ablation by 0.078 (95\% paired bootstrap [0.034, 0.124]). This signal does not transfer into an end-to-end advantage on 350 upstream-labelled RAMDocs development items in either of two preregistered rounds. A frozen, zero-model-call attribution of the 226 shared errors finds 103 cases where conflict was detected but revision remained wrong; complete retrieval and partial-credit scoring do not restore a FAR advantage. All 34 positive per-item typed deltas on the Qwen diagnostic pass through changed revisions, even though removing typed revision improves the overall mean. Typed revision therefore mediates heterogeneous benefit and harm rather than a uniformly positive correction stage. We claim a narrow, machine-audited mechanism signal and characterize its observed boundary; we do not claim human-validated gold, external blindness, or general end-to-end superiority.
 \end{abstract}
 
 \section{Introduction}
@@ -115,10 +115,31 @@ As a post-hoc label-audit sensitivity check, we stratify the same paired compari
 
 The remaining ablations contradict a stronger component-wise story. Removing refutation queries does not reduce answer correctness (0.826 versus 0.797), despite a small counter-evidence recall decrease. Removing boundary queries is also neutral on answer correctness (0.801 versus 0.797). Removing typed revision increases answer correctness to 0.873 while reducing revision accuracy and revision-action correctness to zero. Typed revision therefore provides explicit revision behavior at an answer-score cost; it is not supported as an unconditional accuracy improvement. We report these outcomes as negative or mixed evidence rather than attributing gains to all three query families or every repair stage.
 
+The registered post-stop-rule attribution sharpens this trade-off. Among the
+226 RAMDocs items missed by both FAR and Multi-Query RAG, the earliest-failure
+buckets are 4 retrieval misses, 72 undetected conflicts, 103 detected conflicts
+followed by wrong revision, 35 incomplete answer sets, and 12 overfull answer
+sets; the format-mismatch bucket is empty. On the 179 items with complete
+correct-document retrieval, FAR remains below the baseline by 0.011 (95\% CI
+$[-0.050,0.028]$). Descriptive collection F1 also changes by $-0.003$ (95\% CI
+$[-0.020,0.013]$), so strict exact match is not hiding a partial-set gain.
+Although conflict detection is lower on RAMDocs (0.449) than on the Qwen
+diagnostic (0.883), the detected subset has only a $+0.006$ paired difference
+with a confidence interval crossing zero. Accordingly, all four preregistered
+mechanism hypotheses are not supported.
+
+The component path analysis also rejects our detection-only prediction. FAR has
+34 positive continuous answer-score deltas over the untyped ablation, and every
+one occurs on a changed-revision path; none occurs after detection without a
+changed revision. Together with the higher mean obtained when typed revision is
+removed, this identifies revision as a heterogeneous mediator of both local
+benefit and larger aggregate harm. It does not identify a uniformly beneficial
+component or rescue the RAMDocs gate.
+
 On a visible 100-pair FEVER SUPPORTS/REFUTES transfer diagnostic, the heuristic and NLI detectors both obtain 0.72 accuracy. NLI raises conflict recall from 0.30 to 0.40, but the paired accuracy difference is 0 with a 95\% bootstrap interval of $[-0.05,0.05]$ and McNemar $p=1.0$. This does not validate typed FAR behavior outside the controlled benchmark.
 
 \section{Limitations and Responsible Use}
-The candidate set reuses a small controlled source corpus, includes synthetic passages, and has correlated variants. Its labels are not human-validated gold, the reported split is development data, and evaluation is not externally blind. The machine audit measures agreement with construction labels and cannot reveal errors shared by construction, the LLM signal, and deterministic rules. Results come from one local model and do not establish multi-model generality. Rule conflict detectors are high precision but incomplete; model detectors inherit calibration and domain-shift risk. Retrieval failure can hide a true counterexample, while spurious low-quality contradictions can induce over-correction. The benchmark is not current factual advice and is unsuitable for medical, legal, financial, or policy decisions. Final authors remain responsible for checking all text, citations, experiments, and AAAI disclosure requirements.
+The candidate set reuses a small controlled source corpus, includes synthetic passages, and has correlated variants. Its labels are not human-validated gold, the reported split is development data, and evaluation is not externally blind. The machine audit measures agreement with construction labels and cannot reveal errors shared by construction, the LLM signal, and deterministic rules. Current completed results come from one local model and do not yet establish multi-model generality. Rule conflict detectors are high precision but incomplete; model detectors inherit calibration and domain-shift risk. Retrieval failure can hide a true counterexample, while spurious low-quality contradictions can induce over-correction. The benchmark is not current factual advice and is unsuitable for medical, legal, financial, or policy decisions. Final authors remain responsible for checking all text, citations, experiments, and disclosure requirements.
 
 Our preregistered no-budget 2+4 profile completed only its external Phase A and
 then stopped. Round 1 on 350 RAMDocs development items with upstream labels gave
@@ -141,7 +162,7 @@ across 7--9B open-model families before replacing this single-model diagnostic
 claim.
 
 \section{Conclusion}
-FAR turns ``what could make this answer wrong?'' into a typed, retrievable control protocol. On the released machine-audited development diagnostic, typed conflict control outperforms a matched untyped alternative, while the refutation, boundary, and typed-revision ablations do not support a uniformly positive component story. The result is a narrow, reproducible mechanism signal---not human-gold, blind-test, external-domain, or multi-model evidence.
+FAR turns ``what could make this answer wrong?'' into a typed, retrievable control protocol. On the released machine-audited Qwen development diagnostic, typed conflict control outperforms a matched untyped alternative, but two preregistered RAMDocs rounds and the frozen attribution reject a general end-to-end or upstream-only explanation. Revision is the path through which all observed positive typed deltas occur and also the component whose removal raises the aggregate score. The resulting contribution is a narrow, reproducible account of revision-mediated heterogeneous effects and their observed boundary---not human-gold, blind-test, or general superiority evidence.
 
 \bibliography{references}
 \end{document}

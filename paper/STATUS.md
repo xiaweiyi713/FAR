@@ -1,7 +1,31 @@
 # Paper Status
 
-The anonymous AAAI-27 source uses the official 2027 Author Kit and now tracks
-three explicitly separate evidence profiles.
+The active paper direction is now a TMLR mechanism-and-boundary study. The
+existing anonymous AAAI-27 source is retained as a compilable working draft and
+future upgrade path, but the strict AAAI profile receives no further investment
+under the single-author/no-human-annotator constraint.
+
+## Post-stop-rule mechanism evidence
+
+The registered WS1 analysis was frozen before inspecting the 226 RAMDocs
+both-incorrect cases and then independently recomputed. G-R1 passed. The failure
+buckets are retrieval miss 4, conflict undetected 72, conflict detected but
+revision wrong 103, answer-set incomplete 35, overfull 12, and format mismatch
+0. All four preregistered explanations are not supported: complete-retrieval
+items do not restore a FAR advantage, partial-credit set F1 does not reveal a
+masked gain, the detected-conflict subset remains inconclusive, and Qwen's 34
+positive typed-versus-untyped deltas all occur on changed-revision paths rather
+than detection-without-change paths.
+
+The paper must therefore not claim that the effect resides in detection rather
+than revision. Its defensible mechanism statement is that revision mediates
+both local typed-control gains and larger heterogeneous harms. The evidence is
+machine-audited development analysis, not human gold or blind external testing.
+
+G-P estimates only 0.414 exact-McNemar power for the registered 3 x 60 family
+study at a +0.078 effect. WS2 is consequently a directional reproduction: a
+nonsignificant G-F cannot establish absence, while fewer than 2/3 positive
+families or a nonpositive combined effect narrows the claim to Qwen-specific.
 
 ## Relaxed single-author machine-audited profile
 
@@ -49,7 +73,7 @@ The relevant terminal gate for this branch is now
 `falsirag-round2-failure-readiness`, which verifies the failed-G-A evidence
 release, required disclosures, and local three-model smoke records.
 
-## Strict AAAI evidence profile
+## Strict AAAI evidence profile (retained, inactive)
 
 The strict profile remains incomplete and is not superseded by 2+4. It still requires two independent
 human annotations plus adjudication, a frozen three-model matrix, an externally
@@ -60,3 +84,7 @@ to a blind test, or one model to multi-model generality.
 The public evidence remains fingerprinted under `diagnostics/solo_v1/`.
 `falsirag-solo-release verify` rechecks all 69 files, while
 `falsirag-submission-readiness` continues to enforce the strict path.
+
+This profile is not on the active project timeline. It can be reactivated only
+if two independent human annotators, independent adjudication, and an external
+blind custodian become available; none is being simulated with LLM jury labels.
