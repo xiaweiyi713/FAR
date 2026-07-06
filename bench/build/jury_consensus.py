@@ -118,8 +118,7 @@ def _load_juror(directory: Path) -> tuple[dict[str, Any], dict[str, dict[str, An
         or identity.get("protocol_fingerprint") != PROTOCOL_ACTIVE_SHA256
         or identity.get("prompt_sha256") != PROMPT_SHA256
         or identity.get("source_packet_sha256") != manifest.get("source_packet_sha256")
-        or identity.get("source_adjudication_sha256")
-        != manifest.get("source_adjudication_sha256")
+        or identity.get("source_adjudication_sha256") != manifest.get("source_adjudication_sha256")
         or identity.get("phase_b_gate") != phase_b_gate
         or not str(identity.get("implementation_sha256", "")).strip()
         or identity.get("source_revision", {}).get("git_dirty") is not False
@@ -139,10 +138,7 @@ def _load_juror(directory: Path) -> tuple[dict[str, Any], dict[str, dict[str, An
         ):
             raise ValueError(f"{directory}: jury row identity or provenance mismatch")
         rows[sample_id] = row
-    if (
-        len(rows) != manifest.get("samples")
-        or len(rows) != manifest.get("expected_samples")
-    ):
+    if len(rows) != manifest.get("samples") or len(rows) != manifest.get("expected_samples"):
         raise ValueError(f"{directory}: jury annotation rows are incomplete")
     fallbacks = sum(_is_fallback(row) for row in rows.values())
     if fallbacks != manifest.get("fallbacks"):
@@ -205,14 +201,10 @@ def build_jury_consensus(
     source_packets = {str(item.get("source_packet_sha256")) for item in manifests}
     if len(source_packets) != 1:
         raise ValueError("jury sources do not share one frozen packet")
-    source_adjudications = {
-        str(item.get("source_adjudication_sha256", "")) for item in manifests
-    }
+    source_adjudications = {str(item.get("source_adjudication_sha256", "")) for item in manifests}
     if len(source_adjudications) != 1 or not next(iter(source_adjudications)):
         raise ValueError("jury sources do not share one frozen blind-row file")
-    phase_b_gates = {
-        json.dumps(item.get("phase_b_gate"), sort_keys=True) for item in manifests
-    }
+    phase_b_gates = {json.dumps(item.get("phase_b_gate"), sort_keys=True) for item in manifests}
     if len(phase_b_gates) != 1 or not next(iter(phase_b_gates)):
         raise ValueError("jury sources do not share one verified Phase B authorization")
     source_phase_b_gate = json.loads(next(iter(phase_b_gates)))

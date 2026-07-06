@@ -79,9 +79,7 @@ def audit(
         errors.append(str(exc))
         checks["active_protocol_frozen"] = False
 
-    smoke_audit = verify_smoke_records(
-        model_smoke_dir or ROOT / "diagnostics/model_smoke_2plus4"
-    )
+    smoke_audit = verify_smoke_records(model_smoke_dir or ROOT / "diagnostics/model_smoke_2plus4")
     checks["local_model_smokes_valid"] = smoke_audit.get("valid") is True
     errors.extend(f"model smoke: {item}" for item in smoke_audit.get("errors", []))
 
@@ -148,8 +146,7 @@ def audit(
     if not checks["gate_k_jury_passed"]:
         errors.append("G-K jury agreement gate has not passed without fallbacks")
     checks["jury_bound_to_verified_gate_a"] = (
-        verified_phase_b_gate is not None
-        and consensus.get("phase_b_gate") == verified_phase_b_gate
+        verified_phase_b_gate is not None and consensus.get("phase_b_gate") == verified_phase_b_gate
     )
     if not checks["jury_bound_to_verified_gate_a"]:
         errors.append("jury evidence is not bound to the verified RAMDocs G-A authorization")
@@ -199,9 +196,7 @@ def audit(
 
     sensitivity = _safe_json(sensitivity_report, errors, "label sensitivity")
     sensitivity_methods = {
-        str(row.get("method", ""))
-        for row in sensitivity.get("rows", [])
-        if isinstance(row, dict)
+        str(row.get("method", "")) for row in sensitivity.get("rows", []) if isinstance(row, dict)
     }
     jury_rescore_manifest = sensitivity_report.parent / "jury_gold/matrix_family_manifest.json"
     unanimous_rescore_manifest = (
@@ -221,8 +216,7 @@ def audit(
         and isinstance(unanimous_dev_samples, int)
         and 0 < unanimous_dev_samples <= 60
         and jury_rescore_manifest.is_file()
-        and sensitivity.get("jury_rescore_manifest_sha256")
-        == sha256_file(jury_rescore_manifest)
+        and sensitivity.get("jury_rescore_manifest_sha256") == sha256_file(jury_rescore_manifest)
         and unanimous_rescore_manifest.is_file()
         and sensitivity.get("unanimous_rescore_manifest_sha256")
         == sha256_file(unanimous_rescore_manifest)
@@ -257,28 +251,25 @@ def audit(
         sensitivity.get("label_granularity"),
         matrix.get("label_granularity"),
     }
-    checks["jury_label_granularity_consistent"] = (
-        len(label_granularities) == 1
-        and next(iter(label_granularities), None) in {"six_class", "binary"}
-    )
+    checks["jury_label_granularity_consistent"] = len(label_granularities) == 1 and next(
+        iter(label_granularities), None
+    ) in {"six_class", "binary"}
     if checks["jury_label_granularity_consistent"]:
         granularity = next(iter(label_granularities))
-        expected_metric = (
-            "conflict_presence_f1" if granularity == "binary" else "typed_conflict_f1"
-        )
-        checks["jury_conflict_metric_matches_granularity"] = (
-            matrix.get("conflict_metric") == expected_metric
-            and expected_metric in sensitivity.get("metrics", [])
-        )
+        expected_metric = "conflict_presence_f1" if granularity == "binary" else "typed_conflict_f1"
+        checks["jury_conflict_metric_matches_granularity"] = matrix.get(
+            "conflict_metric"
+        ) == expected_metric and expected_metric in sensitivity.get("metrics", [])
     else:
         checks["jury_conflict_metric_matches_granularity"] = False
         errors.append(
             "jury consensus, labels, sensitivity, and matrix label-granularity chain "
             "is incomplete or inconsistent"
         )
-    if checks["jury_label_granularity_consistent"] and not checks[
-        "jury_conflict_metric_matches_granularity"
-    ]:
+    if (
+        checks["jury_label_granularity_consistent"]
+        and not checks["jury_conflict_metric_matches_granularity"]
+    ):
         errors.append("jury conflict metric does not match the active label granularity")
 
     for target, path, score_path, expected_samples in (
@@ -294,15 +285,19 @@ def audit(
             score.get("split") == "test"
             and score.get("samples") == expected_samples
             and (
-                target == "falsirag"
-                and score.get("schema_version") == "far-jury-family-rescore-v1"
-                and score.get("jury_gold") is True
-                and score.get("publication_gold") is False
-                and score.get("human_iaa") is False
-                or target == "ramdocs"
-                and score.get("schema_version") == "far-ramdocs-suite-v1"
-                and score.get("publication_gold") is False
-                and score.get("externally_held_blind") is False
+                (
+                    target == "falsirag"
+                    and score.get("schema_version") == "far-jury-family-rescore-v1"
+                    and score.get("jury_gold") is True
+                    and score.get("publication_gold") is False
+                    and score.get("human_iaa") is False
+                )
+                or (
+                    target == "ramdocs"
+                    and score.get("schema_version") == "far-ramdocs-suite-v1"
+                    and score.get("publication_gold") is False
+                    and score.get("externally_held_blind") is False
+                )
             )
         )
         passed = (

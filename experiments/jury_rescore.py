@@ -70,13 +70,9 @@ def _overlay_benchmark(data_dir: Path, labels_dir: Path, output_path: Path) -> l
         or phase_b_gate.get("samples") != 350
     ):
         raise ValueError("jury labels are not bound to a verified G-A authorization")
-    if schema == "far-jury-labels-v1" and labels_manifest.get(
-        "excluded_disputed_samples"
-    ) != []:
+    if schema == "far-jury-labels-v1" and labels_manifest.get("excluded_disputed_samples") != []:
         raise ValueError("full jury gold must not exclude disputed samples")
-    if schema == "far-jury-label-view-v1" and labels_manifest.get(
-        "label_view"
-    ) != "unanimous_only":
+    if schema == "far-jury-label-view-v1" and labels_manifest.get("label_view") != "unanimous_only":
         raise ValueError("jury label view must be the unanimous-only sensitivity view")
     labels_path = labels_dir / str(labels_manifest["labels_file"])
     if sha256_file(labels_path) != labels_manifest.get("labels_sha256"):

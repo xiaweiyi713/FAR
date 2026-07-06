@@ -448,10 +448,7 @@ def verify_jury_release(bundle_dir: Path, data_dir: Path) -> dict[str, Any]:
                 )
                 tracked = json.loads(
                     (
-                        bundle_dir
-                        / "model_families"
-                        / family
-                        / "matrix_family_manifest.json"
+                        bundle_dir / "model_families" / family / "matrix_family_manifest.json"
                     ).read_text(encoding="utf-8")
                 )
                 if rebuilt != tracked:
@@ -499,9 +496,7 @@ def verify_jury_release(bundle_dir: Path, data_dir: Path) -> dict[str, Any]:
         errors.append("jury release mixes incompatible label granularities")
     else:
         expected_metric = (
-            "conflict_presence_f1"
-            if next(iter(granularities)) == "binary"
-            else "typed_conflict_f1"
+            "conflict_presence_f1" if next(iter(granularities)) == "binary" else "typed_conflict_f1"
         )
         metric_mismatch = matrix.get("conflict_metric") != expected_metric
         sensitivity_mismatch = expected_metric not in sensitivity.get("metrics", [])

@@ -43,9 +43,7 @@ def find_broken_links(paths: list[Path], *, root: Path = ROOT) -> list[str]:
                     else markdown.parent / target
                 ).resolve()
                 if not candidate.exists():
-                    errors.append(
-                        f"{markdown.relative_to(root)}:{line_number}: missing {target}"
-                    )
+                    errors.append(f"{markdown.relative_to(root)}:{line_number}: missing {target}")
     return errors
 
 

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 
 from experiments.power import (
@@ -56,7 +58,7 @@ def test_stratified_power_reports_all_registered_views() -> None:
     assert 0.0 <= result["at_least_two_thirds_positive_probability"] <= 1.0
 
 
-def test_power_verifier_fails_closed_without_release(tmp_path) -> None:
+def test_power_verifier_fails_closed_without_release(tmp_path: Path) -> None:
     audit = verify_release(tmp_path / "missing", tmp_path / "missing.md")
     assert audit["valid"] is False
     assert audit["gate_p_completed"] is False

@@ -106,8 +106,7 @@ def build_round1(
         raise ValueError("G-K must pass before author adjudication")
     _, blind_rows, blind_rows_sha256 = _blind_sources(packet_dir)
     if (
-        report.get("source_packet_sha256")
-        != sha256_file(packet_dir / "packet_manifest.json")
+        report.get("source_packet_sha256") != sha256_file(packet_dir / "packet_manifest.json")
         or report.get("source_adjudication_sha256") != blind_rows_sha256
     ):
         raise ValueError("author adjudication packet differs from the jury packet")
@@ -389,15 +388,13 @@ def compile_jury_labels(
     adjudication_manifest = json.loads(adjudication_manifest_path.read_text(encoding="utf-8"))
     if any(
         (
-            adjudication_manifest.get("schema_version")
-            != "far-jury-author-adjudication-v1",
+            adjudication_manifest.get("schema_version") != "far-jury-author-adjudication-v1",
             adjudication_manifest.get("protocol_fingerprint") != PROTOCOL_ACTIVE_SHA256,
             adjudication_manifest.get("source_consensus_sha256")
             != sha256_file(consensus_dir / "jury_consensus_report.json"),
             adjudication_manifest.get("source_consensus_rows_sha256")
             != report.get("jury_consensus_rows_sha256"),
-            adjudication_manifest.get("source_packet_sha256")
-            != report.get("source_packet_sha256"),
+            adjudication_manifest.get("source_packet_sha256") != report.get("source_packet_sha256"),
             adjudication_manifest.get("source_adjudication_sha256")
             != report.get("source_adjudication_sha256"),
             adjudication_manifest.get("round1_seed") != ROUND1_SEED,
@@ -441,13 +438,10 @@ def compile_jury_labels(
     if sha256_file(round1_packet) != adjudication_manifest.get("round1_packet_sha256"):
         raise ValueError("round1 adjudication packet fingerprint mismatch")
     round1_packet_rows = read_jsonl(round1_packet)
-    round1_packet_by_id = {
-        str(row["sample_id"]): row for row in round1_packet_rows
-    }
-    if (
-        len(round1_packet_by_id) != len(round1_packet_rows)
-        or len(round1_packet_by_id) != adjudication_manifest.get("samples")
-    ):
+    round1_packet_by_id = {str(row["sample_id"]): row for row in round1_packet_rows}
+    if len(round1_packet_by_id) != len(round1_packet_rows) or len(
+        round1_packet_by_id
+    ) != adjudication_manifest.get("samples"):
         raise ValueError("round1 adjudication packet is duplicate or incomplete")
     round1_path = adjudication_dir / str(freeze["completed_file"])
     if sha256_file(round1_path) != freeze.get("completed_sha256"):
@@ -509,8 +503,7 @@ def compile_jury_labels(
     )
     if any(
         (
-            repeat_manifest.get("schema_version")
-            != "far-jury-author-round2-packet-v1",
+            repeat_manifest.get("schema_version") != "far-jury-author-round2-packet-v1",
             repeat_manifest.get("protocol_fingerprint") != PROTOCOL_ACTIVE_SHA256,
             repeat_manifest.get("source_round1_sha256") != freeze.get("completed_sha256"),
             repeat_manifest.get("stratified_fraction") != 0.20,
@@ -548,9 +541,7 @@ def compile_jury_labels(
     if repeat_packet_ids != expected_repeat:
         raise ValueError("round2 adjudication packet is not the deterministic stratified sample")
     loaded_jurors = [_load_juror_rows(directory) for directory in juror_dirs]
-    jurors = {
-        str(manifest["juror_id"]): rows for manifest, rows in loaded_jurors
-    }
+    jurors = {str(manifest["juror_id"]): rows for manifest, rows in loaded_jurors}
     expected_jurors = {str(item["juror_id"]): item for item in report["jurors"]}
     if len(jurors) != len(loaded_jurors) or set(jurors) != set(expected_jurors):
         raise ValueError("juror sources do not match consensus report")

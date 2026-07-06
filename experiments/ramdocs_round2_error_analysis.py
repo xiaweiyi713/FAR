@@ -144,7 +144,9 @@ def build_analysis(
             },
             "wrong_answer_count": {
                 key: {outcome: value.get(outcome, 0) for outcome in outcome_order}
-                for key, value in sorted(wrong_count_outcomes.items(), key=lambda item: int(item[0]))
+                for key, value in sorted(
+                    wrong_count_outcomes.items(), key=lambda item: int(item[0])
+                )
             },
         },
         "source_fingerprints": {

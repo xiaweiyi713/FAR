@@ -45,11 +45,7 @@ def _binomial_probability(n: int, successes: int, probability: float) -> float:
         return float(successes == 0)
     if probability == 1.0:
         return float(successes == n)
-    return (
-        math.comb(n, successes)
-        * probability**successes
-        * (1.0 - probability) ** (n - successes)
-    )
+    return math.comb(n, successes) * probability**successes * (1.0 - probability) ** (n - successes)
 
 
 def exact_mcnemar_power(
@@ -162,8 +158,7 @@ def simulate_mcnemar_power(
             effect,
         )
         rejected += (
-            candidate_only > baseline_only
-            and _mcnemar_p(baseline_only, candidate_only) < alpha
+            candidate_only > baseline_only and _mcnemar_p(baseline_only, candidate_only) < alpha
         )
     return {
         "method": "paired-mcnemar-monte-carlo-v1",
@@ -202,9 +197,7 @@ def _family_cluster_interval(
     estimates: list[float] = []
     for _ in range(resamples):
         sampled = [rng.choice(summaries) for _ in summaries]
-        estimates.append(
-            sum(total for total, _ in sampled) / sum(size for _, size in sampled)
-        )
+        estimates.append(sum(total for total, _ in sampled) / sum(size for _, size in sampled))
     alpha = (1.0 - confidence) / 2.0
     return _percentile(estimates, alpha), _percentile(estimates, 1.0 - alpha)
 
@@ -350,9 +343,7 @@ def compute_retrospective(
             "mde_60": minimum_detectable_effect(n, discordance, target_power=0.60),
             "mde_80": minimum_detectable_effect(n, discordance, target_power=0.80),
             "power_for_0_03": (
-                exact_mcnemar_power(n, discordance, 0.03)
-                if discordance >= 0.03
-                else None
+                exact_mcnemar_power(n, discordance, 0.03) if discordance >= 0.03 else None
             ),
             "power_for_0_078": (
                 exact_mcnemar_power(n, discordance, TARGET_EFFECT)
@@ -362,8 +353,7 @@ def compute_retrospective(
         }
     qwen_discordance = float(historical["qwen_dev"]["discordance_rate"])
     family_designs = [
-        {"n": 60, "discordance_rate": qwen_discordance, "effect": TARGET_EFFECT}
-        for _ in range(3)
+        {"n": 60, "discordance_rate": qwen_discordance, "effect": TARGET_EFFECT} for _ in range(3)
     ]
     ws2 = simulate_stratified_power(
         family_designs,

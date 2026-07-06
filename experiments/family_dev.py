@@ -307,11 +307,7 @@ def compute_result(output_root: Path) -> dict[str, Any]:
         )
         untyped_report = json.loads(
             (
-                output_root
-                / "evaluations"
-                / family
-                / "minus_typed_conflict"
-                / "report.json"
+                output_root / "evaluations" / family / "minus_typed_conflict" / "report.json"
             ).read_text(encoding="utf-8")
         )
         family_rows.append(

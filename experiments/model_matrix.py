@@ -62,12 +62,8 @@ def _suite_row(family: str, suite_dir: Path) -> dict[str, Any]:
             encoding="utf-8"
         )
     )
-    untyped_report_path = (
-        suite_dir / "minus_typed_conflict" / "evaluation" / "report.json"
-    )
-    if suite.get("reports", {}).get("minus_typed_conflict") != sha256_file(
-        untyped_report_path
-    ):
+    untyped_report_path = suite_dir / "minus_typed_conflict" / "evaluation" / "report.json"
+    if suite.get("reports", {}).get("minus_typed_conflict") != sha256_file(untyped_report_path):
         raise ValueError(f"{family}: untyped rescore report fingerprint mismatch")
     comparison = untyped_report.get("comparison")
     if not isinstance(comparison, dict):
@@ -82,9 +78,7 @@ def _suite_row(family: str, suite_dir: Path) -> dict[str, Any]:
     )
     conflict = metrics[conflict_metric]
     far_predictions = suite_dir / "far" / "predictions.jsonl"
-    if suite.get("rescored_prediction_sha256", {}).get("far") != sha256_file(
-        far_predictions
-    ):
+    if suite.get("rescored_prediction_sha256", {}).get("far") != sha256_file(far_predictions):
         raise ValueError(f"{family}: rescored FAR prediction fingerprint mismatch")
     fallback = _fallback_rate(far_predictions)
     if fallback != suite.get("structured_fallback"):

@@ -61,9 +61,7 @@ def _group_summary(
         return {"samples": 0}
     prediction_rows = [_prediction_summary(predictions[sample_id]) for sample_id in sample_ids]
     score_rows = [scores[sample_id] for sample_id in sample_ids]
-    failures = Counter(
-        reason for score in score_rows for reason in _failure_reasons(score)
-    )
+    failures = Counter(reason for score in score_rows for reason in _failure_reasons(score))
     return {
         "samples": len(sample_ids),
         "exact_match": mean(float(row["ramdocs_exact_match"]) for row in score_rows),
@@ -159,9 +157,7 @@ def build_analysis(
     cases_path = output_dir / "discordant_cases.jsonl"
     write_jsonl(cases_path, cases)
     comparison = json.loads(
-        (suite_dir / f"comparisons/far_vs_{baseline_method}.json").read_text(
-            encoding="utf-8"
-        )
+        (suite_dir / f"comparisons/far_vs_{baseline_method}.json").read_text(encoding="utf-8")
     )
     outcome_order = ("both_correct", "far_only", "baseline_only", "both_incorrect")
     report = {

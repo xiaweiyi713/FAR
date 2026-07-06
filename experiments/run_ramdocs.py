@@ -203,11 +203,14 @@ def _far_prediction(
             f"[{item.evidence_id}] {item.title}: {item.text[:max_document_chars]}"
             for item in documents
         )
-        trace_context = "\n".join(
-            f"- {item.claim_id}: action={item.action.value}; before={item.before}; "
-            f"after={item.after}; conflicts={','.join(kind.value for kind in item.conflict_types) or 'none'}"
-            for item in result.revision_trace
-        )
+        trace_lines = []
+        for item in result.revision_trace:
+            conflict_names = ",".join(kind.value for kind in item.conflict_types) or "none"
+            trace_lines.append(
+                f"- {item.claim_id}: action={item.action.value}; before={item.before}; "
+                f"after={item.after}; conflicts={conflict_names}"
+            )
+        trace_context = "\n".join(trace_lines)
         prompt = (
             f"Question: {question}\n"
             f"Initial answer: {initial_answer}\n"

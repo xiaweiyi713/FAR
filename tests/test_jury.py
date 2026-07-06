@@ -296,8 +296,7 @@ def test_jury_binary_fallback_changes_active_votes_and_joint_majority(tmp_path: 
     assert report["gate_k_binary_fallback_passed"] is True
     assert report["active_label_granularity"] == "binary"
     rows = [
-        json.loads(line)
-        for line in (output / "jury_consensus_rows.jsonl").read_text().splitlines()
+        json.loads(line) for line in (output / "jury_consensus_rows.jsonl").read_text().splitlines()
     ]
     assert {row["majority_label"] for row in rows} == {"conflict"}
     assert {tuple(row["joint_majority_fields"]) for row in rows} == {

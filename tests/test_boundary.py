@@ -72,10 +72,7 @@ def test_holm_adjustment_is_monotone_in_sorted_p_values() -> None:
 
 
 def test_calibration_selection_covers_strata() -> None:
-    rows = [
-        {"id": f"D{index}", "strata": {"group": str(index % 3)}}
-        for index in range(12)
-    ]
+    rows = [{"id": f"D{index}", "strata": {"group": str(index % 3)}} for index in range(12)]
     selected = _calibration_rows(rows)
     assert len(selected) == 5
     assert {row["strata"]["group"] for row in selected} == {"0", "1", "2"}

@@ -12,7 +12,6 @@ from eval.ramdocs import compare_ramdocs, evaluate_ramdocs
 from experiments.protocol_2plus4 import PROTOCOL_PHASE_A_SHA256, verify_active_protocol
 from experiments.ramdocs_suite import verify_suite
 
-
 SCHEMA_VERSION = "far-ramdocs-method-iteration-v1"
 
 
@@ -130,12 +129,18 @@ def verify_round(
         candidate_run = _load(round2_dir / "runs" / "far" / "run_manifest.json")
         candidate_identity = _load(round2_dir / "runs" / "far" / "run_identity.json")
         candidate_report = _load(round2_dir / "evaluations" / "far" / "report.json")
-        comparison_path = round2_dir / "comparisons" / (
-            f"far_vs_{manifest['reused_round1_artifacts']['baseline_method']}.json"
+        comparison_path = (
+            round2_dir
+            / "comparisons"
+            / (f"far_vs_{manifest['reused_round1_artifacts']['baseline_method']}.json")
         )
         comparison = _load(comparison_path)
     except (FileNotFoundError, json.JSONDecodeError, KeyError, TypeError, ValueError) as exc:
-        return {"schema_version": "far-ramdocs-method-iteration-audit-v1", "valid": False, "errors": [str(exc)]}
+        return {
+            "schema_version": "far-ramdocs-method-iteration-audit-v1",
+            "valid": False,
+            "errors": [str(exc)],
+        }
 
     if round1_audit.get("valid") is not True:
         errors.append("Round 1 suite is invalid")
@@ -155,7 +160,10 @@ def verify_round(
             errors.append(f"manifest field mismatch: {key}")
     if candidate_run.get("status") != "complete" or candidate_run.get("completed") != 350:
         errors.append("candidate FAR run is incomplete")
-    if candidate_run.get("partial") is not False or candidate_run.get("gold_loaded_by_runner") is not False:
+    if (
+        candidate_run.get("partial") is not False
+        or candidate_run.get("gold_loaded_by_runner") is not False
+    ):
         errors.append("candidate FAR run is partial or not gold-free")
     if candidate_identity.get("source_revision", {}).get("git_dirty") is not False:
         errors.append("candidate FAR source revision is dirty")
@@ -173,7 +181,9 @@ def verify_round(
         errors.append("candidate corpus fingerprint mismatch")
     baseline = manifest.get("reused_round1_artifacts", {}).get("baseline_method")
     baseline_scores = round1_dir / "evaluations" / str(baseline) / "scores.jsonl"
-    if manifest.get("reused_round1_artifacts", {}).get("baseline_scores_sha256") != sha256_file(baseline_scores):
+    if manifest.get("reused_round1_artifacts", {}).get("baseline_scores_sha256") != sha256_file(
+        baseline_scores
+    ):
         errors.append("frozen baseline score fingerprint mismatch")
     artifact_paths = {
         "config_sha256": config_path,

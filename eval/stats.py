@@ -174,11 +174,7 @@ def stratified_conflict_presence_f1_ci(
     rng = random.Random(seed)
     estimates = [
         _conflict_presence_f1(
-            [
-                rng.choice(values)
-                for _, values in sorted(strata.items())
-                for _ in range(len(values))
-            ]
+            [rng.choice(values) for _, values in sorted(strata.items()) for _ in range(len(values))]
         )
         for _ in range(resamples)
     ]
@@ -234,8 +230,7 @@ def paired_conflict_presence_f1_comparison(
         "lower": _percentile(differences, alpha),
         "upper": _percentile(differences, 1.0 - alpha),
         "higher_is_better": True,
-        "probability_candidate_better": sum(value > 0 for value in differences)
-        / len(differences),
+        "probability_candidate_better": sum(value > 0 for value in differences) / len(differences),
         "confidence": confidence,
         "resamples": resamples,
         "seed": seed,

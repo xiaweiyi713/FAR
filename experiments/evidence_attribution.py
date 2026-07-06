@@ -71,9 +71,11 @@ def verify_bundle(
             "human_iaa": False,
             "test_accessed": False,
         }
-    actual_files = {
-        path.name for path in bundle_dir.iterdir() if path.is_file()
-    } if bundle_dir.is_dir() else set()
+    actual_files = (
+        {path.name for path in bundle_dir.iterdir() if path.is_file()}
+        if bundle_dir.is_dir()
+        else set()
+    )
     if actual_files != RELEASE_FILES:
         errors.append("WS1 release file set is not exact")
     expected_fields = {
@@ -127,14 +129,11 @@ def verify_bundle(
         if manifest.get("bucket_counts") != bucket_counts:
             errors.append("failure bucket counts differ from deterministic recomputation")
         statuses = {
-            key: recomputed["hypotheses"]["hypotheses"][key]["status"]
-            for key in HYPOTHESIS_IDS
+            key: recomputed["hypotheses"]["hypotheses"][key]["status"] for key in HYPOTHESIS_IDS
         }
         if manifest.get("hypothesis_statuses") != statuses:
             errors.append("hypothesis statuses differ from deterministic recomputation")
-        if manifest.get("source_fingerprints") != dict(
-            sorted(recomputed["source_files"].items())
-        ):
+        if manifest.get("source_fingerprints") != dict(sorted(recomputed["source_files"].items())):
             errors.append("source fingerprints differ from deterministic recomputation")
         with tempfile.TemporaryDirectory(prefix="far-ws1-verify-") as temporary:
             recomputed_dir = Path(temporary) / "bundle"
@@ -170,10 +169,7 @@ def verify_bundle(
         if set(observed_hypotheses) != set(HYPOTHESIS_IDS):
             errors.append("G-R1 does not report all four preregistered hypotheses")
         allowed_statuses = {"supported", "not_supported", "indeterminate"}
-        if any(
-            row.get("status") not in allowed_statuses
-            for row in observed_hypotheses.values()
-        ):
+        if any(row.get("status") not in allowed_statuses for row in observed_hypotheses.values()):
             errors.append("G-R1 contains an invalid hypothesis status")
     except (FileNotFoundError, json.JSONDecodeError, KeyError, TypeError, ValueError) as exc:
         errors.append(str(exc))
@@ -208,9 +204,7 @@ def _add_common(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--machine-rows",
         type=Path,
-        default=Path(
-            "diagnostics/solo_v1/machine_annotation/machine_consensus_rows.jsonl"
-        ),
+        default=Path("diagnostics/solo_v1/machine_annotation/machine_consensus_rows.jsonl"),
     )
     parser.add_argument("--bundle-dir", type=Path, default=Path("diagnostics/attribution_v1"))
     parser.add_argument("--report", type=Path, default=Path("reports/mechanism_attribution.md"))

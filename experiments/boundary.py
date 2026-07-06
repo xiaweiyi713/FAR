@@ -207,8 +207,7 @@ def _require_boundary_order(
     ]
     if missing:
         raise ValueError(
-            f"{dataset} formal run cannot start before calibration completes: "
-            f"{', '.join(missing)}"
+            f"{dataset} formal run cannot start before calibration completes: {', '.join(missing)}"
         )
 
 
@@ -279,8 +278,7 @@ def run_method(
             }
         )
         print(
-            f"{dataset}/{method}: completed {sample_id} in "
-            f"{time.perf_counter() - started:.2f}s",
+            f"{dataset}/{method}: completed {sample_id} in {time.perf_counter() - started:.2f}s",
             flush=True,
         )
     return writer.finalize(
@@ -385,11 +383,7 @@ def _paired_result(
 ) -> tuple[dict[str, Any], dict[str, dict[str, Any]]]:
     typed = read_jsonl(output_root / "evaluations" / dataset / "far" / "scores.jsonl")
     untyped = read_jsonl(
-        output_root
-        / "evaluations"
-        / dataset
-        / "far_minus_typed_conflict"
-        / "scores.jsonl"
+        output_root / "evaluations" / dataset / "far_minus_typed_conflict" / "scores.jsonl"
     )
     comparison = paired_bootstrap_comparison(
         untyped,
@@ -448,16 +442,11 @@ def compute_boundary_result(output_root: Path) -> dict[str, Any]:
         untyped = {
             str(row["sample_id"]): row
             for row in read_jsonl(
-                output_root
-                / "evaluations"
-                / dataset
-                / "far_minus_typed_conflict"
-                / "scores.jsonl"
+                output_root / "evaluations" / dataset / "far_minus_typed_conflict" / "scores.jsonl"
             )
         }
         deltas = [
-            float(row["boundary_score"])
-            - float(untyped[str(row["sample_id"])]["boundary_score"])
+            float(row["boundary_score"]) - float(untyped[str(row["sample_id"])]["boundary_score"])
             for row in typed
             if predicate(row["strata"])
         ]
@@ -465,22 +454,18 @@ def compute_boundary_result(output_root: Path) -> dict[str, Any]:
             raise ValueError("boundary hypothesis subgroup is empty")
         return mean(deltas)
 
-    wiki_explicit = subgroup(
-        "wikicontradict", lambda row: str(row["reasoning"]) == "Explicit"
-    )
+    wiki_explicit = subgroup("wikicontradict", lambda row: str(row["reasoning"]) == "Explicit")
     wiki_implicit = subgroup(
         "wikicontradict",
         lambda row: str(row["reasoning"]) == "Implicit (reasoning required)",
     )
     google_outdated = subgroup(
         "rag_conflicts",
-        lambda row: str(row["upstream_conflict_type"])
-        == "Conflict due to outdated information",
+        lambda row: str(row["upstream_conflict_type"]) == "Conflict due to outdated information",
     )
     google_misinfo = subgroup(
         "rag_conflicts",
-        lambda row: str(row["upstream_conflict_type"])
-        == "Conflict due to misinformation",
+        lambda row: str(row["upstream_conflict_type"]) == "Conflict due to misinformation",
     )
     google_safe = subgroup(
         "rag_conflicts",

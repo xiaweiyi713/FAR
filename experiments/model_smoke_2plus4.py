@@ -12,7 +12,6 @@ from typing import Any
 from bench.build.common import sha256_file
 from experiments.protocol_2plus4 import PROTOCOL_ACTIVE_SHA256, verify_active_protocol
 
-
 ROOT = Path(__file__).resolve().parents[1]
 MODEL_SPECS = {
     "mistral": ("mistral:7b-instruct", "experiments/configs/mistral_open.yaml"),
@@ -37,9 +36,11 @@ def verify_smoke_records(output_dir: Path) -> dict[str, Any]:
         errors.append(str(exc))
 
     expected_files = {f"{family}.json" for family in MODEL_SPECS}
-    actual_files = {
-        path.name for path in output_dir.iterdir() if path.is_file() and path.suffix == ".json"
-    } if output_dir.is_dir() else set()
+    actual_files = (
+        {path.name for path in output_dir.iterdir() if path.is_file() and path.suffix == ".json"}
+        if output_dir.is_dir()
+        else set()
+    )
     if actual_files != expected_files:
         errors.append("model smoke file set must be exactly mistral/google/meta JSON records")
 

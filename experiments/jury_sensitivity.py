@@ -80,11 +80,9 @@ def build_sensitivity(
         raise ValueError("jury label fingerprint mismatch")
     labels = read_jsonl(labels_path)
     consensus_report, consensus_rows = _consensus(consensus_dir)
-    if (
-        consensus_report.get("gate_k_passed") is not True
-        or labels_manifest.get("consensus_report_sha256")
-        != sha256_file(consensus_dir / "jury_consensus_report.json")
-    ):
+    if consensus_report.get("gate_k_passed") is not True or labels_manifest.get(
+        "consensus_report_sha256"
+    ) != sha256_file(consensus_dir / "jury_consensus_report.json"):
         raise ValueError("jury labels do not bind the passing consensus report")
     if consensus_report.get("active_label_granularity") != label_granularity:
         raise ValueError("jury labels and consensus disagree on label granularity")
@@ -92,9 +90,7 @@ def build_sensitivity(
     if sha256_file(consensus_path) != consensus_report.get("jury_consensus_rows_sha256"):
         raise ValueError("jury consensus rows fingerprint mismatch")
     unanimous_ids = {
-        sample_id
-        for sample_id, row in consensus_rows.items()
-        if row["disposition"] == "unanimous"
+        sample_id for sample_id, row in consensus_rows.items() if row["disposition"] == "unanimous"
     }
     unanimous_rows = [row for row in labels if str(row["sample_id"]) in unanimous_ids]
     if not unanimous_rows:

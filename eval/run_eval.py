@@ -196,10 +196,8 @@ def evaluate(
         for metric in ROW_METRICS
         if any(row.get(metric) is not None for row in scores)
     }
-    dependency_intervals["conflict_presence_f1"] = (
-        dependency_cluster_conflict_presence_f1_ci(
-            scores, resamples=resamples, seed=seed
-        )
+    dependency_intervals["conflict_presence_f1"] = dependency_cluster_conflict_presence_f1_ci(
+        scores, resamples=resamples, seed=seed
     )
     if any(row.get("typed_conflict_correct") is not None for row in scores):
         dependency_intervals["typed_conflict_f1"] = dependency_cluster_typed_conflict_f1_ci(

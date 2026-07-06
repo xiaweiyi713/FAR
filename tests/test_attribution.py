@@ -142,8 +142,7 @@ def test_component_attribution_freezes_flip_and_gain_paths() -> None:
             for sample_id in sample_ids
         }
         predictions[method] = {
-            sample_id: _prediction(conflicts=("entity",), changed=False)
-            for sample_id in sample_ids
+            sample_id: _prediction(conflicts=("entity",), changed=False) for sample_id in sample_ids
         }
     predictions["far"]["D6"] = _prediction(conflicts=("entity",), changed=True)
     dispositions = {
@@ -157,9 +156,7 @@ def test_component_attribution_freezes_flip_and_gain_paths() -> None:
         "changed_revision": 1,
         "other": 0,
     }
-    assert result["flip_matrix"]["minus_typed_conflict"]["binary_flips"] == {
-        "far_only": 6
-    }
+    assert result["flip_matrix"]["minus_typed_conflict"]["binary_flips"] == {"far_only": 6}
 
 
 def test_component_attribution_rejects_misaligned_inputs() -> None:

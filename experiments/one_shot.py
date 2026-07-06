@@ -42,8 +42,7 @@ def _pretest_evidence(
     ):
         raise ValueError("G-A must pass on the complete RAMDocs dev split before test intent")
     if ramdocs.get("schema_version") == "far-ramdocs-method-iteration-v1" and (
-        ramdocs.get("phase_b_authorized") is not True
-        or ramdocs.get("test_accessed") is not False
+        ramdocs.get("phase_b_authorized") is not True or ramdocs.get("test_accessed") is not False
     ):
         raise ValueError("RAMDocs Round 2 does not authorize Phase B/test progression")
 
@@ -74,8 +73,7 @@ def _pretest_evidence(
         sensitivity.get("schema_version") != "far-jury-label-sensitivity-v1"
         or sensitivity.get("protocol_fingerprint") != PROTOCOL_ACTIVE_SHA256
         or sensitivity.get("family") != "qwen"
-        or set(sensitivity.get("views", {}))
-        != {"construction", "jury_gold", "unanimous_only"}
+        or set(sensitivity.get("views", {})) != {"construction", "jury_gold", "unanimous_only"}
         or not sensitivity.get("rows")
         or sensitivity.get("label_granularity") != labels.get("label_granularity")
         or sensitivity.get("publication_gold") is not False
@@ -85,9 +83,7 @@ def _pretest_evidence(
 
     matrix = _json(matrix_report)
     matrix_families = {
-        str(row.get("family", ""))
-        for row in matrix.get("rows", [])
-        if isinstance(row, dict)
+        str(row.get("family", "")) for row in matrix.get("rows", []) if isinstance(row, dict)
     }
     if (
         matrix.get("schema_version") != "far-model-matrix-v1"

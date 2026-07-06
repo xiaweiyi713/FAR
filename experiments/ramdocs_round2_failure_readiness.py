@@ -12,7 +12,6 @@ from experiments.evidence_2plus4 import verify_ramdocs_round2_release
 from experiments.model_smoke_2plus4 import verify_smoke_records
 from experiments.protocol_2plus4 import PROTOCOL_ACTIVE_SHA256, verify_active_protocol
 
-
 REQUIRED_DISCLOSURES = {
     "round2_result": ("round 2", "g-a"),
     "two_round_stop": ("second", "failed"),
@@ -40,9 +39,7 @@ def audit_failure_branch(
     try:
         verify_active_protocol()
         release_audit = verify_ramdocs_round2_release(bundle_dir, data_dir)
-        manifest = json.loads(
-            (bundle_dir / "bundle_manifest.json").read_text(encoding="utf-8")
-        )
+        manifest = json.loads((bundle_dir / "bundle_manifest.json").read_text(encoding="utf-8"))
         analysis = json.loads(
             (bundle_dir / "round2/error_analysis/report.json").read_text(encoding="utf-8")
         )
@@ -114,9 +111,7 @@ def audit_failure_branch(
         "errors": errors,
         "evidence": {
             "bundle_manifest_sha256": sha256_file(bundle_dir / "bundle_manifest.json"),
-            "error_analysis_sha256": sha256_file(
-                bundle_dir / "round2/error_analysis/report.json"
-            ),
+            "error_analysis_sha256": sha256_file(bundle_dir / "round2/error_analysis/report.json"),
             "paper_main_sha256": sha256_file(paper_main),
             "paper_status_sha256": sha256_file(paper_status),
             "model_smoke_records": smoke_audit.get("records", {}),

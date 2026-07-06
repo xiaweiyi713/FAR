@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 
 from bench.build.common import sha256_file
 from experiments.evidence_family_dev import verify_release
@@ -19,7 +20,7 @@ def test_family_dev_protocol_and_config_parity_are_frozen() -> None:
     assert sha256_file(FAMILY_DEV_PLAN) == FAMILY_DEV_ACTIVE_SHA256
 
 
-def test_dev_view_contains_only_sixty_dev_rows(tmp_path) -> None:
+def test_dev_view_contains_only_sixty_dev_rows(tmp_path: Path) -> None:
     output = tmp_path / "dev-view"
     manifest = prepare_dev_view(output)
     rows = [json.loads(line) for line in (output / "falsirag_bench.jsonl").read_text().splitlines()]
@@ -42,7 +43,7 @@ def test_family_cluster_bootstrap_is_deterministic() -> None:
     assert first["lower"] <= first["upper"]
 
 
-def test_family_dev_verifier_fails_closed_without_release(tmp_path) -> None:
+def test_family_dev_verifier_fails_closed_without_release(tmp_path: Path) -> None:
     audit = verify_release(tmp_path / "missing")
     assert audit["valid"] is False
     assert audit["gate_f_passed"] is False

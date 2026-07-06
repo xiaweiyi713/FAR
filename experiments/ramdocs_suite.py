@@ -200,9 +200,7 @@ def verify_suite(output_dir: Path, data_dir: Path) -> dict[str, Any]:
     if manifest.get("schema_version") != "far-ramdocs-suite-v1":
         errors.append("unsupported RAMDocs suite schema")
     expected_protocol = (
-        PROTOCOL_PHASE_A_SHA256
-        if manifest.get("split") == "dev"
-        else PROTOCOL_ACTIVE_SHA256
+        PROTOCOL_PHASE_A_SHA256 if manifest.get("split") == "dev" else PROTOCOL_ACTIVE_SHA256
     )
     if manifest.get("protocol_fingerprint") != expected_protocol:
         errors.append("RAMDocs suite uses a stale protocol")

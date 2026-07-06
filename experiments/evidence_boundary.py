@@ -42,9 +42,7 @@ def _verify_run(
 ) -> tuple[list[str], set[str], str]:
     errors: list[str] = []
     actual_files = (
-        {item.name for item in path.iterdir() if item.is_file()}
-        if path.is_dir()
-        else set()
+        {item.name for item in path.iterdir() if item.is_file()} if path.is_dir() else set()
     )
     if actual_files != RUN_FILES:
         errors.append(f"{dataset}/{method}: run file set is not exact")
@@ -109,8 +107,7 @@ def verify_release(output_root: Path, report_path: Path) -> dict[str, Any]:
     commits: set[str] = set()
     for dataset in DATASET_ORDER:
         expected_ids = {
-            str(row["id"])
-            for row in read_jsonl(Path(DATASETS[dataset]["path"]) / "tasks.jsonl")
+            str(row["id"]) for row in read_jsonl(Path(DATASETS[dataset]["path"]) / "tasks.jsonl")
         }
         calibration_ids: set[str] | None = None
         for method in METHODS:

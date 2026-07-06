@@ -304,9 +304,11 @@ def verify_boundary(
         with tempfile.TemporaryDirectory(prefix="far-boundary-verify-") as temporary:
             rebuilt = Path(temporary) / "release"
             build_boundary(kind, rebuilt, source_file=source_file)
-            actual_files = {
-                path.name for path in output_dir.iterdir() if path.is_file()
-            } if output_dir.is_dir() else set()
+            actual_files = (
+                {path.name for path in output_dir.iterdir() if path.is_file()}
+                if output_dir.is_dir()
+                else set()
+            )
             if actual_files != RELEASE_FILES:
                 errors.append("boundary release file set is not exact")
             for name in RELEASE_FILES:

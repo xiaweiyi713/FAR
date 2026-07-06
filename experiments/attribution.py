@@ -81,12 +81,10 @@ def collection_score(
 
     predicted = normalize_ramdocs_answer(prediction)
     gold_hits = sum(
-        _contains_phrase(predicted, normalize_ramdocs_answer(answer))
-        for answer in gold_answers
+        _contains_phrase(predicted, normalize_ramdocs_answer(answer)) for answer in gold_answers
     )
     wrong_hits = sum(
-        _contains_phrase(predicted, normalize_ramdocs_answer(answer))
-        for answer in wrong_answers
+        _contains_phrase(predicted, normalize_ramdocs_answer(answer)) for answer in wrong_answers
     )
     precision_denominator = gold_hits + wrong_hits
     precision = gold_hits / precision_denominator if precision_denominator else 0.0
@@ -245,9 +243,9 @@ def conflict_type_distribution(predictions: dict[str, dict[str, Any]]) -> dict[s
         "detected_samples": detected,
         "detection_rate": detected / len(predictions) if predictions else 0.0,
         "counts": dict(sorted(counts.items())),
-        "distribution": {
-            key: value / total for key, value in sorted(counts.items())
-        } if total else {},
+        "distribution": {key: value / total for key, value in sorted(counts.items())}
+        if total
+        else {},
     }
 
 
@@ -595,8 +593,7 @@ def compute_attribution(
         comparison = complete["comparison"]
         upstream_status = (
             "supported"
-            if float(comparison["candidate_minus_baseline"]) > 0
-            and float(comparison["lower"]) > 0
+            if float(comparison["candidate_minus_baseline"]) > 0 and float(comparison["lower"]) > 0
             else "not_supported"
         )
     if (
@@ -627,8 +624,7 @@ def compute_attribution(
     else:
         component_status = (
             "supported"
-            if int(gain_paths["detected_no_changed_revision"])
-            > int(gain_paths["changed_revision"])
+            if int(gain_paths["detected_no_changed_revision"]) > int(gain_paths["changed_revision"])
             else "not_supported"
         )
     hypotheses = {
@@ -807,15 +803,12 @@ def build_bundle(
         "bucket_priority": list(BUCKET_PRIORITY),
         "bucket_counts": result["bucket_counts"],
         "hypothesis_statuses": {
-            key: result["hypotheses"]["hypotheses"][key]["status"]
-            for key in HYPOTHESIS_IDS
+            key: result["hypotheses"]["hypotheses"][key]["status"] for key in HYPOTHESIS_IDS
         },
         "baseline_method": result["baseline_method"],
         "statistics": {"resamples": resamples, "seed": seed},
         "source_fingerprints": dict(sorted(result["source_files"].items())),
-        "artifacts": {
-            name: sha256_file(output_dir / name) for name in artifact_names
-        },
+        "artifacts": {name: sha256_file(output_dir / name) for name in artifact_names},
         "external_report_sha256": sha256_file(report_path),
         "gate_r1_passed": True,
         "model_calls": 0,
@@ -841,9 +834,7 @@ def main() -> None:
     parser.add_argument(
         "--machine-rows",
         type=Path,
-        default=Path(
-            "diagnostics/solo_v1/machine_annotation/machine_consensus_rows.jsonl"
-        ),
+        default=Path("diagnostics/solo_v1/machine_annotation/machine_consensus_rows.jsonl"),
     )
     parser.add_argument("--output-dir", type=Path, default=Path("diagnostics/attribution_v1"))
     parser.add_argument("--report", type=Path, default=Path("reports/mechanism_attribution.md"))
