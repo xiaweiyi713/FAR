@@ -10,7 +10,11 @@ from typing import Any
 from bench.build.common import read_jsonl, sha256_file, write_json
 from eval.ramdocs import compare_ramdocs, evaluate_ramdocs
 from experiments.one_shot import authorize_committed_intent
-from experiments.protocol_2plus4 import PROTOCOL_ACTIVE_SHA256, verify_active_protocol
+from experiments.protocol_2plus4 import (
+    PROTOCOL_ACTIVE_SHA256,
+    PROTOCOL_PHASE_A_SHA256,
+    verify_active_protocol,
+)
 from experiments.run_ramdocs import METHODS, initialize_answers, run_method
 from experiments.runner import one_shot_test_scope
 
@@ -105,7 +109,9 @@ def _run_suite_authorized(
     manifest = {
         "schema_version": "far-ramdocs-suite-v1",
         "study_profile": "external_upstream_labeled_evaluation",
-        "protocol_fingerprint": PROTOCOL_ACTIVE_SHA256,
+        "protocol_fingerprint": (
+            PROTOCOL_PHASE_A_SHA256 if split == "dev" else PROTOCOL_ACTIVE_SHA256
+        ),
         "split": split,
         "allow_test": allow_test,
         "partial": limit is not None,
@@ -193,7 +199,12 @@ def verify_suite(output_dir: Path, data_dir: Path) -> dict[str, Any]:
         }
     if manifest.get("schema_version") != "far-ramdocs-suite-v1":
         errors.append("unsupported RAMDocs suite schema")
-    if manifest.get("protocol_fingerprint") != PROTOCOL_ACTIVE_SHA256:
+    expected_protocol = (
+        PROTOCOL_PHASE_A_SHA256
+        if manifest.get("split") == "dev"
+        else PROTOCOL_ACTIVE_SHA256
+    )
+    if manifest.get("protocol_fingerprint") != expected_protocol:
         errors.append("RAMDocs suite uses a stale protocol")
     if manifest.get("publication_gold") is not False:
         errors.append("RAMDocs suite incorrectly claims publication gold")

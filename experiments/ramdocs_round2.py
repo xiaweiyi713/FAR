@@ -9,7 +9,7 @@ from typing import Any
 
 from bench.build.common import sha256_file, write_json
 from eval.ramdocs import compare_ramdocs, evaluate_ramdocs
-from experiments.protocol_2plus4 import PROTOCOL_ACTIVE_SHA256, verify_active_protocol
+from experiments.protocol_2plus4 import PROTOCOL_PHASE_A_SHA256, verify_active_protocol
 from experiments.ramdocs_suite import verify_suite
 
 
@@ -83,7 +83,7 @@ def finalize_round(
     manifest = {
         "schema_version": SCHEMA_VERSION,
         "round": 2,
-        "protocol_fingerprint": PROTOCOL_ACTIVE_SHA256,
+        "protocol_fingerprint": PROTOCOL_PHASE_A_SHA256,
         "split": "dev",
         "samples": 350,
         "changed_methods": ["far"],
@@ -142,7 +142,7 @@ def verify_round(
     expected = {
         "schema_version": SCHEMA_VERSION,
         "round": 2,
-        "protocol_fingerprint": PROTOCOL_ACTIVE_SHA256,
+        "protocol_fingerprint": PROTOCOL_PHASE_A_SHA256,
         "split": "dev",
         "samples": 350,
         "changed_methods": ["far"],

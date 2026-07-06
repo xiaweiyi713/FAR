@@ -14,8 +14,8 @@ from urllib.request import Request, urlopen
 
 from bench.build.common import read_jsonl, sha256_file, write_json, write_jsonl
 from experiments.protocol_2plus4 import (
-    PROTOCOL_ACTIVE_SHA256,
     PROTOCOL_ORIGINAL_SHA256,
+    PROTOCOL_PHASE_A_SHA256,
     verify_active_protocol,
 )
 
@@ -214,7 +214,7 @@ def build_ramdocs(
         "upstream_filename": UPSTREAM_FILENAME,
         "upstream_sha256": UPSTREAM_SHA256,
         "license": "MIT",
-        "protocol_fingerprint": PROTOCOL_ACTIVE_SHA256,
+        "protocol_fingerprint": PROTOCOL_PHASE_A_SHA256,
         "protocol_original_fingerprint": PROTOCOL_ORIGINAL_SHA256,
         "counts": {
             "questions": len(tasks),
@@ -261,7 +261,7 @@ def verify_ramdocs(output_dir: Path) -> dict[str, Any]:
     expected_flags = {
         "dataset_revision": UPSTREAM_REVISION,
         "upstream_sha256": UPSTREAM_SHA256,
-        "protocol_fingerprint": PROTOCOL_ACTIVE_SHA256,
+        "protocol_fingerprint": PROTOCOL_PHASE_A_SHA256,
         "publication_gold": False,
         "externally_held_blind": False,
     }

@@ -1949,3 +1949,15 @@ evidence bundle verified successfully, releasing the GPU.
 - resume 要求当前身份与原始 JSON 全等；juror verifier、consensus、作者 compile 和最终
   evidence release 均绑定 run identity SHA 与 runtime identity。当前 Phase B 未启动，
   只完成静态语法/导入检查，未运行模型、测试或访问 test。
+
+## 2026-07-06 — 保留 Phase A 历史协议指纹谱系
+
+- J2 偏离使当前 `PLAN_2PLUS4.md` SHA 从 `e022…d00` 变为 `0a5e…ad9`。若只替换全局
+  active 常量，已冻结 RAMDocs 导入、Round 1 8×350 suite 与正在运行的 Round 2 会被
+  错误判成 stale，等同于用 Phase B 部署变化追溯性改写已完成 Phase A。
+- 新增 `PROTOCOL_PHASE_A_SHA256=e022…d00`：RAMDocs 导入、dev suite 与 Round 2
+  始终按该历史协议验证；偏离后的 juror、smoke、错误分析、release、readiness 和未来
+  one-shot 使用新 `PROTOCOL_ACTIVE_SHA256=0a5e…ad9`。RAMDocs test 若获授权也使用
+  当时 active 指纹，而不是沿用 dev 历史值。
+- `verify_active_protocol` 已对当前文档新 SHA 通过；该谱系不改 G-A 数据、方法、阈值
+  或运行中 checkpoint，也未访问或运行 test。
