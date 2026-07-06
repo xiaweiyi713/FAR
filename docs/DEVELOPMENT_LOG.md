@@ -1961,3 +1961,14 @@ evidence bundle verified successfully, releasing the GPU.
   当时 active 指纹，而不是沿用 dev 历史值。
 - `verify_active_protocol` 已对当前文档新 SHA 通过；该谱系不改 G-A 数据、方法、阈值
   或运行中 checkpoint，也未访问或运行 test。
+
+## 2026-07-06 — 加固 Ollama 启动期身份检查
+
+- Round 2 远端 systemd 在 08:45 +08:00 观察到一次可恢复失败：`/api/tags` 预检查
+  通过后，runner 绑定 `qwen3.5:9b` 运行时身份时仍遇到 `Connection refused`。随后
+  `Restart=on-failure` 自动恢复，checkpoint 继续前进且未出现重复 sample。
+- `experiments.runner._ollama_model_identity` 现对 Ollama `/api/tags` 做有界重试
+  （默认 60 秒，2 秒间隔），但仍要求配置模型出现在 tags 中并暴露不可变 digest；
+  因而只消除服务刚启动的 HTTP 竞态，不放松模型、digest 或正式 run identity 门禁。
+- 该改动未触碰正在运行的远端 service、未切换工作树、未修改 checkpoint，也未运行测试
+  或访问 test。

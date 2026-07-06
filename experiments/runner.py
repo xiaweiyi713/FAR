@@ -9,6 +9,7 @@ import os
 import platform
 import subprocess
 import sys
+import time
 from contextlib import contextmanager
 from contextvars import ContextVar
 from datetime import datetime, timezone
@@ -231,15 +232,28 @@ def _package_version(name: str) -> str | None:
 def _ollama_model_identity(base_url: str, model: str) -> dict[str, Any]:
     """Resolve a mutable Ollama tag to the immutable digest used by this run."""
 
-    request = Request(f"{base_url.rstrip('/')}/api/tags", method="GET")
-    try:
-        with urlopen(request, timeout=5) as response:
-            payload = json.loads(response.read().decode("utf-8"))
-    except (HTTPError, URLError, TimeoutError, json.JSONDecodeError) as exc:
+    retry_seconds = float(os.environ.get("FAR_OLLAMA_IDENTITY_RETRY_SECONDS", "60"))
+    retry_sleep = float(os.environ.get("FAR_OLLAMA_IDENTITY_RETRY_SLEEP", "2"))
+    deadline = time.monotonic() + max(0.0, retry_seconds)
+    last_exc: BaseException | None = None
+    payload: Any = None
+    while True:
+        request = Request(f"{base_url.rstrip('/')}/api/tags", method="GET")
+        try:
+            with urlopen(request, timeout=5) as response:
+                payload = json.loads(response.read().decode("utf-8"))
+            break
+        except (HTTPError, URLError, TimeoutError, json.JSONDecodeError) as exc:
+            last_exc = exc
+            if time.monotonic() >= deadline:
+                break
+            time.sleep(retry_sleep)
+
+    if payload is None:
         raise RuntimeError(
             f"could not inspect Ollama model {model!r} at {base_url!r}; "
             "start Ollama and pull the configured model before a formal run"
-        ) from exc
+        ) from last_exc
     models = payload.get("models") if isinstance(payload, dict) else None
     if not isinstance(models, list):
         raise RuntimeError("Ollama /api/tags returned an invalid models payload")
