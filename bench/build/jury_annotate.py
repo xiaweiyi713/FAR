@@ -18,13 +18,13 @@ from bench.build.auto_annotate import (
 )
 from bench.build.common import read_jsonl, sha256_file, write_json, write_jsonl
 from bench.schema import VALID_REVISION_ACTIONS
+from experiments.phase_b_gate import require_phase_b_authorized
 from experiments.protocol_2plus4 import (
     PROTOCOL_ACTIVE_SHA256,
     PROTOCOL_ORIGINAL_SHA256,
     SYSTEM_MODEL_FAMILIES,
     verify_active_protocol,
 )
-from experiments.phase_b_gate import require_phase_b_authorized
 from experiments.runner import build_generator, load_config
 
 JURY_TYPES = ("temporal", "entity", "numerical", "causal", "source_reliability")

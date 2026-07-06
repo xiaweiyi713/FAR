@@ -42,6 +42,14 @@ def _consensus(consensus_dir: Path) -> tuple[dict[str, Any], dict[str, dict[str,
         raise ValueError("jury consensus uses a stale protocol")
     if report.get("publication_gold") is not False or report.get("human_iaa") is not False:
         raise ValueError("jury consensus provenance flags are invalid")
+    phase_b_gate = report.get("phase_b_gate")
+    if (
+        not isinstance(phase_b_gate, dict)
+        or phase_b_gate.get("gate_a_passed") is not True
+        or phase_b_gate.get("phase_b_authorized") is not True
+        or phase_b_gate.get("samples") != 350
+    ):
+        raise ValueError("jury consensus lacks a valid G-A Phase B authorization")
     rows_path = consensus_dir / str(report["jury_consensus_rows"])
     if sha256_file(rows_path) != report.get("jury_consensus_rows_sha256"):
         raise ValueError("jury consensus rows fingerprint mismatch")

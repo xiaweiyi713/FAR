@@ -14,6 +14,7 @@ from typing import Any
 from bench.annotations import cohen_kappa
 from bench.build.common import read_jsonl, sha256_file, write_json, write_jsonl
 from bench.build.jury_annotate import JURY_TYPES, PROMPT_SHA256, _is_fallback
+from experiments.phase_b_gate import require_phase_b_authorized
 from experiments.protocol_2plus4 import (
     PROTOCOL_ACTIVE_SHA256,
     SYSTEM_MODEL_FAMILIES,
@@ -150,6 +151,7 @@ def build_jury_consensus(
     output_dir: Path,
     *,
     overwrite: bool = False,
+    verified_phase_b_gate: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     verify_active_protocol()
     if len(juror_dirs) != 3:
@@ -180,6 +182,9 @@ def build_jury_consensus(
     }
     if len(phase_b_gates) != 1 or not next(iter(phase_b_gates)):
         raise ValueError("jury sources do not share one verified Phase B authorization")
+    source_phase_b_gate = json.loads(next(iter(phase_b_gates)))
+    if verified_phase_b_gate is not None and source_phase_b_gate != verified_phase_b_gate:
+        raise ValueError("jury source authorization differs from the verified RAMDocs G-A")
     sample_sets = [set(rows) for rows in rows_by_juror]
     if not sample_sets[0] or any(samples != sample_sets[0] for samples in sample_sets[1:]):
         raise ValueError("jury sources do not have identical complete samples")
@@ -314,7 +319,7 @@ def build_jury_consensus(
         "protocol_fingerprint": PROTOCOL_ACTIVE_SHA256,
         "source_packet_sha256": next(iter(source_packets)),
         "source_adjudication_sha256": next(iter(source_adjudications)),
-        "phase_b_gate": json.loads(next(iter(phase_b_gates))),
+        "phase_b_gate": source_phase_b_gate,
         "jurors": [
             {
                 "juror_id": juror_id,
@@ -351,6 +356,8 @@ def verify_jury_consensus(
     data_dir: Path,
     juror_dirs: list[Path],
     output_dir: Path,
+    *,
+    verified_phase_b_gate: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     errors: list[str] = []
     try:
@@ -362,7 +369,12 @@ def verify_jury_consensus(
             errors.append("tracked jury consensus rows fingerprint mismatch")
         with tempfile.TemporaryDirectory(prefix="far-jury-verify-") as temporary:
             rebuilt_dir = Path(temporary) / "consensus"
-            rebuilt = build_jury_consensus(data_dir, juror_dirs, rebuilt_dir)
+            rebuilt = build_jury_consensus(
+                data_dir,
+                juror_dirs,
+                rebuilt_dir,
+                verified_phase_b_gate=verified_phase_b_gate,
+            )
             rebuilt_rows = rebuilt_dir / str(rebuilt["jury_consensus_rows"])
             if rebuilt != tracked_report:
                 errors.append("jury consensus report differs from recomputation")
@@ -385,14 +397,33 @@ def main() -> None:
     parser.add_argument("--data-dir", type=Path, required=True)
     parser.add_argument("--juror-dir", type=Path, action="append", required=True)
     parser.add_argument("--output-dir", type=Path, required=True)
+    parser.add_argument("--ramdocs-data-dir", type=Path, required=True)
+    parser.add_argument("--ramdocs-round1-dir", type=Path, required=True)
+    parser.add_argument("--ramdocs-round2-dir", type=Path, required=True)
+    parser.add_argument("--ramdocs-config", type=Path, required=True)
     parser.add_argument("--overwrite", action="store_true")
     parser.add_argument("--verify", action="store_true")
     args = parser.parse_args()
+    phase_b_gate = require_phase_b_authorized(
+        args.ramdocs_data_dir,
+        args.ramdocs_round1_dir,
+        args.ramdocs_round2_dir,
+        args.ramdocs_config,
+    )
     result = (
-        verify_jury_consensus(args.data_dir, args.juror_dir, args.output_dir)
+        verify_jury_consensus(
+            args.data_dir,
+            args.juror_dir,
+            args.output_dir,
+            verified_phase_b_gate=phase_b_gate,
+        )
         if args.verify
         else build_jury_consensus(
-            args.data_dir, args.juror_dir, args.output_dir, overwrite=args.overwrite
+            args.data_dir,
+            args.juror_dir,
+            args.output_dir,
+            overwrite=args.overwrite,
+            verified_phase_b_gate=phase_b_gate,
         )
     )
     print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))

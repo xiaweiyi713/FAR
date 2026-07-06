@@ -1897,3 +1897,6 @@ evidence bundle verified successfully, releasing the GPU.
 - 三份 juror manifest 现绑定同一个 Round 2 manifest、Round 1 suite 与配置 SHA-256；
   juror verifier 会重新验证并逐字段比较，consensus 拒绝缺失、不同或无效的 G-A 绑定。
   当前 G-A 未通过，因此新入口按设计无法运行；未启动 jury 或访问 test。
+- consensus CLI 也强制接收同一组 RAMDocs 路径并重新执行 G-A verifier；构建与 verify
+  都要求三份 juror 的 gate 对象与实时重算结果完全相同。作者仲裁入口继续检查 consensus
+  中的 350 条 G-A/Phase B 授权，形成执行入口、聚合、仲裁三层停止规则。
