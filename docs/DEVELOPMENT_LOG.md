@@ -2220,3 +2220,5 @@ evidence bundle verified successfully, releasing the GPU.
   的迁移阈值；`output/` 无跟踪文件，`outputs/` 仅跟踪 `.gitkeep`。
 - 该命令只检查仓库工程卫生，不读取 held-out/test，不调用模型，不改变 F1–F10、RAMDocs
   停止规则、Phase B 状态或任何实验门禁。
+- 随后将该命令接入 public-diagnostic CI，并更新 workflow contract 与 traceability 文档；
+  今后 `diagnostics/` 体积或 `output/`/`outputs/` 收敛规则漂移会在公开 CI 中 fail-closed。

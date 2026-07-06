@@ -59,6 +59,8 @@ jobs:
         run: uv run --locked mypy far bench baselines eval experiments tests scripts/package_smoke.py
       - name: Check Markdown local links
         run: uv run --locked python scripts/check_markdown_links.py
+      - name: Audit repository maintenance invariants
+        run: uv run --locked falsirag-repository-maintenance --check
       - name: Scan tracked files for secrets
         run: uv run --locked falsirag-scan-secrets --json
       - name: Validate candidate benchmark

@@ -51,6 +51,7 @@ def test_ci_actions_are_pinned_and_public_gate_is_complete() -> None:
         "mypy far bench baselines eval experiments tests scripts/package_smoke.py"
         in public_commands
     )
+    assert "falsirag-repository-maintenance --check" in public_commands
     assert "falsirag-scan-secrets --json" in public_commands
     assert "falsirag-validate-bench --data-dir bench" in public_commands
     assert "bash scripts/solo_diagnostic_check.sh" in public_commands
