@@ -1,0 +1,55 @@
+run:
+  split: dev
+  top_k_per_query: 2
+  conflict_detector: vera
+conflict_graph:
+  enable_nli: true
+  require_nli: true
+  nli_model: cross-encoder/nli-distilroberta-base
+  nli_revision: b14d131f9d32668a5e6a982729b57ff6ed5dfcbd
+  nli_local_files_only: true
+  enable_nli_batching: true
+  enable_nli_candidate_filter: true
+  enable_source_reliability_conflict: true
+  enable_scope_conflict: true
+  enable_granularity_conflict: true
+  enable_entity_lexicon_conflict: true
+  entity_lexicon_similarity: 0.55
+retrieval:
+  backend: vera_hybrid
+  allow_dense_fallback: false
+  sparse:
+    k1: 1.5
+    b: 0.75
+  dense:
+    model_name: BAAI/bge-base-en-v1.5
+    revision: a5beb1e3e68b9ab74eb54cfd186867f64f240e1a
+    device: cpu
+    batch_size: 32
+    local_files_only: true
+  sparse_weight: 0.4
+  dense_weight: 0.6
+  rerank:
+    enabled: true
+    model_name: BAAI/bge-reranker-base
+    revision: 2cfc18c9415c912f9d8155881c133215df768a70
+    device: cpu
+    batch_size: 16
+    candidate_k: 20
+    preserve_base_top_k: 1
+    local_files_only: true
+llm:
+  enabled: true
+  provider: ollama
+  model: qwen3.5:9b
+  base_url: http://localhost:11434
+  temperature: 0.0
+  max_tokens: 1200
+  think: false
+  unload_after_sample: true
+  cache_enabled: true
+  cache_path: /mnt/d/FAR-outputs/cache/qwen_boundary.sqlite3
+  cache_namespace: far-qwen3.5-9b-boundary-v1
+statistics:
+  bootstrap_resamples: 2000
+  bootstrap_seed: 1729

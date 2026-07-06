@@ -13,6 +13,8 @@ from bench.build.validate_bench import validate
 
 EXPECTED_ENTRY_POINTS = {
     "falsirag-attribution-evidence",
+    "falsirag-boundary-evidence",
+    "falsirag-build-boundary",
     "falsirag-power",
     "falsirag-family-dev-evidence",
     "falsirag-build-ramdocs",

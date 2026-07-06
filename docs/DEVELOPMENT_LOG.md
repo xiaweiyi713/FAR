@@ -2162,3 +2162,39 @@ evidence bundle verified successfully, releasing the GPU.
   中心叙事从“效应位于 detection”改为“revision 同时中介局部收益和更大的异质性伤害”。
 - 当前稿仍保留可编译的 AAAI 工作格式，待 WS2/WS3 结果落定后迁移正式 TMLR 模板；内容
   主张已先完成收窄。跨家族运行未完成前，论文仍明确不声称 multi-model generality。
+
+## 2026-07-06 — 注册 WS3 外部边界测绘
+
+- 新增独立预注册 `docs/PLAN_BOUNDARY_MAPPING.md`，活动 SHA-256 为
+  `a8aa260aec7b92f2d51bc4c14ce78b0f355b2b61e543c5ace0cff52c5c1d34a3`。该研究从一开始
+  固定为 `directional_boundary_mapping`，不设全局胜负门禁，不重开 RAMDocs G-A，不把
+  外部上游标签称为 FAR 真人 IAA 或 publication-grade human gold。
+- WS3 只纳入两个许可和划分可审计的公开 dev 诊断：WikiContradict 150 条
+  （导入 manifest SHA `b3b3b80c44600579e15cfe4e9071040cfd99cc3d49ed716ee9dd603435a07765`）
+  与 Google CONFLICTS 150 条（导入 manifest SHA
+  `ec12941a2e98461219858d56a6a07545ba4d5ac70eca96dac2f6148b4ccb86e5`）。FaithEval 因官方
+  只有 test split 排除；ClashEval/ConflictBank 因许可元数据不足或来源边界不清排除。
+- 新增 `bench.build.boundary`、`experiments.protocol_boundary`、`experiments.boundary` 与
+  `experiments.evidence_boundary`。运行器绑定 Qwen3.5 9B digest、配置 SHA、干净已推送
+  source commit、两臂 `far`/`far_minus_typed_conflict`、每基准 5×2 calibration + 150×2
+  formal，并强制 Wiki → Google、calibration → formal。`run-all` 入口用于远端 D: 输出。
+- G-P 预先确认 n=150、Qwen dev 不一致率 19/60、目标 +0.078 的 exact McNemar 功效仅
+  0.348（20,000 次 Monte Carlo 0.344），因此 null 不可解释为无效；任何正方向也只能支撑
+  对应公开 dev 分布和固定 Qwen runtime 的边界描述。
+- 本条记录前后仅完成 importer/protocol/runner/verifier 的静态检查和合成测试；尚未启动
+  WS3 calibration 或正式 prediction，未访问 FalsiRAG held-out/test、RAMDocs test 或任何
+  官方 test-only 外部数据。
+
+## 2026-07-06 — WS2 Mistral formal FAR checkpoint 恢复
+
+- 远端 `far-family-dev.service` 在 Mistral calibration 两臂完成、`runs/mistral/far` 写入
+  5/60 checkpoint 后变为 inactive，未生成 `run_manifest.json` 或 family manifest；systemd
+  显示 exit status 0，日志停在 `far: start F0037` 附近，无 Python traceback、OOM、Xid 或
+  方法级错误。Ollama 曾记录短暂 `/api/tags` 连接/超时失败，但随后服务恢复。
+- GPU 空闲且 `far-ollama-family-dev` active 后，从同一 D: 工作树、同一 `bd57585` 干净提交、
+  同一服务定义和同一 checkpoint 重新 `systemctl --user start far-family-dev.service`。
+  `CheckpointWriter` 跳过已有 calibration 和 formal 5 条，重新进入 `runs/mistral/far`
+  的 `F0037`；未修改配置、digest、样本、方法、指标、G-F/G-P 或 claim level。
+- 这是正式样本期间的运维恢复，不是实验偏离或 Round 2；若同类 inactive 状态重复出现，
+  需优先诊断 Ollama/session 生命周期，再决定是否调整服务保活，且必须继续保持 D: 输出与
+  checkpoint 原样恢复。

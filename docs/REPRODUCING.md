@@ -747,6 +747,58 @@ G-P fixes this study at `directional_reproduction`: a nonsignificant G-F does
 not establish absence. No command above reads train, FalsiRAG held-out/test, or
 RAMDocs test.
 
+## WS3 external boundary mapping
+
+WS3 is independently preregistered in `docs/PLAN_BOUNDARY_MAPPING.md` and is
+fixed at `directional_boundary_mapping`. The two public dev imports are frozen
+under `bench/external/wikicontradict_v1` and
+`bench/external/rag_conflicts_v1`; they are not FAR human IAA, publication gold,
+or held-out/test evidence.
+
+To rebuild an import from the pinned public source and verify byte-for-byte
+equivalence:
+
+```bash
+uv run falsirag-build-boundary verify \
+  --kind wiki \
+  --output-dir bench/external/wikicontradict_v1
+uv run falsirag-build-boundary verify \
+  --kind conflicts \
+  --output-dir bench/external/rag_conflicts_v1
+```
+
+The formal runner refuses unregistered protocol fingerprints, dirty/unpushed
+source, model digest drift, skipped calibration, or starting Google CONFLICTS
+before WikiContradict completes. On the Windows GPU host, use D:-backed outputs:
+
+```bash
+source ~/miniconda3/etc/profile.d/conda.sh
+conda activate train
+cd /mnt/d/FAR-workspace/FAR-longterm
+source scripts/windows_gpu_env.sh
+
+uv run falsirag-boundary run-all \
+  --output-dir /mnt/d/FAR-outputs/boundary_v1
+```
+
+After rsyncing `/mnt/d/FAR-outputs/boundary_v1` to
+`diagnostics/boundary_v1`, finalize once and independently verify:
+
+```bash
+uv run falsirag-boundary finalize \
+  --output-dir diagnostics/boundary_v1 \
+  --report reports/boundary_matrix.md
+uv run falsirag-boundary-evidence \
+  --output-dir diagnostics/boundary_v1 \
+  --report reports/boundary_matrix.md
+```
+
+G-B is only a completeness/recomputability gate. It deliberately has no global
+pass/fail result: the output is a boundary matrix across Wiki explicit/implicit
+and Google outdated/misinformation/no-conflict strata. Power is below 0.60, so
+nulls cannot be interpreted as evidence of absence and positives remain scoped
+to the public dev distribution and the fixed Qwen runtime.
+
 ## Paper
 
 ```bash

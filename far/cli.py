@@ -321,3 +321,24 @@ def evidence_family_dev_main() -> None:
     from experiments.evidence_family_dev import main
 
     main()
+
+
+def build_boundary_main() -> None:
+    _prefer_far_repo()
+    from bench.build.boundary import main
+
+    main()
+
+
+def boundary_main() -> None:
+    _prefer_far_repo()
+    from experiments.boundary import main
+
+    main()
+
+
+def evidence_boundary_main() -> None:
+    _prefer_far_repo()
+    from experiments.evidence_boundary import main
+
+    main()

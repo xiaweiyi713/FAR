@@ -1,0 +1,23 @@
+{
+  "corpus_sha256": "6beb087fb2e181d1ca59ae5d9aa0d0c92b78e3854d3d22dfec809118595bfb5b",
+  "documents": 1346,
+  "human_iaa": false,
+  "kind": "conflicts",
+  "license": "Apache-2.0",
+  "name": "Google CONFLICTS",
+  "publication_gold": false,
+  "samples": 150,
+  "sampling_quotas": {
+    "Conflict due to misinformation": 5,
+    "Conflict due to outdated information": 62,
+    "No conflict": 83
+  },
+  "sampling_seed": 2718,
+  "schema_version": "far-boundary-import-v1",
+  "source_revision": "81ba921dd684a93db41a7e9dda6b6a7c67348a88",
+  "source_sha256": "14559d5c08fde057d7b46783e3345ee5852d6cf6a750f370dc072a0b957fac54",
+  "source_url": "https://raw.githubusercontent.com/google-research-datasets/rag_conflicts/81ba921dd684a93db41a7e9dda6b6a7c67348a88/conflicts.jsonl",
+  "split": "dev",
+  "task_sha256": "3776cd96b19b1e581d3a4f88d45be8fc73c4d5c153bc876b09cde28d7feb871a",
+  "test_accessed": false
+}

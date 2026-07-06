@@ -1,0 +1,24 @@
+{
+  "corpus_sha256": "f684ab5008628bc7ab41198d649e9b9794586d372e1c2dc767cefd16129e1d46",
+  "documents": 300,
+  "human_iaa": false,
+  "kind": "wiki",
+  "license": "MIT",
+  "name": "WikiContradict",
+  "publication_gold": false,
+  "samples": 150,
+  "sampling_quotas": {
+    "('Explicit', 'Different')": 72,
+    "('Explicit', 'Same')": 24,
+    "('Implicit (reasoning required)', 'Different')": 41,
+    "('Implicit (reasoning required)', 'Same')": 13
+  },
+  "sampling_seed": 2718,
+  "schema_version": "far-boundary-import-v1",
+  "source_revision": "c20e361f985ed480a659b35d98b49f2311fcd174",
+  "source_sha256": "cef10054f8aad3e36bca95a0873c2cbb0de8ab4d7b716cadacc5da7aa179ff2b",
+  "source_url": "https://huggingface.co/datasets/ibm-research/Wikipedia_contradict_benchmark/resolve/c20e361f985ed480a659b35d98b49f2311fcd174/WikiContradict_dataset_v1_rag_qa.csv?download=true",
+  "split": "dev",
+  "task_sha256": "a2c264696f6785a2748a8af214843bfd5c8739cc5e77946243910cd1f205b563",
+  "test_accessed": false
+}
