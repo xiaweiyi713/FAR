@@ -2255,3 +2255,22 @@ evidence bundle verified successfully, releasing the GPU.
 - 与 20/60 恢复相同，本次操作不改配置、digest、样本、方法、指标、G-F/G-P、claim level
   或输出目录。重复 inactive 模式暂按运维生命周期问题处理；正式运行期间不修改服务语义，
   以免引入注册后实现偏离。
+
+## 2026-07-06 — WS2 Mistral formal FAR 用户暂停于 39/60
+
+- 后续巡检确认 `far-family-dev.service` 再次 inactive/dead，而 `far-ollama-family-dev.service`
+  active；Mistral formal FAR checkpoint 仍为 38/60，未生成 `run_manifest.json`。日志仍停在
+  `F0193` 附近，无 Python traceback、OOM、Xid、磁盘满或 schema 错误；D: 盘约剩 67 GiB。
+- 运维诊断发现安装的 user service 用分号串联 Mistral → Google → Meta 三个 `run-family`
+  命令，因此子命令异常/早退可能不会让 systemd 报 `failed`。为暴露真实状态且避免继续
+  误串后续 family，使用 transient user service `far-family-dev-mistral-resume` 仅恢复
+  Mistral family：同一 D: 工作树、同一 `bd57585` 冻结提交、同一输出目录和同一 checkpoint，
+  不修改实验代码、配置、digest、样本、方法、指标、G-F/G-P 或 claim level。
+- transient resume 成功重新进入 `F0193`，并在用户要求“别训练了”前完成该样本，使
+  `/mnt/d/FAR-outputs/family_dev_v1/runs/mistral/far/checkpoint.jsonl` 从 38/60 前进到
+  39/60；随后按用户要求停止 `far-family-dev-mistral-resume.service`、
+  `far-family-dev.service` 和 `far-ollama-family-dev.service`。最终只读复核显示三个服务均为
+  inactive，未见 `family_dev`、Ollama 或 llama 推理进程，GPU 进程表仅剩桌面/Xwayland。
+- 本次操作是用户暂停与运维恢复记录，不是评分、finalize、Phase B 启动、G-A/G-K/G-S 判定或
+  结果驱动调整；未访问或运行任何 test。用户随后明确要求 2026-07-06 晚间不再训练，
+  下一次 WS2 family-dev 恢复不得早于 2026-07-07，且恢复前仍需重新确认 GPU 与服务状态。
