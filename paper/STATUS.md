@@ -27,6 +27,15 @@ study at a +0.078 effect. WS2 is consequently a directional reproduction: a
 nonsignificant G-F cannot establish absence, while fewer than 2/3 positive
 families or a nonpositive combined effect narrows the claim to Qwen-specific.
 
+WS3 is now preregistered separately as `directional_boundary_mapping`.
+WikiContradict and Google CONFLICTS are frozen as two public development
+diagnostics with verified import manifests. The registered runner compares FAR
+with `far_minus_typed_conflict`, enforces calibration before formal runs and
+Wiki before Google, and produces a boundary matrix rather than a global
+pass/fail result. No WS3 model prediction has been run yet; its eventual
+results must be presented as public-dev boundary evidence, not human IAA,
+publication gold, or external blind testing.
+
 ## Relaxed single-author machine-audited profile
 
 This profile is complete and checked by `falsirag-solo-paper-readiness`.
