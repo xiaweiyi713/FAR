@@ -1872,3 +1872,5 @@ evidence bundle verified successfully, releasing the GPU.
   64 位 digest、带时区时间戳、`SMOKE_OK` 响应及非 benchmark/非真人来源声明。
 - smoke 脚本现在生成后自动调用 verifier。当前 Round 2 仍占用 GPU，未拉取模型、
   未生成或伪造 smoke 证据；只完成 Python 语法/导入、shell 语法和 whitespace 静态检查。
+- 安装包 smoke 的必需 console-script 集合同步加入该 verifier，防止源码入口存在但构建
+  后 wheel 漏装命令。按本轮限制未执行 package smoke 或其他测试。

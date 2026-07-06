@@ -20,6 +20,7 @@ EXPECTED_ENTRY_POINTS = {
     "falsirag-scan-secrets",
     "falsirag-solo-paper-readiness",
     "falsirag-validate-bench",
+    "falsirag-verify-2plus4-smoke",
 }
 
 
