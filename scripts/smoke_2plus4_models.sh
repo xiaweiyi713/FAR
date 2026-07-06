@@ -75,14 +75,17 @@ PY
 )"
 
 ollama_was_active=false
+ollama_pid=""
 if [[ "$(systemctl --user is-active far-ollama-2plus4.service 2>/dev/null || true)" == "active" ]]; then
   ollama_was_active=true
 else
-  systemctl --user start far-ollama-2plus4.service
+  "${ollama_bin}" serve >>"${output_dir}/ollama-smoke.log" 2>&1 &
+  ollama_pid="$!"
 fi
 cleanup() {
-  if [[ "${ollama_was_active}" == false ]]; then
-    systemctl --user stop far-ollama-2plus4.service >/dev/null 2>&1 || true
+  if [[ "${ollama_was_active}" == false && -n "${ollama_pid}" ]]; then
+    kill "${ollama_pid}" >/dev/null 2>&1 || true
+    wait "${ollama_pid}" >/dev/null 2>&1 || true
   fi
 }
 trap cleanup EXIT
