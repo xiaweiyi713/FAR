@@ -1835,3 +1835,15 @@ evidence bundle verified successfully, releasing the GPU.
   PID `741` 在 reload 前后不变，`systemd-analyze --user verify` 无输出。
 - 部署后 checkpoint 继续推进至 226/350，两个服务 active，近 10 分钟无错误。未访问
   或运行任何 test，也未改变实验方法、配置、checkpoint 或 G-A 判据。
+
+## 2026-07-06 — 将第二轮失败分析纳入可验证证据链
+
+- 补齐 `experiments.ramdocs_round2_error_analysis.verify_analysis`：它不信任报告自报
+  数字，而是重新验证 Round 2、从冻结 score 文件重算四类配对结果和全部 discordant
+  sample ID，并逐项核对 350 条覆盖、停止判定、来源 SHA-256 与非真人/非 test 声明。
+- Round 2 evidence release 在 G-A 失败时现强制要求有效的 `round2/error_analysis`，
+  manifest 必须写入 `paper_downgrade_required=true`；内嵌 verifier 会再次从 bundle
+  的冻结 Round 1/2 制品重算，不能用同时改写报告和指纹的方式掩盖漂移。
+- 仅完成 Python 字节码编译、diff whitespace 与静态内容检查，没有运行测试套件或
+  访问任何 test。08:01 +08:00 只读复核时 checkpoint 为 231/350（`RAM0330`），
+  两个服务 active、GPU 约 7.9/8.2 GiB，最近 journal 没有新增运行错误。

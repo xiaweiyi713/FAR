@@ -18,6 +18,7 @@ from experiments.jury_sensitivity import build_sensitivity
 from experiments.model_matrix import build_matrix
 from experiments.protocol_2plus4 import PROTOCOL_ACTIVE_SHA256, verify_active_protocol
 from experiments.ramdocs_round2 import verify_round
+from experiments.ramdocs_round2_error_analysis import verify_analysis
 from experiments.ramdocs_suite import verify_suite
 
 
@@ -157,11 +158,24 @@ def build_ramdocs_round2_release(
     source_audit = verify_round(data_dir, round1_dir, round2_dir, config_path)
     if source_audit.get("valid") is not True:
         raise ValueError(f"RAMDocs Round 2 is invalid: {source_audit.get('errors', [])}")
+    decision = json.loads((round2_dir / "round_manifest.json").read_text(encoding="utf-8"))
+    if decision.get("gate_a_passed") is False:
+        analysis_audit = verify_analysis(
+            data_dir,
+            round1_dir,
+            round2_dir,
+            config_path,
+            round2_dir / "error_analysis",
+        )
+        if analysis_audit.get("valid") is not True:
+            raise ValueError(
+                "failed G-A requires valid Round 2 error analysis: "
+                f"{analysis_audit.get('errors', [])}"
+            )
     _owned_replace(output_dir, "far-ramdocs-round2-evidence-release-v1", overwrite)
     shutil.copytree(round1_dir, output_dir / "round1", dirs_exist_ok=True)
     shutil.copytree(round2_dir, output_dir / "round2", dirs_exist_ok=True)
     _copy(config_path, output_dir / "round2" / "config.yaml")
-    decision = json.loads((round2_dir / "round_manifest.json").read_text(encoding="utf-8"))
     (output_dir / "README.md").write_text(
         "# RAMDocs dev Round 2 evidence release\n\n"
         "This bundle contains the complete frozen Round 1 suite and the dev-only Round 2 "
@@ -180,6 +194,7 @@ def build_ramdocs_round2_release(
         "samples": 350,
         "gate_a_passed": decision.get("gate_a_passed"),
         "stop_rule_triggered": decision.get("stop_rule_triggered"),
+        "paper_downgrade_required": decision.get("gate_a_passed") is False,
         "test_accessed": False,
         "publication_gold": False,
         "human_iaa": False,
@@ -219,6 +234,20 @@ def verify_ramdocs_round2_release(bundle_dir: Path, data_dir: Path) -> dict[str,
         errors.append("embedded RAMDocs Round 2 evidence is invalid")
     if manifest.get("gate_a_passed") is not audit.get("gate_a_passed"):
         errors.append("RAMDocs Round 2 bundle G-A state disagrees with its evidence")
+    gate_a_passed = audit.get("gate_a_passed")
+    if manifest.get("paper_downgrade_required") is not (gate_a_passed is False):
+        errors.append("RAMDocs Round 2 paper downgrade state disagrees with G-A")
+    if gate_a_passed is False:
+        analysis_audit = verify_analysis(
+            data_dir,
+            bundle_dir / "round1",
+            bundle_dir / "round2",
+            bundle_dir / "round2" / "config.yaml",
+            bundle_dir / "round2" / "error_analysis",
+        )
+        errors.extend(analysis_audit.get("errors", []))
+        if analysis_audit.get("valid") is not True:
+            errors.append("failed G-A bundle lacks valid Round 2 error analysis")
     if manifest.get("protocol_fingerprint") != PROTOCOL_ACTIVE_SHA256:
         errors.append("RAMDocs Round 2 release uses a stale protocol")
     if manifest.get("test_accessed") is not False:
@@ -234,6 +263,7 @@ def verify_ramdocs_round2_release(bundle_dir: Path, data_dir: Path) -> dict[str,
         "samples": manifest.get("samples"),
         "gate_a_passed": manifest.get("gate_a_passed"),
         "stop_rule_triggered": manifest.get("stop_rule_triggered"),
+        "paper_downgrade_required": manifest.get("paper_downgrade_required"),
         "publication_gold": False,
     }
 
