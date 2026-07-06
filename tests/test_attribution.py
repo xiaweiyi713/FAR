@@ -112,6 +112,18 @@ def test_retrieval_strata_are_exact() -> None:
         retrieval_stratum(1.1)
 
 
+def test_missing_upstream_correct_document_is_retrieval_miss() -> None:
+    bucket, signals = classify_failure(
+        task=_task(misinformation=True),
+        far_score=_score(),
+        far_prediction=_prediction(evidence=("noise",)),
+        correct_document_ids=set(),
+    )
+    assert bucket == "retrieval_miss"
+    assert signals["correct_document_available"] is False
+    assert signals["correct_document_recall"] == 0.0
+
+
 def test_total_variation_handles_nonmatching_support() -> None:
     assert total_variation({"a": 1.0}, {"b": 1.0}) == 1.0
     assert total_variation({"a": 0.5, "b": 0.5}, {"a": 0.5, "b": 0.5}) == 0.0

@@ -2040,3 +2040,17 @@ evidence bundle verified successfully, releasing the GPU.
   `test_accessed=false`、`reopens_gate_a=false`。
 - 截至本条记录，尚未运行正式 WS1 构建、未读取正式 226 条内容、未调用任何模型、未
   访问或运行任何 test；验证只使用手写合成样本。正式数据只能在本冻结提交推送后读取。
+
+## 2026-07-06 — WS1 首次运行的 RAMDocs 无正确文档偏离
+
+- 冻结提交 `5f65ad7` 推送后首次运行正式 WS1。构建器在写出发布目录前 fail-closed：
+  实现假定每题至少一篇 `document_type=correct` 文档，但 dev schema 聚合显示 350 题中
+  348 题有 1–10 篇正确文档、2 题没有任何正确文档。这是上游数据事实，不是 test、模型
+  输出或结果门禁；本次诊断未访问 RAMDocs test 或 FalsiRAG-Bench held-out。
+- `deviation:` 修复只把空正确文档集合的 recall 明确定义为 0，使它按已注册“未命中任何
+  正确文档”的最早失败规则进入 `retrieval_miss`；同时逐行记录
+  `correct_document_available=false`，并在分层制品和报告公开 available=348 / unavailable=2。
+  六桶集合及优先级、350 条 none/partial/complete 分层、四个假设阈值和 G-R1 均未改变。
+- 首次失败未生成 `diagnostics/attribution_v1` 或报告半成品。修复必须通过合成回归检查并
+  作为已推送的新冻结提交后，才允许第二次正式构建；仍为零模型调用、非真人 IAA、非
+  publication gold，不重开 G-A。

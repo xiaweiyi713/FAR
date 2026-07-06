@@ -116,7 +116,7 @@ def correct_document_recall(
     correct_document_ids: set[str],
 ) -> float:
     if not correct_document_ids:
-        raise ValueError("RAMDocs task has no correct document")
+        return 0.0
     retrieved = {str(item) for item in prediction.get("evidence_ids", [])}
     return len(retrieved & correct_document_ids) / len(correct_document_ids)
 
@@ -153,6 +153,7 @@ def classify_failure(
     else:
         bucket = "format_em_mismatch"
     return bucket, {
+        "correct_document_available": bool(correct_document_ids),
         "correct_document_recall": retrieval_recall,
         "conflict_detected": bool(conflicts),
         "predicted_conflict_types": list(conflicts),
@@ -444,9 +445,6 @@ def compute_attribution(
         }
         for sample_id, task in tasks.items()
     }
-    if any(not ids for ids in correct_ids.values()):
-        raise ValueError("every RAMDocs dev task must have a correct document")
-
     round_manifest_path = round2_dir / "round_manifest.json"
     round_manifest = json.loads(round_manifest_path.read_text(encoding="utf-8"))
     if (
@@ -535,6 +533,10 @@ def compute_attribution(
     stratified: dict[str, Any] = {
         "schema_version": "far-ws1-stratified-analysis-v1",
         "samples": 350,
+        "correct_document_availability": {
+            "available": sum(bool(ids) for ids in correct_ids.values()),
+            "unavailable": sum(not ids for ids in correct_ids.values()),
+        },
         "retrieval": {
             key: _paired_summary(
                 ids,
@@ -699,6 +701,15 @@ def _report_text(result: dict[str, Any]) -> str:
         "|---|---:|",
     ]
     lines.extend(f"| `{key}` | {bucket_counts[key]} |" for key in BUCKET_PRIORITY)
+    availability = result["stratified_analysis"]["correct_document_availability"]
+    lines.extend(
+        [
+            "",
+            "- 上游正确文档可用性: "
+            f"available={availability['available']}, unavailable={availability['unavailable']}；"
+            "无正确文档题按注册的最早上游失败规则进入 `retrieval_miss`。",
+        ]
+    )
     if int(bucket_counts["format_em_mismatch"]) > 0:
         lines.extend(
             [
