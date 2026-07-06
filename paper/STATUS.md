@@ -27,14 +27,27 @@ named claim tier. It combines RAMDocs external upstream labels with a DeepSeek/G
 cross-family LLM jury and author-blind adjudication. It is never described as human
 inter-annotator agreement, publication-grade human gold, or an externally held test.
 
-The tooling now enforces G-A, G-K, G-S, family isolation, the 14-day repeat interval,
+The tooling enforces G-A, G-K, G-S, family isolation, the 14-day repeat interval,
 three-view label sensitivity, the three-system-family matrix, and commit-bound one-shot
-test access. Evidence is not complete: RAMDocs Round 1 failed G-A, and the preregistered
-dev-only Round 2 FAR iteration is still running. Phase B, jury gold, the model matrix,
-and held-out evaluation therefore remain blocked.
+test access. The empirical branch is now closed: RAMDocs Round 1 failed G-A, and
+the preregistered dev-only Round 2 FAR iteration also failed G-A. This second
+failed gate triggers the registered stop rule and downgrades 2+4 to a
+typed-conflict-control applicability-boundary analysis, not an end-to-end
+advantage claim.
 
-The final gate is `falsirag-jury-paper-readiness`; it remains fail-closed until every
-required source artifact can be recomputed from the fingerprinted 2+4 evidence release.
+Phase B not run: the cross-family jury, author-blind adjudication, G-K/G-S,
+jury rescoring, and model matrix were not run. Held-out not run: neither
+FalsiRAG-Bench held-out nor RAMDocs held-out was evaluated. RAMDocs provides
+external upstream labels; this is not human inter-annotator agreement,
+publication-grade human gold, or an externally held test. The verified evidence
+is fingerprinted under `diagnostics/ramdocs_v2/`, with
+`gate_a_passed:false`, `stop_rule_triggered:true`, and
+`paper_downgrade_required:true`.
+
+The success gate `falsirag-jury-paper-readiness` remains fail-closed by design.
+The relevant terminal gate for this branch is now
+`falsirag-round2-failure-readiness`, which verifies the failed-G-A evidence
+release, required disclosures, and local three-model smoke records.
 
 ## Strict AAAI evidence profile
 

@@ -7,7 +7,7 @@
 | 协议条款 | 实现/证据入口 | 当前状态 |
 |---|---|---|
 | Phase 0 预注册与偏离记录 | `experiments/protocol_2plus4.py`、`docs/DEVELOPMENT_LOG.md` | 证据完成 |
-| Phase 0 Mistral/Gemma/Llama 本地 smoke | `scripts/smoke_2plus4_models.sh`、`falsirag-verify-2plus4-smoke`、`diagnostics/model_smoke_2plus4` | 生成与独立验真工具已实现、证据未完成；成功论文门与失败降级门均要求同步后的三家族记录；远端当前缺少三个模型且 Round 2 占用 GPU，未冒充已有 smoke 记录 |
+| Phase 0 Mistral/Gemma/Llama 本地 smoke | `scripts/smoke_2plus4_models.sh`、`falsirag-verify-2plus4-smoke`、`diagnostics/model_smoke_2plus4` | 生成与独立验真工具已实现、证据未完成；失败降级门仍要求同步后的三家族记录；Round 2 已释放 GPU，下一步可在 D: 模型缓存上运行 smoke，未冒充已有 smoke 记录 |
 | A1 RAMDocs 钉死版本、许可证、指纹和 70/30 切分 | `bench/build/ramdocs.py`、`bench/external/ramdocs_v1/manifest.json` | 证据完成 |
 | A2 closed-corpus 映射和初始答案 | `experiments/run_ramdocs.py`、`diagnostics/ramdocs_v1/dev` | 证据完成 |
 | A2 strict EM / coverage / wrong exclusion | `eval/ramdocs.py`、`tests/test_ramdocs.py` | 已实现并测试 |
@@ -15,7 +15,7 @@
 | A2 误导文档冲突检出率 | `eval/ramdocs.py` | 已实现并测试 |
 | A3 六基线 + typed/untyped | `experiments/ramdocs_suite.py`、`diagnostics/ramdocs_v1/dev` | 8×350 证据完成 |
 | A4 G-A、最强基线、bootstrap、McNemar 与停止规则 | `diagnostics/ramdocs_v1/dev/suite_manifest.json`、`diagnostics/ramdocs_v1/error_analysis` | 证据完成；G-A 失败，停止规则触发 |
-| A4 Round 2 dev-only 方法迭代 | `experiments/ramdocs_round2.py`、`experiments/ramdocs_round2_error_analysis.py`、`falsirag-round2-failure-readiness`、`/mnt/d/FAR-outputs/ramdocs_dev_v2` | 运行中；截至 2026-07-06 08:01 +08:00 已至少 231/350，未 finalize，Phase B 仍关闭；若 G-A 再失败，release 强制携带可重算的错误分析，且失败论文门要求适用边界降级与未运行 Phase B/test 披露 |
+| A4 Round 2 dev-only 方法迭代 | `experiments/ramdocs_round2.py`、`experiments/ramdocs_round2_error_analysis.py`、`falsirag-round2-failure-readiness`、`diagnostics/ramdocs_v2` | 证据完成且失败关闭：350/350、0 duplicate、verify valid；FAR 0.3086 vs 冻结 Multi-Query 0.3114，配对差 -0.0029、95% CI [-0.0314, 0.0286]、McNemar p=1.0，G-A 第二次失败；release 携带可重算错误分析、`paper_downgrade_required:true`、`test_accessed:false`、`human_iaa:false` |
 | B1 三陪审员独立结构化标注 | `experiments/phase_b_gate.py`、`bench/build/jury_annotate.py` | 已实现；annotator 在模型初始化前重算完整 Round 2 verifier，强制 J1/J2/J3 精确模型身份，并以干净 Git/实现/config/G-A/packet/prompt/本地 Ollama digest 绑定可续跑 run identity；当前 G-A 失败，无法执行 |
 | B1/B2 Cohen/Fleiss κ、联合多数、二分降级、G-K | `bench/build/jury_consensus.py` | 已实现；consensus 再次重算 G-A 并要求三 juror 绑定一致；二分降级会切换实际投票、联合多数、标签粒度与后续 presence-F1，不把任一陪审员类型冒充类型金标；停止规则阻挡，未执行 |
 | B3 作者盲态仲裁、14 天强制间隔、分层 20% 重标、G-S | `bench/build/jury_adjudication.py` | 已实现；停止规则阻挡，未执行 |
@@ -24,8 +24,8 @@
 | B4 构建标签 / jury gold / unanimous-only 敏感性 | `experiments/jury_sensitivity.py` | 已实现；无 jury labels，未执行 |
 | B5 Qwen/Mistral/Google 四方法矩阵与 >30% 回退剔除 | `scripts/run_2plus4_model_family.sh`、`experiments/model_matrix.py` | 已实现；停止规则阻挡，未执行 |
 | Phase 5 一次性 test intent、commit 绑定、评分数和 seal | `experiments/one_shot.py`、`experiments/runner.py` | 已实现；仅 `--allow-test` 不足以读取 test，必须由已提交且通过 G-A/G-K/G-S/dev 分析校验的 intent 授权；jury labels 的 `phase_b_gate` 必须逐 SHA 对应实际 RAMDocs gate manifest；当前停止规则禁止执行 |
-| Phase C 强制披露和禁止声明 | `experiments/jury_paper_readiness.py` | 已实现，当前失败关闭 |
-| RAMDocs / jury 可校验证据包 | `experiments/evidence_2plus4.py` | RAMDocs Round 1 dev 证据完成且有效；jury release verifier 已实现从 juror、作者仲裁和三家族源 suite 全链重算，但正式 jury 制品被停止规则阻挡 |
+| Phase C 强制披露和禁止声明 | `experiments/jury_paper_readiness.py`、`falsirag-round2-failure-readiness` | 成功论文门失败关闭；失败降级门已实现，要求 Round 2 release、错误分析、三模型 smoke、Phase B not run、held-out not run、upstream labels、not human inter-annotator agreement 与 applicability-boundary 披露 |
+| RAMDocs / jury 可校验证据包 | `experiments/evidence_2plus4.py` | RAMDocs Round 2 evidence release 已同步到 `diagnostics/ramdocs_v2` 且 verify valid；jury release verifier 已实现从 juror、作者仲裁和三家族源 suite 全链重算，但正式 jury 制品被停止规则阻挡 |
 
 可选 A5 WikiContradict 不是主路径完成门禁，当前未实现。严格 AAAI 人类双标注
 档位仍明确为未完成；2+4 只是用外部上游标签和跨家族 LLM 陪审团构成

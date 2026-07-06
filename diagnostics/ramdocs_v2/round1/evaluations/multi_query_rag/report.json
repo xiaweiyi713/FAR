@@ -1,0 +1,23 @@
+{
+  "method": "multi_query_rag",
+  "metrics": {
+    "gold_answer_coverage": 0.7457142857142854,
+    "misinformation_conflict_detected": 0.0,
+    "ramdocs_exact_match": 0.31142857142857144,
+    "unsupported_sentence_rate": 0.9933333333333334,
+    "wrong_answer_exclusion": 0.5742857142857143
+  },
+  "misinformation_items": 166,
+  "partial": false,
+  "provenance": {
+    "corpus_sha256": "219269fedcdc21c9bd87b045a5afd1e7ce60c22ea21f4c1e8ded9c7658d61496",
+    "predictions_sha256": "9350ad4f3a204d29095e20a9e619b66ed5a14c8f26cfbe039daeef513249dbc6",
+    "scores_sha256": "e040bfbe92a17748db0af5f6754dba16d74d90f8b48315bc62521370c8729f18",
+    "tasks_sha256": "d1d816c5d2045e0b2b09067fbb2938936644d33170f3a3bfa40960d43e5d9ce5"
+  },
+  "publication_gold": false,
+  "samples": 350,
+  "schema_version": "far-ramdocs-evaluation-v1",
+  "scoring_protocol": "all_normalized_gold_answers_and_no_normalized_wrong_answers",
+  "split": "dev"
+}

@@ -42,8 +42,19 @@ if [[ -x "${nvidia_smi}" ]]; then
   memory_used="${memory_used//[[:space:]]/}"
   utilization="${utilization//[[:space:]]/}"
   if (( memory_used > 1500 || utilization > 20 )); then
-    echo "GPU is occupied; model smoke deferred" >&2
-    exit 75
+    compute_apps="$(
+      "${nvidia_smi}" \
+        --query-compute-apps=pid,process_name,used_memory \
+        --format=csv,noheader,nounits 2>/dev/null || true
+    )"
+    if [[ -n "${compute_apps//[[:space:]]/}" ]] || (( utilization > 20 )); then
+      echo "GPU is occupied; model smoke deferred" >&2
+      if [[ -n "${compute_apps//[[:space:]]/}" ]]; then
+        echo "${compute_apps}" >&2
+      fi
+      exit 75
+    fi
+    echo "GPU memory is above the idle threshold but no compute app is active; continuing smoke." >&2
   fi
 fi
 

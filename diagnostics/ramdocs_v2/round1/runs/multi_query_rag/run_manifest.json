@@ -1,0 +1,16 @@
+{
+  "allow_test": false,
+  "completed": 350,
+  "errors": 0,
+  "expected": 350,
+  "gold_loaded_by_runner": false,
+  "method": "multi_query_rag",
+  "missing_ids": [],
+  "partial": false,
+  "predictions_sha256": "9350ad4f3a204d29095e20a9e619b66ed5a14c8f26cfbe039daeef513249dbc6",
+  "run_signature": "eba7927bcd5654f5ccc25000e3be0ae48ce3ef1ee39e6be830008ebfebdf0763",
+  "schema_version": "far-run-manifest-v1",
+  "split": "dev",
+  "status": "complete",
+  "study_profile": "ramdocs_external_upstream_labeled"
+}

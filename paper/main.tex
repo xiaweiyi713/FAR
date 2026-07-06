@@ -120,7 +120,25 @@ On a visible 100-pair FEVER SUPPORTS/REFUTES transfer diagnostic, the heuristic 
 \section{Limitations and Responsible Use}
 The candidate set reuses a small controlled source corpus, includes synthetic passages, and has correlated variants. Its labels are not human-validated gold, the reported split is development data, and evaluation is not externally blind. The machine audit measures agreement with construction labels and cannot reveal errors shared by construction, the LLM signal, and deterministic rules. Results come from one local model and do not establish multi-model generality. Rule conflict detectors are high precision but incomplete; model detectors inherit calibration and domain-shift risk. Retrieval failure can hide a true counterexample, while spurious low-quality contradictions can induce over-correction. The benchmark is not current factual advice and is unsuitable for medical, legal, financial, or policy decisions. Final authors remain responsible for checking all text, citations, experiments, and AAAI disclosure requirements.
 
-Our preregistered no-budget 2+4 profile completed only its external Phase A. On 350 RAMDocs development items with upstream labels, FAR and the automatically selected strongest baseline, Multi-Query RAG, both obtain 0.311 strict exact match. The paired difference is 0, with bootstrap 95\% CI $[-0.0286,0.0314]$ and McNemar $p=1.0$. G-A therefore fails and the preregistered stop rule applies. Consequently the cross-family LLM jury and author-blind adjudication were not run; there is no jury gold, and this work provides not human inter-annotator agreement. Held-out tests were not run and are not externally held. Any future 2+4 round would still have to disclose the negative refutation and boundary ablations, the typed revision trade-off, and the FEVER null result, and would have to demonstrate transfer across 7--9B open-model families before replacing this single-model diagnostic claim.
+Our preregistered no-budget 2+4 profile completed only its external Phase A and
+then stopped. Round 1 on 350 RAMDocs development items with upstream labels gave
+FAR and the strongest baseline, Multi-Query RAG, the same 0.311 strict exact
+match. Round 2 changed only FAR's final answer consolidation layer; its G-A
+comparison also failed, with FAR at 0.309 versus 0.311 for the frozen
+Multi-Query baseline, paired difference $-0.0029$, bootstrap 95\% CI
+$[-0.0314,0.0286]$, and McNemar $p=1.0$. This second failed G-A triggers the
+registered stop rule and downgrades the 2+4 branch to an
+applicability-boundary analysis for typed conflict control. Phase B not run:
+the DeepSeek/GLM/Meta jury, author-blind adjudication, G-K/G-S, jury rescoring,
+and three-family model matrix were not run. Held-out not run: neither the
+FalsiRAG-Bench held-out split nor the RAMDocs held-out split was evaluated.
+The RAMDocs evidence uses upstream labels and is not human inter-annotator
+agreement, not publication-grade human gold, and not an externally held test.
+Any future attempt to revive this profile would have to start from the recorded
+failure analysis, disclose the negative refutation and boundary ablations, the
+typed revision trade-off, and the FEVER null result, and demonstrate transfer
+across 7--9B open-model families before replacing this single-model diagnostic
+claim.
 
 \section{Conclusion}
 FAR turns ``what could make this answer wrong?'' into a typed, retrievable control protocol. On the released machine-audited development diagnostic, typed conflict control outperforms a matched untyped alternative, while the refutation, boundary, and typed-revision ablations do not support a uniformly positive component story. The result is a narrow, reproducible mechanism signal---not human-gold, blind-test, external-domain, or multi-model evidence.

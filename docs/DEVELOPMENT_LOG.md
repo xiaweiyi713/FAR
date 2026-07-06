@@ -1972,3 +1972,33 @@ evidence bundle verified successfully, releasing the GPU.
   因而只消除服务刚启动的 HTTP 竞态，不放松模型、digest 或正式 run identity 门禁。
 - 该改动未触碰正在运行的远端 service、未切换工作树、未修改 checkpoint，也未运行测试
   或访问 test。
+
+## 2026-07-06 — Round 2 完成并触发失败降级分支
+
+- 09:30 +08:00 左右，Windows watchdog 在 Round 2 319/350 时停止
+  `far-ramdocs-round2.service` 与 `far-ollama-2plus4.service`。诊断显示
+  checkpoint 未损坏、0 duplicate；GPU 仅有 Xwayland 图形占用，但空闲判定因短暂
+  utilization 残留写入 `ramdocs_dev_v2.waiting-for-gpu`。确认无其他计算进程后，
+  删除 waiting marker 并用同一 user service 从原 checkpoint 安全恢复；恢复后
+  checkpoint 从 319 推进到 321，重复数仍为 0。
+- Round 2 FAR-only dev run 最终完成 350/350，`runs/far/run_manifest.json`
+  为 `status=complete`、`partial=false`、`errors=0`、
+  `gold_loaded_by_runner=false`，prediction SHA 为
+  `b74a42264fd40e962ca883687fae63a2832ff50869fd4f02687f56771e357eb5`。
+  完成后才将远端正式工作树从 `d8d5f40` 切到最新 `main` `88340ac`。
+- 使用 `experiments.ramdocs_round2 finalize` 与 `verify` 重算 Round 2：
+  FAR strict exact match 为 0.3086，冻结 Round 1 最强 `multi_query_rag`
+  为 0.3114；配对差 -0.0029，95% CI [-0.0314, 0.0286]，McNemar p=1.0。
+  `gate_a_passed=false`、`phase_b_authorized=false`、`stop_rule_triggered=true`。
+- 已生成 `experiments.ramdocs_round2_error_analysis`：FAR-only 15、baseline-only
+  16、共同正确 93、共同错误 226；报告设置
+  `paper_downgrade_required=true`、`test_accessed=false`、`human_iaa=false`。
+  `experiments.evidence_2plus4 build-ramdocs-round2` 与
+  `verify-ramdocs-round2` 已在远端通过，并同步到本地 `diagnostics/ramdocs_v2`；
+  本地 verifier 同样返回 `valid=true`。
+- 按预注册停止规则，Phase B not run：DeepSeek/GLM/Meta jury、作者盲态仲裁、
+  G-K/G-S、jury rescoring 与三系统家族矩阵均未运行。Held-out not run：
+  FalsiRAG-Bench 与 RAMDocs test 均未访问。论文和状态文档已改写为
+  typed-conflict-control applicability-boundary 分析，并明确 RAMDocs 是
+  upstream labels，不是 human inter-annotator agreement 或 publication-grade
+  human gold。

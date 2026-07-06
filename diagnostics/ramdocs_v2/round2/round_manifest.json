@@ -1,0 +1,58 @@
+{
+  "candidate_artifacts": {
+    "comparison_sha256": "856193776b00e2a35e630fb204d2ac6bf3b37efe8f6df323a4f9495eb75558ea",
+    "config_sha256": "a9b906692ba6ab5a54f866a119fa90d316177bd7ec14d56599d5048c4ef4e550",
+    "evaluation_report_sha256": "70cb3e290d3e2b7094282fd1dc79f278882113b77e7eadb1bddb66ee2dc68893",
+    "predictions_sha256": "b74a42264fd40e962ca883687fae63a2832ff50869fd4f02687f56771e357eb5",
+    "run_identity_sha256": "7bd8a440771c786f93179071d4ff10a80801aa7a2a7e7952ce50ae17093a9be9",
+    "run_manifest_sha256": "401cf4da0a5c6b5ff263522911b8375f7c48224623563c3f25c82bbf4c6de304",
+    "scores_sha256": "6583e8011d0e6d57c83c408d7af810e3ae3adaa54c23a832e2746f245b77407a"
+  },
+  "candidate_metrics": {
+    "gold_answer_coverage": 0.7466666666666665,
+    "misinformation_conflict_detected": 0.4457831325301205,
+    "ramdocs_exact_match": 0.30857142857142855,
+    "unsupported_sentence_rate": 0.9971428571428571,
+    "wrong_answer_exclusion": 0.5771428571428572
+  },
+  "changed_methods": [
+    "far"
+  ],
+  "gate_a_passed": false,
+  "human_iaa": false,
+  "mcnemar": {
+    "baseline_only": 16,
+    "candidate_only": 15,
+    "discordant": 31,
+    "method": "exact-two-sided-mcnemar-v1",
+    "p_value": 1.0
+  },
+  "paired_comparison": {
+    "candidate_minus_baseline": -0.002857142857142857,
+    "confidence": 0.95,
+    "higher_is_better": true,
+    "lower": -0.03142857142857143,
+    "method": "paired-stratified-percentile-bootstrap-v1",
+    "metric": "ramdocs_exact_match",
+    "pairs": 350,
+    "probability_candidate_better": 0.399,
+    "resamples": 2000,
+    "seed": 1729,
+    "upper": 0.02857142857142857
+  },
+  "phase_b_authorized": false,
+  "protocol_fingerprint": "e0221cfa9569ba089136fd017c1175ad282643c4c773b5f661f42ba95c9d7d00",
+  "publication_gold": false,
+  "reused_round1_artifacts": {
+    "baseline_method": "multi_query_rag",
+    "baseline_scores_sha256": "e040bfbe92a17748db0af5f6754dba16d74d90f8b48315bc62521370c8729f18",
+    "initial_answers_sha256": "5fbcea9b6b2a6cc1136e87d8bb7a2335feebe8b5e2f5b1f54afcd78a7abbbc6b",
+    "suite_manifest_sha256": "3da14fe405e2bd8061787b16185f3238c8f0c07e37ef734144be76135e7e6f2a"
+  },
+  "round": 2,
+  "samples": 350,
+  "schema_version": "far-ramdocs-method-iteration-v1",
+  "split": "dev",
+  "stop_rule_triggered": true,
+  "test_accessed": false
+}

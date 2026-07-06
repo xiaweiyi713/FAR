@@ -1,0 +1,39 @@
+{
+  "checks": {
+    "forbidden_claims_absent": true,
+    "local_model_smokes_valid": false,
+    "paper_disclosures": {
+      "boundary_claim": true,
+      "held_out_not_run": true,
+      "non_human_provenance": true,
+      "phase_b_not_run": true,
+      "round2_result": true,
+      "two_round_stop": true,
+      "upstream_labels": true
+    },
+    "paper_downgrade_required": true,
+    "round2_release_valid": true
+  },
+  "errors": [
+    "model smoke: model smoke file set must be exactly mistral/google/meta JSON records",
+    "model smoke: [Errno 2] No such file or directory: 'diagnostics/model_smoke_2plus4/mistral.json'",
+    "model smoke: [Errno 2] No such file or directory: 'diagnostics/model_smoke_2plus4/google.json'",
+    "model smoke: [Errno 2] No such file or directory: 'diagnostics/model_smoke_2plus4/meta.json'"
+  ],
+  "evidence": {
+    "bundle_manifest_sha256": "8a791e3da776097822b6114fb244cf4f71573f2545dcd72f37380f5ffe4f1681",
+    "error_analysis_sha256": "ed0848cf01962bd4dbe07d5aa5752dbea86080571bd5469d50b86d55f77de95f",
+    "model_smoke_records": {},
+    "paper_main_sha256": "1b529bf26992e45e34c719f2541bfa6bb977b14d22221b4c30b79a622aaf2a9c",
+    "paper_status_sha256": "66eaee3406af09e0033a010a0585c3d0fd0e077cfb2c88dd6c39a53aabe8d2e1"
+  },
+  "gate_a_passed": false,
+  "human_iaa": false,
+  "phase_b_run": false,
+  "protocol_fingerprint": "0a5e963166bcb49ff9b417c12690e1af4f642009359c77523080cff9a9d7cad9",
+  "publication_gold": false,
+  "ready": false,
+  "schema_version": "far-ramdocs-round2-failure-readiness-v1",
+  "study_profile": "typed_conflict_control_applicability_boundary_analysis",
+  "test_accessed": false
+}

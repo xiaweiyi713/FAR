@@ -4,7 +4,7 @@
 当前进度，不修改成功判据。活动协议指纹由
 `experiments/protocol_2plus4.py` 强制校验。
 
-## 当前状态（2026-07-05）
+## 当前状态（2026-07-06）
 
 | 阶段 | 状态 | 权威证据 |
 |---|---|---|
@@ -16,8 +16,8 @@
 | G-S 作者复标 | 工具完成、禁止执行 | Phase B 未启动；不存在作者仲裁制品 |
 | 多模型矩阵 | 工具完成、禁止执行 | G-A 停止规则阻断 jury-gold 矩阵与投稿主张 |
 | 一次性 test | 工具完成、禁止执行 | dev 停止规则已触发，RAMDocs/FalsiRAG test 均未访问 |
-| Round 2 dev 方法迭代 | 运行中 | FAR-only 第二轮已在原 detached 工作树 `d8d5f40` 恢复；恢复后 checkpoint 已从 105/350 推进到至少 231/350，Ollama、RAMDocs runner 和 llama-server 均 active |
-| 2+4 论文门 | 失败关闭 | 当前首轮 2+4 路线不可进入投稿包装；只有 Round 2 完成且 G-A 通过才可改判 |
+| Round 2 dev 方法迭代 | **完成但 G-A 失败** | FAR-only 第二轮完整 350/350、0 duplicate、verifier valid；FAR 0.3086 vs 冻结 `multi_query_rag` 0.3114，配对差 -0.0029，95% CI [-0.0314, 0.0286]，McNemar p=1.0 |
+| 2+4 论文门 | 失败关闭并降级 | 第二次 G-A 失败触发停止规则；Phase B not run，held-out not run，论文只能写 typed-conflict-control applicability-boundary analysis |
 
 ## RAMDocs
 
@@ -165,14 +165,11 @@ systemctl --user disable --now far-ramdocs-round2.service far-ollama-2plus4.serv
 - G-A 为 false，故 Phase B、jury gold、多模型矩阵和一次性 test 均未启动。
 
 Round 2 只改变 FAR 的最终答案合并层；初始答案和最强基线沿用 Round 1 的冻结
-制品并逐文件校验 SHA-256。FAR 350 条完成后执行：
-
-截至 2026-07-06 08:01 +08:00，远端 Round 2 FAR 已在原 detached 工作树
-`d8d5f40` 恢复并确认推进。恢复时 checkpoint 为 105/350；随后写入到至少
-231/350，最后观测样本为 `RAM0330`。尚无 `run_manifest.json` 或
-`predictions.jsonl`；`far-ollama-2plus4.service`、`far-ramdocs-round2.service`
-和 `llama-server` 均 active。恢复前曾因 GPU 被 VeraRAG/SelfRAG 占用而保留
-`/mnt/d/FAR-runtime/ramdocs_dev_v2.waiting-for-gpu`；恢复时未切换工作树。
+制品并逐文件校验 SHA-256。该轮已在原 detached 工作树 `d8d5f40` 完成 350/350；
+期间 watchdog 曾因 GPU 空闲判定残留在 319/350 暂停，确认无其他计算进程后按
+同一 checkpoint 安全恢复，最终 `run_manifest.json` 为 complete、0 errors、0
+duplicates、`gold_loaded_by_runner:false`。完成后正式工作树切到最新 `main`
+`88340ac` 执行 finalize/verify。
 
 ```bash
 uv run python -m experiments.ramdocs_round2 finalize \
@@ -187,8 +184,9 @@ uv run python -m experiments.ramdocs_round2 verify \
   --config experiments/configs/ramdocs_qwen_round2.yaml
 ```
 
-只有 `round_manifest.json` 与 verifier 同时给出 `gate_a_passed=true` 才可进入
-Phase B；再次失败则按预注册规则降级论文，且仍不得访问 test。
+`round_manifest.json` 与 verifier 均给出 `gate_a_passed=false`，因此不得进入
+Phase B。按预注册规则，论文降级为 typed-conflict-control
+applicability-boundary analysis，且仍不得访问 test。
 
 若第二轮失败，生成冻结的跨轮错误分析：
 
