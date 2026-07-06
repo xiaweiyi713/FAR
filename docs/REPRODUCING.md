@@ -684,6 +684,27 @@ flips, hypothesis dispositions, fingerprints, and G-R1. A nonempty or partial
 release is rejected rather than overwritten; any post-freeze implementation
 change must be registered and pushed as a `deviation:` commit before rebuilding.
 
+## G-P power gate
+
+Build and independently recompute the historical power review and the frozen
+WS2 three-family design:
+
+```bash
+uv run falsirag-power build
+uv run falsirag-power verify
+```
+
+For a proposed paired binary design, inspect a standalone scenario with:
+
+```bash
+uv run falsirag-power simulate \
+  --n 180 --discordance-rate 0.316667 --effect 0.078
+```
+
+Every new preregistration must bind its design to a G-P result. Power below
+0.60 does not silently authorize a confirmatory null claim: it forces the
+study to be labelled directional/descriptive before any formal run.
+
 ## Paper
 
 ```bash

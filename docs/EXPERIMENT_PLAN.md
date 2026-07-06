@@ -29,6 +29,14 @@ Go/no-go gates:
    inspection. Its inherited SUPPORTS/REFUTES labels may evaluate binary
    detection, but its machine-generated typed buckets must not support typed
    claims or become a post-hoc tuning set presented as external validation.
+7. Before registering any new formal comparison, run G-P with the planned pair
+   count, a frozen discordance-rate basis, target effect, alpha, simulation
+   count, and seed. Record exact/stratified McNemar power and the applicable
+   cluster-bootstrap sensitivity. If primary power is below 0.60, preregister
+   the study as directional or descriptive: a null result cannot establish
+   absence, and no post-hoc metric, subset, family, or second round may upgrade
+   the claim. The frozen historical/WS2 calculation is reproduced with
+   `uv run falsirag-power verify`.
 
 After the custodian returns all three unscored suites, use
 `falsirag-score-blind-return` with the role-separated attestation. Final

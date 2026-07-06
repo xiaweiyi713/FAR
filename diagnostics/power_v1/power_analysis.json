@@ -1,0 +1,87 @@
+{
+  "historical": {
+    "qwen_dev": {
+      "baseline_only": 2,
+      "candidate_only": 17,
+      "continuous_effect": 0.07833035219308979,
+      "discordance_rate": 0.31666666666666665,
+      "discordant": 19,
+      "mde_60": 0.171051025390625,
+      "mde_80": 0.20634358723958335,
+      "n": 60,
+      "power_for_0_03": 0.0381898985150758,
+      "power_for_0_078": 0.132363430278539
+    },
+    "ramdocs_round1": {
+      "baseline_only": 16,
+      "candidate_only": 16,
+      "discordance_rate": 0.09142857142857143,
+      "discordant": 32,
+      "mde_60": 0.03823660714285714,
+      "mde_80": 0.0469140625,
+      "n": 350,
+      "observed_effect": 0.0,
+      "power_for_0_03": 0.3884656865777786,
+      "power_for_0_078": 0.9996818848173764
+    },
+    "ramdocs_round2": {
+      "baseline_only": 16,
+      "candidate_only": 15,
+      "discordance_rate": 0.08857142857142856,
+      "discordant": 31,
+      "mde_60": 0.037679617745535715,
+      "mde_80": 0.04618321010044643,
+      "n": 350,
+      "observed_effect": -0.002857142857142857,
+      "power_for_0_03": 0.3987484324612563,
+      "power_for_0_078": 0.9998444778390947
+    }
+  },
+  "human_iaa": false,
+  "model_calls": 0,
+  "publication_gold": false,
+  "roadmap_fingerprint": "91eb3205fe127271bc5f4882025243d9974a711e311ef074fcbde09aa86e7cf7",
+  "schema_version": "far-power-retrospective-v1",
+  "source_fingerprints": {
+    "diagnostics/attribution_v1/dev_component_attribution.json": "6c7ccf5ecfce1b1e4445e903245c0993558288a0364e6995b6a5f0b758e0346d",
+    "diagnostics/ramdocs_v2/round1/comparisons/far_vs_multi_query_rag.json": "4951ad8d67f4d256ba5fa3fae5778765b5a705edc79591cb63f578e88949ae0d",
+    "diagnostics/ramdocs_v2/round2/comparisons/far_vs_multi_query_rag.json": "856193776b00e2a35e630fb204d2ac6bf3b37efe8f6df323a4f9495eb75558ea"
+  },
+  "test_accessed": false,
+  "ws2_design": {
+    "adequately_powered": false,
+    "alpha": 0.05,
+    "at_least_two_thirds_positive_probability": 0.9295,
+    "bootstrap_resamples": 500,
+    "discordance_basis": "qwen dev binary flips at answer_correctness >= 0.8",
+    "families": 3,
+    "family_cluster_bootstrap_power": 0.595,
+    "family_designs": [
+      {
+        "discordance_rate": 0.31666666666666665,
+        "effect": 0.078,
+        "n": 60
+      },
+      {
+        "discordance_rate": 0.31666666666666665,
+        "effect": 0.078,
+        "n": 60
+      },
+      {
+        "discordance_rate": 0.31666666666666665,
+        "effect": 0.078,
+        "n": 60
+      }
+    ],
+    "g_f_failure_interpretation": "inconclusive for absence; report direction and interval",
+    "gate_p_completed": true,
+    "gate_p_threshold": 0.6,
+    "method": "family-stratified-power-monte-carlo-v1",
+    "pairs": 180,
+    "required_claim_level": "directional_reproduction",
+    "seed": 1729,
+    "simulations": 10000,
+    "stratified_mcnemar_power": 0.4143,
+    "target_effect_basis": "F1 qwen dev continuous typed-minus-untyped +0.078"
+  }
+}

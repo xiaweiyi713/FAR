@@ -1,0 +1,21 @@
+{
+  "adequately_powered": false,
+  "artifacts": {
+    "power_analysis.json": "dc93e764fcc29b11edb1252288f8b0a36dd0c0f3ec79336592366577eb393ba2",
+    "power_retrospective.md": "bfcd5e83a1700396c82bfd15723bd74c5d84291487d4df443d470a95d2284cf6"
+  },
+  "external_report_sha256": "bfcd5e83a1700396c82bfd15723bd74c5d84291487d4df443d470a95d2284cf6",
+  "gate_p_completed": true,
+  "human_iaa": false,
+  "model_calls": 0,
+  "publication_gold": false,
+  "required_claim_level": "directional_reproduction",
+  "roadmap_fingerprint": "91eb3205fe127271bc5f4882025243d9974a711e311ef074fcbde09aa86e7cf7",
+  "schema_version": "far-power-release-v1",
+  "source_fingerprints": {
+    "diagnostics/attribution_v1/dev_component_attribution.json": "6c7ccf5ecfce1b1e4445e903245c0993558288a0364e6995b6a5f0b758e0346d",
+    "diagnostics/ramdocs_v2/round1/comparisons/far_vs_multi_query_rag.json": "4951ad8d67f4d256ba5fa3fae5778765b5a705edc79591cb63f578e88949ae0d",
+    "diagnostics/ramdocs_v2/round2/comparisons/far_vs_multi_query_rag.json": "856193776b00e2a35e630fb204d2ac6bf3b37efe8f6df323a4f9495eb75558ea"
+  },
+  "test_accessed": false
+}

@@ -2077,3 +2077,22 @@ evidence bundle verified successfully, releasing the GPU.
 - 本结果推翻的是路线图中的可证伪解释假设，不改写 F1–F10：RAMDocs 两轮 G-A 仍失败，
   Qwen dev 的 typed−untyped +0.078 仍保留，但简单的 upstream-only、metric masking 和
   detection-only 故事均被关闭。WS2/WS3 必须据此采用更窄、更机制化的边界表述。
+
+## 2026-07-06 — 完成 WS5 功效回顾并制度化 G-P
+
+- 新增 `experiments.power`：配对二元设计的解析 exact McNemar 功效/MDE、固定种子 Monte
+  Carlo 复核、三家族分层 McNemar 功效、家族聚类 bootstrap 与 2/3 方向一致概率；所有
+  参数和源制品 SHA 写入 `diagnostics/power_v1`，独立 verifier 可完整重算并逐字节比较。
+- 历史回顾显示：Qwen 60 条 typed/untyped 的冻结二元不一致率为 19/60=0.317，+3pp 和
+  +7.8pp 的 exact 功效分别仅 0.038 / 0.132；达到 60% / 80% 功效的 MDE 约为 17.1pp /
+  20.6pp。RAMDocs 两轮在约 9% 不一致率下对 +3pp 的功效仅 0.388 / 0.399，证实旧 G-A
+  对小效应缺乏检测力，但不改变其两次失败判定。
+- WS2 预设计固定为 3 家族 × 60 配对、目标 +0.078、沿用 Qwen 不一致率；10,000 次模拟
+  得到分层 McNemar 功效 0.414、家族聚类 bootstrap 正区间概率 0.595、至少 2/3 家族
+  正方向概率 0.930。主功效低于 G-P 0.60，因此强制登记为
+  `directional_reproduction`：G-F 不显著不能证明无效，方向不一致仍可收窄为
+  Qwen-specific。
+- `docs/EXPERIMENT_PLAN.md` 现要求今后所有正式预注册绑定 n、不一致率依据、目标效应、
+  alpha、模拟次数与 seed；功效低于 0.60 时必须预先降格，禁止事后换指标/子集/家族或
+  增加 Round 2。`falsirag-power verify` 返回 `valid=true`、`gate_p_completed=true`、
+  `model_calls=0`、`test_accessed=false`；本工作未调用模型或读取任何 held-out/test。

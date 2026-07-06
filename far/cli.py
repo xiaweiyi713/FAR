@@ -300,3 +300,10 @@ def evidence_attribution_main() -> None:
     from experiments.evidence_attribution import main
 
     main()
+
+
+def power_main() -> None:
+    _prefer_far_repo()
+    from experiments.power import main
+
+    main()
