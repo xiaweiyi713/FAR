@@ -1861,3 +1861,14 @@ evidence bundle verified successfully, releasing the GPU.
 - `docs/PROPOSAL_TRACEABILITY.md` 也补入同一独立档位，并把旧的“三档状态账本”
   更正为当前代码实际生成的四档；待办不再被笼统描述成仅有外部证据，也包括受预注册
   门禁约束的进行中实验。
+
+## 2026-07-06 — 为 Phase 0 三模型 smoke 增加独立验真
+
+- 完成度审计确认 `scripts/smoke_2plus4_models.sh` 能生成 Mistral/Gemma/Llama 三份
+  记录，但此前没有独立 verifier；自报 `smoke_passed=true` 和配置哈希不足以形成
+  可复核证据。
+- 新增 `experiments.model_smoke_2plus4` 与 CLI `falsirag-verify-2plus4-smoke`，严格
+  要求精确三文件集合，逐家族核对活动协议、当前配置 SHA-256、固定模型名、Ollama
+  64 位 digest、带时区时间戳、`SMOKE_OK` 响应及非 benchmark/非真人来源声明。
+- smoke 脚本现在生成后自动调用 verifier。当前 Round 2 仍占用 GPU，未拉取模型、
+  未生成或伪造 smoke 证据；只完成 Python 语法/导入、shell 语法和 whitespace 静态检查。

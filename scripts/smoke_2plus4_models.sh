@@ -152,4 +152,5 @@ done
 if (( missing != 0 )); then
   exit 3
 fi
+python -m experiments.model_smoke_2plus4 --output-dir "${output_dir}"
 echo "2+4 local model smoke records: ${output_dir}"

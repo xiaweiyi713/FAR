@@ -239,6 +239,13 @@ def model_matrix_main() -> None:
     main()
 
 
+def verify_2plus4_model_smoke_main() -> None:
+    _prefer_far_repo()
+    from experiments.model_smoke_2plus4 import main
+
+    main()
+
+
 def jury_rescore_main() -> None:
     _prefer_far_repo()
     from experiments.jury_rescore import main
