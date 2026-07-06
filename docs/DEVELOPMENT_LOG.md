@@ -2242,3 +2242,16 @@ evidence bundle verified successfully, releasing the GPU.
   Mistral `run-family`；`CheckpointWriter` 将跳过已有 20 条正式 FAR 样本继续运行。
 - 本次恢复不改变配置、digest、样本、方法、指标、G-F/G-P、claim level 或输出目录；它是
   正式 dev 运行的运维恢复，不是实验偏离、Round 2 或结果驱动调整。
+
+## 2026-07-06 — WS2 Mistral formal FAR 38/60 checkpoint 恢复
+
+- 只读监控在稍后巡检中再次发现 `far-family-dev.service` 与 `far-ollama-family-dev.service`
+  均为 inactive/dead；Mistral formal FAR checkpoint 为 38/60，未生成 `run_manifest.json`。
+  日志停在 `far: start F0193`，仍无 Python traceback、OOM、Xid 或 schema 错误。GPU 上仅见
+  桌面/Xwayland 残留，不是其他训练任务占用。
+- 按既定恢复规则，从同一 D: 工作树、同一服务定义、同一输出目录和同一 checkpoint 重新
+  `systemctl --user start far-family-dev.service`。服务恢复为 active，`far-ollama-family-dev`
+  同步 active，runner 重新进入 Mistral `run-family` 并将跳过已有 38 条正式 FAR 样本。
+- 与 20/60 恢复相同，本次操作不改配置、digest、样本、方法、指标、G-F/G-P、claim level
+  或输出目录。重复 inactive 模式暂按运维生命周期问题处理；正式运行期间不修改服务语义，
+  以免引入注册后实现偏离。
