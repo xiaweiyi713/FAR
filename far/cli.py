@@ -286,3 +286,17 @@ def jury_sensitivity_main() -> None:
     from experiments.jury_sensitivity import main
 
     main()
+
+
+def attribution_main() -> None:
+    _prefer_far_repo()
+    from experiments.attribution import main
+
+    main()
+
+
+def evidence_attribution_main() -> None:
+    _prefer_far_repo()
+    from experiments.evidence_attribution import main
+
+    main()

@@ -653,6 +653,37 @@ confidence intervals, paired bootstrap, McNemar, and file fingerprints. Do not
 tune on this visible frozen slice and then report it as independent external
 validation.
 
+## Frozen WS1 mechanism attribution
+
+WS1 is a deterministic, dev-only reanalysis of already frozen predictions. It
+makes zero model calls, does not access either held-out test split, does not
+produce human IAA or publication-grade gold, and cannot reopen RAMDocs G-A.
+The analysis-before-look rule is enforced in two stages:
+
+1. Commit and push the registered roadmap, classifier, evidence verifier, and
+   synthetic unit tests without reading the 226 formal both-incorrect cases.
+2. Pass that exact commit to the one-shot builder. The builder requires it to
+   be an ancestor of `origin/main` and byte-compares all frozen analysis files
+   against the commit before reading the dev inputs.
+
+After the freeze commit has been pushed, build and independently verify the
+release with:
+
+```bash
+uv run falsirag-attribution-evidence build \
+  --analysis-freeze-commit <pushed-freeze-commit>
+
+uv run falsirag-attribution-evidence verify
+```
+
+The build writes the exact six-file release to
+`diagnostics/attribution_v1/` and the paper-facing copy to
+`reports/mechanism_attribution.md`. The verifier independently recomputes all
+failure buckets, retrieval/conflict strata, set-F1 diagnostics, dev component
+flips, hypothesis dispositions, fingerprints, and G-R1. A nonempty or partial
+release is rejected rather than overwritten; any post-freeze implementation
+change must be registered and pushed as a `deviation:` commit before rebuilding.
+
 ## Paper
 
 ```bash

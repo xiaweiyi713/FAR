@@ -2023,3 +2023,20 @@ evidence bundle verified successfully, releasing the GPU.
   企划按预注册失败分支完成闭合：保留第二次 G-A 失败与论文降级，不启动 LLM jury、
   作者仲裁、模型矩阵或任何 held-out/test。全程未运行测试套件，也未访问 test 数据；
   三模型 smoke 不是人类标注、真人仲裁或真人 IAA。
+
+## 2026-07-06 — 注册长期路线并冻结 WS1 analysis-before-look 实现
+
+- 将 `docs/PLAN_LONGTERM_OPTIMIZATION.md` 注册为 post-stop-rule 长期路线，活动
+  SHA-256 为 `91eb3205fe127271bc5f4882025243d9974a711e311ef074fcbde09aa86e7cf7`；
+  F1–F10、六工作流、决策树及后续 `deviation:` 纪律均由
+  `experiments.protocol_longterm` fail-closed 校验。
+- 在查看正式 226 条 both-incorrect 内容之前，冻结 WS1 六桶唯一优先级、两套 350 条
+  分层、集合 F1 描述性口径、四个假设的三态阈值和 dev 五臂逐样本翻转定义；新增
+  `experiments.attribution` 零模型构建器与 `experiments.evidence_attribution` 独立重算
+  verifier，G-R1 要求唯一覆盖 226 条并报告全部四个预注册假设。
+- analysis-before-look 由 Git 谱系强制执行：正式构建必须显式传入已推送且属于
+  `origin/main` 的冻结提交，当前路线/实现/verifier/合成单测必须与该提交逐字节一致。
+  发布物明确记录 `model_calls=0`、`publication_gold=false`、`human_iaa=false`、
+  `test_accessed=false`、`reopens_gate_a=false`。
+- 截至本条记录，尚未运行正式 WS1 构建、未读取正式 226 条内容、未调用任何模型、未
+  访问或运行任何 test；验证只使用手写合成样本。正式数据只能在本冻结提交推送后读取。

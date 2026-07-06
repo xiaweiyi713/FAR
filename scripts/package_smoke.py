@@ -12,6 +12,7 @@ import far
 from bench.build.validate_bench import validate
 
 EXPECTED_ENTRY_POINTS = {
+    "falsirag-attribution-evidence",
     "falsirag-build-ramdocs",
     "falsirag-jury-paper-readiness",
     "falsirag-jury-sensitivity",
