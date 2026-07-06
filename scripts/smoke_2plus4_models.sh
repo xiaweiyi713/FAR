@@ -19,7 +19,7 @@ fi
 source scripts/windows_gpu_env.sh
 
 command -v curl >/dev/null
-command -v jq >/dev/null
+command -v python >/dev/null
 ollama_bin="${OLLAMA_BIN:-/mnt/d/FAR-runtime/ollama/bin/ollama}"
 if [[ ! -x "${ollama_bin}" ]]; then
   ollama_bin="$(command -v ollama)"
@@ -103,8 +103,18 @@ for entry in "${models[@]}"; do
   IFS='|' read -r family model config_path <<<"${entry}"
   config_sha256="$(sha256sum "${config_path}" | awk '{print $1}')"
   tags="$(curl -fsS http://127.0.0.1:11434/api/tags)"
-  if ! jq -e --arg model "${model}" '.models[]? | select(.name == $model or .model == $model)' \
-    <<<"${tags}" >/dev/null; then
+  if ! python - "${tags}" "${model}" <<'PY'
+import json
+import sys
+
+tags = json.loads(sys.argv[1])
+model = sys.argv[2]
+for item in tags.get("models", []):
+    if item.get("name") == model or item.get("model") == model:
+        raise SystemExit(0)
+raise SystemExit(1)
+PY
+  then
     if [[ "${pull_missing}" != true ]]; then
       echo "missing ${model}; rerun with --pull after the GPU is idle" >&2
       missing=1
@@ -114,49 +124,85 @@ for entry in "${models[@]}"; do
     tags="$(curl -fsS http://127.0.0.1:11434/api/tags)"
   fi
 
-  request="$(jq -nc --arg model "${model}" '{
-    model: $model,
-    prompt: "Reply with exactly SMOKE_OK.",
-    stream: false,
-    keep_alive: 0,
-    options: {temperature: 0, num_predict: 16}
-  }')"
+  request="$(
+    python - "${model}" <<'PY'
+import json
+import sys
+
+print(json.dumps({
+    "model": sys.argv[1],
+    "prompt": "Reply with exactly SMOKE_OK.",
+    "stream": False,
+    "keep_alive": 0,
+    "options": {"temperature": 0, "num_predict": 16},
+}))
+PY
+  )"
   response="$(curl -fsS --max-time 300 \
     -H 'Content-Type: application/json' \
     -d "${request}" \
     http://127.0.0.1:11434/api/generate)"
-  if ! jq -e '.error == null and (.response | contains("SMOKE_OK"))' \
-    <<<"${response}" >/dev/null; then
+  if ! python - "${response}" <<'PY'
+import json
+import sys
+
+payload = json.loads(sys.argv[1])
+if payload.get("error") is not None or "SMOKE_OK" not in str(payload.get("response", "")):
+    raise SystemExit(1)
+PY
+  then
     echo "${model}: smoke response failed validation" >&2
     exit 1
   fi
-  model_row="$(jq -c --arg model "${model}" \
-    '.models[] | select(.name == $model or .model == $model)' <<<"${tags}" | head -n 1)"
-  jq -n \
-    --arg schema_version "far-2plus4-local-model-smoke-v1" \
-    --arg created_at "$(date --iso-8601=seconds)" \
-    --arg protocol_fingerprint "${protocol_fingerprint}" \
-    --arg family "${family}" \
-    --arg model "${model}" \
-    --arg config_path "${config_path}" \
-    --arg config_sha256 "${config_sha256}" \
-    --argjson model_record "${model_row}" \
-    --arg response "$(jq -r '.response' <<<"${response}")" \
-    '{
-      schema_version: $schema_version,
-      created_at: $created_at,
-      protocol_fingerprint: $protocol_fingerprint,
-      model_family: $family,
-      model: $model,
-      config_path: $config_path,
-      config_sha256: $config_sha256,
-      model_record: $model_record,
-      response: $response,
-      smoke_passed: true,
-      benchmark_data_accessed: false,
-      publication_gold: false,
-      human_iaa: false
-    }' >"${output_dir}/${family}.json"
+  python - \
+    "${tags}" \
+    "${response}" \
+    "${family}" \
+    "${model}" \
+    "${config_path}" \
+    "${config_sha256}" \
+    "${protocol_fingerprint}" \
+    "$(date --iso-8601=seconds)" \
+    >"${output_dir}/${family}.json" <<'PY'
+import json
+import sys
+
+tags = json.loads(sys.argv[1])
+response = json.loads(sys.argv[2])
+family = sys.argv[3]
+model = sys.argv[4]
+config_path = sys.argv[5]
+config_sha256 = sys.argv[6]
+protocol_fingerprint = sys.argv[7]
+created_at = sys.argv[8]
+model_record = None
+for item in tags.get("models", []):
+    if item.get("name") == model or item.get("model") == model:
+        model_record = item
+        break
+if model_record is None:
+    raise SystemExit(f"model record disappeared before smoke record write: {model}")
+print(json.dumps(
+    {
+        "schema_version": "far-2plus4-local-model-smoke-v1",
+        "created_at": created_at,
+        "protocol_fingerprint": protocol_fingerprint,
+        "model_family": family,
+        "model": model,
+        "config_path": config_path,
+        "config_sha256": config_sha256,
+        "model_record": model_record,
+        "response": response.get("response", ""),
+        "smoke_passed": True,
+        "benchmark_data_accessed": False,
+        "publication_gold": False,
+        "human_iaa": False,
+    },
+    ensure_ascii=False,
+    indent=2,
+    sort_keys=True,
+))
+PY
   echo "${family}/${model}: smoke passed"
 done
 
