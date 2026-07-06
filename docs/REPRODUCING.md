@@ -709,8 +709,10 @@ study to be labelled directional/descriptive before any formal run.
 
 WS2 is independently preregistered in `docs/PLAN_FAMILY_DEV.md`. It uses a
 dev-only view and refuses dirty/unpushed source, mutable model identities, or a
-config/digest that differs from the registration. On the Windows GPU host,
-prepare the input once and run families in the frozen order:
+config/digest that differs from the registration. Before resuming any
+interrupted Windows GPU run, first read `docs/CURRENT_OPERATIONAL_STATE.md` and
+honor any active user pause window. On the Windows GPU host, prepare the input
+once and run families in the frozen order:
 
 ```bash
 source ~/miniconda3/etc/profile.d/conda.sh

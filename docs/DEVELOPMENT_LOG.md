@@ -2274,3 +2274,6 @@ evidence bundle verified successfully, releasing the GPU.
 - 本次操作是用户暂停与运维恢复记录，不是评分、finalize、Phase B 启动、G-A/G-K/G-S 判定或
   结果驱动调整；未访问或运行任何 test。用户随后明确要求 2026-07-06 晚间不再训练，
   下一次 WS2 family-dev 恢复不得早于 2026-07-07，且恢复前仍需重新确认 GPU 与服务状态。
+- 为避免后续心跳或手动恢复把用户暂停误判为异常，新增 `docs/CURRENT_OPERATIONAL_STATE.md`
+  作为当前运行状态入口，并在 README 与复现手册的 WS2 小节中链接该文件。该文件只记录
+  当前断点、暂停窗口和恢复前只读检查，不启动服务、不写远端 checkpoint、不改变实验协议。
