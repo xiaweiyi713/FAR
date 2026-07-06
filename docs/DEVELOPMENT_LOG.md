@@ -2134,6 +2134,11 @@ evidence bundle verified successfully, releasing the GPU.
   未写 prediction；随后改为三个显式 family 命令。当前 Mistral 两臂 5 条 calibration
   已开始，首个样本为 `F0182`，GPU 正常占用。该运维修正不改方法、配置、digest、样本、
   指标、G-F/G-P 或 claim level。
+- transient family service 在 Mistral typed calibration 5/5、untyped 2/5 后被 systemd
+  回收，日志无 Python/Ollama 错误，第三条尚未写 checkpoint。为避免短生命周期 transient
+  unit 再次中断，新增两份不自动 enable 的持久 user-unit 模板，安装到远端后从同一
+  `bd57585` checkpoint 恢复；typed 5 行与 untyped 2 行保持原样。该运维偏离发生在任何
+  60 条正式 prediction 之前，不修改实验实现、配置、cache、校准样本或统计判定。
 
 ## 2026-07-06 — 完成 WS6-0/1/2/4 首轮仓库收敛
 
