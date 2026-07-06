@@ -2230,3 +2230,15 @@ evidence bundle verified successfully, releasing the GPU.
   calibration/formal checkpoint 行数、run manifest、日志尾、相关进程与 GPU 状态。
 - 该脚本是只读巡检入口：不启动或停止 systemd unit，不写 marker，不 finalize，不读取
   held-out/test，也不改变正在 D: 工作树上运行的 `bd57585` 冻结 WS2 formal run。
+
+## 2026-07-06 — WS2 Mistral formal FAR 20/60 checkpoint 恢复
+
+- 新增只读监控脚本后巡检发现 `far-family-dev.service` 变为 inactive/dead，但
+  `/mnt/d/FAR-outputs/family_dev_v1/runs/mistral/far/checkpoint.jsonl` 仅 20/60，且未生成
+  `run_manifest.json`。日志停在 `far: start F0100`，无 Python traceback、OOM、Xid 或
+  schema 错误；`far-ollama-family-dev` 仍 active，GPU 空闲。
+- 按 WS2 恢复规则，从同一 D: 工作树、同一服务定义、同一 checkpoint 重新
+  `systemctl --user start far-family-dev.service`。服务恢复为 active，Python runner 重新进入
+  Mistral `run-family`；`CheckpointWriter` 将跳过已有 20 条正式 FAR 样本继续运行。
+- 本次恢复不改变配置、digest、样本、方法、指标、G-F/G-P、claim level 或输出目录；它是
+  正式 dev 运行的运维恢复，不是实验偏离、Round 2 或结果驱动调整。
