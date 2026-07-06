@@ -705,6 +705,48 @@ Every new preregistration must bind its design to a G-P result. Power below
 0.60 does not silently authorize a confirmatory null claim: it forces the
 study to be labelled directional/descriptive before any formal run.
 
+## WS2 cross-family dev reproduction
+
+WS2 is independently preregistered in `docs/PLAN_FAMILY_DEV.md`. It uses a
+dev-only view and refuses dirty/unpushed source, mutable model identities, or a
+config/digest that differs from the registration. On the Windows GPU host,
+prepare the input once and run families in the frozen order:
+
+```bash
+source ~/miniconda3/etc/profile.d/conda.sh
+conda activate train
+cd /mnt/d/FAR-workspace/FAR-longterm
+source scripts/windows_gpu_env.sh
+
+uv run falsirag-family-dev prepare-input \
+  --output-dir /mnt/d/FAR-outputs/family_dev_input_v1
+
+uv run falsirag-family-dev run-family --family mistral \
+  --input-dir /mnt/d/FAR-outputs/family_dev_input_v1 \
+  --output-dir /mnt/d/FAR-outputs/family_dev_v1
+uv run falsirag-family-dev run-family --family google \
+  --input-dir /mnt/d/FAR-outputs/family_dev_input_v1 \
+  --output-dir /mnt/d/FAR-outputs/family_dev_v1
+uv run falsirag-family-dev run-family --family meta \
+  --input-dir /mnt/d/FAR-outputs/family_dev_input_v1 \
+  --output-dir /mnt/d/FAR-outputs/family_dev_v1
+```
+
+Each family first runs the frozen five-sample calibration for both arms and
+then the full 60 paired dev samples. After rsyncing the raw directory to
+`diagnostics/family_dev_v1`, finalize once and independently verify:
+
+```bash
+uv run falsirag-family-dev finalize \
+  --output-dir diagnostics/family_dev_v1
+uv run falsirag-family-dev-evidence \
+  --output-dir diagnostics/family_dev_v1
+```
+
+G-P fixes this study at `directional_reproduction`: a nonsignificant G-F does
+not establish absence. No command above reads train, FalsiRAG held-out/test, or
+RAMDocs test.
+
 ## Paper
 
 ```bash

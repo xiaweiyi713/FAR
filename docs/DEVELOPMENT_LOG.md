@@ -2096,3 +2096,26 @@ evidence bundle verified successfully, releasing the GPU.
   alpha、模拟次数与 seed；功效低于 0.60 时必须预先降格，禁止事后换指标/子集/家族或
   增加 Round 2。`falsirag-power verify` 返回 `valid=true`、`gate_p_completed=true`、
   `model_calls=0`、`test_accessed=false`；本工作未调用模型或读取任何 held-out/test。
+
+## 2026-07-06 — 注册 WS2 三家族方向性复现
+
+- 新增独立预注册 `docs/PLAN_FAMILY_DEV.md`，活动 SHA-256 为
+  `5acc611bf8bb79740a996cc7bc9bd262bc55a661373f070670da19f7aa48433b`。
+  固定 60 条 dev、typed/untyped 两臂、Mistral/Google/Meta 三家族、三个 Ollama digest、
+  配置 SHA、answer correctness 唯一主指标、0.8 binary McNemar 阈值、家族 cluster
+  bootstrap、机器标签敏感性与一次运行/无 Round 2 纪律。
+- G-P 的 0.414 主功效已写入预注册，研究级别在看任何新预测前固定为
+  `directional_reproduction`。G-F 仍按合并连续差 >0 且双侧分层 exact McNemar p<0.05
+  计算，但不显著只能视为功效受限；少于 2/3 家族正方向或合并差非正才触发
+  Qwen-specific 收窄。
+- 新增与 Mistral/Gemma 同构的 `llama_open.yaml`；`protocol_family_dev` 绑定 dev/corpus、
+  G-P manifest、smoke digest、三配置及干净已推送提交。专用 runner 只创建
+  `bench/splits/dev.jsonl` 的 60 条 dev view，不读取 train、FalsiRAG test_inputs 或
+  RAMDocs test；每家族先跑两臂各 5 条 calibration，再跑两臂各 60 条正式样本。
+- `experiments.evidence_family_dev` 将从原始预测独立重算全部 score/report、合并 G-F、
+  cluster CI、方向和标签分层，并核验 390 次 pipeline 样本执行、运行时 digest、配置、
+  提交与全制品 SHA。单个 pipeline 样本可能触发多个本地 Ollama 请求，因此只记录样本
+  执行数和 `api_cost_usd=0`，不伪称精确模型调用数。
+- 截至本条记录，WS2 尚未运行 calibration 或任何正式样本，未启动 GPU 模型、未生成
+  family-dev prediction，也未访问或评测 held-out/test；当前检查仅为合成测试、配置静态
+  校验和 dev-only input view 回归。

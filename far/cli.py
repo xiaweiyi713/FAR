@@ -307,3 +307,17 @@ def power_main() -> None:
     from experiments.power import main
 
     main()
+
+
+def family_dev_main() -> None:
+    _prefer_far_repo()
+    from experiments.family_dev import main
+
+    main()
+
+
+def evidence_family_dev_main() -> None:
+    _prefer_far_repo()
+    from experiments.evidence_family_dev import main
+
+    main()
