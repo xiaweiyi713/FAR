@@ -282,8 +282,13 @@ def test_source_archive_includes_reader_facing_reports(tmp_path: Path) -> None:
     assert "scripts/package_smoke.py" in members
     assert report_members == {
         "reports/README.md",
+        "reports/boundary_benchmark_selection.md",
+        "reports/mechanism_attribution.md",
+        "reports/power_retrospective.md",
         "reports/project_status_snapshot.json",
         "reports/project_status_snapshot.md",
+        "reports/ramdocs_round2_failure_readiness.json",
+        "reports/repository_maintenance.md",
         "reports/single_author_diagnostic_report.md",
         "reports/solo_human_review_priority.csv",
         "reports/solo_paper_readiness.json",

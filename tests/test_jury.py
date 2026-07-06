@@ -14,13 +14,24 @@ from bench.build.jury_adjudication import (
     freeze_round1,
     freeze_round2,
 )
-from bench.build.jury_annotate import PROMPT_SHA256, verify_juror
+from bench.build.jury_annotate import JUROR_SPECS, PROMPT_SHA256
 from bench.build.jury_consensus import (
     build_jury_consensus,
     fleiss_kappa,
     verify_jury_consensus,
 )
 from experiments.protocol_2plus4 import PROTOCOL_ACTIVE_SHA256
+
+
+def _phase_b_gate() -> dict[str, object]:
+    return {
+        "gate_a_passed": True,
+        "phase_b_authorized": True,
+        "samples": 350,
+        "round_manifest_sha256": "a" * 64,
+        "round1_suite_manifest_sha256": "b" * 64,
+        "config_sha256": "c" * 64,
+    }
 
 
 def _annotation(conflict_type: str) -> dict[str, object]:
@@ -42,6 +53,7 @@ def _jury_dir(
     family: str,
     labels: dict[str, str],
     packet_sha: str,
+    adjudication_sha: str,
 ) -> Path:
     directory = root / juror_id
     directory.mkdir()
@@ -58,20 +70,53 @@ def _jury_dir(
         for sample_id, label in sorted(labels.items())
     ]
     write_jsonl(directory / filename, rows)
+    spec = JUROR_SPECS[juror_id]
+    runtime: dict[str, object] = {
+        "enabled": True,
+        "provider": spec["provider"],
+        "model": spec["model"],
+    }
+    if spec["provider"] == "ollama":
+        runtime["ollama_model"] = {"model": spec["model"], "digest": "d" * 64}
+    run_identity = {
+        "schema_version": "far-jury-run-identity-v1",
+        "juror_id": juror_id,
+        "model_family": family,
+        "config_sha256": "e" * 64,
+        "llm_runtime": runtime,
+        "implementation_sha256": "f" * 64,
+        "source_revision": {"git_dirty": False, "git_commit": "1" * 40},
+        "protocol_fingerprint": PROTOCOL_ACTIVE_SHA256,
+        "prompt_sha256": PROMPT_SHA256,
+        "source_packet_sha256": packet_sha,
+        "source_adjudication_sha256": adjudication_sha,
+        "phase_b_gate": _phase_b_gate(),
+    }
+    write_json(directory / "run_identity.json", run_identity)
     write_json(
         directory / "jury_annotation_manifest.json",
         {
             "schema_version": "far-jury-annotation-manifest-v1",
             "juror_id": juror_id,
             "model_family": family,
-            "model": f"{family}-model",
+            "model": spec["model"],
+            "llm_runtime": runtime,
+            "config_sha256": "e" * 64,
+            "run_identity_sha256": sha256_file(directory / "run_identity.json"),
             "protocol_fingerprint": PROTOCOL_ACTIVE_SHA256,
             "prompt_sha256": PROMPT_SHA256,
             "source_packet_sha256": packet_sha,
+            "source_adjudication_sha256": adjudication_sha,
+            "phase_b_gate": _phase_b_gate(),
             "samples": len(rows),
+            "expected_samples": len(rows),
+            "complete": True,
             "fallbacks": 0,
+            "fallback_rate": 0.0,
             "annotation_file": filename,
             "annotation_sha256": sha256_file(directory / filename),
+            "publication_gold": False,
+            "human_annotator": False,
         },
     )
     return directory
@@ -90,12 +135,20 @@ def _fixture(tmp_path: Path) -> tuple[Path, Path, list[Path]]:
     packet.mkdir()
     blind_rows = [
         {
-            "schema_version": "packet",
+            "schema_version": "falsirag-annotation-packet-v1",
             "sample_id": row["id"],
             "question": "question",
             "initial_answer": "initial",
             "claims": [{"claim_id": "C1", "claim": "claim"}],
-            "evidence": [{"evidence_id": "EVIDENCE_A", "text": "evidence"}],
+            "evidence": [
+                {
+                    "evidence_id": "EVIDENCE_A",
+                    "title": "title",
+                    "source": "source",
+                    "date": None,
+                    "text": "evidence",
+                }
+            ],
             "adjudicator_id": "",
             "gold_annotation": {},
         }
@@ -104,14 +157,32 @@ def _fixture(tmp_path: Path) -> tuple[Path, Path, list[Path]]:
     write_jsonl(packet / "adjudications.jsonl", blind_rows)
     write_json(
         packet / "packet_manifest.json",
-        {"adjudication_file": "adjudications.jsonl", "source_fingerprints": {}},
+        {
+            "schema_version": "falsirag-annotation-packet-v1",
+            "source_fingerprints": {
+                "benchmark_sha256": sha256_file(data / "falsirag_bench.jsonl"),
+                "corpus_sha256": "0" * 64,
+            },
+            "samples": len(benchmark),
+            "adjudication_file": "adjudications.jsonl",
+            "blind_fields_omitted": [
+                "category",
+                "split",
+                "conflict_type",
+                "expected_revision",
+                "source_metadata",
+                "annotation_status",
+                "evidence roles",
+            ],
+        },
     )
     packet_sha = sha256_file(packet / "packet_manifest.json")
+    adjudication_sha = sha256_file(packet / "adjudications.jsonl")
     labels = {"S1": "temporal", "S2": "entity", "S3": "entity"}
     jurors = [
-        _jury_dir(tmp_path, "J1", "deepseek", labels, packet_sha),
-        _jury_dir(tmp_path, "J2", "glm", labels, packet_sha),
-        _jury_dir(tmp_path, "J3", "meta", labels, packet_sha),
+        _jury_dir(tmp_path, "J1", "deepseek", labels, packet_sha, adjudication_sha),
+        _jury_dir(tmp_path, "J2", "glm", labels, packet_sha, adjudication_sha),
+        _jury_dir(tmp_path, "J3", "meta", labels, packet_sha, adjudication_sha),
     ]
     return data, packet, jurors
 
@@ -141,7 +212,6 @@ def test_jury_consensus_and_delayed_author_adjudication(tmp_path: Path) -> None:
     consensus = build_jury_consensus(data, jurors, consensus_dir)
     assert consensus["gate_k_passed"] is True
     assert consensus["dispositions"] == {"disputed": 1, "unanimous": 2}
-    assert all(verify_juror(packet, directory)["valid"] for directory in jurors)
     assert verify_jury_consensus(data, jurors, consensus_dir)["valid"] is True
 
     adjudication = tmp_path / "adjudication"
@@ -183,18 +253,42 @@ def test_jury_rejects_system_family_overlap(tmp_path: Path) -> None:
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     manifest["model_family"] = "qwen"
     write_json(manifest_path, manifest)
-    with pytest.raises(ValueError, match="overlaps"):
+    with pytest.raises(ValueError, match=r"preregistered identity|overlaps"):
         build_jury_consensus(data, jurors, tmp_path / "consensus")
 
 
 def test_jury_binary_fallback_changes_active_votes_and_joint_majority(tmp_path: Path) -> None:
     data, packet, _ = _fixture(tmp_path)
     packet_sha = sha256_file(packet / "packet_manifest.json")
+    adjudication_sha = sha256_file(packet / "adjudications.jsonl")
     sample_ids = ("S1", "S2", "S3")
+    juror_root = tmp_path / "binary_jurors"
+    juror_root.mkdir()
     jurors = [
-        _jury_dir(tmp_path, "B1", "deepseek", dict.fromkeys(sample_ids, "temporal"), packet_sha),
-        _jury_dir(tmp_path, "B2", "glm", dict.fromkeys(sample_ids, "entity"), packet_sha),
-        _jury_dir(tmp_path, "B3", "meta", dict.fromkeys(sample_ids, "numerical"), packet_sha),
+        _jury_dir(
+            juror_root,
+            "J1",
+            "deepseek",
+            dict.fromkeys(sample_ids, "temporal"),
+            packet_sha,
+            adjudication_sha,
+        ),
+        _jury_dir(
+            juror_root,
+            "J2",
+            "glm",
+            dict.fromkeys(sample_ids, "entity"),
+            packet_sha,
+            adjudication_sha,
+        ),
+        _jury_dir(
+            juror_root,
+            "J3",
+            "meta",
+            dict.fromkeys(sample_ids, "numerical"),
+            packet_sha,
+            adjudication_sha,
+        ),
     ]
     output = tmp_path / "binary_consensus"
     report = build_jury_consensus(data, jurors, output)
@@ -213,7 +307,9 @@ def test_jury_binary_fallback_changes_active_votes_and_joint_majority(tmp_path: 
 
 
 def test_jury_verifier_rejects_tampering(tmp_path: Path) -> None:
-    _, packet, jurors = _fixture(tmp_path)
+    data, _, jurors = _fixture(tmp_path)
+    consensus_dir = tmp_path / "consensus"
+    build_jury_consensus(data, jurors, consensus_dir)
     path = jurors[0] / "jury_annotations_J1.jsonl"
     path.write_text(path.read_text(encoding="utf-8") + "{}\n", encoding="utf-8")
-    assert verify_juror(packet, jurors[0])["valid"] is False
+    assert verify_jury_consensus(data, jurors, consensus_dir)["valid"] is False

@@ -318,7 +318,7 @@ def main() -> None:
         elif manifest.get("schema_version") == "far-jury-evidence-release-v1":
             from experiments.evidence_2plus4 import verify_jury_release
 
-            result = verify_jury_release(args.bundle_dir)
+            result = verify_jury_release(args.bundle_dir, Path("bench"))
         else:
             result = verify_solo_release(args.bundle_dir)
     print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))

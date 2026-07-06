@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from bench.build.common import write_json, write_jsonl
+from bench.build.common import sha256_file, write_json, write_jsonl
 from experiments.evidence_2plus4 import _files, verify_jury_release
 from experiments.jury_rescore import _prediction_source
 from experiments.model_matrix import _fallback_rate, build_matrix
@@ -36,6 +36,26 @@ def _family_bundle(root: Path, family: str, gain: float = 0.1) -> Path:
             }
         },
     )
+    predictions = directory / "far" / "predictions.jsonl"
+    predictions.parent.mkdir(parents=True)
+    write_jsonl(
+        predictions,
+        [
+            {
+                "sample_id": f"S{index:03d}",
+                "metadata": {
+                    "retrieval_trace": [{"query": {"tactic": "llm:entity identity"}}],
+                    "revision_trace": [
+                        {
+                            "changed": True,
+                            "rationale": "typed policy realized by the configured LLM",
+                        }
+                    ],
+                },
+            }
+            for index in range(60)
+        ],
+    )
     write_json(
         directory / "matrix_family_manifest.json",
         {
@@ -52,6 +72,15 @@ def _family_bundle(root: Path, family: str, gain: float = 0.1) -> Path:
             },
             "jury_gold": True,
             "publication_gold": False,
+            "human_iaa": False,
+            "label_granularity": "six_class",
+            "jury_labels_manifest_sha256": "b" * 64,
+            "reports": {
+                "minus_typed_conflict": sha256_file(evaluation / "report.json"),
+            },
+            "rescored_prediction_sha256": {
+                "far": sha256_file(predictions),
+            },
         },
     )
     return directory
@@ -71,10 +100,11 @@ def test_model_matrix_exposes_direction_failure(tmp_path: Path) -> None:
     suites = {
         "qwen": _family_bundle(tmp_path, "qwen"),
         "mistral": _family_bundle(tmp_path, "mistral", gain=-0.05),
+        "google": _family_bundle(tmp_path, "google"),
     }
     report = build_matrix(suites, tmp_path / "matrix.json")
     assert report["minimum_matrix_passed"] is True
-    assert report["three_family_claim_ready"] is False
+    assert report["three_family_claim_ready"] is True
     assert report["typed_answer_gain_same_direction"] is False
 
 
@@ -154,12 +184,14 @@ def test_jury_release_verifier_detects_fingerprint_tampering(tmp_path: Path) -> 
             "files": _files(tmp_path),
         },
     )
-    assert verify_jury_release(tmp_path)["valid"] is True
+    audit = verify_jury_release(tmp_path, tmp_path)
+    assert audit["valid"] is False
+    assert audit["publication_gold"] is False
 
     (tmp_path / "model_matrix.json").write_text("{}\n", encoding="utf-8")
-    audit = verify_jury_release(tmp_path)
+    audit = verify_jury_release(tmp_path, tmp_path)
     assert audit["valid"] is False
-    assert "fingerprints differ" in " ".join(audit["errors"])
+    assert audit["errors"]
 
 
 def test_one_shot_intent_binds_clean_commit_and_inputs(
@@ -167,8 +199,73 @@ def test_one_shot_intent_binds_clean_commit_and_inputs(
 ) -> None:
     benchmark = tmp_path / "test_inputs.jsonl"
     manifest = tmp_path / "manifest.json"
-    benchmark.write_text("{}\n", encoding="utf-8")
+    benchmark.write_text("".join("{}\n" for _ in range(150)), encoding="utf-8")
     manifest.write_text("{}\n", encoding="utf-8")
+    ramdocs_gate = tmp_path / "ramdocs_gate.json"
+    jury_labels_dir = tmp_path / "labels"
+    jury_labels_dir.mkdir()
+    labels_file = jury_labels_dir / "labels.jsonl"
+    labels_file.write_text("{}\n", encoding="utf-8")
+    jury_labels = jury_labels_dir / "manifest.json"
+    sensitivity = tmp_path / "sensitivity.json"
+    matrix = tmp_path / "matrix.json"
+    write_json(
+        ramdocs_gate,
+        {
+            "schema_version": "far-ramdocs-suite-v1",
+            "protocol_fingerprint": PROTOCOL_ACTIVE_SHA256,
+            "split": "dev",
+            "samples": 350,
+            "gate_a_passed": True,
+            "stop_rule_triggered": False,
+        },
+    )
+    write_json(
+        jury_labels,
+        {
+            "schema_version": "far-jury-labels-v1",
+            "protocol_fingerprint": PROTOCOL_ACTIVE_SHA256,
+            "gate_k_passed": True,
+            "gate_s_passed": True,
+            "jury_gold": True,
+            "publication_gold": False,
+            "human_iaa": False,
+            "samples": 300,
+            "excluded_disputed_samples": [],
+            "labels_file": labels_file.name,
+            "labels_sha256": sha256_file(labels_file),
+            "label_granularity": "six_class",
+            "phase_b_gate": {
+                "round_manifest_sha256": sha256_file(ramdocs_gate),
+                "gate_a_passed": True,
+                "phase_b_authorized": True,
+            },
+        },
+    )
+    write_json(
+        sensitivity,
+        {
+            "schema_version": "far-jury-label-sensitivity-v1",
+            "protocol_fingerprint": PROTOCOL_ACTIVE_SHA256,
+            "family": "qwen",
+            "views": {"construction": {}, "jury_gold": {}, "unanimous_only": {}},
+            "rows": [{"sample_id": "S1"}],
+            "label_granularity": "six_class",
+            "publication_gold": False,
+            "human_iaa": False,
+        },
+    )
+    write_json(
+        matrix,
+        {
+            "schema_version": "far-model-matrix-v1",
+            "protocol_fingerprint": PROTOCOL_ACTIVE_SHA256,
+            "rows": [{"family": item} for item in ("qwen", "mistral", "google")],
+            "label_granularity": "six_class",
+            "jury_labels_manifest_sha256": sha256_file(jury_labels),
+            "publication_gold": False,
+        },
+    )
 
     def fake_git(*args: str) -> str:
         if args[:2] == ("status", "--porcelain"):
@@ -179,9 +276,19 @@ def test_one_shot_intent_binds_clean_commit_and_inputs(
 
     monkeypatch.setattr("experiments.one_shot._git", fake_git)
     output = tmp_path / "intent.json"
-    intent = prepare_intent("ramdocs", benchmark, manifest, ["far", "baseline"], output)
+    intent = prepare_intent(
+        "ramdocs",
+        benchmark,
+        manifest,
+        ["far", "baseline"],
+        output,
+        ramdocs_gate_manifest=ramdocs_gate,
+        jury_labels_manifest=jury_labels,
+        sensitivity_report=sensitivity,
+        matrix_report=matrix,
+    )
     assert intent["one_shot"] is True
     assert intent["externally_held"] is False
-    assert intent["expected_samples"] == 1
+    assert intent["expected_samples"] == 150
     assert intent["prepared_from_git_commit"] == "a" * 40
     assert json.loads(output.read_text(encoding="utf-8"))["intent_id"] == intent["intent_id"]

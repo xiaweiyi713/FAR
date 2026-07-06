@@ -2198,3 +2198,14 @@ evidence bundle verified successfully, releasing the GPU.
 - 这是正式样本期间的运维恢复，不是实验偏离或 Round 2；若同类 inactive 状态重复出现，
   需优先诊断 Ollama/session 生命周期，再决定是否调整服务保活，且必须继续保持 D: 输出与
   checkpoint 原样恢复。
+
+## 2026-07-06 — CI fixture 与 readiness 快照维护
+
+- GitHub Actions 在收紧 2+4 证据门禁、Phase B 授权、one-shot test intent 与发布清单后，
+  暴露出若干旧合成 fixture/快照仍按旧 schema 构造数据。维护范围限定为测试桩、reader-facing
+  readiness JSON 与 release manifest 预期成员；未放松生产门禁，未把 LLM jury 表述为真人 IAA。
+- 旧的 blind/test split 单元情景改为验证 fail-closed：没有已提交的一次性 test intent 时必须拒绝
+  外部 blind return / test suite 路径。合成 jury 与 family-dev fixture 则补齐 run identity、source
+  fingerprint、Phase B authorization、jury source/adjudication provenance 与 family 8-method 报告字段。
+- 本次仓库维护不访问 FalsiRAG held-out/test、RAMDocs test 或外部官方 test-only 数据；远端 WS2 family
+  dev 保持在 D: 工作树继续运行，Round2 RAMDocs dev 已按既有停止规则停在 G-A 未通过后的降级路径。

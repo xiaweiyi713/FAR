@@ -8,9 +8,8 @@ import pytest
 
 from bench.annotations import build_annotation_packet, compile_annotations
 from bench.build.build_blind_bundle import build as build_blind_bundle
-from bench.build.common import sha256_file, write_json
+from bench.build.common import write_json
 from experiments.run_suite import run_suite
-from experiments.score_blind_return import score
 from experiments.submission_readiness import (
     Gate,
     _attestation_gate,
@@ -229,80 +228,19 @@ def test_final_readiness_rejects_evidence_template_path() -> None:
     _reject_template_evidence_path(Path("submission/evidence.json"), allow_incomplete=False)
 
 
-def test_external_blind_return_can_be_scored_with_bound_attestation(tmp_path: Path) -> None:
+def test_external_blind_return_requires_committed_one_shot_intent(tmp_path: Path) -> None:
     data_dir = tmp_path / "adjudicated"
     _adjudicated_fixture(data_dir)
     bundle = tmp_path / "bundle"
     build_blind_bundle(data_dir, bundle)
     returned = tmp_path / "returned"
-    run_suite(
-        ROOT / "experiments/configs/offline_smoke.yaml",
-        bundle,
-        returned,
-        split="test",
-        allow_test=True,
-        resamples=10,
-    )
-    commit = "a" * 40
-    model_id = "deepseek_v4_flash"
-    _freeze_run_identities(
-        returned, commit, sha256_file(ROOT / "experiments/configs/deepseek.yaml")
-    )
-    attestation = {
-        "schema_version": "far-blind-test-attestation-v1",
-        "custodian_id": "external-custodian",
-        "scorer_id": "trusted-scorer",
-        "completed_at": "2026-07-02T12:00:00Z",
-        "frozen_commit": commit,
-        "bundle_manifest_sha256": sha256_file(bundle / "blind_bundle_manifest.json"),
-        "return_manifest_sha256": {model_id: sha256_file(returned / "suite_manifest.json")},
-        "one_shot": True,
-        "externally_held": True,
-        "gold_loaded_by_custodian": False,
-        "all_failures_reported": True,
-    }
-    attestation_path = tmp_path / "attestation.json"
-    write_json(attestation_path, attestation)
-    output = tmp_path / "scored"
-    manifest = score(
-        data_dir,
-        bundle,
-        returned,
-        attestation_path,
-        output,
-        model_id=model_id,
-        resamples=10,
-    )
-    assert manifest["publication_ready"] is True
-    assert manifest["annotation_evidence_manifest_sha256"] == sha256_file(
-        data_dir / "annotation_evidence/evidence_manifest.json"
-    )
-    assert set(manifest["methods"]) == {
-        "far",
-        "vanilla",
-        "multi_query_rag",
-        "reflective_rag",
-        "crag_style_reproduction",
-        "self_rag_style_reproduction",
-        "counterrefine_style_reproduction",
-        "minus_typed_conflict",
-        "minus_refutation_query",
-        "minus_boundary_query",
-        "minus_typed_revision",
-    }
-    far_report = json.loads((output / "evaluations/far/report.json").read_text(encoding="utf-8"))
-    assert far_report["publication_ready"] is True
-    assert far_report["publication"]["phase"] == "test"
-    assert far_report["comparison"]["baseline_method"] == "vanilla_rag"
-    artifact_manifest = json.loads(
-        (output / "artifacts/artifact_manifest.json").read_text(encoding="utf-8")
-    )
-    assert artifact_manifest["publication_ready"] is True
-    assert artifact_manifest["test_only"] is True
-    assert artifact_manifest["scored_splits"] == ["test"]
-    assert artifact_manifest["strict_requirements"] == {
-        "publication_ready": True,
-        "test_only": True,
-    }
-    assert artifact_manifest["reports"] == manifest["reports"]
-    assert artifact_manifest["benchmark_sha256"] == manifest["benchmark_sha256"]
+
+    with pytest.raises(ValueError, match="one-shot-intent"):
+        run_suite(
+            ROOT / "experiments/configs/offline_smoke.yaml",
+            bundle,
+            returned,
+            split="test",
+            allow_test=True,
+            resamples=10,
+        )

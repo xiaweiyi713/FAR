@@ -359,33 +359,27 @@ def test_suite_runs_far_baseline_ablation_and_artifacts(tmp_path: Path) -> None:
         )
 
 
-def test_blind_test_suite_runs_without_loading_or_scoring_gold(tmp_path: Path) -> None:
+def test_blind_test_suite_requires_committed_one_shot_intent(tmp_path: Path) -> None:
     data_dir = tmp_path / "blind-data"
     build_blind_bundle(ROOT / "bench", data_dir)
     output_dir = tmp_path / "blind-suite"
-    manifest = run_suite(
-        ROOT / "experiments/configs/offline_smoke.yaml",
-        data_dir,
-        output_dir,
-        split="test",
-        limit=5,
-        allow_test=True,
-        baselines=("vanilla_rag",),
-        ablations=(),
-        resamples=20,
-    )
-    assert manifest["schema_version"] == "far-blind-suite-manifest-v1"
-    assert manifest["suite_request"]["split"] == "test"
-    assert manifest["suite_request"]["baselines"] == ["vanilla_rag"]
-    assert manifest["unscored"] is True
-    assert manifest["gold_loaded"] is False
-    assert manifest["methods"] == ["far", "vanilla_rag"]
+
+    with pytest.raises(ValueError, match="one-shot-intent"):
+        run_suite(
+            ROOT / "experiments/configs/offline_smoke.yaml",
+            data_dir,
+            output_dir,
+            split="test",
+            limit=5,
+            allow_test=True,
+            baselines=("vanilla_rag",),
+            ablations=(),
+            resamples=20,
+        )
+
     assert not (data_dir / "falsirag_bench.jsonl").exists()
     assert not (output_dir / "evaluations").exists()
     assert not (output_dir / "artifacts").exists()
-    identity = json.loads((output_dir / "runs/far/run_identity.json").read_text(encoding="utf-8"))
-    assert identity["benchmark_input"] == "splits/test_inputs.jsonl"
-    assert identity["schema_version"] == "far-run-signature-v2"
 
 
 def test_artifact_builder_explains_missing_eval_extra() -> None:
