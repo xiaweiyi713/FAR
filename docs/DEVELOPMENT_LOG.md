@@ -1903,3 +1903,7 @@ evidence bundle verified successfully, releasing the GPU.
 - `scripts/run_2plus4_model_family.sh` 同步在模型 suite 启动前调用同一 G-A gate，默认
   指向冻结的 `diagnostics/ramdocs_v2` release，并提供四个显式路径环境变量。因而失败
   分支也不能误跑 Mistral/Gemma 矩阵；Phase 0 的非 benchmark smoke 不受此门影响。
+- 编译后的 jury labels 现继承完整 `phase_b_gate`；复评、jury release、paper readiness
+  与 one-shot intent 都要求它和 consensus 一致，其中 readiness 重新执行 Round 2
+  verifier，intent 至少逐 SHA 绑定实际 RAMDocs gate manifest。这样 RAMDocs 外部证据
+  与 jury/matrix/test 不再是两组仅靠布尔值并列的制品。

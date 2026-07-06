@@ -62,6 +62,14 @@ def _overlay_benchmark(data_dir: Path, labels_dir: Path, output_path: Path) -> l
         or labels_manifest.get("gate_s_passed") is not True
     ):
         raise ValueError("jury label provenance or gate state is invalid")
+    phase_b_gate = labels_manifest.get("phase_b_gate")
+    if (
+        not isinstance(phase_b_gate, dict)
+        or phase_b_gate.get("gate_a_passed") is not True
+        or phase_b_gate.get("phase_b_authorized") is not True
+        or phase_b_gate.get("samples") != 350
+    ):
+        raise ValueError("jury labels are not bound to a verified G-A authorization")
     if schema == "far-jury-labels-v1" and labels_manifest.get(
         "excluded_disputed_samples"
     ) != []:

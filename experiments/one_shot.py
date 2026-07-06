@@ -49,6 +49,7 @@ def _pretest_evidence(
 
     labels = _json(jury_labels_manifest)
     labels_path = jury_labels_manifest.parent / str(labels.get("labels_file", ""))
+    phase_b_gate = labels.get("phase_b_gate")
     if (
         labels.get("schema_version") != "far-jury-labels-v1"
         or labels.get("protocol_fingerprint") != PROTOCOL_ACTIVE_SHA256
@@ -59,6 +60,10 @@ def _pretest_evidence(
         or labels.get("human_iaa") is not False
         or labels.get("samples") != 300
         or labels.get("excluded_disputed_samples") != []
+        or not isinstance(phase_b_gate, dict)
+        or phase_b_gate.get("round_manifest_sha256") != sha256_file(ramdocs_gate_manifest)
+        or phase_b_gate.get("gate_a_passed") is not True
+        or phase_b_gate.get("phase_b_authorized") is not True
         or not labels_path.is_file()
         or labels.get("labels_sha256") != sha256_file(labels_path)
     ):

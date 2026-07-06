@@ -616,6 +616,7 @@ def compile_jury_labels(
         "label_granularity": label_granularity,
         "gate_k_passed": report.get("gate_k_passed"),
         "gate_s_passed": consistency.get("gate_s_passed"),
+        "phase_b_gate": report.get("phase_b_gate"),
         "samples": len(labels),
         "excluded_disputed_samples": [],
         "labels_file": labels_path.name,

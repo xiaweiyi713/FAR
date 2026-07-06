@@ -341,6 +341,7 @@ def build_jury_release(
         "protocol_fingerprint": PROTOCOL_ACTIVE_SHA256,
         "gate_k_passed": consensus.get("gate_k_passed"),
         "gate_s_passed": labels.get("gate_s_passed"),
+        "phase_b_gate": consensus.get("phase_b_gate"),
         "label_granularity": labels.get("label_granularity"),
         "three_family_claim_ready": matrix.get("three_family_claim_ready"),
         "juror_ids": sorted(juror_dirs),
@@ -396,6 +397,12 @@ def verify_jury_release(bundle_dir: Path, data_dir: Path) -> dict[str, Any]:
         errors.append("embedded G-K evidence is not ready")
     if labels.get("gate_s_passed") is not True or labels.get("jury_gold") is not True:
         errors.append("embedded G-S/jury labels are not ready")
+    if (
+        not isinstance(manifest.get("phase_b_gate"), dict)
+        or manifest.get("phase_b_gate") != consensus.get("phase_b_gate")
+        or labels.get("phase_b_gate") != consensus.get("phase_b_gate")
+    ):
+        errors.append("jury release G-A authorization chain is missing or inconsistent")
     if sensitivity.get("schema_version") != "far-jury-label-sensitivity-v1":
         errors.append("embedded label sensitivity report is missing")
     if matrix.get("three_family_claim_ready") is not True:

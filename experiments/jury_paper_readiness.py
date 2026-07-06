@@ -11,6 +11,7 @@ from bench.build.common import read_jsonl, sha256_file, write_json
 from bench.build.jury_adjudication import _consensus
 from bench.build.ramdocs import verify_ramdocs
 from experiments.jury_rescore import QWEN_METHODS
+from experiments.phase_b_gate import require_phase_b_authorized
 from experiments.protocol_2plus4 import PROTOCOL_ACTIVE_SHA256, ROOT, verify_active_protocol
 from experiments.ramdocs_round2 import verify_round
 from experiments.ramdocs_suite import verify_suite
@@ -84,6 +85,7 @@ def audit(
     checks["ramdocs_dev_suite_valid"] = ramdocs_dev.get("valid") is True
     errors.extend(f"RAMDocs dev: {item}" for item in ramdocs_dev.get("errors", []))
     gate_a_passed = ramdocs_dev.get("gate_a_passed") is True
+    verified_phase_b_gate: dict[str, Any] | None = None
     if (
         not gate_a_passed
         and ramdocs_round2_dir is not None
@@ -99,6 +101,22 @@ def audit(
         checks["ramdocs_dev_round2_valid"] = round2.get("valid") is True
         errors.extend(f"RAMDocs Round 2: {item}" for item in round2.get("errors", []))
         gate_a_passed = round2.get("valid") is True and round2.get("gate_a_passed") is True
+        if gate_a_passed:
+            try:
+                verified_phase_b_gate = require_phase_b_authorized(
+                    ramdocs_data,
+                    ramdocs_dev_suite,
+                    ramdocs_round2_dir,
+                    ramdocs_round2_config,
+                )
+            except (
+                FileNotFoundError,
+                json.JSONDecodeError,
+                KeyError,
+                TypeError,
+                ValueError,
+            ) as exc:
+                errors.append(f"RAMDocs Phase B authorization: {exc}")
     checks["gate_a_external_passed"] = gate_a_passed
     if not checks["gate_a_external_passed"]:
         errors.append("G-A external validation gate has not passed")
@@ -121,6 +139,12 @@ def audit(
     )
     if not checks["gate_k_jury_passed"]:
         errors.append("G-K jury agreement gate has not passed without fallbacks")
+    checks["jury_bound_to_verified_gate_a"] = (
+        verified_phase_b_gate is not None
+        and consensus.get("phase_b_gate") == verified_phase_b_gate
+    )
+    if not checks["jury_bound_to_verified_gate_a"]:
+        errors.append("jury evidence is not bound to the verified RAMDocs G-A authorization")
 
     labels = _safe_json(jury_labels_manifest, errors, "jury labels")
     consensus_report_sha256 = (
@@ -156,6 +180,7 @@ def audit(
         and labels.get("samples") == 300
         and labels.get("excluded_disputed_samples") == []
         and labels.get("consensus_report_sha256") == consensus_report_sha256
+        and labels.get("phase_b_gate") == verified_phase_b_gate
         and labels_fingerprint_valid
         and label_rows_valid
     )
