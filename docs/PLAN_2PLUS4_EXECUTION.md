@@ -251,6 +251,9 @@ uv run python -m experiments.ramdocs_error_analysis \
 
 三个 juror 必须使用同一 packet 和冻结 prompt：
 
+J2 按 2026-07-06 预评测偏离固定为本地 Ollama `glm4:9b`，不用智谱 API；模型位于
+Windows D:，正式身份由配置 SHA-256 与 Ollama digest 共同绑定。
+
 ```bash
 gate_args=(
   --ramdocs-data-dir bench/external/ramdocs_v1

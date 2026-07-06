@@ -1927,3 +1927,13 @@ evidence bundle verified successfully, releasing the GPU.
   当前配置和活动协议全部有效，并把三份记录 SHA-256 纳入最终 evidence 字段。
 - 执行手册补齐 Windows D: → Mac 诊断目录的 rsync 与二次 verify。当前 GPU 仍由
   Round 2 占用，未拉取模型、运行 smoke、测试或访问 test。
+
+## 2026-07-06 — Phase B 前登记 J2 本地 GLM 偏离
+
+- 原注册矩阵写 J2 为智谱 API 的 GLM-4-Flash 或同级模型，但项目没有可用智谱凭据；
+  实际冻结配置一直是远端 D: 已有的本地 Ollama `glm4:9b`。若不在执行前登记，配置与
+  协议来源声明会不一致。
+- 在 G-A 尚未通过、任何 juror 尚未运行时，将 J2 固定为本地 GLM4 9B。模型家族仍是
+  GLM，与 Qwen/Mistral/Google 系统家族零重叠；prompt、temperature=0、结构化输出和
+  独立标注协议均不变，成本降为 0。正式证据必须记录配置哈希与 Ollama digest。
+- 本偏离不参考 jury 或 test 结果，也不把 J2 或三陪审员协议称为真人标注/IAA。
