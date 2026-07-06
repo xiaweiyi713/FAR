@@ -1874,3 +1874,14 @@ evidence bundle verified successfully, releasing the GPU.
   未生成或伪造 smoke 证据；只完成 Python 语法/导入、shell 语法和 whitespace 静态检查。
 - 安装包 smoke 的必需 console-script 集合同步加入该 verifier，防止源码入口存在但构建
   后 wheel 漏装命令。按本轮限制未执行 package smoke 或其他测试。
+
+## 2026-07-06 — 补全 Phase B 作者盲态仲裁 SOP
+
+- 执行手册此前只展示 `build-round1`，省略三份 juror 的独立 verify、consensus
+  verify、两轮 freeze、14 天后 build-round2 以及最终 compile 的完整命令；工具虽然
+  已实现，操作者仍无法仅按文档完成 G-K/G-S 证据链。
+- 手册现补齐逐步可执行命令，并明确两轮 `author_annotation` 必须由作者本人在盲态
+  下填写；Codex、其他 LLM 或自动脚本代填只能算新增机器 juror，不能冒充作者仲裁。
+  最终标签继续固定 `publication_gold:false`、`human_iaa:false`。
+- 本次只审计 CLI 与补文档；G-A 尚未通过，没有启动 jury、读取 test 或生成任何
+  作者仲裁制品。

@@ -243,6 +243,20 @@ uv run falsirag-jury-annotate --packet-dir outputs/annotations/falsirag_packet_v
 uv run falsirag-jury-annotate --packet-dir outputs/annotations/falsirag_packet_v1 \
   --config experiments/configs/jury_llama.yaml --juror-id J3 \
   --model-family meta --output-dir outputs/jury/meta
+
+# 三份运行分别完成后逐一独立验真
+uv run falsirag-jury-annotate --verify \
+  --packet-dir outputs/annotations/falsirag_packet_v1 \
+  --config experiments/configs/jury_deepseek.yaml --juror-id J1 \
+  --model-family deepseek --output-dir outputs/jury/deepseek
+uv run falsirag-jury-annotate --verify \
+  --packet-dir outputs/annotations/falsirag_packet_v1 \
+  --config experiments/configs/jury_glm.yaml --juror-id J2 \
+  --model-family glm --output-dir outputs/jury/glm
+uv run falsirag-jury-annotate --verify \
+  --packet-dir outputs/annotations/falsirag_packet_v1 \
+  --config experiments/configs/jury_llama.yaml --juror-id J3 \
+  --model-family meta --output-dir outputs/jury/meta
 ```
 
 不得使用此前粘贴到聊天中的 DeepSeek key；它应视为已泄露。正式 J1 运行只接受
@@ -250,6 +264,10 @@ uv run falsirag-jury-annotate --packet-dir outputs/annotations/falsirag_packet_v
 
 ```bash
 uv run falsirag-jury-consensus --data-dir bench \
+  --juror-dir outputs/jury/deepseek --juror-dir outputs/jury/glm \
+  --juror-dir outputs/jury/meta --output-dir outputs/jury/consensus
+
+uv run falsirag-jury-consensus --verify --data-dir bench \
   --juror-dir outputs/jury/deepseek --juror-dir outputs/jury/glm \
   --juror-dir outputs/jury/meta --output-dir outputs/jury/consensus
 ```
@@ -261,11 +279,38 @@ uv run falsirag-jury-adjudication build-round1 \
   --packet-dir outputs/annotations/falsirag_packet_v1 \
   --consensus-dir outputs/jury/consensus \
   --output-dir outputs/jury/author_adjudication
+
+# 你本人只填写 round1_packet.jsonl 内的 author_annotation，然后立即冻结
+uv run falsirag-jury-adjudication freeze-round1 \
+  --output-dir outputs/jury/author_adjudication \
+  --completed-file outputs/jury/author_adjudication/round1_packet.jsonl
+
+# round1_freeze.json 记录的 eligible_at 至少 14 天后才允许创建第二遍盲包
+uv run falsirag-jury-adjudication build-round2 \
+  --packet-dir outputs/annotations/falsirag_packet_v1 \
+  --consensus-dir outputs/jury/consensus \
+  --output-dir outputs/jury/author_adjudication
+
+# 你本人只填写 round2_packet.jsonl 内的 author_annotation，然后冻结并计算 G-S
+uv run falsirag-jury-adjudication freeze-round2 \
+  --output-dir outputs/jury/author_adjudication \
+  --completed-file outputs/jury/author_adjudication/round2_packet.jsonl
+
+# 仅 G-K 与 G-S 均通过后编译最终 jury labels
+uv run falsirag-jury-adjudication compile \
+  --consensus-dir outputs/jury/consensus \
+  --adjudication-dir outputs/jury/author_adjudication \
+  --juror-dir outputs/jury/deepseek \
+  --juror-dir outputs/jury/glm \
+  --juror-dir outputs/jury/meta \
+  --output-dir bench/labels_jury_v1
 ```
 
-只编辑 packet 的 `author_annotation`。第一遍冻结后，`build-round2` 会核验时间戳；
-不足 14 天直接失败。G-S 通过后使用 `compile` 生成
-`bench/labels_jury_v1`，并固定 `jury_gold: true`、`publication_gold: false`。
+只编辑 packet 的 `author_annotation`。两轮都必须由作者本人在看不到 jury 投票、
+构造标签和系统输出的条件下完成；Codex、其他 LLM 或自动脚本不能代填并冒充作者。
+第一遍冻结后，`build-round2` 会核验时间戳；不足 14 天直接失败。G-S 通过后使用
+`compile` 生成 `bench/labels_jury_v1`，并固定 `jury_gold: true`、
+`publication_gold: false`、`human_iaa: false`。
 
 ## 多模型与留出集
 
