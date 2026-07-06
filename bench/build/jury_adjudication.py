@@ -562,6 +562,8 @@ def compile_jury_labels(
                 != str(tracked.get("model_family", "")).lower(),
                 manifest.get("model") != tracked.get("model"),
                 manifest.get("config_sha256") != tracked.get("config_sha256"),
+                manifest.get("llm_runtime") != tracked.get("llm_runtime"),
+                manifest.get("run_identity_sha256") != tracked.get("run_identity_sha256"),
                 manifest.get("annotation_sha256") != tracked.get("annotation_sha256"),
                 manifest.get("fallbacks") != tracked.get("fallbacks"),
             )

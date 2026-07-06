@@ -13,7 +13,7 @@ from typing import Any
 
 from bench.annotations import cohen_kappa
 from bench.build.common import read_jsonl, sha256_file, write_json, write_jsonl
-from bench.build.jury_annotate import JURY_TYPES, PROMPT_SHA256, _is_fallback
+from bench.build.jury_annotate import JUROR_SPECS, JURY_TYPES, PROMPT_SHA256, _is_fallback
 from experiments.phase_b_gate import require_phase_b_authorized
 from experiments.protocol_2plus4 import (
     PROTOCOL_ACTIVE_SHA256,
@@ -60,6 +60,7 @@ def _load_juror(directory: Path) -> tuple[dict[str, Any], dict[str, dict[str, An
             "config_sha256",
             "source_packet_sha256",
             "source_adjudication_sha256",
+            "run_identity_sha256",
         )
     ):
         raise ValueError(f"{directory}: jury source fingerprints are incomplete")
@@ -89,11 +90,43 @@ def _load_juror(directory: Path) -> tuple[dict[str, Any], dict[str, dict[str, An
     path = directory / str(manifest["annotation_file"])
     if sha256_file(path) != manifest.get("annotation_sha256"):
         raise ValueError(f"{directory}: jury annotation fingerprint mismatch")
-    rows: dict[str, dict[str, Any]] = {}
     juror_id = str(manifest.get("juror_id", ""))
     family = str(manifest.get("model_family", ""))
     if not juror_id or not family:
         raise ValueError(f"{directory}: jury identity is missing")
+    spec = JUROR_SPECS.get(juror_id)
+    runtime = manifest.get("llm_runtime")
+    if (
+        spec is None
+        or family.lower() != spec["family"]
+        or manifest.get("model") != spec["model"]
+        or not isinstance(runtime, dict)
+        or runtime.get("provider") != spec["provider"]
+        or runtime.get("model") != spec["model"]
+    ):
+        raise ValueError(f"{directory}: jury model is not the preregistered identity")
+    identity_path = directory / "run_identity.json"
+    if sha256_file(identity_path) != manifest.get("run_identity_sha256"):
+        raise ValueError(f"{directory}: jury run identity fingerprint mismatch")
+    identity = json.loads(identity_path.read_text(encoding="utf-8"))
+    if (
+        identity.get("schema_version") != "far-jury-run-identity-v1"
+        or identity.get("juror_id") != juror_id
+        or identity.get("model_family") != family
+        or identity.get("config_sha256") != manifest.get("config_sha256")
+        or identity.get("llm_runtime") != manifest.get("llm_runtime")
+        or identity.get("protocol_fingerprint") != PROTOCOL_ACTIVE_SHA256
+        or identity.get("prompt_sha256") != PROMPT_SHA256
+        or identity.get("source_packet_sha256") != manifest.get("source_packet_sha256")
+        or identity.get("source_adjudication_sha256")
+        != manifest.get("source_adjudication_sha256")
+        or identity.get("phase_b_gate") != phase_b_gate
+        or not str(identity.get("implementation_sha256", "")).strip()
+        or identity.get("source_revision", {}).get("git_dirty") is not False
+        or not str(identity.get("source_revision", {}).get("git_commit", "")).strip()
+    ):
+        raise ValueError(f"{directory}: jury run identity is invalid")
+    rows: dict[str, dict[str, Any]] = {}
     for row in read_jsonl(path):
         sample_id = str(row["sample_id"])
         if sample_id in rows:
@@ -326,6 +359,8 @@ def build_jury_consensus(
                 "model_family": family,
                 "model": manifest.get("model"),
                 "config_sha256": manifest.get("config_sha256"),
+                "llm_runtime": manifest.get("llm_runtime"),
+                "run_identity_sha256": manifest.get("run_identity_sha256"),
                 "annotation_sha256": manifest.get("annotation_sha256"),
                 "fallbacks": manifest.get("fallbacks"),
             }

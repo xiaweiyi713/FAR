@@ -1937,3 +1937,15 @@ evidence bundle verified successfully, releasing the GPU.
   GLM，与 Qwen/Mistral/Google 系统家族零重叠；prompt、temperature=0、结构化输出和
   独立标注协议均不变，成本降为 0。正式证据必须记录配置哈希与 Ollama digest。
 - 本偏离不参考 jury 或 test 结果，也不把 J2 或三陪审员协议称为真人标注/IAA。
+
+## 2026-07-06 — 固定 juror 精确身份与可续跑 provenance
+
+- `jury_annotate` 过去只校验调用方自报 family 和 config 中的 family 相同，仍可把任意
+  DeepSeek/GLM/Meta 模型塞入 J1/J2/J3；resume 也只看 juror ID/family，可能跨提交、
+  配置或可变 Ollama tag 混合标注行。
+- annotator 现强制精确映射 J1=`deepseek-chat`、J2=`glm4:9b`、J3=`llama3.1:8b`，
+  并在首行写入前冻结 `run_identity.json`：干净 Git commit、实现哈希、配置、活动协议、
+  prompt、盲包、G-A 授权和运行时身份；J2/J3 还必须有 64 位 Ollama digest。
+- resume 要求当前身份与原始 JSON 全等；juror verifier、consensus、作者 compile 和最终
+  evidence release 均绑定 run identity SHA 与 runtime identity。当前 Phase B 未启动，
+  只完成静态语法/导入检查，未运行模型、测试或访问 test。

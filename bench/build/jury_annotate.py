@@ -25,9 +25,20 @@ from experiments.protocol_2plus4 import (
     SYSTEM_MODEL_FAMILIES,
     verify_active_protocol,
 )
-from experiments.runner import build_generator, load_config
+from experiments.runner import (
+    _implementation_sha256,
+    _llm_runtime_identity,
+    _source_revision,
+    build_generator,
+    load_config,
+)
 
 JURY_TYPES = ("temporal", "entity", "numerical", "causal", "source_reliability")
+JUROR_SPECS = {
+    "J1": {"family": "deepseek", "provider": "deepseek", "model": "deepseek-chat"},
+    "J2": {"family": "glm", "provider": "ollama", "model": "glm4:9b"},
+    "J3": {"family": "meta", "provider": "ollama", "model": "llama3.1:8b"},
+}
 BLIND_SOURCE_FIELDS = {
     "schema_version",
     "sample_id",
@@ -138,6 +149,44 @@ def _is_fallback(row: dict[str, Any]) -> bool:
     )
 
 
+def _validate_juror_identity(
+    juror_id: str,
+    family: str,
+    llm_config: dict[str, Any],
+) -> dict[str, str]:
+    spec = JUROR_SPECS.get(juror_id)
+    if spec is None:
+        raise ValueError("juror_id must be one of the three preregistered jurors")
+    actual = {
+        "family": family,
+        "provider": str(llm_config.get("provider", "")).strip().lower(),
+        "model": str(llm_config.get("model", "")).strip(),
+    }
+    if actual != spec:
+        raise ValueError(f"{juror_id} identity differs from the preregistered model: {actual}")
+    return spec
+
+
+def _validate_runtime_identity(
+    runtime: dict[str, Any],
+    spec: dict[str, str],
+) -> None:
+    if (
+        runtime.get("enabled") is not True
+        or runtime.get("provider") != spec["provider"]
+        or runtime.get("model") != spec["model"]
+    ):
+        raise ValueError("jury runtime identity differs from the preregistered model")
+    if spec["provider"] == "ollama":
+        ollama_model = runtime.get("ollama_model")
+        if (
+            not isinstance(ollama_model, dict)
+            or ollama_model.get("model") != spec["model"]
+            or len(str(ollama_model.get("digest", ""))) != 64
+        ):
+            raise ValueError("local jury runtime lacks an immutable Ollama digest")
+
+
 def annotate_juror(
     packet_dir: Path,
     config_path: Path,
@@ -166,11 +215,14 @@ def annotate_juror(
         raise ValueError("juror family must be non-empty and disjoint from system families")
     config = load_config(config_path)
     llm_config = config.get("llm", {})
+    if not isinstance(llm_config, dict):
+        raise TypeError("jury llm configuration must be a mapping")
     configured_family = str(llm_config.get("model_family", "")).strip().lower()
     if configured_family != family:
         raise ValueError("juror family must match llm.model_family in the frozen config")
     if float(llm_config.get("temperature", -1.0)) != 0.0:
         raise ValueError("jury annotation requires temperature=0")
+    spec = _validate_juror_identity(juror_id, family, llm_config)
     if overwrite and resume:
         raise ValueError("overwrite and resume cannot both be true")
     if retry_fallbacks and not resume:
@@ -191,6 +243,35 @@ def annotate_juror(
     elif output_dir.exists() and any(output_dir.iterdir()) and not resume:
         raise FileExistsError(f"{output_dir} exists; pass --overwrite or --resume")
     output_dir.mkdir(parents=True, exist_ok=True)
+
+    runtime_identity = _llm_runtime_identity(config)
+    _validate_runtime_identity(runtime_identity, spec)
+    source_revision = _source_revision()
+    if source_revision.get("git_dirty") is not False:
+        raise ValueError("jury annotation requires a clean Git revision")
+    run_identity = {
+        "schema_version": "far-jury-run-identity-v1",
+        "juror_id": juror_id,
+        "model_family": family,
+        "config_sha256": sha256_file(config_path),
+        "llm_runtime": runtime_identity,
+        "implementation_sha256": _implementation_sha256(),
+        "source_revision": source_revision,
+        "protocol_fingerprint": PROTOCOL_ACTIVE_SHA256,
+        "prompt_sha256": PROMPT_SHA256,
+        "source_packet_sha256": sha256_file(packet_manifest_path),
+        "source_adjudication_sha256": source_adjudication_sha256,
+        "phase_b_gate": phase_b_gate,
+    }
+    identity_path = output_dir / "run_identity.json"
+    if resume:
+        if not identity_path.is_file():
+            raise ValueError("jury resume requires the original run identity")
+        existing_identity = json.loads(identity_path.read_text(encoding="utf-8"))
+        if existing_identity != run_identity:
+            raise ValueError("jury resume identity differs from the original run")
+    else:
+        write_json(identity_path, run_identity)
 
     selected_ids = {str(row["sample_id"]) for row in source_rows}
     existing: list[dict[str, Any]] = []
@@ -255,7 +336,9 @@ def annotate_juror(
         "juror_id": juror_id,
         "model_family": family,
         "model": str(config.get("llm", {}).get("model", "")),
+        "llm_runtime": runtime_identity,
         "config_sha256": sha256_file(config_path),
+        "run_identity_sha256": sha256_file(identity_path),
         "protocol_fingerprint": PROTOCOL_ACTIVE_SHA256,
         "protocol_original_fingerprint": PROTOCOL_ORIGINAL_SHA256,
         "prompt_sha256": PROMPT_SHA256,
@@ -278,6 +361,7 @@ def annotate_juror(
 
 def verify_juror(
     packet_dir: Path,
+    config_path: Path,
     output_dir: Path,
     gate_data_dir: Path,
     gate_round1_dir: Path,
@@ -290,6 +374,10 @@ def verify_juror(
         manifest = json.loads(
             (output_dir / "jury_annotation_manifest.json").read_text(encoding="utf-8")
         )
+        config = load_config(config_path)
+        llm_config = config.get("llm", {})
+        if not isinstance(llm_config, dict):
+            raise TypeError("jury llm configuration must be a mapping")
         packet_sha = sha256_file(packet_dir / "packet_manifest.json")
         _, packet_rows, adjudication_sha = _load_blind_packet(packet_dir)
         phase_b_gate = require_phase_b_authorized(
@@ -302,6 +390,13 @@ def verify_juror(
         rows = read_jsonl(path)
         juror_id = str(manifest["juror_id"])
         family = str(manifest["model_family"])
+        spec = _validate_juror_identity(juror_id, family.lower(), llm_config)
+        identity_path = output_dir / "run_identity.json"
+        run_identity = json.loads(identity_path.read_text(encoding="utf-8"))
+        runtime_identity = manifest.get("llm_runtime")
+        if not isinstance(runtime_identity, dict):
+            raise TypeError("jury manifest lacks a runtime identity")
+        _validate_runtime_identity(runtime_identity, spec)
         if manifest.get("schema_version") != "far-jury-annotation-manifest-v1":
             errors.append("unsupported jury annotation manifest schema")
         if manifest.get("complete") is not True:
@@ -321,6 +416,31 @@ def verify_juror(
             errors.append("jury annotation blind-row fingerprint mismatch")
         if manifest.get("phase_b_gate") != phase_b_gate:
             errors.append("jury annotation Phase B authorization differs from verified G-A")
+        if manifest.get("config_sha256") != sha256_file(config_path):
+            errors.append("jury annotation configuration fingerprint mismatch")
+        if manifest.get("run_identity_sha256") != sha256_file(identity_path):
+            errors.append("jury annotation run identity fingerprint mismatch")
+        expected_identity = {
+            "juror_id": juror_id,
+            "model_family": family,
+            "config_sha256": manifest.get("config_sha256"),
+            "llm_runtime": manifest.get("llm_runtime"),
+            "protocol_fingerprint": PROTOCOL_ACTIVE_SHA256,
+            "prompt_sha256": PROMPT_SHA256,
+            "source_packet_sha256": packet_sha,
+            "source_adjudication_sha256": adjudication_sha,
+            "phase_b_gate": phase_b_gate,
+        }
+        if run_identity.get("schema_version") != "far-jury-run-identity-v1" or any(
+            run_identity.get(key) != value for key, value in expected_identity.items()
+        ):
+            errors.append("jury annotation run identity content mismatch")
+        if (
+            not str(run_identity.get("implementation_sha256", "")).strip()
+            or run_identity.get("source_revision", {}).get("git_dirty") is not False
+            or not str(run_identity.get("source_revision", {}).get("git_commit", "")).strip()
+        ):
+            errors.append("jury annotation lacks a clean immutable source identity")
         if family.lower() in SYSTEM_MODEL_FAMILIES:
             errors.append("jury annotation family overlaps system families")
         if sha256_file(path) != manifest.get("annotation_sha256"):
@@ -385,6 +505,7 @@ def main() -> None:
     result = (
         verify_juror(
             args.packet_dir,
+            args.config,
             args.output_dir,
             args.ramdocs_data_dir,
             args.ramdocs_round1_dir,

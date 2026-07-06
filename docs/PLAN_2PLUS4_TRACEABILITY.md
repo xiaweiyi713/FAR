@@ -16,7 +16,7 @@
 | A3 六基线 + typed/untyped | `experiments/ramdocs_suite.py`、`diagnostics/ramdocs_v1/dev` | 8×350 证据完成 |
 | A4 G-A、最强基线、bootstrap、McNemar 与停止规则 | `diagnostics/ramdocs_v1/dev/suite_manifest.json`、`diagnostics/ramdocs_v1/error_analysis` | 证据完成；G-A 失败，停止规则触发 |
 | A4 Round 2 dev-only 方法迭代 | `experiments/ramdocs_round2.py`、`experiments/ramdocs_round2_error_analysis.py`、`falsirag-round2-failure-readiness`、`/mnt/d/FAR-outputs/ramdocs_dev_v2` | 运行中；截至 2026-07-06 08:01 +08:00 已至少 231/350，未 finalize，Phase B 仍关闭；若 G-A 再失败，release 强制携带可重算的错误分析，且失败论文门要求适用边界降级与未运行 Phase B/test 披露 |
-| B1 三陪审员独立结构化标注 | `experiments/phase_b_gate.py`、`bench/build/jury_annotate.py` | 已实现；annotator 在模型初始化前重算完整 Round 2 verifier 并绑定 G-A SHA；当前 G-A 失败，无法执行 |
+| B1 三陪审员独立结构化标注 | `experiments/phase_b_gate.py`、`bench/build/jury_annotate.py` | 已实现；annotator 在模型初始化前重算完整 Round 2 verifier，强制 J1/J2/J3 精确模型身份，并以干净 Git/实现/config/G-A/packet/prompt/本地 Ollama digest 绑定可续跑 run identity；当前 G-A 失败，无法执行 |
 | B1/B2 Cohen/Fleiss κ、联合多数、二分降级、G-K | `bench/build/jury_consensus.py` | 已实现；consensus 再次重算 G-A 并要求三 juror 绑定一致；二分降级会切换实际投票、联合多数、标签粒度与后续 presence-F1，不把任一陪审员类型冒充类型金标；停止规则阻挡，未执行 |
 | B3 作者盲态仲裁、14 天强制间隔、分层 20% 重标、G-S | `bench/build/jury_adjudication.py` | 已实现；停止规则阻挡，未执行 |
 | B3 `jury_gold: true` / `publication_gold: false` | `bench/build/jury_adjudication.py` | 已实现；无标签层生成 |
