@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import argparse
 import json
 from pathlib import Path
 from typing import Any
@@ -40,3 +41,23 @@ def require_phase_b_authorized(
         "gate_a_passed": True,
         "phase_b_authorized": True,
     }
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--data-dir", type=Path, required=True)
+    parser.add_argument("--round1-dir", type=Path, required=True)
+    parser.add_argument("--round2-dir", type=Path, required=True)
+    parser.add_argument("--config", type=Path, required=True)
+    args = parser.parse_args()
+    result = require_phase_b_authorized(
+        args.data_dir,
+        args.round1_dir,
+        args.round2_dir,
+        args.config,
+    )
+    print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
+
+
+if __name__ == "__main__":
+    main()

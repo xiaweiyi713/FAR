@@ -19,6 +19,16 @@ if [[ -f scripts/windows_gpu_env.sh ]]; then
   source scripts/windows_gpu_env.sh
 fi
 
+ramdocs_data_dir="${RAMDOCS_DATA_DIR:-bench/external/ramdocs_v1}"
+ramdocs_round1_dir="${RAMDOCS_ROUND1_DIR:-diagnostics/ramdocs_v2/round1}"
+ramdocs_round2_dir="${RAMDOCS_ROUND2_DIR:-diagnostics/ramdocs_v2/round2}"
+ramdocs_config="${RAMDOCS_ROUND2_CONFIG:-diagnostics/ramdocs_v2/round2/config.yaml}"
+python -m experiments.phase_b_gate \
+  --data-dir "${ramdocs_data_dir}" \
+  --round1-dir "${ramdocs_round1_dir}" \
+  --round2-dir "${ramdocs_round2_dir}" \
+  --config "${ramdocs_config}"
+
 python -m experiments.run_suite \
   --config "$config" \
   --data-dir bench \

@@ -1900,3 +1900,6 @@ evidence bundle verified successfully, releasing the GPU.
 - consensus CLI 也强制接收同一组 RAMDocs 路径并重新执行 G-A verifier；构建与 verify
   都要求三份 juror 的 gate 对象与实时重算结果完全相同。作者仲裁入口继续检查 consensus
   中的 350 条 G-A/Phase B 授权，形成执行入口、聚合、仲裁三层停止规则。
+- `scripts/run_2plus4_model_family.sh` 同步在模型 suite 启动前调用同一 G-A gate，默认
+  指向冻结的 `diagnostics/ramdocs_v2` release，并提供四个显式路径环境变量。因而失败
+  分支也不能误跑 Mistral/Gemma 矩阵；Phase 0 的非 benchmark smoke 不受此门影响。
