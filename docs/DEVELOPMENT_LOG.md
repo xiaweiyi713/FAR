@@ -1858,3 +1858,6 @@ evidence bundle verified successfully, releasing the GPU.
   和论文降级完成预注册失败分支，不得绕过门禁。
 - `docs/COMPLETION_AUDIT.md` 同步加入 2+4 的实现、实证与来源边界验收，且保留
   `publication_gold:false`、`human_iaa:false` 和非外部保管盲测红线。
+- `docs/PROPOSAL_TRACEABILITY.md` 也补入同一独立档位，并把旧的“三档状态账本”
+  更正为当前代码实际生成的四档；待办不再被笼统描述成仅有外部证据，也包括受预注册
+  门禁约束的进行中实验。
