@@ -1847,3 +1847,14 @@ evidence bundle verified successfully, releasing the GPU.
 - 仅完成 Python 字节码编译、diff whitespace 与静态内容检查，没有运行测试套件或
   访问任何 test。08:01 +08:00 只读复核时 checkpoint 为 231/350（`RAM0330`），
   两个服务 active、GPU 约 7.9/8.2 GiB，最近 journal 没有新增运行错误。
+
+## 2026-07-06 — 将 2+4 路线纳入企划总账与完成验收
+
+- `PROJECT_PROPOSAL.md` 原顶层执行状态仍只列出机器审计诊断、宽松论文和严格真人
+  三条旧路径，未把已经预注册并实施的 2+4 替代路线列为独立证据档位；总完成审计
+  也没有它的验收与停止规则，容易造成“工具存在但企划仍要求真人才能完成”的冲突。
+- 企划总账现明确四档：诊断、宽松论文、2+4 单作者证据、严格真人证据。2+4 档位
+  明确绑定 Round 2 G-A；通过才可进入 G-K/G-S/跨家族矩阵，失败则以可重算错误分析
+  和论文降级完成预注册失败分支，不得绕过门禁。
+- `docs/COMPLETION_AUDIT.md` 同步加入 2+4 的实现、实证与来源边界验收，且保留
+  `publication_gold:false`、`human_iaa:false` 和非外部保管盲测红线。
