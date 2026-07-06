@@ -176,6 +176,13 @@ def project_status_main() -> None:
     main()
 
 
+def repository_maintenance_main() -> None:
+    _prefer_far_repo()
+    from experiments.repository_maintenance import main
+
+    main()
+
+
 def solo_paper_readiness_main() -> None:
     _prefer_far_repo()
     from experiments.solo_paper_readiness import main

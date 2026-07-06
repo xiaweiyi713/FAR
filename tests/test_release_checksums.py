@@ -288,6 +288,7 @@ def test_source_archive_includes_reader_facing_reports(tmp_path: Path) -> None:
         "reports/project_status_snapshot.json",
         "reports/project_status_snapshot.md",
         "reports/ramdocs_round2_failure_readiness.json",
+        "reports/repository_maintenance.json",
         "reports/repository_maintenance.md",
         "reports/single_author_diagnostic_report.md",
         "reports/solo_human_review_priority.csv",

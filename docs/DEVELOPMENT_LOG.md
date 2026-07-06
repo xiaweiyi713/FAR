@@ -2209,3 +2209,14 @@ evidence bundle verified successfully, releasing the GPU.
   fingerprint、Phase B authorization、jury source/adjudication provenance 与 family 8-method 报告字段。
 - 本次仓库维护不访问 FalsiRAG held-out/test、RAMDocs test 或外部官方 test-only 数据；远端 WS2 family
   dev 保持在 D: 工作树继续运行，Round2 RAMDocs dev 已按既有停止规则停在 G-A 未通过后的降级路径。
+
+## 2026-07-06 — WS6 仓库维护审计命令化
+
+- 新增 `falsirag-repository-maintenance`，把 WS6 的工程状态从静态说明升级为可重算审计：
+  统计全仓跟踪体积、`diagnostics/` 体积、最大跟踪文件、`output/` 停用状态与 `outputs/`
+  忽略策略，并生成 `reports/repository_maintenance.{json,md}`。
+- 当前审计为 `valid:true`：`diagnostics/` 跟踪体积约 28.233 MiB，全仓跟踪体积约 37.637 MiB，
+  最大跟踪文件为 `bench/external/ramdocs_v1/corpus.jsonl`（约 2.553 MiB），均低于长期路线图
+  的迁移阈值；`output/` 无跟踪文件，`outputs/` 仅跟踪 `.gitkeep`。
+- 该命令只检查仓库工程卫生，不读取 held-out/test，不调用模型，不改变 F1–F10、RAMDocs
+  停止规则、Phase B 状态或任何实验门禁。
