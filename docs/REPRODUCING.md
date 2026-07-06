@@ -747,6 +747,18 @@ G-P fixes this study at `directional_reproduction`: a nonsignificant G-F does
 not establish absence. No command above reads train, FalsiRAG held-out/test, or
 RAMDocs test.
 
+During a remote run, monitor progress from the Mac side with the read-only
+watcher:
+
+```bash
+scripts/watch_windows_family_dev.sh
+```
+
+The watcher only prints service state, checkpoint counts, manifests, recent
+logs, active processes, and GPU status from `windows-gpu`. It does not start or
+stop services, write marker files, inspect held-out/test inputs, or finalize a
+release.
+
 ## WS3 external boundary mapping
 
 WS3 is independently preregistered in `docs/PLAN_BOUNDARY_MAPPING.md` and is

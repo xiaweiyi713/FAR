@@ -2222,3 +2222,11 @@ evidence bundle verified successfully, releasing the GPU.
   停止规则、Phase B 状态或任何实验门禁。
 - 随后将该命令接入 public-diagnostic CI，并更新 workflow contract 与 traceability 文档；
   今后 `diagnostics/` 体积或 `output/`/`outputs/` 收敛规则漂移会在公开 CI 中 fail-closed。
+
+## 2026-07-06 — WS2 family-dev 只读监控入口
+
+- 新增 `scripts/watch_windows_family_dev.sh`，从 Mac 侧通过 `ssh windows-gpu` 打印 WS2
+  `far-family-dev` / `far-ollama-family-dev` 状态、dev-only input manifest、三家族两臂
+  calibration/formal checkpoint 行数、run manifest、日志尾、相关进程与 GPU 状态。
+- 该脚本是只读巡检入口：不启动或停止 systemd unit，不写 marker，不 finalize，不读取
+  held-out/test，也不改变正在 D: 工作树上运行的 `bd57585` 冻结 WS2 formal run。
