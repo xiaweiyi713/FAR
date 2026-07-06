@@ -24,6 +24,7 @@ from experiments.protocol_2plus4 import (
     SYSTEM_MODEL_FAMILIES,
     verify_active_protocol,
 )
+from experiments.phase_b_gate import require_phase_b_authorized
 from experiments.runner import build_generator, load_config
 
 JURY_TYPES = ("temporal", "entity", "numerical", "causal", "source_reliability")
@@ -141,6 +142,10 @@ def annotate_juror(
     packet_dir: Path,
     config_path: Path,
     output_dir: Path,
+    gate_data_dir: Path,
+    gate_round1_dir: Path,
+    gate_round2_dir: Path,
+    gate_config_path: Path,
     *,
     juror_id: str,
     model_family: str,
@@ -150,6 +155,12 @@ def annotate_juror(
     retry_fallbacks: bool = False,
 ) -> dict[str, Any]:
     verify_active_protocol()
+    phase_b_gate = require_phase_b_authorized(
+        gate_data_dir,
+        gate_round1_dir,
+        gate_round2_dir,
+        gate_config_path,
+    )
     family = model_family.strip().lower()
     if not family or family in SYSTEM_MODEL_FAMILIES:
         raise ValueError("juror family must be non-empty and disjoint from system families")
@@ -250,6 +261,7 @@ def annotate_juror(
         "prompt_sha256": PROMPT_SHA256,
         "source_packet_sha256": sha256_file(packet_manifest_path),
         "source_adjudication_sha256": source_adjudication_sha256,
+        "phase_b_gate": phase_b_gate,
         "samples": len(rows),
         "expected_samples": len(source_rows),
         "complete": len(rows) == len(source_rows),
@@ -264,7 +276,14 @@ def annotate_juror(
     return manifest
 
 
-def verify_juror(packet_dir: Path, output_dir: Path) -> dict[str, Any]:
+def verify_juror(
+    packet_dir: Path,
+    output_dir: Path,
+    gate_data_dir: Path,
+    gate_round1_dir: Path,
+    gate_round2_dir: Path,
+    gate_config_path: Path,
+) -> dict[str, Any]:
     errors: list[str] = []
     try:
         verify_active_protocol()
@@ -273,6 +292,12 @@ def verify_juror(packet_dir: Path, output_dir: Path) -> dict[str, Any]:
         )
         packet_sha = sha256_file(packet_dir / "packet_manifest.json")
         _, packet_rows, adjudication_sha = _load_blind_packet(packet_dir)
+        phase_b_gate = require_phase_b_authorized(
+            gate_data_dir,
+            gate_round1_dir,
+            gate_round2_dir,
+            gate_config_path,
+        )
         path = output_dir / str(manifest["annotation_file"])
         rows = read_jsonl(path)
         juror_id = str(manifest["juror_id"])
@@ -294,6 +319,8 @@ def verify_juror(packet_dir: Path, output_dir: Path) -> dict[str, Any]:
             errors.append("jury annotation source packet fingerprint mismatch")
         if manifest.get("source_adjudication_sha256") != adjudication_sha:
             errors.append("jury annotation blind-row fingerprint mismatch")
+        if manifest.get("phase_b_gate") != phase_b_gate:
+            errors.append("jury annotation Phase B authorization differs from verified G-A")
         if family.lower() in SYSTEM_MODEL_FAMILIES:
             errors.append("jury annotation family overlaps system families")
         if sha256_file(path) != manifest.get("annotation_sha256"):
@@ -345,6 +372,10 @@ def main() -> None:
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--juror-id", required=True)
     parser.add_argument("--model-family", required=True)
+    parser.add_argument("--ramdocs-data-dir", type=Path, required=True)
+    parser.add_argument("--ramdocs-round1-dir", type=Path, required=True)
+    parser.add_argument("--ramdocs-round2-dir", type=Path, required=True)
+    parser.add_argument("--ramdocs-config", type=Path, required=True)
     parser.add_argument("--limit", type=int)
     parser.add_argument("--overwrite", action="store_true")
     parser.add_argument("--resume", action="store_true")
@@ -352,12 +383,23 @@ def main() -> None:
     parser.add_argument("--verify", action="store_true")
     args = parser.parse_args()
     result = (
-        verify_juror(args.packet_dir, args.output_dir)
+        verify_juror(
+            args.packet_dir,
+            args.output_dir,
+            args.ramdocs_data_dir,
+            args.ramdocs_round1_dir,
+            args.ramdocs_round2_dir,
+            args.ramdocs_config,
+        )
         if args.verify
         else annotate_juror(
             args.packet_dir,
             args.config,
             args.output_dir,
+            args.ramdocs_data_dir,
+            args.ramdocs_round1_dir,
+            args.ramdocs_round2_dir,
+            args.ramdocs_config,
             juror_id=args.juror_id,
             model_family=args.model_family,
             limit=args.limit,

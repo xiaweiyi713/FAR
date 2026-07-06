@@ -62,6 +62,22 @@ def _load_juror(directory: Path) -> tuple[dict[str, Any], dict[str, dict[str, An
         )
     ):
         raise ValueError(f"{directory}: jury source fingerprints are incomplete")
+    phase_b_gate = manifest.get("phase_b_gate")
+    if (
+        not isinstance(phase_b_gate, dict)
+        or phase_b_gate.get("gate_a_passed") is not True
+        or phase_b_gate.get("phase_b_authorized") is not True
+        or phase_b_gate.get("samples") != 350
+        or any(
+            len(str(phase_b_gate.get(field, ""))) != 64
+            for field in (
+                "round_manifest_sha256",
+                "round1_suite_manifest_sha256",
+                "config_sha256",
+            )
+        )
+    ):
+        raise ValueError(f"{directory}: jury source lacks a valid Phase B authorization")
     if manifest.get("complete") is not True:
         raise ValueError(f"{directory}: jury annotation manifest is incomplete")
     if (
@@ -159,6 +175,11 @@ def build_jury_consensus(
     }
     if len(source_adjudications) != 1 or not next(iter(source_adjudications)):
         raise ValueError("jury sources do not share one frozen blind-row file")
+    phase_b_gates = {
+        json.dumps(item.get("phase_b_gate"), sort_keys=True) for item in manifests
+    }
+    if len(phase_b_gates) != 1 or not next(iter(phase_b_gates)):
+        raise ValueError("jury sources do not share one verified Phase B authorization")
     sample_sets = [set(rows) for rows in rows_by_juror]
     if not sample_sets[0] or any(samples != sample_sets[0] for samples in sample_sets[1:]):
         raise ValueError("jury sources do not have identical complete samples")
@@ -293,6 +314,7 @@ def build_jury_consensus(
         "protocol_fingerprint": PROTOCOL_ACTIVE_SHA256,
         "source_packet_sha256": next(iter(source_packets)),
         "source_adjudication_sha256": next(iter(source_adjudications)),
+        "phase_b_gate": json.loads(next(iter(phase_b_gates))),
         "jurors": [
             {
                 "juror_id": juror_id,

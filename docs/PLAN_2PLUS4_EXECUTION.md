@@ -232,35 +232,45 @@ uv run python -m experiments.ramdocs_error_analysis \
 三个 juror 必须使用同一 packet 和冻结 prompt：
 
 ```bash
+gate_args=(
+  --ramdocs-data-dir bench/external/ramdocs_v1
+  --ramdocs-round1-dir diagnostics/ramdocs_v2/round1
+  --ramdocs-round2-dir diagnostics/ramdocs_v2/round2
+  --ramdocs-config diagnostics/ramdocs_v2/round2/config.yaml
+)
+
 uv run falsirag-jury-annotate --packet-dir outputs/annotations/falsirag_packet_v1 \
   --config experiments/configs/jury_deepseek.yaml --juror-id J1 \
-  --model-family deepseek --output-dir outputs/jury/deepseek
+  --model-family deepseek --output-dir outputs/jury/deepseek "${gate_args[@]}"
 
 uv run falsirag-jury-annotate --packet-dir outputs/annotations/falsirag_packet_v1 \
   --config experiments/configs/jury_glm.yaml --juror-id J2 \
-  --model-family glm --output-dir outputs/jury/glm
+  --model-family glm --output-dir outputs/jury/glm "${gate_args[@]}"
 
 uv run falsirag-jury-annotate --packet-dir outputs/annotations/falsirag_packet_v1 \
   --config experiments/configs/jury_llama.yaml --juror-id J3 \
-  --model-family meta --output-dir outputs/jury/meta
+  --model-family meta --output-dir outputs/jury/meta "${gate_args[@]}"
 
 # 三份运行分别完成后逐一独立验真
 uv run falsirag-jury-annotate --verify \
   --packet-dir outputs/annotations/falsirag_packet_v1 \
   --config experiments/configs/jury_deepseek.yaml --juror-id J1 \
-  --model-family deepseek --output-dir outputs/jury/deepseek
+  --model-family deepseek --output-dir outputs/jury/deepseek "${gate_args[@]}"
 uv run falsirag-jury-annotate --verify \
   --packet-dir outputs/annotations/falsirag_packet_v1 \
   --config experiments/configs/jury_glm.yaml --juror-id J2 \
-  --model-family glm --output-dir outputs/jury/glm
+  --model-family glm --output-dir outputs/jury/glm "${gate_args[@]}"
 uv run falsirag-jury-annotate --verify \
   --packet-dir outputs/annotations/falsirag_packet_v1 \
   --config experiments/configs/jury_llama.yaml --juror-id J3 \
-  --model-family meta --output-dir outputs/jury/meta
+  --model-family meta --output-dir outputs/jury/meta "${gate_args[@]}"
 ```
 
 不得使用此前粘贴到聊天中的 DeepSeek key；它应视为已泄露。正式 J1 运行只接受
 轮换后通过 `DEEPSEEK_API_KEY` 环境变量注入的密钥，任何 key 都不得写入仓库。
+`gate_args` 指向已经 build/verify 的完整 Round 2 release；annotator 会重新执行
+Round 2 verifier，只有 `gate_a_passed=true`、`phase_b_authorized=true` 且停止规则关闭
+才会初始化模型或写输出。三份 juror manifest 均绑定同一个 G-A manifest SHA-256。
 
 ```bash
 uv run falsirag-jury-consensus --data-dir bench \

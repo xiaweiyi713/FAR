@@ -1885,3 +1885,15 @@ evidence bundle verified successfully, releasing the GPU.
   最终标签继续固定 `publication_gold:false`、`human_iaa:false`。
 - 本次只审计 CLI 与补文档；G-A 尚未通过，没有启动 jury、读取 test 或生成任何
   作者仲裁制品。
+
+## 2026-07-06 — 把 G-A 停止规则下沉到 juror 执行入口
+
+- 静态审计发现 jury readiness 和 one-shot 会检查 G-A，但 `falsirag-jury-annotate`
+  本身只靠执行手册禁止提前运行；操作者仍可能在 Round 2 未通过时花费 API/GPU 生成
+  Phase B 标注，违背预注册停止规则。
+- 新增 `experiments.phase_b_gate.require_phase_b_authorized`，从 RAMDocs 数据、Round 1、
+  Round 2 和冻结配置重新执行正式 verifier，并要求 G-A/Phase B 授权为真、停止规则
+  为假、dev-only 与非真人来源声明完整。juror 在模型初始化和写文件之前必须通过它。
+- 三份 juror manifest 现绑定同一个 Round 2 manifest、Round 1 suite 与配置 SHA-256；
+  juror verifier 会重新验证并逐字段比较，consensus 拒绝缺失、不同或无效的 G-A 绑定。
+  当前 G-A 未通过，因此新入口按设计无法运行；未启动 jury 或访问 test。
