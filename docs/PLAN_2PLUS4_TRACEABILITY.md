@@ -7,7 +7,7 @@
 | 协议条款 | 实现/证据入口 | 当前状态 |
 |---|---|---|
 | Phase 0 预注册与偏离记录 | `experiments/protocol_2plus4.py`、`docs/DEVELOPMENT_LOG.md` | 证据完成 |
-| Phase 0 Mistral/Gemma/Llama 本地 smoke | `scripts/smoke_2plus4_models.sh`、`falsirag-verify-2plus4-smoke`、`/mnt/d/FAR-outputs/model_smoke_2plus4` | 生成与独立验真工具已实现、证据未完成；远端当前缺少三个模型且 Round 2 占用 GPU，未冒充已有 smoke 记录 |
+| Phase 0 Mistral/Gemma/Llama 本地 smoke | `scripts/smoke_2plus4_models.sh`、`falsirag-verify-2plus4-smoke`、`diagnostics/model_smoke_2plus4` | 生成与独立验真工具已实现、证据未完成；成功论文门与失败降级门均要求同步后的三家族记录；远端当前缺少三个模型且 Round 2 占用 GPU，未冒充已有 smoke 记录 |
 | A1 RAMDocs 钉死版本、许可证、指纹和 70/30 切分 | `bench/build/ramdocs.py`、`bench/external/ramdocs_v1/manifest.json` | 证据完成 |
 | A2 closed-corpus 映射和初始答案 | `experiments/run_ramdocs.py`、`diagnostics/ramdocs_v1/dev` | 证据完成 |
 | A2 strict EM / coverage / wrong exclusion | `eval/ramdocs.py`、`tests/test_ramdocs.py` | 已实现并测试 |

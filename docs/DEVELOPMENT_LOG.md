@@ -1917,3 +1917,13 @@ evidence bundle verified successfully, releasing the GPU.
   并拒绝 RAMDocs 优势、jury 确认或外部盲测等失败后禁用主张。
 - 当前 Round 2 尚未完成，因此只实现门禁和运行手册，没有提前改写论文结果、生成
   readiness 报告、运行测试或访问 test。
+
+## 2026-07-06 — 将 Phase 0 三模型 smoke 纳入两条终局门
+
+- 完成度审计发现三模型 smoke 虽有生成与独立 verifier，但成功的 jury paper gate 和
+  第二轮失败降级 gate 都未要求它，Phase 0 明列的必交制品仍可能被跳过。
+- 两条 readiness 现共同调用 `verify_smoke_records`，要求同步到
+  `diagnostics/model_smoke_2plus4` 的 Mistral/Gemma/Llama 精确三文件集合、模型 digest、
+  当前配置和活动协议全部有效，并把三份记录 SHA-256 纳入最终 evidence 字段。
+- 执行手册补齐 Windows D: → Mac 诊断目录的 rsync 与二次 verify。当前 GPU 仍由
+  Round 2 占用，未拉取模型、运行 smoke、测试或访问 test。

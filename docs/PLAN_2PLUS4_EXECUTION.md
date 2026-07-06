@@ -39,6 +39,11 @@ git checkout --detach origin/main
 scripts/smoke_2plus4_models.sh --pull
 falsirag-verify-2plus4-smoke \
   --output-dir /mnt/d/FAR-outputs/model_smoke_2plus4
+exit
+rsync -az windows-gpu:/mnt/d/FAR-outputs/model_smoke_2plus4/ \
+  diagnostics/model_smoke_2plus4/
+uv run falsirag-verify-2plus4-smoke \
+  --output-dir diagnostics/model_smoke_2plus4
 ```
 
 脚本发现 RAMDocs 服务或其他 GPU 任务时以状态 75 退出等待；模型与输出均位于 D:，
@@ -47,6 +52,8 @@ falsirag-verify-2plus4-smoke \
 `benchmark_data_accessed=false`、`human_iaa=false`。脚本结束前会自动调用同一
 verifier；独立命令可在之后重新核对精确三文件集合、当前配置 SHA-256、协议指纹、
 模型家族/名称/digest 和来源声明。不带 `--pull` 时只检查现有模型，不下载缺失镜像。
+同步后的 `diagnostics/model_smoke_2plus4` 是成功论文门与第二轮失败降级门的共同硬要求；
+只有远端 D: 临时记录、未同步或配置发生漂移时，两条分支都不能声明完成。
 
 正式 Windows GPU 运行或 checkpoint 恢复使用 D: 盘脚本；它会启动 D: 盘
 Ollama、继承 D: 盘 HuggingFace cache，并复用同一个输出目录续跑。长任务由

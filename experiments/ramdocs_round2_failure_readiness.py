@@ -9,6 +9,7 @@ from typing import Any
 
 from bench.build.common import sha256_file, write_json
 from experiments.evidence_2plus4 import verify_ramdocs_round2_release
+from experiments.model_smoke_2plus4 import verify_smoke_records
 from experiments.protocol_2plus4 import PROTOCOL_ACTIVE_SHA256, verify_active_protocol
 
 
@@ -33,6 +34,7 @@ def audit_failure_branch(
     bundle_dir: Path,
     paper_main: Path,
     paper_status: Path,
+    model_smoke_dir: Path,
 ) -> dict[str, Any]:
     errors: list[str] = []
     try:
@@ -54,6 +56,9 @@ def audit_failure_branch(
         }
     if release_audit.get("valid") is not True:
         errors.extend(f"Round 2 release: {item}" for item in release_audit.get("errors", []))
+    smoke_audit = verify_smoke_records(model_smoke_dir)
+    if smoke_audit.get("valid") is not True:
+        errors.extend(f"model smoke: {item}" for item in smoke_audit.get("errors", []))
     if any(
         (
             manifest.get("protocol_fingerprint") != PROTOCOL_ACTIVE_SHA256,
@@ -101,6 +106,7 @@ def audit_failure_branch(
         "human_iaa": False,
         "checks": {
             "round2_release_valid": release_audit.get("valid") is True,
+            "local_model_smokes_valid": smoke_audit.get("valid") is True,
             "paper_downgrade_required": manifest.get("paper_downgrade_required") is True,
             "paper_disclosures": disclosure_checks,
             "forbidden_claims_absent": not forbidden,
@@ -113,6 +119,7 @@ def audit_failure_branch(
             ),
             "paper_main_sha256": sha256_file(paper_main),
             "paper_status_sha256": sha256_file(paper_status),
+            "model_smoke_records": smoke_audit.get("records", {}),
         },
     }
 
@@ -123,6 +130,11 @@ def main() -> None:
     parser.add_argument("--bundle-dir", type=Path, required=True)
     parser.add_argument("--paper-main", type=Path, default=Path("paper/main.tex"))
     parser.add_argument("--paper-status", type=Path, default=Path("paper/STATUS.md"))
+    parser.add_argument(
+        "--model-smoke-dir",
+        type=Path,
+        default=Path("diagnostics/model_smoke_2plus4"),
+    )
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()
     result = audit_failure_branch(
@@ -130,6 +142,7 @@ def main() -> None:
         args.bundle_dir,
         args.paper_main,
         args.paper_status,
+        args.model_smoke_dir,
     )
     if args.output:
         write_json(args.output, result)

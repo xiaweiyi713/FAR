@@ -11,6 +11,7 @@ from bench.build.common import read_jsonl, sha256_file, write_json
 from bench.build.jury_adjudication import _consensus
 from bench.build.ramdocs import verify_ramdocs
 from experiments.jury_rescore import QWEN_METHODS
+from experiments.model_smoke_2plus4 import verify_smoke_records
 from experiments.phase_b_gate import require_phase_b_authorized
 from experiments.protocol_2plus4 import PROTOCOL_ACTIVE_SHA256, ROOT, verify_active_protocol
 from experiments.ramdocs_round2 import verify_round
@@ -67,6 +68,7 @@ def audit(
     *,
     ramdocs_round2_dir: Path | None = None,
     ramdocs_round2_config: Path | None = None,
+    model_smoke_dir: Path | None = None,
 ) -> dict[str, Any]:
     errors: list[str] = []
     checks: dict[str, bool] = {}
@@ -76,6 +78,12 @@ def audit(
     except ValueError as exc:
         errors.append(str(exc))
         checks["active_protocol_frozen"] = False
+
+    smoke_audit = verify_smoke_records(
+        model_smoke_dir or ROOT / "diagnostics/model_smoke_2plus4"
+    )
+    checks["local_model_smokes_valid"] = smoke_audit.get("valid") is True
+    errors.extend(f"model smoke: {item}" for item in smoke_audit.get("errors", []))
 
     ramdocs_import = verify_ramdocs(ramdocs_data)
     checks["ramdocs_import_valid"] = ramdocs_import.get("valid") is True
@@ -364,6 +372,7 @@ def audit(
             ),
             "matrix_report_sha256": sha256_file(matrix_report) if matrix_report.is_file() else None,
             "paper_sha256": sha256_file(paper_main) if paper_main.is_file() else None,
+            "model_smoke_records": smoke_audit.get("records", {}),
         },
     }
 
@@ -381,6 +390,11 @@ def main() -> None:
         "--ramdocs-round2-config",
         type=Path,
         default=ROOT / "experiments/configs/ramdocs_qwen_round2.yaml",
+    )
+    parser.add_argument(
+        "--model-smoke-dir",
+        type=Path,
+        default=ROOT / "diagnostics/model_smoke_2plus4",
     )
     parser.add_argument(
         "--jury-consensus-report",
@@ -439,6 +453,7 @@ def main() -> None:
         args.paper_main,
         ramdocs_round2_dir=args.ramdocs_round2_dir,
         ramdocs_round2_config=args.ramdocs_round2_config,
+        model_smoke_dir=args.model_smoke_dir,
     )
     if args.output:
         write_json(args.output, result)
