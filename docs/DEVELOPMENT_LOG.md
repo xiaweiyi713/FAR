@@ -2054,3 +2054,26 @@ evidence bundle verified successfully, releasing the GPU.
 - 首次失败未生成 `diagnostics/attribution_v1` 或报告半成品。修复必须通过合成回归检查并
   作为已推送的新冻结提交后，才允许第二次正式构建；仍为零模型调用、非真人 IAA、非
   publication gold，不重开 G-A。
+
+## 2026-07-06 — WS1 G-R1 通过，四个机制假设均未获支持
+
+- 偏离提交 `cded2b7` 推送后完成唯一正式构建；独立 verifier 从冻结输入重新计算六桶、
+  两套分层、集合 F1、五臂翻转和四假设，返回 `valid=true`、`gate_r1_passed=true`、
+  `model_calls=0`、`test_accessed=false`。证据包位于 `diagnostics/attribution_v1`，外部
+  报告位于 `reports/mechanism_attribution.md`。
+- 226 条共同错误按最早阶段唯一归类：retrieval miss 4、conflict undetected 72、
+  conflict detected but revision wrong 103、answer-set incomplete 35、overfull 12、
+  format/EM mismatch 0。正确文档完整检索子集有 179 条，但 FAR−baseline strict EM 为
+  -0.0112，95% CI [-0.0503, 0.0279]，因此 H-upstream 不支持。
+- RAMDocs 冲突检出率 0.449，dev 为 0.883，冲突分布 TV=0.446；但 RAMDocs 已检出子集
+  FAR−baseline 仅 +0.0064，CI [-0.0446, 0.0573]，未满足注册的严格正效应条件，
+  H-conflict-shape 不支持。描述性集合 F1 差 -0.0031，CI [-0.0200, 0.0133]，
+  H-metric 不支持且不重开 G-A。
+- dev 上 FAR 相对 untyped 有 34 条连续分数正增益，全部发生在 changed revision 路径，
+  而非预注册预测的 detected-without-change 路径，因此 H-component 不支持。结合
+  minus-typed-revision 的均值优势，这说明 revision 同时承载局部收益与更大的异质性伤害；
+  后续论文不得继续写“效应位于 detection 而非 revision”，应改为“修订路径是收益与失效
+  共同发生的核心中介”，并保留机器审计/dev/单模型限定。
+- 本结果推翻的是路线图中的可证伪解释假设，不改写 F1–F10：RAMDocs 两轮 G-A 仍失败，
+  Qwen dev 的 typed−untyped +0.078 仍保留，但简单的 upstream-only、metric masking 和
+  detection-only 故事均被关闭。WS2/WS3 必须据此采用更窄、更机制化的边界表述。
