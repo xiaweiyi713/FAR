@@ -16,6 +16,7 @@ EXPECTED_ENTRY_POINTS = {
     "falsirag-jury-paper-readiness",
     "falsirag-jury-sensitivity",
     "falsirag-project-status",
+    "falsirag-round2-failure-readiness",
     "falsirag-run",
     "falsirag-scan-secrets",
     "falsirag-solo-paper-readiness",

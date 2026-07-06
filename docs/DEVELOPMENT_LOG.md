@@ -1907,3 +1907,13 @@ evidence bundle verified successfully, releasing the GPU.
   与 one-shot intent 都要求它和 consensus 一致，其中 readiness 重新执行 Round 2
   verifier，intent 至少逐 SHA 绑定实际 RAMDocs gate manifest。这样 RAMDocs 外部证据
   与 jury/matrix/test 不再是两组仅靠布尔值并列的制品。
+
+## 2026-07-06 — 为第二轮失败增加论文降级门
+
+- 失败分支已有可重算错误分析和 `paper_downgrade_required`，但此前没有工具验证论文
+  真的从 2+4 正结果降级为适用边界分析；只冻结 JSON 仍可能留下过强摘要或状态页。
+- 新增 `falsirag-round2-failure-readiness`：重算完整 Round 2 release，要求两轮停止、
+  applicability-boundary、Phase B/held-out 未运行、upstream labels 和非真人 IAA 披露，
+  并拒绝 RAMDocs 优势、jury 确认或外部盲测等失败后禁用主张。
+- 当前 Round 2 尚未完成，因此只实现门禁和运行手册，没有提前改写论文结果、生成
+  readiness 报告、运行测试或访问 test。

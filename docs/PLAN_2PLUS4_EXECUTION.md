@@ -215,6 +215,19 @@ uv run falsirag-2plus4-release verify-ramdocs-round2 \
 builder/verifier 还会强制重算 `round2/error_analysis` 的配对结果、discordant 样本
 和来源指纹，并要求 `paper_downgrade_required=true`；缺少或漂移时拒绝发布。
 
+第二轮失败后，更新 `paper/main.tex` 与 `paper/STATUS.md`，再执行失败分支论文门：
+
+```bash
+uv run falsirag-round2-failure-readiness \
+  --data-dir bench/external/ramdocs_v1 \
+  --bundle-dir diagnostics/ramdocs_v2 \
+  --output reports/ramdocs_round2_failure_readiness.json
+```
+
+该门重新验证完整 release，并要求论文明确写出第二轮 G-A 失败、两轮停止规则、
+typed-conflict control applicability-boundary analysis、Phase B/held-out 未运行、
+upstream-label 与非真人 IAA 来源边界。它不允许把“诚实停止”误报成 2+4 正结果。
+
 重建 dev 错误分析：
 
 ```bash
