@@ -1,0 +1,37 @@
+{
+  "benchmark_data_accessed": false,
+  "config_path": "experiments/configs/mistral_open.yaml",
+  "config_sha256": "31035391d672883e2d6f347ca3acd937cd91f2c345e960695292be88774d4b5b",
+  "created_at": "2026-07-06T13:42:59+08:00",
+  "human_iaa": false,
+  "model": "mistral:7b-instruct",
+  "model_family": "mistral",
+  "model_record": {
+    "capabilities": [
+      "completion",
+      "tools"
+    ],
+    "details": {
+      "context_length": 32768,
+      "embedding_length": 4096,
+      "families": [
+        "llama"
+      ],
+      "family": "llama",
+      "format": "gguf",
+      "parameter_size": "7.2B",
+      "parent_model": "",
+      "quantization_level": "Q4_K_M"
+    },
+    "digest": "6577803aa9a036369e481d648a2baebb381ebc6e897f2bb9a766a2aa7bfbc1cf",
+    "model": "mistral:7b-instruct",
+    "modified_at": "2026-07-06T10:18:19.1733372+08:00",
+    "name": "mistral:7b-instruct",
+    "size": 4372824384
+  },
+  "protocol_fingerprint": "0a5e963166bcb49ff9b417c12690e1af4f642009359c77523080cff9a9d7cad9",
+  "publication_gold": false,
+  "response": " SMOKE_OK",
+  "schema_version": "far-2plus4-local-model-smoke-v1",
+  "smoke_passed": true
+}

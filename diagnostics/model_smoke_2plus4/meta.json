@@ -1,0 +1,37 @@
+{
+  "benchmark_data_accessed": false,
+  "config_path": "experiments/configs/jury_llama.yaml",
+  "config_sha256": "024e0b0294c02a6c07176a2cec18251d5d7305d3737733a65b430a467bf5d732",
+  "created_at": "2026-07-06T13:44:44+08:00",
+  "human_iaa": false,
+  "model": "llama3.1:8b",
+  "model_family": "meta",
+  "model_record": {
+    "capabilities": [
+      "completion",
+      "tools"
+    ],
+    "details": {
+      "context_length": 131072,
+      "embedding_length": 4096,
+      "families": [
+        "llama"
+      ],
+      "family": "llama",
+      "format": "gguf",
+      "parameter_size": "8.0B",
+      "parent_model": "",
+      "quantization_level": "Q4_K_M"
+    },
+    "digest": "46e0c10c039e019119339687c3c1757cc81b9da49709a3b3924863ba87ca666e",
+    "model": "llama3.1:8b",
+    "modified_at": "2026-07-06T13:43:44.1125502+08:00",
+    "name": "llama3.1:8b",
+    "size": 4920753328
+  },
+  "protocol_fingerprint": "0a5e963166bcb49ff9b417c12690e1af4f642009359c77523080cff9a9d7cad9",
+  "publication_gold": false,
+  "response": "SMOKE_OK",
+  "schema_version": "far-2plus4-local-model-smoke-v1",
+  "smoke_passed": true
+}

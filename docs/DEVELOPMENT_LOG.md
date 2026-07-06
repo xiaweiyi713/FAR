@@ -2002,3 +2002,24 @@ evidence bundle verified successfully, releasing the GPU.
   typed-conflict-control applicability-boundary 分析，并明确 RAMDocs 是
   upstream labels，不是 human inter-annotator agreement 或 publication-grade
   human gold。
+
+## 2026-07-06 — 完成 Phase 0 三模型 smoke 与失败分支终局验收
+
+- 修正 Phase 0 Google 模型名称：原配置使用 Ollama 不存在的
+  `gemma2:9b-instruct`，现统一为实际发布 tag `gemma2:9b`，并同步更新生成脚本、
+  独立 verifier 与运行配置；没有借此改变模型家族、实验结果或 G-A 判据。
+- Windows GPU 在 D: 盘完成 Mistral `mistral:7b-instruct`、Google `gemma2:9b`
+  与 Meta `llama3.1:8b` 固定短提示 smoke。Llama 的 Ollama 并行拉取两次在同一
+  分片附近停滞，第一次残留 blob 随后经 SHA-256 校验确认损坏；该损坏文件被删除，
+  改用官方 Ollama registry 单连接下载同一 digest，下载后先由 `sha256sum -c`
+  验证通过，再原子放入 D: Ollama blob 存储，最终 Ollama manifest 写入成功。
+- 远端生成的三份记录已同步到 `diagnostics/model_smoke_2plus4`。远端脚本内 verifier
+  与本地 `experiments.model_smoke_2plus4` 均返回 `valid:true`，精确三家族记录 SHA
+  分别为 Mistral `156bcdd7…77b3`、Google `18696c41…502b`、Meta
+  `4829dfae…c77b`；记录明确 `benchmark_data_accessed:false`、
+  `publication_gold:false`、`human_iaa:false`。
+- 重新运行 `experiments.ramdocs_round2_failure_readiness` 得到 `ready:true`、
+  `gate_a_passed:false`、`phase_b_run:false`、`test_accessed:false`。因此 2+4
+  企划按预注册失败分支完成闭合：保留第二次 G-A 失败与论文降级，不启动 LLM jury、
+  作者仲裁、模型矩阵或任何 held-out/test。全程未运行测试套件，也未访问 test 数据；
+  三模型 smoke 不是人类标注、真人仲裁或真人 IAA。

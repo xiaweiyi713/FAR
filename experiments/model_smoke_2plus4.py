@@ -16,7 +16,7 @@ from experiments.protocol_2plus4 import PROTOCOL_ACTIVE_SHA256, verify_active_pr
 ROOT = Path(__file__).resolve().parents[1]
 MODEL_SPECS = {
     "mistral": ("mistral:7b-instruct", "experiments/configs/mistral_open.yaml"),
-    "google": ("gemma2:9b-instruct", "experiments/configs/gemma_open.yaml"),
+    "google": ("gemma2:9b", "experiments/configs/gemma_open.yaml"),
     "meta": ("llama3.1:8b", "experiments/configs/jury_llama.yaml"),
 }
 _DIGEST = re.compile(r"^[0-9a-f]{64}$")

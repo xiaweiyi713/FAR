@@ -7,7 +7,7 @@
 | 协议条款 | 实现/证据入口 | 当前状态 |
 |---|---|---|
 | Phase 0 预注册与偏离记录 | `experiments/protocol_2plus4.py`、`docs/DEVELOPMENT_LOG.md` | 证据完成 |
-| Phase 0 Mistral/Gemma/Llama 本地 smoke | `scripts/smoke_2plus4_models.sh`、`falsirag-verify-2plus4-smoke`、`diagnostics/model_smoke_2plus4` | 生成与独立验真工具已实现、证据未完成；失败降级门仍要求同步后的三家族记录；Round 2 已释放 GPU，下一步可在 D: 模型缓存上运行 smoke，未冒充已有 smoke 记录 |
+| Phase 0 Mistral/Gemma/Llama 本地 smoke | `scripts/smoke_2plus4_models.sh`、`falsirag-verify-2plus4-smoke`、`diagnostics/model_smoke_2plus4` | 证据完成：Mistral `mistral:7b-instruct`、Google `gemma2:9b`、Meta `llama3.1:8b` 均返回 `SMOKE_OK`；远端与同步后的本地 verifier 均为 `valid:true`，三记录绑定活动协议、配置 SHA-256 与 Ollama digest，并明确 `benchmark_data_accessed:false`、`human_iaa:false` |
 | A1 RAMDocs 钉死版本、许可证、指纹和 70/30 切分 | `bench/build/ramdocs.py`、`bench/external/ramdocs_v1/manifest.json` | 证据完成 |
 | A2 closed-corpus 映射和初始答案 | `experiments/run_ramdocs.py`、`diagnostics/ramdocs_v1/dev` | 证据完成 |
 | A2 strict EM / coverage / wrong exclusion | `eval/ramdocs.py`、`tests/test_ramdocs.py` | 已实现并测试 |
@@ -24,7 +24,7 @@
 | B4 构建标签 / jury gold / unanimous-only 敏感性 | `experiments/jury_sensitivity.py` | 已实现；无 jury labels，未执行 |
 | B5 Qwen/Mistral/Google 四方法矩阵与 >30% 回退剔除 | `scripts/run_2plus4_model_family.sh`、`experiments/model_matrix.py` | 已实现；停止规则阻挡，未执行 |
 | Phase 5 一次性 test intent、commit 绑定、评分数和 seal | `experiments/one_shot.py`、`experiments/runner.py` | 已实现；仅 `--allow-test` 不足以读取 test，必须由已提交且通过 G-A/G-K/G-S/dev 分析校验的 intent 授权；jury labels 的 `phase_b_gate` 必须逐 SHA 对应实际 RAMDocs gate manifest；当前停止规则禁止执行 |
-| Phase C 强制披露和禁止声明 | `experiments/jury_paper_readiness.py`、`falsirag-round2-failure-readiness` | 成功论文门失败关闭；失败降级门已实现，要求 Round 2 release、错误分析、三模型 smoke、Phase B not run、held-out not run、upstream labels、not human inter-annotator agreement 与 applicability-boundary 披露 |
+| Phase C 强制披露和禁止声明 | `experiments/jury_paper_readiness.py`、`falsirag-round2-failure-readiness`、`reports/ramdocs_round2_failure_readiness.json` | 成功论文门失败关闭；失败降级门已通过并返回 `ready:true`，重算确认 Round 2 release、错误分析、三模型 smoke、Phase B not run、held-out not run、upstream labels、not human inter-annotator agreement 与 applicability-boundary 披露 |
 | RAMDocs / jury 可校验证据包 | `experiments/evidence_2plus4.py` | RAMDocs Round 2 evidence release 已同步到 `diagnostics/ramdocs_v2` 且 verify valid；jury release verifier 已实现从 juror、作者仲裁和三家族源 suite 全链重算，但正式 jury 制品被停止规则阻挡 |
 
 可选 A5 WikiContradict 不是主路径完成门禁，当前未实现。严格 AAAI 人类双标注

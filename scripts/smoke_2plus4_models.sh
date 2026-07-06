@@ -98,7 +98,7 @@ curl -fsS --max-time 3 http://127.0.0.1:11434/api/tags >/dev/null
 
 models=(
   "mistral|mistral:7b-instruct|experiments/configs/mistral_open.yaml"
-  "google|gemma2:9b-instruct|experiments/configs/gemma_open.yaml"
+  "google|gemma2:9b|experiments/configs/gemma_open.yaml"
   "meta|llama3.1:8b|experiments/configs/jury_llama.yaml"
 )
 missing=0

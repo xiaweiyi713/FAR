@@ -17,7 +17,8 @@
 | 多模型矩阵 | 工具完成、禁止执行 | G-A 停止规则阻断 jury-gold 矩阵与投稿主张 |
 | 一次性 test | 工具完成、禁止执行 | dev 停止规则已触发，RAMDocs/FalsiRAG test 均未访问 |
 | Round 2 dev 方法迭代 | **完成但 G-A 失败** | FAR-only 第二轮完整 350/350、0 duplicate、verifier valid；FAR 0.3086 vs 冻结 `multi_query_rag` 0.3114，配对差 -0.0029，95% CI [-0.0314, 0.0286]，McNemar p=1.0 |
-| 2+4 论文门 | 失败关闭并降级 | 第二次 G-A 失败触发停止规则；Phase B not run，held-out not run，论文只能写 typed-conflict-control applicability-boundary analysis |
+| Phase 0 三模型 smoke | **证据完成** | `diagnostics/model_smoke_2plus4/{mistral,google,meta}.json`；远端与本地 verifier 均 `valid=true`，未读取 benchmark，非真人 IAA |
+| 2+4 论文门 | **失败分支已闭合并降级** | `reports/ramdocs_round2_failure_readiness.json` 为 `ready:true`；第二次 G-A 失败触发停止规则，Phase B not run、held-out not run，论文只能写 typed-conflict-control applicability-boundary analysis |
 
 ## RAMDocs
 
@@ -54,6 +55,10 @@ verifier；独立命令可在之后重新核对精确三文件集合、当前配
 模型家族/名称/digest 和来源声明。不带 `--pull` 时只检查现有模型，不下载缺失镜像。
 同步后的 `diagnostics/model_smoke_2plus4` 是成功论文门与第二轮失败降级门的共同硬要求；
 只有远端 D: 临时记录、未同步或配置发生漂移时，两条分支都不能声明完成。
+
+本轮正式记录已经按上述流程完成并同步；当前固定名称为
+`mistral:7b-instruct`、`gemma2:9b` 与 `llama3.1:8b`。其中 Gemma 使用 Ollama
+实际发布的 `gemma2:9b` tag，不使用不存在的 `gemma2:9b-instruct` 别名。
 
 正式 Windows GPU 运行或 checkpoint 恢复使用 D: 盘脚本；它会启动 D: 盘
 Ollama、继承 D: 盘 HuggingFace cache，并复用同一个输出目录续跑。长任务由

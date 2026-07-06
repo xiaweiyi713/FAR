@@ -1,0 +1,36 @@
+{
+  "benchmark_data_accessed": false,
+  "config_path": "experiments/configs/gemma_open.yaml",
+  "config_sha256": "2c348c6a530b31d5154b992e9f111528b81d78541ea40b48e121e6c1511098e1",
+  "created_at": "2026-07-06T13:43:52+08:00",
+  "human_iaa": false,
+  "model": "gemma2:9b",
+  "model_family": "google",
+  "model_record": {
+    "capabilities": [
+      "completion"
+    ],
+    "details": {
+      "context_length": 8192,
+      "embedding_length": 3584,
+      "families": [
+        "gemma2"
+      ],
+      "family": "gemma2",
+      "format": "gguf",
+      "parameter_size": "9.2B",
+      "parent_model": "",
+      "quantization_level": "Q4_0"
+    },
+    "digest": "ff02c3702f322b9e075e9568332d96c0a7028002f1a5a056e0a6784320a4db0b",
+    "model": "gemma2:9b",
+    "modified_at": "2026-07-06T10:45:50.7913735+08:00",
+    "name": "gemma2:9b",
+    "size": 5443152417
+  },
+  "protocol_fingerprint": "0a5e963166bcb49ff9b417c12690e1af4f642009359c77523080cff9a9d7cad9",
+  "publication_gold": false,
+  "response": "SMOKE_OK",
+  "schema_version": "far-2plus4-local-model-smoke-v1",
+  "smoke_passed": true
+}
