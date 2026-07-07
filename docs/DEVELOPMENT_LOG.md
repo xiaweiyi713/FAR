@@ -2365,3 +2365,16 @@ evidence bundle verified successfully, releasing the GPU.
   predecessor family manifest fail-closed。监控脚本同步显示三个模板实例。
 - 当前 Mistral 正式运行仍使用已启动的 dedicated persistent unit，没有热切换、重启或修改
   冻结远端工作树。该模板仅用于 Mistral 完成后的 Google/Meta 以及未来复现。
+
+## 2026-07-07 — WS3 静态就绪审计与持久化 units
+
+- 在不调用模型的情况下复核 WS3 注册、runner 与独立 verifier：两个公开输入各 150 条 dev，
+  每题闭集文档；顺序固定 Wiki→Google、两臂 calibration→formal；正式 600 + calibration 20
+  个 pipeline 样本；G-P 低于 0.60，claim level 固定为 `directional_boundary_mapping`；G-B
+  只表示制品完整，不存在全局胜负。
+- 新增 `far-ollama-boundary.service` 与 `far-boundary.service`，将 Qwen boundary 的 Ollama、
+  log、checkpoint 与 WS2 family-dev 分离，所有大文件仍位于 D:。boundary unit 只调用注册的
+  `experiments.boundary run-all`，保留健康检查与 `Restart=on-failure`。
+- units 当前只进入仓库，**没有在 Mistral untyped 运行期间部署或启动**。WS3 启动仍需先确认
+  WS2 释放 GPU、Qwen digest 精确匹配、正式工作树干净且位于 `origin/main`；未访问任何
+  held-out/test，也未改变 WS3 指纹、样本、方法、功效或假设网格。

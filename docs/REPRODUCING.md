@@ -784,6 +784,21 @@ under `bench/external/wikicontradict_v1` and
 `bench/external/rag_conflicts_v1`; they are not FAR human IAA, publication gold,
 or held-out/test evidence.
 
+Windows/WSL 长时运行可安装 D: 盘持久化 units；只能在 WS2 已释放 GPU、Qwen digest
+复核通过且正式工作树干净并位于 `origin/main` 时启动：
+
+```bash
+cp scripts/systemd/far-ollama-boundary.service ~/.config/systemd/user/
+cp scripts/systemd/far-boundary.service ~/.config/systemd/user/
+systemctl --user daemon-reload
+systemctl --user start far-ollama-boundary.service
+systemctl --user start far-boundary.service
+```
+
+`far-boundary.service` 仅调用注册的 `run-all` 入口，输出固定为
+`/mnt/d/FAR-outputs/boundary_v1`；runner 自身强制 Wiki→Google、calibration→formal、
+两臂和 checkpoint 身份。不得与 family-dev 或其他 GPU 作业并行启动。
+
 To rebuild an import from the pinned public source and verify byte-for-byte
 equivalence:
 

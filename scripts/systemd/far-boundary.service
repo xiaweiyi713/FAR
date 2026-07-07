@@ -1,0 +1,14 @@
+[Unit]
+Description=FAR WS3 directional boundary mapping
+Wants=far-ollama-boundary.service
+After=far-ollama-boundary.service
+
+[Service]
+Type=simple
+WorkingDirectory=/mnt/d/FAR-workspace/FAR-longterm
+ExecStartPre=/bin/bash -lc 'while :; do stable=1; for _ in 1 2 3; do curl -fsS --max-time 5 http://127.0.0.1:11434/api/tags >/dev/null || { stable=0; break; }; sleep 2; done; (( stable )) && exit 0; sleep 2; done'
+ExecStart=/bin/bash -lc 'source ~/miniconda3/etc/profile.d/conda.sh; conda activate train; source scripts/windows_gpu_env.sh; exec python -m experiments.boundary run-all --output-dir /mnt/d/FAR-outputs/boundary_v1'
+Restart=on-failure
+RestartSec=30s
+StandardOutput=append:/mnt/d/FAR-outputs/boundary_v1.log
+StandardError=append:/mnt/d/FAR-outputs/boundary_v1.log
