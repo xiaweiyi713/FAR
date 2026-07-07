@@ -2427,3 +2427,5 @@ evidence bundle verified successfully, releasing the GPU.
 - 该命令只读仓库证据，不调用模型、不评分 prediction、不访问 held-out/test，也不改变
   F1–F10、G-R1/G-F/G-B/G-P、标签级别、Phase B 或论文 claim。公开 CI 新增
   `falsirag-longterm-status --check`，用于防止 README/报告与长期路线实际证据脱节。
+- 因 `reports/README.md` 新增长期状态入口，`falsirag-project-status` 的 reader-facing
+  report 指纹也同步刷新；这只是状态账本一致性更新，不改变任何研究结论。
