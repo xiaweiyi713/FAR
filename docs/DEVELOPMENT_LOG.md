@@ -2429,3 +2429,21 @@ evidence bundle verified successfully, releasing the GPU.
   `falsirag-longterm-status --check`，用于防止 README/报告与长期路线实际证据脱节。
 - 因 `reports/README.md` 新增长期状态入口，`falsirag-project-status` 的 reader-facing
   report 指纹也同步刷新；这只是状态账本一致性更新，不改变任何研究结论。
+
+## 2026-07-07 — WS2 Mistral untyped 从 7/60 恢复运行
+
+- 12:07 CST 前置巡检确认：本地 `main` 在 `6eb97b7` 且 CI 成功；远端三个 family-dev 相关
+  service 均为 inactive；D: 剩余约 72 GiB；正式工作树仍是冻结提交
+  `bd57585716b4c046db97311209a0d9f7ec340e6d`；Mistral FAR formal 为 `60/60` complete，
+  `minus_typed_conflict` 为 `7/60`、7 个 ID 唯一、最后完成 `F0040`，尚无 run/family
+  manifest。
+- 启动 `far-ollama-family-dev.service` 后通过 Ollama HTTP API 确认
+  `mistral:7b-instruct` digest 精确匹配冻结值
+  `6577803aa9a036369e481d648a2baebb381ebc6e897f2bb9a766a2aa7bfbc1cf`。
+- 随后启动 `far-family-dev-mistral-resume.service`。复核显示 service `active`、
+  `MainPID=11393`、`NRestarts=0`；runner 跳过 FAR 60 条和 untyped 既有 7 条后进入
+  `far_minus_typed_conflict: start F0047`，后续只读复核显示 `F0047` 已完成，checkpoint
+  为 `8/60`、8 个 ID 唯一，当前正在 `F0053`。
+- 本次只恢复同一 checkpoint 的正式 WS2 Mistral family，不部署新实验代码，不启动
+  Google/Gemma、Meta/Llama 或 WS3 boundary，不访问/运行 held-out/test，不改变 digest、
+  配置、样本、指标、G-F/G-P、claim level 或输出目录。

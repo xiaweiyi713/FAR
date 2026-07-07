@@ -119,11 +119,20 @@ def _ws2(root: Path) -> dict[str, Any]:
     current_state = root / "docs/CURRENT_OPERATIONAL_STATE.md"
     release_exists = release_manifest.is_file()
     current_text = _read_text(current_state)
+    active_run_documented = (
+        "far-family-dev-mistral-resume.service" in current_text
+        and "`active`" in current_text
+        and "当前进度" in current_text
+        and "当前日志位置" in current_text
+    )
     paused_checkpoint_documented = "minus_typed_conflict" in current_text and "7/60" in current_text
     errors = [f"protocol: {item}" for item in protocol.get("errors", [])]
     if release_exists:
         status = "release_present_unverified"
         summary = "local family-dev release exists and should be verified with evidence_family_dev"
+    elif active_run_documented:
+        status = "in_progress_active"
+        summary = "Mistral untyped resumed from documented checkpoint and is currently running"
     elif paused_checkpoint_documented:
         status = "in_progress_paused"
         summary = "Mistral FAR complete remotely; Mistral untyped paused at documented checkpoint"
@@ -151,6 +160,7 @@ def _ws2(root: Path) -> dict[str, Any]:
             "methods": protocol.get("methods"),
             "samples": protocol.get("samples"),
             "local_release_present": release_exists,
+            "active_run_documented": active_run_documented,
             "paused_checkpoint_documented": paused_checkpoint_documented,
         },
         "errors": errors,
@@ -326,6 +336,16 @@ def build_status(root: Path = ROOT) -> dict[str, Any]:
     incomplete_workstreams = [
         key for key, row in workstreams.items() if row.get("status") not in complete_statuses
     ]
+    ws2_status = str(workstreams["WS2"].get("status"))
+    if ws2_status == "in_progress_active":
+        next_training_step = (
+            "monitor active WS2 Mistral minus_typed_conflict run until it completes or fails"
+        )
+    else:
+        next_training_step = (
+            "resume WS2 Mistral minus_typed_conflict from documented checkpoint "
+            "only when training is allowed"
+        )
     return {
         "schema_version": SCHEMA_VERSION,
         "valid": not errors,
@@ -339,10 +359,7 @@ def build_status(root: Path = ROOT) -> dict[str, Any]:
             "complete_workstreams": complete_workstreams,
             "incomplete_workstreams": incomplete_workstreams,
             "goal_complete": False,
-            "next_training_step": (
-                "resume WS2 Mistral minus_typed_conflict from documented checkpoint "
-                "only when training is allowed"
-            ),
+            "next_training_step": next_training_step,
         },
         "safety": {
             "model_calls": 0,
@@ -393,7 +410,7 @@ def render_markdown(report: dict[str, Any]) -> str:
 - 已闭合或已建立基线: {complete}
 - 仍未完成: {incomplete}
 - 总目标完成: `{str(report["progress"]["goal_complete"]).lower()}`
-- 下一次允许训练时的首要动作: {report["progress"]["next_training_step"]}
+- 当前首要动作: {report["progress"]["next_training_step"]}
 
 ## 安全边界
 

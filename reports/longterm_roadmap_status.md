@@ -15,7 +15,7 @@
 | 工作流 | 状态 | 门禁/证据 | 摘要 |
 |---|---|---|---|
 | WS1 | `complete` | G-R1 | 226 shared RAMDocs errors uniquely bucketed; four hypotheses recorded |
-| WS2 | `in_progress_paused` | G-F | Mistral FAR complete remotely; Mistral untyped paused at documented checkpoint |
+| WS2 | `in_progress_active` | G-F | Mistral untyped resumed from documented checkpoint and is currently running |
 | WS3 | `registered_inputs_ready_pending_predictions` | G-B | two public dev imports and protocol are frozen; no model predictions yet |
 | WS4 | `in_progress_waiting_for_ws2_ws3` | paper readiness / claim scope | TMLR mechanism-boundary direction is documented; final paper waits for WS2/WS3 |
 | WS5 | `complete` | G-P | power gate is institutionalized; WS2 forced to directional reproduction |
@@ -26,7 +26,7 @@
 - 已闭合或已建立基线: WS1, WS5, WS6
 - 仍未完成: WS2, WS3, WS4
 - 总目标完成: `false`
-- 下一次允许训练时的首要动作: resume WS2 Mistral minus_typed_conflict from documented checkpoint only when training is allowed
+- 当前首要动作: monitor active WS2 Mistral minus_typed_conflict run until it completes or fails
 
 ## 安全边界
 

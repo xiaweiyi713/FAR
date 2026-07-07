@@ -13,7 +13,7 @@
       "WS3",
       "WS4"
     ],
-    "next_training_step": "resume WS2 Mistral minus_typed_conflict from documented checkpoint only when training is allowed"
+    "next_training_step": "monitor active WS2 Mistral minus_typed_conflict run until it completes or fails"
   },
   "roadmap": {
     "active_sha256": "91eb3205fe127271bc5f4882025243d9974a711e311ef074fcbde09aa86e7cf7",
@@ -84,6 +84,7 @@
     },
     "WS2": {
       "details": {
+        "active_run_documented": true,
         "families": [
           "mistral",
           "google",
@@ -94,7 +95,7 @@
           "far",
           "minus_typed_conflict"
         ],
-        "paused_checkpoint_documented": true,
+        "paused_checkpoint_documented": false,
         "samples": 60
       },
       "errors": [],
@@ -110,7 +111,7 @@
         {
           "exists": true,
           "path": "docs/CURRENT_OPERATIONAL_STATE.md",
-          "sha256": "0b1162f967808e702d7b351358c56d4d4d31c5deeef9412541eec2783757ccc2"
+          "sha256": "066d92ec93ac48afa36cae686d534eb695f6a9496fb155fb6bb1ee4c2223bf48"
         },
         {
           "exists": false,
@@ -122,8 +123,8 @@
       "priority": "P0",
       "protocol_valid": true,
       "required_claim_level": "directional_reproduction",
-      "status": "in_progress_paused",
-      "summary": "Mistral FAR complete remotely; Mistral untyped paused at documented checkpoint",
+      "status": "in_progress_active",
+      "summary": "Mistral untyped resumed from documented checkpoint and is currently running",
       "test_accessed": false
     },
     "WS3": {
@@ -250,12 +251,12 @@
         {
           "exists": true,
           "path": "reports/repository_maintenance.json",
-          "sha256": "ef2f9c8435eecac67ccb87db3e9d48f86e4869ab2f802fcd1a025d1c4296d137"
+          "sha256": "999f28dd7b5ee9c88d406da8a64b661ba58978b6c04a3f03cf3fc1b93f28d6c2"
         },
         {
           "exists": true,
           "path": "reports/repository_maintenance.md",
-          "sha256": "77e3397bc80f9aca3c192fd5990064b0928a0a385d1234860f8513595ee88d0c"
+          "sha256": "77875512401b0f8d125bd1d7c07fb5680a34e55a4094d8c29b79c35045fcb0d9"
         }
       ],
       "name": "WS6 engineering maintenance",
