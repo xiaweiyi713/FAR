@@ -1,12 +1,13 @@
 # FAR 当前运行状态
 
-状态时间：2026-07-07 17:37 CST
+状态时间：2026-07-07 17:46 CST
 适用范围：WS2 跨家族 dev 复现（Windows GPU / D: 盘 / `family_dev_v1`）
 
 ## 当前结论
 
-- 按用户“今天晚上不能训练了，明天再训练”的要求，已停止所有 WS2 family-dev 训练相关
-  service；今晚不启动 Google/Gemma、Meta/Llama、WS3 boundary 或任何新模型 prediction。
+- 按用户“今天晚上不能训练了，明天再训练”的要求，今晚不启动 Google/Gemma、
+  Meta/Llama、WS3 boundary 或任何新模型 prediction。最近巡检显示所有 WS2 family-dev
+  训练相关 service 已处于 `inactive`。
 - 远端 `windows-gpu` 当前 service 状态：
   - `far-family-dev-mistral-resume.service`：`inactive`，`Result=success`，`NRestarts=0`；
   - `far-family-dev.service`：`inactive`，`Result=success`，`NRestarts=0`；
@@ -23,7 +24,7 @@
   `publication_gold=false`，`test_accessed=false`，`source_commit` 仍为冻结提交
   `bd57585716b4c046db97311209a0d9f7ec340e6d`。
 - 未启动 WS3 boundary、Google/Gemma、Meta/Llama 或任何 held-out/test 运行。最近一次已推送
-  状态提交 `04835ff` 的 GitHub Actions 已成功。
+  状态提交 `276c27d` 的 GitHub Actions 已成功。
 - 已新增并执行零模型预启动核验脚本
   `scripts/preflight_windows_family_dev_next.sh google`。该脚本只读检查远端 service、
   冻结 worktree、dev-only 输入 view、Mistral predecessor manifest、目标 family 顺序与可选
@@ -61,6 +62,10 @@
 - `scripts/watch_windows_family_dev.sh windows-gpu` 已能在只读输出中直接显示
   `/mnt/d/FAR-outputs/family_dev_v1/family_manifests/mistral.json`，并列出 WS2/WS3 相关
   service 状态；最新巡检均为 inactive，未见训练进程。
+- 已新增并 dry-run 执行 `scripts/stop_windows_family_dev.sh`。默认 dry-run 只打印当前
+  WS2/WS3 相关 service 状态、相关进程和将要执行的 WS2 stop 命令；本次输出确认所有
+  family-dev、boundary 与 Ollama 相关 service 均为 inactive，未发现相关进程，且没有执行
+  stop/start 动作。
 
 ## 继续原则
 
@@ -73,6 +78,9 @@
   `FAR_FAMILY_DEV_REQUIRE_OLLAMA=1 scripts/preflight_windows_family_dev_next.sh google`
   精确核验 `gemma2:9b` digest，然后才启动 `far-family-dev@google.service`。
   Google/Gemma family manifest 完成并核验前，不启动 Meta/Llama。
+- 若需要暂停或停止 WS2 runner，先运行 `scripts/stop_windows_family_dev.sh` dry-run；只有
+  确认需要真实停止时才加 `--execute`，只有需要同时停止 WS2 Ollama 时才再加
+  `--stop-ollama`。该脚本不停止 WS3 boundary units、不删除 checkpoint。
 - 若进程异常停止，先诊断服务状态、GPU、checkpoint 行数/唯一性、日志错误、daemon-reload
   是否复发；不得直接改方法或重跑已完成样本。
 - 仍不得访问 held-out/test，仍不得把 LLM jury 称为真人 IAA。

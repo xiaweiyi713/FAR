@@ -2531,3 +2531,19 @@ evidence bundle verified successfully, releasing the GPU.
 - 同一段明确 Google 完成后才能用相同 guarded starter 启动 Meta；runner 与 preflight
   均会独立验证 predecessor manifests，错误顺序 fail-closed。本次只改复现手册，不启动训练、
   不调用模型、不访问 held-out/test，也不改 WS2 预注册、样本、指标、digest 或输出目录。
+
+## 2026-07-07 — WS2 family-dev guarded stopper dry-run
+
+- 按用户“今天晚上不能训练了，明天再训练”的约束，新增
+  `scripts/stop_windows_family_dev.sh`。脚本默认 dry-run，只通过 SSH 打印当前 service/
+  process 状态和计划执行的 `systemctl --user stop` 命令；只有显式 `--execute` 才会停止
+  WS2 family-dev runner units，只有额外传入 `--stop-ollama` 才会包含
+  `far-ollama-family-dev.service`。
+- stopper 明确不停止 `far-boundary.service` 或 `far-ollama-boundary.service`，不删除
+  checkpoint，不写实验输出，不检查 held-out/test，也不使用 `pkill` 一类进程级杀伤动作。
+- 本轮仅运行 `scripts/stop_windows_family_dev.sh` dry-run。输出确认
+  `far-family-dev@google.service`、`far-family-dev@meta.service`、
+  `far-family-dev-mistral-resume.service`、`far-family-dev.service`、
+  `far-ollama-family-dev.service`、`far-boundary.service` 与
+  `far-ollama-boundary.service` 均为 inactive，未发现 FAR family-dev/Ollama/llama/training
+  相关进程；没有启动训练、没有停止 service、没有调用模型、没有访问 held-out/test。

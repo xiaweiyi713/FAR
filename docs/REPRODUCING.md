@@ -756,6 +756,24 @@ watcher:
 scripts/watch_windows_family_dev.sh
 ```
 
+To pause or stop WS2 family-dev runners from the Mac side, first use the
+guarded stopper in dry-run mode. It prints current service/process state and
+the exact `systemctl stop` commands without stopping anything:
+
+```bash
+scripts/stop_windows_family_dev.sh
+```
+
+Only when an active WS2 runner must actually be stopped, rerun with
+`--execute`. Add `--stop-ollama` only if the D:-backed WS2 Ollama service should
+also be stopped. The stopper does not delete checkpoints, inspect
+held-out/test, or stop WS3 boundary units:
+
+```bash
+scripts/stop_windows_family_dev.sh --execute
+scripts/stop_windows_family_dev.sh --execute --stop-ollama
+```
+
 Windows/WSL 长时运行应优先安装单家族模板 unit，避免三家族 shell 串联掩盖中间失败：
 
 ```bash
