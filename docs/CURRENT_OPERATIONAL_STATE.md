@@ -1,6 +1,6 @@
 # FAR 当前运行状态
 
-状态时间：2026-07-07 17:40 CST
+状态时间：2026-07-07 17:37 CST
 适用范围：WS2 跨家族 dev 复现（Windows GPU / D: 盘 / `family_dev_v1`）
 
 ## 当前结论
@@ -58,6 +58,9 @@
 - 待运行 family：Google/Gemma、Meta/Llama。今晚暂停，明天恢复前需重新确认 GPU 空闲、
   Ollama digest、D: 空间、正式工作树冻结提交与当前输出目录完整性。
 - Google/Gemma 离线 preflight 结果：`valid=true`（未要求 Ollama 在线 digest 检查）。
+- `scripts/watch_windows_family_dev.sh windows-gpu` 已能在只读输出中直接显示
+  `/mnt/d/FAR-outputs/family_dev_v1/family_manifests/mistral.json`，并列出 WS2/WS3 相关
+  service 状态；最新巡检均为 inactive，未见训练进程。
 
 ## 继续原则
 

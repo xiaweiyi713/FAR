@@ -114,7 +114,7 @@
         {
           "exists": true,
           "path": "docs/CURRENT_OPERATIONAL_STATE.md",
-          "sha256": "7ce8507940cf1298ec8d31b0b761ee274a93cc5fe85efa023db142db5374daf8"
+          "sha256": "4b823b1ee9c9e8e1391dfc03c9b42bca8a346c7af616713f8f89e4627ea4fe22"
         },
         {
           "exists": false,
@@ -254,12 +254,12 @@
         {
           "exists": true,
           "path": "reports/repository_maintenance.json",
-          "sha256": "2d5012587a95227d8198022ccd6ad3e628e4bb95de4e5299efbd0dc600a27a24"
+          "sha256": "12164880a0e7334739187c15bdaca0157fedc9bb41924e5517b52f9d960926ee"
         },
         {
           "exists": true,
           "path": "reports/repository_maintenance.md",
-          "sha256": "ebdfb7dbe4bb908a9a05161968f4e8a126a98a47c026aa285082d7a36daef0c2"
+          "sha256": "327af9dc8c2befa68ba14d4e06ae006aebfd77621b43980a1bbc936eba850754"
         }
       ],
       "name": "WS6 engineering maintenance",

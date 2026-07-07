@@ -31,7 +31,9 @@ for unit in \
   far-family-dev@google.service \
   far-family-dev@meta.service \
   far-family-dev.service \
-  far-ollama-family-dev.service; do
+  far-ollama-family-dev.service \
+  far-boundary.service \
+  far-ollama-boundary.service; do
   printf "%s: " "${unit}"
   systemctl --user is-active "${unit}" 2>/dev/null || true
 done
@@ -65,7 +67,13 @@ for family in mistral google meta; do
     done
   done
 done
-for candidate in "${output_dir}/family_manifest.json" "${output_dir}/result.json" "${output_dir}/release_manifest.json"; do
+for family in mistral google meta; do
+  candidate="${output_dir}/family_manifests/${family}.json"
+  if [[ -f "${candidate}" ]]; then
+    echo "${candidate}"
+  fi
+done
+for candidate in "${output_dir}/manifest.json" "${output_dir}/result.json" "${output_dir}/family_dev_report.md" "${output_dir}/release_manifest.json"; do
   [[ -f "${candidate}" ]] && echo "${candidate}"
 done
 

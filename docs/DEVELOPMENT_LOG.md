@@ -2504,3 +2504,15 @@ evidence bundle verified successfully, releasing the GPU.
   Ollama 或 `train.py` 进程。本次没有启动训练、没有启动 Ollama、没有运行 prediction。
 - `scripts/preflight_windows_family_dev_next.sh` 的 `next_action_if_valid` 也改为指向 guarded
   starter 的 `--execute` 入口，避免未来从 preflight JSON 中直接复制裸 `systemctl` 串。
+
+## 2026-07-07 — WS2 只读监控补齐 family manifest
+
+- `scripts/watch_windows_family_dev.sh` 之前只列出 calibration/formal arm 的 checkpoint 与
+  run manifest，以及旧式顶层 manifest 名称；实际 WS2 family 完成标记位于
+  `/mnt/d/FAR-outputs/family_dev_v1/family_manifests/{family}.json`，容易在恢复前巡检时被漏看。
+- 现已补充 `family_manifests/mistral|google|meta.json`、最终 `manifest.json`、`result.json`、
+  `family_dev_report.md` 的只读展示，并把 `far-boundary.service` 与
+  `far-ollama-boundary.service` 加入 service 状态列表，避免 WS2/WS3 GPU 占用来源漏判。
+- 本轮运行 `scripts/watch_windows_family_dev.sh windows-gpu` 仅做只读巡检：Mistral family
+  manifest 可见；family-dev、boundary 与 Ollama 相关 service 均为 inactive；未发现
+  `experiments.family_dev`、Ollama 或 `train.py` 进程；未启动训练、未访问 held-out/test。
