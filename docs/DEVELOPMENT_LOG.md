@@ -2447,3 +2447,26 @@ evidence bundle verified successfully, releasing the GPU.
 - 本次只恢复同一 checkpoint 的正式 WS2 Mistral family，不部署新实验代码，不启动
   Google/Gemma、Meta/Llama 或 WS3 boundary，不访问/运行 held-out/test，不改变 digest、
   配置、样本、指标、G-F/G-P、claim level 或输出目录。
+
+## 2026-07-07 — WS2 Mistral family 完成并按夜间窗口暂停
+
+- 用户要求“今天晚上不能训练了，明天再训练”后，只做只读核验与安全停机，不启动
+  Google/Gemma、Meta/Llama、WS3 boundary 或任何 held-out/test 运行。
+- 远端 `/mnt/d/FAR-outputs/family_dev_v1` 显示 Mistral FAR formal 与
+  `minus_typed_conflict` formal 均已完成 `60/60`，各 60 个 ID 唯一、无重复组；两个
+  run manifest 均为 `status=complete`、`partial=false`、`errors=0`。predictions SHA
+  分别为 `7c72e569a05f131515e85b225c947388ceca87aafef6d00eced580ed683180b5` 与
+  `2643726e3965e86a58cb6afab0223695fc4db7c0df28a3862782c2275d802ae3`。
+- Mistral family manifest 已生成：
+  `/mnt/d/FAR-outputs/family_dev_v1/family_manifests/mistral.json`。manifest 绑定冻结提交
+  `bd57585716b4c046db97311209a0d9f7ec340e6d`、Mistral digest
+  `6577803aa9a036369e481d648a2baebb381ebc6e897f2bb9a766a2aa7bfbc1cf`，
+  并记录 `human_iaa=false`、`publication_gold=false`、`test_accessed=false`。
+- 已停止 `far-family-dev-mistral-resume.service`、`far-family-dev.service` 与
+  `far-ollama-family-dev.service`；复核均为 inactive/dead、`Result=success`、`NRestarts=0`。
+  `far-tmux-server.service` 仍 active 但只维持 tmux server；GPU 仅剩 `/Xwayland` 桌面进程
+  约 785 MiB 占用，未发现 FAR Python runner、Ollama runner、boundary/family-dev 或
+  `train.py` 进程。
+- 明天恢复前需重新核验 GPU 空闲、D: 空间、Ollama digest、正式工作树冻结提交、Mistral
+  family manifest 与两个 formal run manifest；随后按预注册顺序启动 Google/Gemma，
+  且 Google/Gemma family manifest 完成并核验前不启动 Meta/Llama。

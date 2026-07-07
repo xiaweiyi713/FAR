@@ -13,7 +13,7 @@
       "WS3",
       "WS4"
     ],
-    "next_training_step": "monitor active WS2 Mistral minus_typed_conflict run until it completes or fails"
+    "next_training_step": "when training is allowed, verify Mistral manifests again and start WS2 Google/Gemma as the next preregistered family"
   },
   "roadmap": {
     "active_sha256": "91eb3205fe127271bc5f4882025243d9974a711e311ef074fcbde09aa86e7cf7",
@@ -84,7 +84,7 @@
     },
     "WS2": {
       "details": {
-        "active_run_documented": true,
+        "active_run_documented": false,
         "families": [
           "mistral",
           "google",
@@ -95,6 +95,7 @@
           "far",
           "minus_typed_conflict"
         ],
+        "mistral_complete_paused_documented": true,
         "paused_checkpoint_documented": false,
         "samples": 60
       },
@@ -111,7 +112,7 @@
         {
           "exists": true,
           "path": "docs/CURRENT_OPERATIONAL_STATE.md",
-          "sha256": "066d92ec93ac48afa36cae686d534eb695f6a9496fb155fb6bb1ee4c2223bf48"
+          "sha256": "e61c00347b1bb16c3f560a02ac6354946260dd264cd2fc74d06981eb4be3fb7e"
         },
         {
           "exists": false,
@@ -123,8 +124,8 @@
       "priority": "P0",
       "protocol_valid": true,
       "required_claim_level": "directional_reproduction",
-      "status": "in_progress_active",
-      "summary": "Mistral untyped resumed from documented checkpoint and is currently running",
+      "status": "in_progress_paused",
+      "summary": "Mistral family is complete; next registered family waits for the next training window",
       "test_accessed": false
     },
     "WS3": {

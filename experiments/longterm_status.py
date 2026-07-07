@@ -125,6 +125,12 @@ def _ws2(root: Path) -> dict[str, Any]:
         and "当前进度" in current_text
         and "当前日志位置" in current_text
     )
+    mistral_complete_paused_documented = (
+        "WS2 Mistral family 已完整完成" in current_text
+        and "Google/Gemma" in current_text
+        and "`inactive`" in current_text
+        and "今晚暂停" in current_text
+    )
     paused_checkpoint_documented = "minus_typed_conflict" in current_text and "7/60" in current_text
     errors = [f"protocol: {item}" for item in protocol.get("errors", [])]
     if release_exists:
@@ -133,6 +139,11 @@ def _ws2(root: Path) -> dict[str, Any]:
     elif active_run_documented:
         status = "in_progress_active"
         summary = "Mistral untyped resumed from documented checkpoint and is currently running"
+    elif mistral_complete_paused_documented:
+        status = "in_progress_paused"
+        summary = (
+            "Mistral family is complete; next registered family waits for the next training window"
+        )
     elif paused_checkpoint_documented:
         status = "in_progress_paused"
         summary = "Mistral FAR complete remotely; Mistral untyped paused at documented checkpoint"
@@ -161,6 +172,7 @@ def _ws2(root: Path) -> dict[str, Any]:
             "samples": protocol.get("samples"),
             "local_release_present": release_exists,
             "active_run_documented": active_run_documented,
+            "mistral_complete_paused_documented": mistral_complete_paused_documented,
             "paused_checkpoint_documented": paused_checkpoint_documented,
         },
         "errors": errors,
@@ -337,9 +349,15 @@ def build_status(root: Path = ROOT) -> dict[str, Any]:
         key for key, row in workstreams.items() if row.get("status") not in complete_statuses
     ]
     ws2_status = str(workstreams["WS2"].get("status"))
+    ws2_details = workstreams["WS2"].get("details", {})
     if ws2_status == "in_progress_active":
         next_training_step = (
             "monitor active WS2 Mistral minus_typed_conflict run until it completes or fails"
+        )
+    elif ws2_details.get("mistral_complete_paused_documented") is True:
+        next_training_step = (
+            "when training is allowed, verify Mistral manifests again and start "
+            "WS2 Google/Gemma as the next preregistered family"
         )
     else:
         next_training_step = (
