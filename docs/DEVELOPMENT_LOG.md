@@ -2406,3 +2406,14 @@ evidence bundle verified successfully, releasing the GPU.
   boundary/family-dev 或 `train.py` 进程。
 - 本次仅更新状态记录；不修改实验实现、配置、digest、样本、指标、G-F/G-P、claim level 或
   输出目录，不启动 Google/Gemma、Meta/Llama 或 WS3 boundary。
+
+## 2026-07-07 — WS6 维护基线刷新与 README 入口
+
+- 在不启动模型、不运行实验、不访问 held-out/test 的前提下，重算
+  `falsirag-repository-maintenance` 并刷新 `reports/repository_maintenance.{json,md}`。
+  当前审计仍为 `valid:true`：`diagnostics/` 跟踪体积约 28.233 MiB，低于 200 MiB
+  迁移阈值；全仓跟踪文件 474 个、约 37.675 MiB；最大跟踪文件仍为
+  `bench/external/ramdocs_v1/corpus.jsonl`，约 2.553 MiB，低于 50 MiB 单文件阈值。
+- README 当前研究状态表新增 WS6 工程维护行，活动制品清单新增仓库维护报告入口；这只提高
+  读者可见性和可重算性，不改变 F1–F10、WS1/WS2/WS3 判定、论文 claim、标签级别或
+  Phase B / held-out 状态。
