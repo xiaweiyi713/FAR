@@ -2378,3 +2378,13 @@ evidence bundle verified successfully, releasing the GPU.
 - units 当前只进入仓库，**没有在 Mistral untyped 运行期间部署或启动**。WS3 启动仍需先确认
   WS2 释放 GPU、Qwen digest 精确匹配、正式工作树干净且位于 `origin/main`；未访问任何
   held-out/test，也未改变 WS3 指纹、样本、方法、功效或假设网格。
+
+## 2026-07-07 — WS4 适用前提进入论文正文
+
+- 论文此前已披露 WS1 桶计数与四个假设均不支持，但“适用前提”仍只存在机制报告，正文的
+  applicability-boundary 主张缺少直接承载物。现新增操作性检查表，覆盖证据可检索、冲突可
+  类型化且可检出、修订不抵消信号、结论对 partial-credit 口径稳健四项。
+- 表格逐项绑定已冻结数字（完整检索子集 -0.011、检出子集 +0.006、103 条检出后修订错误、
+  collection F1 -0.003），并明确这些只是观测到的必要检查，不是充分条件或因果定理。
+- 本次不加入未完成的 WS2/WS3 结果，不改 F1–F10、门禁、指标、样本或实验配置；零模型调用，
+  未访问 held-out/test。

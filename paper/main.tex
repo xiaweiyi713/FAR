@@ -138,6 +138,28 @@ removed, this identifies revision as a heterogeneous mediator of both local
 benefit and larger aggregate harm. It does not identify a uniformly beneficial
 component or rescue the RAMDocs gate.
 
+Table~\ref{tab:preconditions} turns these negative and mixed findings into an
+operational applicability checklist. These are observed necessary checks, not
+sufficient conditions or a causal theorem: satisfying one row did not by itself
+restore a FAR advantage.
+
+\begin{table}[t]
+\centering
+\small
+\begin{tabular}{p{0.25\columnwidth}p{0.65\columnwidth}}
+\toprule
+Check before use & Evidence and implication \\
+\midrule
+Correct evidence is retrievable & Complete correct-document retrieval still gives a $-0.011$ FAR difference; reachability is necessary but insufficient. \\
+Conflict is typed and detected & 72 shared errors are undetected, while the detected subset is only $+0.006$ with an interval crossing zero; detection creates an opportunity, not a guarantee. \\
+Revision preserves the signal & 103 shared errors are detected then revised incorrectly. Every positive Qwen typed delta passes through a changed revision, yet removing typed revision raises the mean; revision is both mediator and risk. \\
+Conclusions survive metric choice & Collection F1 changes by $-0.003$ with an interval crossing zero; partial credit must be disclosed but cannot replace the frozen gate. \\
+\bottomrule
+\end{tabular}
+\caption{Observed applicability checks for typed conflict control. They delimit where the mechanism can be meaningfully attempted; none is sufficient for an end-to-end gain.}
+\label{tab:preconditions}
+\end{table}
+
 On a visible 100-pair FEVER SUPPORTS/REFUTES transfer diagnostic, the heuristic and NLI detectors both obtain 0.72 accuracy. NLI raises conflict recall from 0.30 to 0.40, but the paired accuracy difference is 0 with a 95\% bootstrap interval of $[-0.05,0.05]$ and McNemar $p=1.0$. This does not validate typed FAR behavior outside the controlled benchmark.
 
 \section{Limitations and Responsible Use}
