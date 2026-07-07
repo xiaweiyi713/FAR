@@ -270,6 +270,7 @@ result = {
     "valid": not errors,
     "family": family,
     "next_action_if_valid": (
+        "FAR_FAMILY_DEV_TRAINING_ALLOWED=1 "
         f"scripts/start_windows_family_dev_next.sh {family} --execute"
     ),
     "remote": {

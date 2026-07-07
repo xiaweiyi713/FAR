@@ -1,6 +1,6 @@
 # FAR 当前运行状态
 
-状态时间：2026-07-07 17:46 CST
+状态时间：2026-07-07 18:00 CST
 适用范围：WS2 跨家族 dev 复现（Windows GPU / D: 盘 / `family_dev_v1`）
 
 ## 当前结论
@@ -23,8 +23,8 @@
   `/mnt/d/FAR-outputs/family_dev_v1/family_manifests/mistral.json`，`human_iaa=false`，
   `publication_gold=false`，`test_accessed=false`，`source_commit` 仍为冻结提交
   `bd57585716b4c046db97311209a0d9f7ec340e6d`。
-- 未启动 WS3 boundary、Google/Gemma、Meta/Llama 或任何 held-out/test 运行。最近一次已推送
-  状态提交 `276c27d` 的 GitHub Actions 已成功。
+- 未启动 WS3 boundary、Google/Gemma、Meta/Llama 或任何 held-out/test 运行。最近一次
+  GitHub Actions main 分支巡检已成功；具体提交以 GitHub Actions 最新 main run 为准。
 - 已新增并执行零模型预启动核验脚本
   `scripts/preflight_windows_family_dev_next.sh google`。该脚本只读检查远端 service、
   冻结 worktree、dev-only 输入 view、Mistral predecessor manifest、目标 family 顺序与可选
@@ -72,8 +72,9 @@
 - 继续只允许从同一 D: 工作树、同一冻结提交、同一输出目录前进。
 - 不修改实验代码、配置、模型 digest、样本、指标、G-F/G-P、claim level 或输出目录。
 - 明天恢复时，先 dry-run `scripts/start_windows_family_dev_next.sh google`；确认输出仍为
-  `valid=true` 且用户允许训练后，再运行
-  `scripts/start_windows_family_dev_next.sh google --execute`。该执行模式会按顺序启动
+  `valid=true` 且用户允许训练后，再显式运行
+  `FAR_FAMILY_DEV_TRAINING_ALLOWED=1 scripts/start_windows_family_dev_next.sh google --execute`。
+  缺少该环境变量时，guarded starter 会在任何 SSH 动作前退出。执行模式会按顺序启动
   `far-ollama-family-dev.service`、用
   `FAR_FAMILY_DEV_REQUIRE_OLLAMA=1 scripts/preflight_windows_family_dev_next.sh google`
   精确核验 `gemma2:9b` digest，然后才启动 `far-family-dev@google.service`。

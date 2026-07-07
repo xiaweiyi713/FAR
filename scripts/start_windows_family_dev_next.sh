@@ -2,7 +2,8 @@
 # Guarded starter for the next WS2 family-dev run on the Windows GPU.
 #
 # Default mode is dry-run: it runs the read-only preflight and prints the exact
-# remote actions that would be taken.  It starts services only with --execute.
+# remote actions that would be taken.  It starts services only with --execute
+# and FAR_FAMILY_DEV_TRAINING_ALLOWED=1.
 # Do not use this script for held-out/test runs.
 
 set -euo pipefail
@@ -14,7 +15,7 @@ usage: scripts/start_windows_family_dev_next.sh {google|meta} [--execute] [remot
 Default: dry-run only.  The script runs the read-only preflight and prints the
 remote systemd commands that would be used.
 
-With --execute:
+With --execute and FAR_FAMILY_DEV_TRAINING_ALLOWED=1:
   1. run offline preflight;
   2. start far-ollama-family-dev.service on the remote host;
   3. rerun preflight with FAR_FAMILY_DEV_REQUIRE_OLLAMA=1 to verify digest;
@@ -22,7 +23,7 @@ With --execute:
 
 Examples:
   scripts/start_windows_family_dev_next.sh google
-  scripts/start_windows_family_dev_next.sh google --execute
+  FAR_FAMILY_DEV_TRAINING_ALLOWED=1 scripts/start_windows_family_dev_next.sh google --execute
 EOF
 }
 
@@ -78,6 +79,19 @@ date '+%Y-%m-%dT%H:%M:%S%z'
 echo "family=${family}"
 echo "remote=${remote}"
 echo "mode=$([[ "${execute}" == "1" ]] && echo execute || echo dry-run)"
+echo "training_allowed=$([[ "${FAR_FAMILY_DEV_TRAINING_ALLOWED:-0}" == "1" ]] && echo yes || echo no)"
+
+if [[ "${execute}" == "1" && "${FAR_FAMILY_DEV_TRAINING_ALLOWED:-0}" != "1" ]]; then
+  cat <<'EOF'
+
+Refusing to start WS2 family-dev services because training is not explicitly
+authorized. Re-run only during an allowed training window with:
+  FAR_FAMILY_DEV_TRAINING_ALLOWED=1 scripts/start_windows_family_dev_next.sh <family> --execute
+
+No remote services were started.
+EOF
+  exit 3
+fi
 
 echo
 echo "== offline preflight =="
@@ -96,7 +110,8 @@ if [[ "${execute}" != "1" ]]; then
   cat <<'EOF'
 
 Dry-run complete. No remote services were started.
-To start the run when training is allowed, rerun with --execute.
+To start the run when training is allowed, rerun with
+FAR_FAMILY_DEV_TRAINING_ALLOWED=1 and --execute.
 EOF
   exit 0
 fi

@@ -790,13 +790,15 @@ actions without starting services:
 scripts/start_windows_family_dev_next.sh google
 ```
 
-Only when training is allowed, rerun with `--execute`. The execute path starts
-the D:-backed Ollama service, reruns preflight with
+Only when training is allowed, rerun with both `--execute` and the explicit
+`FAR_FAMILY_DEV_TRAINING_ALLOWED=1` confirmation. Without that environment
+variable, the guarded starter exits before any SSH action. The execute path
+starts the D:-backed Ollama service, reruns preflight with
 `FAR_FAMILY_DEV_REQUIRE_OLLAMA=1` to verify the frozen `gemma2:9b` digest, and
 only then starts `far-family-dev@google.service`:
 
 ```bash
-scripts/start_windows_family_dev_next.sh google --execute
+FAR_FAMILY_DEV_TRAINING_ALLOWED=1 scripts/start_windows_family_dev_next.sh google --execute
 ```
 
 Mistral 的 `family_manifests/mistral.json` 完整生成后才可执行 Google；Google 完整后才可
@@ -804,7 +806,7 @@ Mistral 的 `family_manifests/mistral.json` 完整生成后才可执行 Google�
 
 ```bash
 scripts/start_windows_family_dev_next.sh meta
-scripts/start_windows_family_dev_next.sh meta --execute
+FAR_FAMILY_DEV_TRAINING_ALLOWED=1 scripts/start_windows_family_dev_next.sh meta --execute
 ```
 
 The runner and preflight both independently verify predecessor manifests, so an

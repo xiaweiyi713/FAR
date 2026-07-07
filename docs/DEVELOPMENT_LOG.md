@@ -2547,3 +2547,15 @@ evidence bundle verified successfully, releasing the GPU.
   `far-ollama-family-dev.service`、`far-boundary.service` 与
   `far-ollama-boundary.service` 均为 inactive，未发现 FAR family-dev/Ollama/llama/training
   相关进程；没有启动训练、没有停止 service、没有调用模型、没有访问 held-out/test。
+
+## 2026-07-07 — WS2 family-dev start guard requires explicit training authorization
+
+- 按用户“今天晚上不能训练了，明天再训练”的约束，进一步收紧
+  `scripts/start_windows_family_dev_next.sh`：真实执行现在需要同时满足 `--execute` 与
+  `FAR_FAMILY_DEV_TRAINING_ALLOWED=1`。缺少环境变量时脚本会在任何 SSH 动作、Ollama start
+  或 family-dev start 之前退出，并打印恢复命令。
+- dry-run 路径保持不变，仍只运行只读 preflight 与打印计划动作；preflight JSON 的
+  `next_action_if_valid` 也同步包含 `FAR_FAMILY_DEV_TRAINING_ALLOWED=1`，避免从机器输出中
+  复制到裸执行命令。
+- 本次只修改本地脚本与文档，不启动训练、不启动 Ollama、不运行 prediction、不访问
+  held-out/test。
