@@ -2417,3 +2417,13 @@ evidence bundle verified successfully, releasing the GPU.
 - README 当前研究状态表新增 WS6 工程维护行，活动制品清单新增仓库维护报告入口；这只提高
   读者可见性和可重算性，不改变 F1–F10、WS1/WS2/WS3 判定、论文 claim、标签级别或
   Phase B / held-out 状态。
+
+## 2026-07-07 — 长期路线 WS1–WS6 状态账本
+
+- 新增 `falsirag-longterm-status`，从已跟踪的协议指纹、manifest、报告和状态文档生成
+  `reports/longterm_roadmap_status.{json,md}`。该账本明确区分：WS1 与 WS5 已完成，
+  WS2 为 `in_progress_paused`，WS3 为 `registered_inputs_ready_pending_predictions`，
+  WS4 正在等待 WS2/WS3，WS6 为维护基线完成但长期维护仍持续。
+- 该命令只读仓库证据，不调用模型、不评分 prediction、不访问 held-out/test，也不改变
+  F1–F10、G-R1/G-F/G-B/G-P、标签级别、Phase B 或论文 claim。公开 CI 新增
+  `falsirag-longterm-status --check`，用于防止 README/报告与长期路线实际证据脱节。

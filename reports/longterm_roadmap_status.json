@@ -1,0 +1,268 @@
+{
+  "claim_scope": "roadmap status only; does not alter F1-F10, experimental gates, label level, or held-out/test policy",
+  "errors": [],
+  "progress": {
+    "complete_workstreams": [
+      "WS1",
+      "WS5",
+      "WS6"
+    ],
+    "goal_complete": false,
+    "incomplete_workstreams": [
+      "WS2",
+      "WS3",
+      "WS4"
+    ],
+    "next_training_step": "resume WS2 Mistral minus_typed_conflict from documented checkpoint only when training is allowed"
+  },
+  "roadmap": {
+    "active_sha256": "91eb3205fe127271bc5f4882025243d9974a711e311ef074fcbde09aa86e7cf7",
+    "frozen_fact_ids": [
+      "F1",
+      "F2",
+      "F3",
+      "F4",
+      "F5",
+      "F6",
+      "F7",
+      "F8",
+      "F9",
+      "F10"
+    ],
+    "frozen_facts_present": true,
+    "missing_facts": [],
+    "path": "docs/PLAN_LONGTERM_OPTIMIZATION.md"
+  },
+  "safety": {
+    "can_claim_human_iaa": false,
+    "can_claim_publication_gold": false,
+    "held_out_test_accessed": false,
+    "model_calls": 0
+  },
+  "schema_version": "far-longterm-roadmap-status-v1",
+  "valid": true,
+  "workstreams": {
+    "WS1": {
+      "details": {
+        "bucket_counts": {
+          "answer_set_incomplete": 35,
+          "answer_set_overfull": 12,
+          "conflict_detected_revision_wrong": 103,
+          "conflict_undetected": 72,
+          "format_em_mismatch": 0,
+          "retrieval_miss": 4
+        },
+        "hypothesis_statuses": {
+          "H-component": "not_supported",
+          "H-conflict-shape": "not_supported",
+          "H-metric": "not_supported",
+          "H-upstream": "not_supported"
+        }
+      },
+      "errors": [],
+      "gate": "G-R1",
+      "gate_passed": true,
+      "human_iaa": false,
+      "key_evidence": [
+        {
+          "exists": true,
+          "path": "diagnostics/attribution_v1/manifest.json",
+          "sha256": "eeb5221d0c1b888ebd006c34b16c2e60142ae9741714c84ad3beec92ca88927e"
+        },
+        {
+          "exists": true,
+          "path": "reports/mechanism_attribution.md",
+          "sha256": "3fba30cf124b205412ef53165cdd0af31e15917f1fdc7d4b0f0b1ce9ac19ca5e"
+        }
+      ],
+      "model_calls": 0,
+      "name": "WS1 mechanism attribution",
+      "priority": "P0",
+      "status": "complete",
+      "summary": "226 shared RAMDocs errors uniquely bucketed; four hypotheses recorded",
+      "test_accessed": false
+    },
+    "WS2": {
+      "details": {
+        "families": [
+          "mistral",
+          "google",
+          "meta"
+        ],
+        "local_release_present": false,
+        "methods": [
+          "far",
+          "minus_typed_conflict"
+        ],
+        "paused_checkpoint_documented": true,
+        "samples": 60
+      },
+      "errors": [],
+      "gate": "G-F",
+      "gate_passed": null,
+      "human_iaa": false,
+      "key_evidence": [
+        {
+          "exists": true,
+          "path": "docs/PLAN_FAMILY_DEV.md",
+          "sha256": "5acc611bf8bb79740a996cc7bc9bd262bc55a661373f070670da19f7aa48433b"
+        },
+        {
+          "exists": true,
+          "path": "docs/CURRENT_OPERATIONAL_STATE.md",
+          "sha256": "0b1162f967808e702d7b351358c56d4d4d31c5deeef9412541eec2783757ccc2"
+        },
+        {
+          "exists": false,
+          "path": "diagnostics/family_dev_v1/manifest.json",
+          "sha256": null
+        }
+      ],
+      "name": "WS2 cross-family typed/untyped dev reproduction",
+      "priority": "P0",
+      "protocol_valid": true,
+      "required_claim_level": "directional_reproduction",
+      "status": "in_progress_paused",
+      "summary": "Mistral FAR complete remotely; Mistral untyped paused at documented checkpoint",
+      "test_accessed": false
+    },
+    "WS3": {
+      "details": {
+        "datasets": [
+          "wikicontradict",
+          "rag_conflicts"
+        ],
+        "local_release_present": false,
+        "methods": [
+          "far",
+          "far_minus_typed_conflict"
+        ],
+        "samples_per_dataset": 150
+      },
+      "errors": [],
+      "gate": "G-B",
+      "gate_passed": null,
+      "human_iaa": false,
+      "key_evidence": [
+        {
+          "exists": true,
+          "path": "docs/PLAN_BOUNDARY_MAPPING.md",
+          "sha256": "a8aa260aec7b92f2d51bc4c14ce78b0f355b2b61e543c5ace0cff52c5c1d34a3"
+        },
+        {
+          "exists": true,
+          "path": "reports/boundary_benchmark_selection.md",
+          "sha256": "c27f48391e364322e6bcac8345f1cf185873fbd3049faebc8903e2ac9b156ec5"
+        },
+        {
+          "exists": false,
+          "path": "diagnostics/boundary_v1/manifest.json",
+          "sha256": null
+        },
+        {
+          "exists": false,
+          "path": "reports/boundary_matrix.md",
+          "sha256": null
+        }
+      ],
+      "name": "WS3 external boundary mapping",
+      "priority": "P1",
+      "protocol_valid": true,
+      "required_claim_level": "directional_boundary_mapping",
+      "status": "registered_inputs_ready_pending_predictions",
+      "summary": "two public dev imports and protocol are frozen; no model predictions yet",
+      "test_accessed": false
+    },
+    "WS4": {
+      "details": {
+        "relaxed_machine_audited_paper_ready": true,
+        "strict_aaai_inactive": true,
+        "tmlr_relocated": true,
+        "waiting_for_ws2_ws3": true
+      },
+      "errors": [],
+      "gate": "paper readiness / claim scope",
+      "gate_passed": true,
+      "human_iaa": false,
+      "key_evidence": [
+        {
+          "exists": true,
+          "path": "paper/STATUS.md",
+          "sha256": "20055fde66f94c66058b829c780b57ad88fe4c1a5d3ca338f841fee42fc7f99e"
+        },
+        {
+          "exists": true,
+          "path": "paper/main.tex",
+          "sha256": "a6a1938734f69e7ac6e28bf60e8c98f8d95b4998fdbe29c708f973413d78fe04"
+        },
+        {
+          "exists": true,
+          "path": "reports/solo_paper_readiness.json",
+          "sha256": "b071eb74d98984b5cfa11b01a3c1debdb5a884c6b9f668de2c2188c63ab65415"
+        }
+      ],
+      "name": "WS4 paper and venue repositioning",
+      "priority": "P0",
+      "status": "in_progress_waiting_for_ws2_ws3",
+      "summary": "TMLR mechanism-boundary direction is documented; final paper waits for WS2/WS3",
+      "test_accessed": false
+    },
+    "WS5": {
+      "details": {
+        "adequately_powered": false,
+        "external_report_sha256": "bfcd5e83a1700396c82bfd15723bd74c5d84291487d4df443d470a95d2284cf6"
+      },
+      "errors": [],
+      "gate": "G-P",
+      "gate_passed": true,
+      "human_iaa": false,
+      "key_evidence": [
+        {
+          "exists": true,
+          "path": "diagnostics/power_v1/manifest.json",
+          "sha256": "d67740f2ec3a143e6efe61d4a973558ab4b74578ab021279c5f69e0f4205fce3"
+        },
+        {
+          "exists": true,
+          "path": "reports/power_retrospective.md",
+          "sha256": "bfcd5e83a1700396c82bfd15723bd74c5d84291487d4df443d470a95d2284cf6"
+        }
+      ],
+      "model_calls": 0,
+      "name": "WS5 statistical design upgrade",
+      "priority": "P1",
+      "required_claim_level": "directional_reproduction",
+      "status": "complete",
+      "summary": "power gate is institutionalized; WS2 forced to directional reproduction",
+      "test_accessed": false
+    },
+    "WS6": {
+      "details": {
+        "diagnostics_mib": 28.233,
+        "outputs_tracks_only_gitkeep": true,
+        "tracked_files": 477
+      },
+      "errors": [],
+      "gate": "repository-maintenance audit",
+      "gate_passed": true,
+      "human_iaa": false,
+      "key_evidence": [
+        {
+          "exists": true,
+          "path": "reports/repository_maintenance.json",
+          "sha256": "58bc5f72472dfaec185d7e7a1ee577da5d9fe6294e4c86882acbdd1ba3a49fc8"
+        },
+        {
+          "exists": true,
+          "path": "reports/repository_maintenance.md",
+          "sha256": "77e3397bc80f9aca3c192fd5990064b0928a0a385d1234860f8513595ee88d0c"
+        }
+      ],
+      "name": "WS6 engineering maintenance",
+      "priority": "P2",
+      "status": "baseline_complete_ongoing_maintenance",
+      "summary": "tracked diagnostics size and output/outputs hygiene are machine-audited",
+      "test_accessed": false
+    }
+  }
+}
