@@ -1,6 +1,6 @@
 # FAR 当前运行状态
 
-状态时间：2026-07-07 10:54 CST
+状态时间：2026-07-07 11:11 CST
 适用范围：WS2 跨家族 dev 复现（Windows GPU / D: 盘 / `family_dev_v1`）
 
 ## 当前结论
@@ -11,17 +11,20 @@
   - `far-family-dev-mistral-resume.service`：持久化 unit，`active`，仅运行 Mistral family；
   - `far-family-dev.service`：`inactive`，不使用其分号串联的三家族命令；
   - `far-ollama-family-dev.service`：`active`。
-- 恢复时断点：
+- 2026-07-07 首次恢复时断点（历史记录）：
   - 输出目录：`/mnt/d/FAR-outputs/family_dev_v1`
   - family：`mistral`
   - arm：`far`
   - formal checkpoint：`/mnt/d/FAR-outputs/family_dev_v1/runs/mistral/far/checkpoint.jsonl`
   - 已完成行数：`39/60`
-  - 尚未生成：`/mnt/d/FAR-outputs/family_dev_v1/runs/mistral/far/run_manifest.json`
-- 10:36 CST 已完成到 `F0285`，checkpoint 前进到 `56/60` 且 56 个 ID 唯一。原 transient
-  unit 随后被外部 SSH 客户端反复执行的 daemon-reload 清除，未完成的 `F0287` 没有写入。
-- 10:53 CST 已改用持久化 Mistral-only unit 从同一 56/60 checkpoint 恢复；截至 10:54，
-  unit 跨过 7 次后续 daemon-reload 后仍为 `loaded/active`、同一 PID、`NRestarts=0`。
+  - 当时尚未生成：`/mnt/d/FAR-outputs/family_dev_v1/runs/mistral/far/run_manifest.json`
+- Mistral FAR formal 已完成 `60/60`：60 个 ID 唯一，run manifest 为 `status:complete`、
+  split=dev，预测 SHA 为
+  `7c72e569a05f131515e85b225c947388ceca87aafef6d00eced580ed683180b5`。
+- Mistral untyped formal 使用独立 `runs/mistral/minus_typed_conflict/` 目录；11:11 CST 已完成
+  `F0004` 与 `F0006`，checkpoint 为 `2/60` 且正在 `F0020`，尚无 untyped run manifest。
+- Windows keepalive 的旧 RAMDocs watchdog 已修复为“无 keep-running marker 即 no-op”；
+  11:05:23 后未再产生 daemon-reload，family-dev persistent unit 保持 active、`NRestarts=0`。
 
 ## 本次恢复前的只读检查
 
@@ -52,8 +55,9 @@ scripts/watch_windows_family_dev.sh
 
 ## 最近一次证据
 
-2026-07-07 10:54 CST 只读复核显示：Mistral-only persistent service 的 `MainPID=6280`、
-`NRestarts=0`，runner 与 Ollama 进程均存在；checkpoint 为 56 个唯一 ID，尚无 manifest。
-日志无 traceback、OOM、Xid、磁盘或 schema 错误。Ollama 的 Mistral digest 在恢复前再次
-精确匹配冻结值。这次恢复不修改实验代码、配置、digest、样本、方法、指标、G-F/G-P、
-claim level 或输出目录，也不是评分、finalize、Phase B、G-A/G-K/G-S 判定或任何 test 访问。
+2026-07-07 11:11 CST 只读复核显示：Mistral-only persistent service 的 `MainPID=8567`、
+`NRestarts=0`，runner 与 Ollama 进程均存在；FAR 为 60/60 complete，untyped 为 2/60 且两臂
+目录与 checkpoint 独立。日志无 traceback、OOM、Xid、磁盘或 schema 错误。Ollama 的
+Mistral digest 在恢复前再次精确匹配冻结值。这次恢复不修改实验代码、配置、digest、样本、
+方法、指标、G-F/G-P、claim level 或输出目录，也不是评分、finalize、Phase B、G-A/G-K/G-S
+判定或任何 test 访问。

@@ -67,12 +67,17 @@ raise SystemExit(0 if complete else 1)
 PY
 }
 
+# No active authorization means the watchdog must be a strict no-op.  Check
+# this before the completed-manifest cleanup: repeatedly disabling already
+# completed RAMDocs units triggers a user-manager daemon-reload every cycle and
+# can disrupt unrelated GPU services.
+[[ -f "${marker}" ]] || exit 0
+
 if manifest_is_complete; then
   rm -f "${marker}" "${waiting_marker}"
   user_systemctl disable --now "${suite_unit}" "${ollama_unit}" >/dev/null 2>&1 || true
   exit 0
 fi
-[[ -f "${marker}" ]] || exit 0
 
 ollama_active="$(user_systemctl is-active "${ollama_unit}" 2>/dev/null || true)"
 suite_active="$(user_systemctl is-active "${suite_unit}" 2>/dev/null || true)"

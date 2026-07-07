@@ -49,7 +49,7 @@ echo
 echo "== checkpoints and manifests =="
 for family in mistral google meta; do
   for root in calibration runs; do
-    for method in far far_minus_typed_conflict; do
+    for method in far minus_typed_conflict; do
       run_dir="${output_dir}/${root}/${family}/${method}"
       checkpoint="${run_dir}/checkpoint.jsonl"
       manifest="${run_dir}/run_manifest.json"

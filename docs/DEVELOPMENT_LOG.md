@@ -2319,9 +2319,10 @@ evidence bundle verified successfully, releasing the GPU.
 - 静态复核确认跟踪的 `far-family-dev.service` 用分号串联 Mistral、Google、Meta，前一家族
   非零退出时 Bash 仍会继续，systemd 最终可能把后一家族的成功误报为整个 unit 成功。主分支
   unit 现以 `set -eo pipefail` fail-fast，并让最后一个 Meta runner 使用 `exec` 传递真实状态。
-- 只读监控脚本原先检查 `minus_typed_conflict`，但正式 runner 的实际目录名是
-  `far_minus_typed_conflict`；该错误会漏报整条 untyped arm。现已改正，并把当前使用的
-  `far-family-dev-mistral-resume.service` 纳入服务状态与 journal 输出。
+- 静态审计时一度把只读监控目录从 `minus_typed_conflict` 误改为日志方法名
+  `far_minus_typed_conflict`。Mistral FAR 完成后的真实运行制品确认协议常量和目录名均为
+  `minus_typed_conflict`；现已恢复正确目录，同时保留对
+  `far-family-dev-mistral-resume.service` 的服务状态与 journal 监控。
 - 这些修改只面向未来运维和只读可见性，**没有部署到正在运行的远端冻结工作树**。WS2 正式
   运行继续使用 D: 上的干净提交 `bd57585716b4c046db97311209a0d9f7ec340e6d`、同一 checkpoint
   和 Mistral-only transient unit；不修改实验实现、配置、digest、样本、门禁或输出。
@@ -2343,3 +2344,14 @@ evidence bundle verified successfully, releasing the GPU.
 - 恢复前再次确认 `mistral:7b-instruct` digest 精确匹配冻结值；10:54 CST 复核时 persistent
   unit 已跨过 7 次后续 daemon-reload，仍为 `loaded/active`、同一 `MainPID=6280`、
   `NRestarts=0`。runner 正在跳过 calibration 与既有 checkpoint，未完成样本仍不计入 56 行。
+- Mistral FAR 随后完成 60/60：60 个 ID 唯一，run manifest 为 `status:complete`、split=dev、
+  `predictions_sha256=7c72e569a05f131515e85b225c947388ceca87aafef6d00eced580ed683180b5`。
+  runner 按冻结顺序进入 untyped `F0004` 并写出独立 run identity，尚未写 checkpoint。
+- 进一步定位到 Windows `Keep WSL Training Online` 每 15 秒以 root 运行 RAMDocs watchdog。
+  RAMDocs marker 已不存在且 manifest 已完成，但 watchdog 先检查 manifest、再检查 marker，因而
+  每轮仍执行 `disable --now` 并触发 daemon-reload。现将 marker 无授权时的 no-op 检查移到
+  manifest cleanup 之前；完成态 RAMDocs 不再干扰 family-dev 等无关 GPU 服务。
+- 修复后的 watchdog 已部署到 `/mnt/d/FAR-tools/watch_windows_ramdocs_services.sh`；11:05:23
+  后未再观察到 daemon-reload。再次核验 Mistral digest 后恢复同一 family 命令，runner 跳过
+  FAR 60 条并从独立 `runs/mistral/minus_typed_conflict/` 开始 formal untyped。11:10 CST，
+  `F0004` 在 107.90 秒后成为首条 checkpoint，当前 1/60、正在 `F0006`，service `NRestarts=0`。
