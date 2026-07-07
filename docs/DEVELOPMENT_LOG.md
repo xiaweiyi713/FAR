@@ -2327,3 +2327,19 @@ evidence bundle verified successfully, releasing the GPU.
   和 Mistral-only transient unit；不修改实验实现、配置、digest、样本、门禁或输出。
 - 同期只读巡检显示 Mistral FAR formal 已前进至 44/60、44 个 ID 唯一，正在 `F0212`；
   transient service 仍为 active、`NRestarts=0`，未见运行错误或其他 GPU 任务抢占。
+
+## 2026-07-07 — WS2 Mistral 56/60 外部 daemon-reload 恢复
+
+- 10:50 CST 巡检发现 Mistral FAR formal 在 56/60 后停止，日志停于 `far: start F0287`；
+  三个相关服务均 inactive、GPU 无 compute 任务，56 个 checkpoint ID 唯一且没有 manifest。
+  日志无 traceback、OOM、Xid、磁盘或 schema 错误，D: 盘仍剩约 72 GiB。
+- user journal 显示另一个来自 `100.79.155.87` 的 SSH 客户端从 10:36 起约每 15–18 秒执行
+  `systemctl --user daemon-reload`。10:37:28 的 reload 清除了 transient Mistral unit，随后
+  Ollama 两次自动重启并在 10:38:29 被显式停止；这解释了 systemd 的 success 状态和未完成
+  checkpoint，不是 runner 或模型失败。
+- 新增持久化 `far-family-dev-mistral-resume.service`：仍只运行冻结工作树中的 Mistral family，
+  使用同一输入、输出和 checkpoint，并保留 `Restart=on-failure`。该运维 unit 可跨 daemon-reload
+  存活；它不修改实验实现、配置、digest、样本、指标、G-F/G-P 或 claim level。
+- 恢复前再次确认 `mistral:7b-instruct` digest 精确匹配冻结值；10:54 CST 复核时 persistent
+  unit 已跨过 7 次后续 daemon-reload，仍为 `loaded/active`、同一 `MainPID=6280`、
+  `NRestarts=0`。runner 正在跳过 calibration 与既有 checkpoint，未完成样本仍不计入 56 行。

@@ -1,6 +1,6 @@
 # FAR 当前运行状态
 
-状态时间：2026-07-07 10:13 CST
+状态时间：2026-07-07 10:54 CST
 适用范围：WS2 跨家族 dev 复现（Windows GPU / D: 盘 / `family_dev_v1`）
 
 ## 当前结论
@@ -8,7 +8,7 @@
 - 用户要求的 2026-07-06 夜间暂停窗口已经结束。2026-07-07 10:01 CST，在完成只读
   前置检查后，已从冻结断点恢复 WS2。
 - 远端 `windows-gpu` 当前服务：
-  - `far-family-dev-mistral-resume.service`：`active`，仅运行 Mistral family；
+  - `far-family-dev-mistral-resume.service`：持久化 unit，`active`，仅运行 Mistral family；
   - `far-family-dev.service`：`inactive`，不使用其分号串联的三家族命令；
   - `far-ollama-family-dev.service`：`active`。
 - 恢复时断点：
@@ -18,8 +18,10 @@
   - formal checkpoint：`/mnt/d/FAR-outputs/family_dev_v1/runs/mistral/far/checkpoint.jsonl`
   - 已完成行数：`39/60`
   - 尚未生成：`/mnt/d/FAR-outputs/family_dev_v1/runs/mistral/far/run_manifest.json`
-- 10:13 CST 已完成到 `F0211`，checkpoint 前进到 `44/60` 且 44 个 ID 唯一；runner 随后
-  进入 `far: start F0212`。
+- 10:36 CST 已完成到 `F0285`，checkpoint 前进到 `56/60` 且 56 个 ID 唯一。原 transient
+  unit 随后被外部 SSH 客户端反复执行的 daemon-reload 清除，未完成的 `F0287` 没有写入。
+- 10:53 CST 已改用持久化 Mistral-only unit 从同一 56/60 checkpoint 恢复；截至 10:54，
+  unit 跨过 7 次后续 daemon-reload 后仍为 `loaded/active`、同一 PID、`NRestarts=0`。
 
 ## 本次恢复前的只读检查
 
@@ -44,14 +46,14 @@ scripts/watch_windows_family_dev.sh
 
 - 只能从同一 D: 工作树、同一冻结提交、同一输出目录、同一 checkpoint 恢复。
 - 不修改实验代码、配置、模型 digest、样本、指标、G-F/G-P、claim level 或输出目录。
-- 若继续使用 transient 恢复，优先只恢复当前未完成的 Mistral family，避免原
+- 当前改用持久化 Mistral-only unit，避免 daemon-reload 清除 transient unit，同时避免原
   `far-family-dev.service` 的分号串联命令吞掉子命令状态或误串后续 family。
 - 恢复后继续把每次停机/恢复写入 `docs/DEVELOPMENT_LOG.md`，并保持 README 状态表准确。
 
 ## 最近一次证据
 
-2026-07-07 10:13 CST 只读复核显示：Mistral-only transient service 的 `NRestarts=0`，
-runner 与 Ollama 进程均存在；checkpoint 为 44 个唯一 ID，下一条为 `F0212`，最近日志无
-traceback、OOM、Xid、磁盘或 schema 错误。这次恢复不修改实验代码、配置、digest、样本、
-方法、指标、G-F/G-P、claim level 或输出目录，也不是评分、finalize、Phase B、G-A/G-K/G-S
-判定或任何 test 访问。
+2026-07-07 10:54 CST 只读复核显示：Mistral-only persistent service 的 `MainPID=6280`、
+`NRestarts=0`，runner 与 Ollama 进程均存在；checkpoint 为 56 个唯一 ID，尚无 manifest。
+日志无 traceback、OOM、Xid、磁盘或 schema 错误。Ollama 的 Mistral digest 在恢复前再次
+精确匹配冻结值。这次恢复不修改实验代码、配置、digest、样本、方法、指标、G-F/G-P、
+claim level 或输出目录，也不是评分、finalize、Phase B、G-A/G-K/G-S 判定或任何 test 访问。
