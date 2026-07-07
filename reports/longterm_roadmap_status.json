@@ -13,7 +13,7 @@
       "WS3",
       "WS4"
     ],
-    "next_training_step": "when training is allowed, verify Mistral manifests again and start WS2 Google/Gemma as the next preregistered family"
+    "next_training_step": "when training is allowed, rerun Google/Gemma preflight with Ollama digest verification and start WS2 Google/Gemma"
   },
   "roadmap": {
     "active_sha256": "91eb3205fe127271bc5f4882025243d9974a711e311ef074fcbde09aa86e7cf7",
@@ -90,6 +90,7 @@
           "google",
           "meta"
         ],
+        "google_preflight_documented": true,
         "local_release_present": false,
         "methods": [
           "far",
@@ -112,7 +113,7 @@
         {
           "exists": true,
           "path": "docs/CURRENT_OPERATIONAL_STATE.md",
-          "sha256": "e61c00347b1bb16c3f560a02ac6354946260dd264cd2fc74d06981eb4be3fb7e"
+          "sha256": "d39ea2ce512f3ddc2f086becfaac66d117ab259b03d8610a87d36098e1f1d81b"
         },
         {
           "exists": false,
@@ -242,7 +243,7 @@
       "details": {
         "diagnostics_mib": 28.233,
         "outputs_tracks_only_gitkeep": true,
-        "tracked_files": 477
+        "tracked_files": 478
       },
       "errors": [],
       "gate": "repository-maintenance audit",
@@ -252,12 +253,12 @@
         {
           "exists": true,
           "path": "reports/repository_maintenance.json",
-          "sha256": "999f28dd7b5ee9c88d406da8a64b661ba58978b6c04a3f03cf3fc1b93f28d6c2"
+          "sha256": "3db9cf00234cf58d46aa71ec59f32c66abb76d62df1a6191212c6e1d3587449e"
         },
         {
           "exists": true,
           "path": "reports/repository_maintenance.md",
-          "sha256": "77875512401b0f8d125bd1d7c07fb5680a34e55a4094d8c29b79c35045fcb0d9"
+          "sha256": "4e3128b202ed5810883ef5d5b1deefb808fc566d2c15bd1bb5ab88ee7e1799e0"
         }
       ],
       "name": "WS6 engineering maintenance",

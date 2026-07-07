@@ -2470,3 +2470,23 @@ evidence bundle verified successfully, releasing the GPU.
 - 明天恢复前需重新核验 GPU 空闲、D: 空间、Ollama digest、正式工作树冻结提交、Mistral
   family manifest 与两个 formal run manifest；随后按预注册顺序启动 Google/Gemma，
   且 Google/Gemma family manifest 完成并核验前不启动 Meta/Llama。
+
+## 2026-07-07 — WS2 Google/Gemma 预启动核验脚本
+
+- 在不训练、不启动 Ollama、不运行 prediction、不访问 held-out/test 的前提下，新增
+  `scripts/preflight_windows_family_dev_next.sh`。脚本通过 SSH 只读核验下一家族运行条件：
+  family-dev/boundary service 未活动、D: 冻结工作树位于
+  `bd57585716b4c046db97311209a0d9f7ec340e6d` 且干净、dev-only input view 指纹匹配、
+  predecessor family manifest 与 formal run manifest 完整、目标 family 尚未完成、systemd
+  单 family 模板已安装；设置 `FAR_FAMILY_DEV_REQUIRE_OLLAMA=1` 时还会核验目标 Ollama tag
+  的冻结 digest。
+- 首次离线 preflight 发现远端缺少 `far-family-dev@.service` 模板。已仅复制仓库中已跟踪的
+  `scripts/systemd/far-family-dev@.service` 到
+  `~/.config/systemd/user/far-family-dev@.service` 并执行 `systemctl --user daemon-reload`；
+  没有启动任何 service。随后 `far-family-dev@google.service` 与
+  `far-family-dev@meta.service` 均显示 `loaded`、`inactive/dead`。
+- 重新运行 `scripts/preflight_windows_family_dev_next.sh google` 得到 `valid=true`。明天恢复
+  时的安全顺序固定为：先离线 preflight，再启动 `far-ollama-family-dev.service`，再用
+  `FAR_FAMILY_DEV_REQUIRE_OLLAMA=1` 复跑 preflight 精确核验 `gemma2:9b` digest，最后启动
+  `far-family-dev@google.service`。Google/Gemma family manifest 完成并核验前仍不得启动
+  Meta/Llama。

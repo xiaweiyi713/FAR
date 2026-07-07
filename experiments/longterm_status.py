@@ -131,6 +131,10 @@ def _ws2(root: Path) -> dict[str, Any]:
         and "`inactive`" in current_text
         and "今晚暂停" in current_text
     )
+    google_preflight_documented = (
+        "scripts/preflight_windows_family_dev_next.sh google" in current_text
+        and "valid=true" in current_text
+    )
     paused_checkpoint_documented = "minus_typed_conflict" in current_text and "7/60" in current_text
     errors = [f"protocol: {item}" for item in protocol.get("errors", [])]
     if release_exists:
@@ -173,6 +177,7 @@ def _ws2(root: Path) -> dict[str, Any]:
             "local_release_present": release_exists,
             "active_run_documented": active_run_documented,
             "mistral_complete_paused_documented": mistral_complete_paused_documented,
+            "google_preflight_documented": google_preflight_documented,
             "paused_checkpoint_documented": paused_checkpoint_documented,
         },
         "errors": errors,
@@ -355,10 +360,16 @@ def build_status(root: Path = ROOT) -> dict[str, Any]:
             "monitor active WS2 Mistral minus_typed_conflict run until it completes or fails"
         )
     elif ws2_details.get("mistral_complete_paused_documented") is True:
-        next_training_step = (
-            "when training is allowed, verify Mistral manifests again and start "
-            "WS2 Google/Gemma as the next preregistered family"
-        )
+        if ws2_details.get("google_preflight_documented") is True:
+            next_training_step = (
+                "when training is allowed, rerun Google/Gemma preflight with Ollama "
+                "digest verification and start WS2 Google/Gemma"
+            )
+        else:
+            next_training_step = (
+                "when training is allowed, verify Mistral manifests again and start "
+                "WS2 Google/Gemma as the next preregistered family"
+            )
     else:
         next_training_step = (
             "resume WS2 Mistral minus_typed_conflict from documented checkpoint "
