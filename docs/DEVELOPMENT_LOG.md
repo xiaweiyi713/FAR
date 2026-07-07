@@ -2388,3 +2388,21 @@ evidence bundle verified successfully, releasing the GPU.
   collection F1 -0.003），并明确这些只是观测到的必要检查，不是充分条件或因果定理。
 - 本次不加入未完成的 WS2/WS3 结果，不改 F1–F10、门禁、指标、样本或实验配置；零模型调用，
   未访问 held-out/test。
+
+## 2026-07-07 — WS2 夜间停训与断点冻结
+
+- 按用户“今晚不能训练、明天再训练”的要求，只做只读巡检与安全停机，不启动新训练、不运行
+  test、不访问 held-out/test。
+- 巡检确认 Mistral FAR formal 已完成 `60/60`，manifest 为 `status=complete`、`errors=0`，
+  predictions SHA 为
+  `7c72e569a05f131515e85b225c947388ceca87aafef6d00eced580ed683180b5`。
+- Mistral `minus_typed_conflict` 当前停在 `7/60`：7 个 ID 唯一，最后完成 `F0040`，尚未生成
+  run manifest 或 family manifest。后续恢复必须从
+  `/mnt/d/FAR-outputs/family_dev_v1/runs/mistral/minus_typed_conflict/checkpoint.jsonl`
+  继续。
+- 已停止 `far-family-dev-mistral-resume.service`、`far-family-dev.service` 与
+  `far-ollama-family-dev.service`；复核均为 `inactive`、`Result=success`、`NRestarts=0`。
+  GPU 剩余约 956 MiB 占用来自 `/Xwayland`，未发现 FAR Python runner、Ollama runner、
+  boundary/family-dev 或 `train.py` 进程。
+- 本次仅更新状态记录；不修改实验实现、配置、digest、样本、指标、G-F/G-P、claim level 或
+  输出目录，不启动 Google/Gemma、Meta/Llama 或 WS3 boundary。
