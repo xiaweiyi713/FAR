@@ -13,7 +13,7 @@
       "WS3",
       "WS4"
     ],
-    "next_training_step": "when training is allowed, rerun Google/Gemma preflight with Ollama digest verification and start WS2 Google/Gemma"
+    "next_training_step": "when training is allowed, dry-run the guarded Google/Gemma starter, then execute it to verify Ollama digest and start WS2 Google/Gemma"
   },
   "roadmap": {
     "active_sha256": "91eb3205fe127271bc5f4882025243d9974a711e311ef074fcbde09aa86e7cf7",
@@ -91,6 +91,7 @@
           "meta"
         ],
         "google_preflight_documented": true,
+        "guarded_starter_documented": true,
         "local_release_present": false,
         "methods": [
           "far",
@@ -113,7 +114,7 @@
         {
           "exists": true,
           "path": "docs/CURRENT_OPERATIONAL_STATE.md",
-          "sha256": "d39ea2ce512f3ddc2f086becfaac66d117ab259b03d8610a87d36098e1f1d81b"
+          "sha256": "7ce8507940cf1298ec8d31b0b761ee274a93cc5fe85efa023db142db5374daf8"
         },
         {
           "exists": false,
@@ -243,7 +244,7 @@
       "details": {
         "diagnostics_mib": 28.233,
         "outputs_tracks_only_gitkeep": true,
-        "tracked_files": 478
+        "tracked_files": 479
       },
       "errors": [],
       "gate": "repository-maintenance audit",
@@ -253,12 +254,12 @@
         {
           "exists": true,
           "path": "reports/repository_maintenance.json",
-          "sha256": "3db9cf00234cf58d46aa71ec59f32c66abb76d62df1a6191212c6e1d3587449e"
+          "sha256": "2d5012587a95227d8198022ccd6ad3e628e4bb95de4e5299efbd0dc600a27a24"
         },
         {
           "exists": true,
           "path": "reports/repository_maintenance.md",
-          "sha256": "4e3128b202ed5810883ef5d5b1deefb808fc566d2c15bd1bb5ab88ee7e1799e0"
+          "sha256": "ebdfb7dbe4bb908a9a05161968f4e8a126a98a47c026aa285082d7a36daef0c2"
         }
       ],
       "name": "WS6 engineering maintenance",

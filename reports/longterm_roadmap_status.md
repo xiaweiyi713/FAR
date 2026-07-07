@@ -26,7 +26,7 @@
 - 已闭合或已建立基线: WS1, WS5, WS6
 - 仍未完成: WS2, WS3, WS4
 - 总目标完成: `false`
-- 当前首要动作: when training is allowed, rerun Google/Gemma preflight with Ollama digest verification and start WS2 Google/Gemma
+- 当前首要动作: when training is allowed, dry-run the guarded Google/Gemma starter, then execute it to verify Ollama digest and start WS2 Google/Gemma
 
 ## 安全边界
 

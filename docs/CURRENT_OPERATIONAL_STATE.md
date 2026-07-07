@@ -1,6 +1,6 @@
 # FAR 当前运行状态
 
-状态时间：2026-07-07 17:35 CST
+状态时间：2026-07-07 17:40 CST
 适用范围：WS2 跨家族 dev 复现（Windows GPU / D: 盘 / `family_dev_v1`）
 
 ## 当前结论
@@ -28,6 +28,9 @@
   `scripts/preflight_windows_family_dev_next.sh google`。该脚本只读检查远端 service、
   冻结 worktree、dev-only 输入 view、Mistral predecessor manifest、目标 family 顺序与可选
   Ollama digest；不启动/停止 service、不写远端文件、不运行 prediction。
+- 已新增并 dry-run 执行 guarded starter：`scripts/start_windows_family_dev_next.sh google`。
+  dry-run 只复用上述 preflight 并打印计划动作；复核显示 `far-family-dev@google.service`
+  与 `far-ollama-family-dev.service` 仍为 `inactive/dead`，没有训练进程。
 - 预启动核验发现远端尚未安装单 family systemd 模板，已仅部署
   `~/.config/systemd/user/far-family-dev@.service` 并执行 `systemctl --user daemon-reload`；
   `far-family-dev@google.service` 与 `far-family-dev@meta.service` 当前均为 `loaded` 且
@@ -60,11 +63,12 @@
 
 - 继续只允许从同一 D: 工作树、同一冻结提交、同一输出目录前进。
 - 不修改实验代码、配置、模型 digest、样本、指标、G-F/G-P、claim level 或输出目录。
-- 明天恢复时，先运行
-  `scripts/preflight_windows_family_dev_next.sh google`，再启动
-  `far-ollama-family-dev.service`；Ollama 在线后用
+- 明天恢复时，先 dry-run `scripts/start_windows_family_dev_next.sh google`；确认输出仍为
+  `valid=true` 且用户允许训练后，再运行
+  `scripts/start_windows_family_dev_next.sh google --execute`。该执行模式会按顺序启动
+  `far-ollama-family-dev.service`、用
   `FAR_FAMILY_DEV_REQUIRE_OLLAMA=1 scripts/preflight_windows_family_dev_next.sh google`
-  精确核验 `gemma2:9b` digest，最后才启动 `far-family-dev@google.service`。
+  精确核验 `gemma2:9b` digest，然后才启动 `far-family-dev@google.service`。
   Google/Gemma family manifest 完成并核验前，不启动 Meta/Llama。
 - 若进程异常停止，先诊断服务状态、GPU、checkpoint 行数/唯一性、日志错误、daemon-reload
   是否复发；不得直接改方法或重跑已完成样本。

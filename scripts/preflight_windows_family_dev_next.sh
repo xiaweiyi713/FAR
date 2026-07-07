@@ -270,9 +270,7 @@ result = {
     "valid": not errors,
     "family": family,
     "next_action_if_valid": (
-        f"systemctl --user start far-ollama-family-dev.service && "
-        f"FAR_FAMILY_DEV_REQUIRE_OLLAMA=1 scripts/preflight_windows_family_dev_next.sh {family} && "
-        f"systemctl --user start far-family-dev@{family}.service"
+        f"scripts/start_windows_family_dev_next.sh {family} --execute"
     ),
     "remote": {
         "output_dir": str(output_dir),

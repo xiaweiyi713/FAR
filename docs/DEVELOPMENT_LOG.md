@@ -2490,3 +2490,17 @@ evidence bundle verified successfully, releasing the GPU.
   `FAR_FAMILY_DEV_REQUIRE_OLLAMA=1` 复跑 preflight 精确核验 `gemma2:9b` digest，最后启动
   `far-family-dev@google.service`。Google/Gemma family manifest 完成并核验前仍不得启动
   Meta/Llama。
+
+## 2026-07-07 — WS2 Google/Gemma guarded starter dry-run
+
+- 新增 `scripts/start_windows_family_dev_next.sh`，默认 dry-run，只执行只读 preflight 并打印
+  明天会执行的远端 systemd 动作；只有显式 `--execute` 才会启动
+  `far-ollama-family-dev.service`、带 `FAR_FAMILY_DEV_REQUIRE_OLLAMA=1` 复跑 digest preflight，
+  并启动 `far-family-dev@<family>.service`。脚本限制 family 只能为 `google` 或 `meta`，
+  不包含任何 held-out/test 路径。
+- 本轮仅运行 `scripts/start_windows_family_dev_next.sh google` dry-run。输出显示离线
+  preflight `valid=true`，计划动作正确；随后复核 `far-family-dev@google.service` 与
+  `far-ollama-family-dev.service` 仍为 `inactive/dead`，未发现 `experiments.family_dev`、
+  Ollama 或 `train.py` 进程。本次没有启动训练、没有启动 Ollama、没有运行 prediction。
+- `scripts/preflight_windows_family_dev_next.sh` 的 `next_action_if_valid` 也改为指向 guarded
+  starter 的 `--execute` 入口，避免未来从 preflight JSON 中直接复制裸 `systemctl` 串。
