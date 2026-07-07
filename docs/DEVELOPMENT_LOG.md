@@ -2355,3 +2355,13 @@ evidence bundle verified successfully, releasing the GPU.
   后未再观察到 daemon-reload。再次核验 Mistral digest 后恢复同一 family 命令，runner 跳过
   FAR 60 条并从独立 `runs/mistral/minus_typed_conflict/` 开始 formal untyped。11:10 CST，
   `F0004` 在 107.90 秒后成为首条 checkpoint，当前 1/60、正在 `F0006`，service `NRestarts=0`。
+
+## 2026-07-07 — WS2 单家族 systemd 模板
+
+- 新增 `far-family-dev@.service`，通过 `%i` 一次只运行一个 family；Mistral、Google、Meta
+  继续共享冻结 input/output 和 runner，但不再由一个 shell 串联。每个实例保留健康检查、
+  checkpoint 恢复和 `Restart=on-failure`，systemd 能准确暴露当前家族的退出状态。
+- 复现手册固定实例顺序为 `@mistral` → `@google` → `@meta`；即使人工误序，冻结 runner 仍以
+  predecessor family manifest fail-closed。监控脚本同步显示三个模板实例。
+- 当前 Mistral 正式运行仍使用已启动的 dedicated persistent unit，没有热切换、重启或修改
+  冻结远端工作树。该模板仅用于 Mistral 完成后的 Google/Meta 以及未来复现。

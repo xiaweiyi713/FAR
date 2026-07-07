@@ -27,6 +27,9 @@ echo
 echo "== systemd user services =="
 for unit in \
   far-family-dev-mistral-resume.service \
+  far-family-dev@mistral.service \
+  far-family-dev@google.service \
+  far-family-dev@meta.service \
   far-family-dev.service \
   far-ollama-family-dev.service; do
   printf "%s: " "${unit}"
@@ -73,6 +76,7 @@ if [[ -f "${output_dir}.log" ]]; then
 else
   journalctl --user \
     -u far-family-dev-mistral-resume.service \
+    -u 'far-family-dev@*.service' \
     -u far-family-dev.service \
     -n 80 --no-pager 2>/dev/null || true
 fi

@@ -756,6 +756,21 @@ watcher:
 scripts/watch_windows_family_dev.sh
 ```
 
+Windows/WSL 长时运行应优先安装单家族模板 unit，避免三家族 shell 串联掩盖中间失败：
+
+```bash
+cp scripts/systemd/far-family-dev@.service ~/.config/systemd/user/
+cp scripts/systemd/far-ollama-family-dev.service ~/.config/systemd/user/
+systemctl --user daemon-reload
+systemctl --user start far-ollama-family-dev.service
+systemctl --user start far-family-dev@mistral.service
+```
+
+Mistral 的 `family_manifests/mistral.json` 完整生成后才可启动
+`far-family-dev@google.service`；Google 完整后才可启动
+`far-family-dev@meta.service`。runner 还会独立验证 predecessor manifest，错误顺序会
+fail-closed。正式运行期间不得切换工作树、配置、digest、输入或输出目录。
+
 The watcher only prints service state, checkpoint counts, manifests, recent
 logs, active processes, and GPU status from `windows-gpu`. It does not start or
 stop services, write marker files, inspect held-out/test inputs, or finalize a
