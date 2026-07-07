@@ -244,7 +244,7 @@
       "details": {
         "diagnostics_mib": 28.233,
         "outputs_tracks_only_gitkeep": true,
-        "tracked_files": 479
+        "tracked_files": 480
       },
       "errors": [],
       "gate": "repository-maintenance audit",
@@ -254,12 +254,12 @@
         {
           "exists": true,
           "path": "reports/repository_maintenance.json",
-          "sha256": "b1fb6a54ba7acba339d00f44128d240bee2b28cd03a2f882978a1999b1a46db0"
+          "sha256": "1b769d92d31bab6b129ca627720fda2c5b990db9dee0afa83bf86cea0b12d959"
         },
         {
           "exists": true,
           "path": "reports/repository_maintenance.md",
-          "sha256": "0dfaf0764fc8eb5b6448017107f8467893c0b4c8e684d7f71bce758041bf87e6"
+          "sha256": "e5092fd26316ac5727124f51a524861acb48dac3862e39d4617a4a0a5ecf951a"
         }
       ],
       "name": "WS6 engineering maintenance",
