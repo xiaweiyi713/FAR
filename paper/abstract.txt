@@ -1,16 +1,19 @@
-Retrieval-augmented language agents typically search for evidence that supports
-an emerging answer, while reflection remains weakly grounded in retrievable
-counter-evidence. We introduce Falsification-Augmented Retrieval (FAR), a
-control framework that decomposes an initial answer into dependent claims,
-assigns typed evidence requirements, retrieves support, refutation, and boundary
-evidence, and revises each claim according to temporal, entity, numerical,
-causal, source-reliability, definition, or counter-evidence conflicts. FAR
-exposes the claim-evidence map and a before/after revision trace. We also define
-FalsiRAG-Bench, a controlled evaluation protocol in which falsifying evidence is
-present in the corpus and revision actions are annotated. The current artifact
-contains a balanced 300-item machine-seeded candidate set, strict promotion to
-double-annotated and adjudicated gold, six transparent baselines, four
-component ablations, and paired statistical inference. This draft states the
-method and evaluation contract; final performance claims are intentionally
-withheld until independent annotation and frozen multi-model experiments are
-complete.
+Retrieval-augmented language agents typically seek evidence that supports an
+emerging answer, while reflection remains weakly grounded in retrievable
+counter-evidence. We introduce Falsification-Augmented Retrieval (FAR), which
+decomposes an answer into dependent claims, assigns typed evidence requirements,
+retrieves support, refutation, and boundary evidence, and exposes a typed
+revision trace. On a 60-item Qwen3.5 9B machine-audited development diagnostic,
+typed control improves answer correctness over an otherwise matched untyped
+ablation by 0.078 (95% paired bootstrap [0.034, 0.124]). This signal does not
+transfer into an end-to-end advantage on 350 upstream-labelled RAMDocs
+development items in either of two preregistered rounds. A frozen,
+zero-model-call attribution of the 226 shared errors finds 103 cases where
+conflict was detected but revision remained wrong; complete retrieval and
+partial-credit scoring do not restore a FAR advantage. All 34 positive per-item
+typed deltas on the Qwen diagnostic pass through changed revisions, even though
+removing typed revision improves the overall mean. Typed revision therefore
+mediates heterogeneous benefit and harm rather than a uniformly positive
+correction stage. We claim a narrow, machine-audited mechanism signal and
+characterize its observed boundary; we do not claim human-validated gold,
+external blindness, or general end-to-end superiority.

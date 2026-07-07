@@ -12,7 +12,7 @@
 \pdfinfo{/TemplateVersion (2027.1)}
 \setcounter{secnumdepth}{0}
 
-\title{Ask What Could Be Wrong: Falsification-Guided Retrieval for Self-Correcting Language Agents}
+\title{When Does Typed Conflict Control Help? Falsification-Guided Retrieval and Its Observed Boundaries}
 \author{Anonymous Submission}
 \affiliations{}
 
@@ -28,11 +28,11 @@ Retrieval-augmented generation (RAG) grounds language models in external memory 
 
 We study \emph{falsification-guided retrieval}: given an initial answer, actively formulate retrievable evidence needs that could show where it is wrong. The central hypothesis is not merely that counter-evidence helps. It is that a \emph{typed evidence conflict} can serve as a control signal for both the next query and the revision action. A temporal conflict asks for version boundaries and repairs a timeline; a numerical conflict asks for alternative measurements and replaces or qualifies a value; a causal conflict seeks confounding or association-only evidence and downgrades the causal claim.
 
-FAR makes this loop explicit. It (1) builds a claim dependency graph, (2) assigns positive typed evidence requirements, (3) generates support, refutation, and boundary queries, and (4) applies a typed revision with an auditable trace. We contribute an evaluation protocol, FalsiRAG-Bench, that places counter-evidence inside the retrieval corpus and scores whether it is found and used correctly. Our intended contributions are:
+FAR makes this loop explicit. It (1) builds a claim dependency graph, (2) assigns positive typed evidence requirements, (3) generates support, refutation, and boundary queries, and (4) applies a typed revision with an auditable trace. We contribute an evaluation protocol, FalsiRAG-Bench, that places counter-evidence inside the retrieval corpus and scores whether it is found and used correctly. Our contributions are:
 \begin{itemize}
-    \item an explicit falsification-guided RAG framework with auditable claim, evidence, conflict, and revision traces;
-    \item evidence that typed conflict is useful as a control representation relative to a matched untyped alternative; and
-    \item a reproducible machine-audited synthetic benchmark and evaluation contract that makes both positive and negative component evidence visible.
+    \item an explicit typed-conflict control framework with auditable claim, evidence, conflict, and revision traces, evaluated against a matched untyped control;
+    \item a reproducible machine-audited synthetic benchmark and evaluation contract that keeps positive, negative, and mixed component evidence visible; and
+    \item an applicability-boundary account that combines the positive Qwen development signal with two preregistered RAMDocs null results and frozen mechanism attribution.
 \end{itemize}
 The empirical claim is intentionally narrower than the full architecture: the present evidence supports typed conflict control, not a positive marginal contribution from every query family or revision component.
 
@@ -89,6 +89,8 @@ All 300 labels are \texttt{machine\_seeded}; they are not human-validated gold. 
 We evaluate a locally hashed Qwen3.5 9B model with matched retrieval settings. Baselines are Vanilla RAG, Multi-query RAG, Reflective RAG, closed-corpus CRAG-style and CounterRefine-style reproductions, and a Self-RAG-style inference approximation. The three style names explicitly avoid claiming equivalence to official trained or web-retrieval systems. This is a single-model development diagnostic; it does not establish multi-model generality.
 
 Ablations remove typed conflict (untyped contradiction and generic queries), refutation queries, boundary queries, or typed revision. The primary gate compares typed and untyped FAR on aligned examples. Metrics are answer soft F1, unsupported claim rate, evidence precision, typed conflict F1, revision accuracy, overclaim reduction, and counter-evidence recall. We report category-stratified bootstrap confidence intervals, dependency-group sensitivity intervals, paired bootstrap differences, and exact McNemar tests for revision success.
+
+Power is treated as a gate on claim strength rather than repaired after observing results. A preregistered simulation using the Qwen discordance pattern estimates only 0.414 exact-McNemar power for the planned three-family, 60-pair-per-family reproduction at a +0.078 effect. That study is therefore designated a directional reproduction: a nonsignificant result cannot establish absence, and family-level directions must be disclosed. The same retrospective audit shows that the RAMDocs gate had a confidence-interval half-width near three percentage points, too coarse to adjudicate smaller effects.
 
 \begin{table}[t]
 \centering

@@ -2290,5 +2290,20 @@ evidence bundle verified successfully, releasing the GPU.
   `far-family-dev.service` 的 Mistral → Google → Meta 分号串联命令。
 - 10:03 CST 复核时 transient service 为 active、`NRestarts=0`，runner 已跳过 39 条已完成
   样本并进入 `far: start F0194`；checkpoint 尚保持 39/60，未完成样本不计入行数。
+- 10:05 CST，`F0194` 在 115.04 秒后完成并写入 checkpoint；只读复核确认 40/60、40 个
+  ID 唯一，service 仍为 active、`NRestarts=0`，随后进入 `F0204`。
 - 本次运维恢复继续使用同一输入、输出、checkpoint、配置和冻结提交，不修改模型 digest、
   样本、方法、指标、G-F/G-P 或 claim level；未评分、未 finalize、未访问或运行任何 test。
+
+## 2026-07-07 — WS4 论文机制—边界主张对齐
+
+- 对照长期优化计划静态审计 `paper/` 后发现，正文已披露 RAMDocs 双失败和负消融，但独立
+  `paper/abstract.txt` 仍停留在“等待真人双标注后再披露结果”的旧阶段，已与当前冻结证据
+  和正文摘要不一致。现将其同步为同一窄主张：Qwen machine-audited dev 上 typed-vs-untyped
+  为正，RAMDocs 两轮没有端到端优势，revision 同时中介局部收益与聚合准确率代价。
+- 论文标题改为直接询问 typed conflict control 何时有效；引言贡献列表现明确包含
+  applicability-boundary account，不再把完整 FAR 架构或每个查询/修订组件写成已获支持。
+- 将 G-P 的 0.414 exact-McNemar 功效和 `directional_reproduction` 限定写入实验设计；这不会
+  改写 G-F，也明确禁止未来把不显著结果解释为机制不存在。
+- 本次仅修改论文与状态文本，未调用模型、未读取预测结果以调整门禁、未访问或运行任何
+  held-out/test，且不改 F1–F10、实验配置、样本、digest、指标或停止规则。
