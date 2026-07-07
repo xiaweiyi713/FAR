@@ -2277,3 +2277,18 @@ evidence bundle verified successfully, releasing the GPU.
 - 为避免后续心跳或手动恢复把用户暂停误判为异常，新增 `docs/CURRENT_OPERATIONAL_STATE.md`
   作为当前运行状态入口，并在 README 与复现手册的 WS2 小节中链接该文件。该文件只记录
   当前断点、暂停窗口和恢复前只读检查，不启动服务、不写远端 checkpoint、不改变实验协议。
+
+## 2026-07-07 — WS2 Mistral formal FAR 从 39/60 恢复
+
+- 用户要求的 2026-07-06 夜间暂停窗口结束后，先做只读核验：三个 WS2 服务均为
+  `inactive`，没有残留 family-dev/Ollama/llama 推理进程；冻结 D: 工作树仍为干净提交
+  `bd57585716b4c046db97311209a0d9f7ec340e6d`；Mistral FAR checkpoint 为 39 个唯一 ID，
+  未生成 run manifest；D: 盘约剩 72 GiB；GPU 无 compute 任务，仅有桌面显存占用。
+- 启动 `far-ollama-family-dev.service` 后，运行时 `mistral:7b-instruct` digest 精确匹配预注册值
+  `6577803aa9a036369e481d648a2baebb381ebc6e897f2bb9a766a2aa7bfbc1cf`。随后使用
+  `far-family-dev-mistral-resume.service` 仅续跑 Mistral family，没有启动旧
+  `far-family-dev.service` 的 Mistral → Google → Meta 分号串联命令。
+- 10:03 CST 复核时 transient service 为 active、`NRestarts=0`，runner 已跳过 39 条已完成
+  样本并进入 `far: start F0194`；checkpoint 尚保持 39/60，未完成样本不计入行数。
+- 本次运维恢复继续使用同一输入、输出、checkpoint、配置和冻结提交，不修改模型 digest、
+  样本、方法、指标、G-F/G-P 或 claim level；未评分、未 finalize、未访问或运行任何 test。

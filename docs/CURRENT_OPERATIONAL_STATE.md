@@ -1,40 +1,44 @@
 # FAR 当前运行状态
 
-状态时间：2026-07-06 22:04 CST  
+状态时间：2026-07-07 10:03 CST
 适用范围：WS2 跨家族 dev 复现（Windows GPU / D: 盘 / `family_dev_v1`）
 
 ## 当前结论
 
-- **今晚不要恢复训练或推理。** 用户明确要求 2026-07-06 晚间不再训练，下一次 WS2
-  family-dev 恢复不得早于 2026-07-07。
-- 远端 `windows-gpu` 上已停止：
-  - `far-family-dev-mistral-resume.service`
-  - `far-family-dev.service`
-  - `far-ollama-family-dev.service`
-- 当前断点：
+- 用户要求的 2026-07-06 夜间暂停窗口已经结束。2026-07-07 10:01 CST，在完成只读
+  前置检查后，已从冻结断点恢复 WS2。
+- 远端 `windows-gpu` 当前服务：
+  - `far-family-dev-mistral-resume.service`：`active`，仅运行 Mistral family；
+  - `far-family-dev.service`：`inactive`，不使用其分号串联的三家族命令；
+  - `far-ollama-family-dev.service`：`active`。
+- 恢复时断点：
   - 输出目录：`/mnt/d/FAR-outputs/family_dev_v1`
   - family：`mistral`
   - arm：`far`
   - formal checkpoint：`/mnt/d/FAR-outputs/family_dev_v1/runs/mistral/far/checkpoint.jsonl`
   - 已完成行数：`39/60`
   - 尚未生成：`/mnt/d/FAR-outputs/family_dev_v1/runs/mistral/far/run_manifest.json`
+- 10:03 CST 最新日志已跳过全部 39 条已完成样本并进入 `far: start F0194`；尚未把
+  未完成样本计入 checkpoint。
 
-## 明天恢复前的只读检查
+## 本次恢复前的只读检查
 
-恢复前必须先确认：
+本次恢复已确认：
 
 ```bash
 scripts/watch_windows_family_dev.sh
 ```
 
-并至少满足：
+检查结果满足：
 
-1. 三个相关服务没有正在运行，或只有预期的 Ollama 服务；
-2. 没有 `python -m experiments.family_dev`、`ollama serve`、`llama-server` 等非预期进程；
-3. checkpoint 仍为 Mistral FAR formal `39/60`，没有重复样本或已完成 manifest；
-4. GPU 没有被用户其他任务占用；
-5. D: 盘仍有足够空间；
-6. 不访问、不运行任何 held-out/test。
+1. 恢复前三个相关服务均为 `inactive`，没有残留 family-dev/Ollama/llama 推理进程；
+2. checkpoint 为 Mistral FAR formal `39/60`，39 个 ID 唯一，未生成 manifest；
+3. 冻结工作树仍为干净提交 `bd57585716b4c046db97311209a0d9f7ec340e6d`；
+4. GPU 无 compute 任务，仅约 552 MiB 桌面占用；
+5. D: 盘剩余约 72 GiB；
+6. Ollama 的 `mistral:7b-instruct` digest 精确匹配预注册值
+   `6577803aa9a036369e481d648a2baebb381ebc6e897f2bb9a766a2aa7bfbc1cf`；
+7. 未访问、未运行任何 held-out/test。
 
 ## 恢复原则
 
@@ -46,11 +50,7 @@ scripts/watch_windows_family_dev.sh
 
 ## 最近一次证据
 
-2026-07-06 晚间只读复核显示：
-
-- 三个相关服务均为 `inactive`；
-- checkpoint 为 `39/60`；
-- 未见 `family_dev`、Ollama 或 llama 推理进程；
-- GPU 进程表仅剩桌面/Xwayland 类残留，不是 FAR 训练/推理。
-
-这不是评分、finalize、Phase B、G-A/G-K/G-S 判定或任何 test 访问。
+2026-07-07 10:03 CST 只读复核显示：Mistral-only transient service 的 `MainPID=1254`、
+`NRestarts=0`，runner 与 Ollama 进程均存在，checkpoint 仍为 39 个唯一 ID，日志进入
+`F0194`。这次恢复不修改实验代码、配置、digest、样本、方法、指标、G-F/G-P、claim level
+或输出目录，也不是评分、finalize、Phase B、G-A/G-K/G-S 判定或任何 test 访问。
