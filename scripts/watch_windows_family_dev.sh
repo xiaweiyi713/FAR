@@ -25,7 +25,10 @@ echo "input_dir=${input_dir}"
 
 echo
 echo "== systemd user services =="
-for unit in far-family-dev.service far-ollama-family-dev.service; do
+for unit in \
+  far-family-dev-mistral-resume.service \
+  far-family-dev.service \
+  far-ollama-family-dev.service; do
   printf "%s: " "${unit}"
   systemctl --user is-active "${unit}" 2>/dev/null || true
 done
@@ -46,7 +49,7 @@ echo
 echo "== checkpoints and manifests =="
 for family in mistral google meta; do
   for root in calibration runs; do
-    for method in far minus_typed_conflict; do
+    for method in far far_minus_typed_conflict; do
       run_dir="${output_dir}/${root}/${family}/${method}"
       checkpoint="${run_dir}/checkpoint.jsonl"
       manifest="${run_dir}/run_manifest.json"
@@ -68,7 +71,10 @@ echo "== recent family-dev log =="
 if [[ -f "${output_dir}.log" ]]; then
   tail -n 80 "${output_dir}.log"
 else
-  journalctl --user -u far-family-dev.service -n 80 --no-pager 2>/dev/null || true
+  journalctl --user \
+    -u far-family-dev-mistral-resume.service \
+    -u far-family-dev.service \
+    -n 80 --no-pager 2>/dev/null || true
 fi
 
 echo

@@ -1,6 +1,6 @@
 # FAR 当前运行状态
 
-状态时间：2026-07-07 10:05 CST
+状态时间：2026-07-07 10:13 CST
 适用范围：WS2 跨家族 dev 复现（Windows GPU / D: 盘 / `family_dev_v1`）
 
 ## 当前结论
@@ -18,8 +18,8 @@
   - formal checkpoint：`/mnt/d/FAR-outputs/family_dev_v1/runs/mistral/far/checkpoint.jsonl`
   - 已完成行数：`39/60`
   - 尚未生成：`/mnt/d/FAR-outputs/family_dev_v1/runs/mistral/far/run_manifest.json`
-- 10:05 CST 已完成 `F0194`，checkpoint 前进到 `40/60` 且 40 个 ID 唯一；runner 随后
-  进入 `far: start F0204`。
+- 10:13 CST 已完成到 `F0211`，checkpoint 前进到 `44/60` 且 44 个 ID 唯一；runner 随后
+  进入 `far: start F0212`。
 
 ## 本次恢复前的只读检查
 
@@ -50,8 +50,8 @@ scripts/watch_windows_family_dev.sh
 
 ## 最近一次证据
 
-2026-07-07 10:05 CST 只读复核显示：Mistral-only transient service 的 `MainPID=1254`、
-`NRestarts=0`，runner 与 Ollama 进程均存在；`F0194` 用时 115.04 秒并原子写入 checkpoint，
-当前为 40 个唯一 ID，下一条为 `F0204`。这次恢复不修改实验代码、配置、digest、样本、
+2026-07-07 10:13 CST 只读复核显示：Mistral-only transient service 的 `NRestarts=0`，
+runner 与 Ollama 进程均存在；checkpoint 为 44 个唯一 ID，下一条为 `F0212`，最近日志无
+traceback、OOM、Xid、磁盘或 schema 错误。这次恢复不修改实验代码、配置、digest、样本、
 方法、指标、G-F/G-P、claim level 或输出目录，也不是评分、finalize、Phase B、G-A/G-K/G-S
 判定或任何 test 访问。

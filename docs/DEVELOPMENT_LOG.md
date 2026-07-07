@@ -2313,3 +2313,17 @@ evidence bundle verified successfully, releasing the GPU.
 - 本次仅修改论文与状态文本，未调用模型、未读取预测结果以调整门禁、未访问或运行任何
   held-out/test 数据，且不改 F1–F10、实验配置、样本、digest、指标或停止规则；本地没有运行
   测试套件，派生报告命令只重算已冻结 dev 证据和文本指纹。
+
+## 2026-07-07 — WS2/WS6 family-dev 运维 fail-fast 修复
+
+- 静态复核确认跟踪的 `far-family-dev.service` 用分号串联 Mistral、Google、Meta，前一家族
+  非零退出时 Bash 仍会继续，systemd 最终可能把后一家族的成功误报为整个 unit 成功。主分支
+  unit 现以 `set -eo pipefail` fail-fast，并让最后一个 Meta runner 使用 `exec` 传递真实状态。
+- 只读监控脚本原先检查 `minus_typed_conflict`，但正式 runner 的实际目录名是
+  `far_minus_typed_conflict`；该错误会漏报整条 untyped arm。现已改正，并把当前使用的
+  `far-family-dev-mistral-resume.service` 纳入服务状态与 journal 输出。
+- 这些修改只面向未来运维和只读可见性，**没有部署到正在运行的远端冻结工作树**。WS2 正式
+  运行继续使用 D: 上的干净提交 `bd57585716b4c046db97311209a0d9f7ec340e6d`、同一 checkpoint
+  和 Mistral-only transient unit；不修改实验实现、配置、digest、样本、门禁或输出。
+- 同期只读巡检显示 Mistral FAR formal 已前进至 44/60、44 个 ID 唯一，正在 `F0212`；
+  transient service 仍为 active、`NRestarts=0`，未见运行错误或其他 GPU 任务抢占。
