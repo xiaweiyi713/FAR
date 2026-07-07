@@ -2305,5 +2305,11 @@ evidence bundle verified successfully, releasing the GPU.
   applicability-boundary account，不再把完整 FAR 架构或每个查询/修订组件写成已获支持。
 - 将 G-P 的 0.414 exact-McNemar 功效和 `directional_reproduction` 限定写入实验设计；这不会
   改写 G-F，也明确禁止未来把不显著结果解释为机制不存在。
+- 推送后 GitHub CI 自动触发，fail-closed 地发现 `paper/main.tex` 的新 SHA 尚未传播到
+  `reports/solo_paper_readiness.json` 与 `reports/project_status_snapshot.json`；失败只来自这两份
+  派生报告过期。按证据依赖顺序先重生成 solo readiness，再重生成 project status，两个报告
+  继续为 `ready:true` / diagnostic `complete:true`，并绑定新的 paper SHA
+  `ad31e0631a0d26c9e1fed55bdba0e16f91882d83c4e8030bb4c1c514fe3d065f`。
 - 本次仅修改论文与状态文本，未调用模型、未读取预测结果以调整门禁、未访问或运行任何
-  held-out/test，且不改 F1–F10、实验配置、样本、digest、指标或停止规则。
+  held-out/test 数据，且不改 F1–F10、实验配置、样本、digest、指标或停止规则；本地没有运行
+  测试套件，派生报告命令只重算已冻结 dev 证据和文本指纹。
