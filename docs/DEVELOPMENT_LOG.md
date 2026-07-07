@@ -2516,3 +2516,18 @@ evidence bundle verified successfully, releasing the GPU.
 - 本轮运行 `scripts/watch_windows_family_dev.sh windows-gpu` 仅做只读巡检：Mistral family
   manifest 可见；family-dev、boundary 与 Ollama 相关 service 均为 inactive；未发现
   `experiments.family_dev`、Ollama 或 `train.py` 进程；未启动训练、未访问 held-out/test。
+
+## 2026-07-07 — WS2 复现手册改用 guarded starter
+
+- `docs/REPRODUCING.md` 的 WS2 cross-family dev reproduction 小节此前仍展示手工
+  `systemctl --user start far-ollama-family-dev.service` 与
+  `far-family-dev@<family>.service` 的启动方式；在已有 preflight 与 dry-run starter 后，
+  继续保留裸 systemctl 命令容易绕过 digest preflight。
+- 现已将 Windows/WSL 长时运行步骤改为：安装单 family unit 模板后，先运行
+  `scripts/start_windows_family_dev_next.sh google` dry-run；只有训练窗口允许时才执行
+  `scripts/start_windows_family_dev_next.sh google --execute`。该执行路径会启动 D: backed
+  Ollama、带 `FAR_FAMILY_DEV_REQUIRE_OLLAMA=1` 复跑 preflight 精确核验 `gemma2:9b`
+  digest，然后才启动 `far-family-dev@google.service`。
+- 同一段明确 Google 完成后才能用相同 guarded starter 启动 Meta；runner 与 preflight
+  均会独立验证 predecessor manifests，错误顺序 fail-closed。本次只改复现手册，不启动训练、
+  不调用模型、不访问 held-out/test，也不改 WS2 预注册、样本、指标、digest 或输出目录。

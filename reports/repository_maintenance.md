@@ -4,7 +4,7 @@
 - `diagnostics/` 跟踪体积: 约 28.233 MiB
   (阈值 200.0 MiB;
   under_threshold=`true`).
-- 全仓跟踪文件: 479 个, 约 37.729 MiB.
+- 全仓跟踪文件: 479 个, 约 37.731 MiB.
 - 最大跟踪文件: `bench/external/ramdocs_v1/corpus.jsonl`, 约 2.553 MiB
   (阈值 50.0 MiB;
   under_threshold=`true`).

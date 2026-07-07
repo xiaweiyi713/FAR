@@ -762,14 +762,36 @@ Windows/WSL 长时运行应优先安装单家族模板 unit，避免三家族 sh
 cp scripts/systemd/far-family-dev@.service ~/.config/systemd/user/
 cp scripts/systemd/far-ollama-family-dev.service ~/.config/systemd/user/
 systemctl --user daemon-reload
-systemctl --user start far-ollama-family-dev.service
-systemctl --user start far-family-dev@mistral.service
 ```
 
-Mistral 的 `family_manifests/mistral.json` 完整生成后才可启动
-`far-family-dev@google.service`；Google 完整后才可启动
-`far-family-dev@meta.service`。runner 还会独立验证 predecessor manifest，错误顺序会
-fail-closed。正式运行期间不得切换工作树、配置、digest、输入或输出目录。
+Before starting the next family from the Mac side, use the guarded starter in
+dry-run mode. It runs the read-only preflight and prints the remote systemd
+actions without starting services:
+
+```bash
+scripts/start_windows_family_dev_next.sh google
+```
+
+Only when training is allowed, rerun with `--execute`. The execute path starts
+the D:-backed Ollama service, reruns preflight with
+`FAR_FAMILY_DEV_REQUIRE_OLLAMA=1` to verify the frozen `gemma2:9b` digest, and
+only then starts `far-family-dev@google.service`:
+
+```bash
+scripts/start_windows_family_dev_next.sh google --execute
+```
+
+Mistral 的 `family_manifests/mistral.json` 完整生成后才可执行 Google；Google 完整后才可
+执行 Meta：
+
+```bash
+scripts/start_windows_family_dev_next.sh meta
+scripts/start_windows_family_dev_next.sh meta --execute
+```
+
+The runner and preflight both independently verify predecessor manifests, so an
+incorrect family order fails closed. During any formal run, do not switch the
+worktree, config, digest, input view, or output directory.
 
 The watcher only prints service state, checkpoint counts, manifests, recent
 logs, active processes, and GPU status from `windows-gpu`. It does not start or
