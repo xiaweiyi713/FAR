@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # Read-only monitor for the WS2 family-dev run on the Windows GPU WSL host.
 #
-# This script prints service state, checkpoint counts, manifest locations, recent
-# logs, and GPU status.  It intentionally does not start/stop units, write
-# markers, inspect held-out/test inputs, or finalize results.
+# This script prints service health, checkpoint integrity, manifest locations,
+# recent logs, and GPU status.  It intentionally does not start/stop units,
+# write markers, inspect held-out/test inputs, or finalize results.
 
 set -euo pipefail
 
@@ -36,6 +36,20 @@ for unit in \
   far-ollama-boundary.service; do
   printf "%s: " "${unit}"
   systemctl --user is-active "${unit}" 2>/dev/null || true
+done
+
+echo
+echo "== active service health =="
+for unit in \
+  far-family-dev@mistral.service \
+  far-family-dev@google.service \
+  far-family-dev@meta.service \
+  far-ollama-family-dev.service; do
+  if [[ "$(systemctl --user is-active "${unit}" 2>/dev/null || true)" == "active" ]]; then
+    systemctl --user show "${unit}" \
+      -p Id -p ActiveState -p SubState -p MainPID -p NRestarts -p Result \
+      --no-pager 2>/dev/null || true
+  fi
 done
 
 echo
@@ -76,6 +90,32 @@ done
 for candidate in "${output_dir}/manifest.json" "${output_dir}/result.json" "${output_dir}/family_dev_report.md" "${output_dir}/release_manifest.json"; do
   [[ -f "${candidate}" ]] && echo "${candidate}"
 done
+
+echo
+echo "== checkpoint integrity =="
+python3 - "${output_dir}" <<'PY' 2>/dev/null || true
+from __future__ import annotations
+
+import json
+import sys
+from pathlib import Path
+
+root = Path(sys.argv[1])
+for family in ("mistral", "google", "meta"):
+    for phase, expected in (("calibration", 5), ("runs", 60)):
+        for method in ("far", "minus_typed_conflict"):
+            path = root / phase / family / method / "checkpoint.jsonl"
+            if not path.is_file():
+                continue
+            rows = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line]
+            ids = [str(row.get("sample_id", row.get("id", ""))) for row in rows]
+            unique = len(set(ids))
+            duplicates = len(ids) - unique
+            print(
+                f"{family}/{phase}/{method}: rows={len(rows)}/{expected} "
+                f"unique={unique} duplicates={duplicates}"
+            )
+PY
 
 echo
 echo "== recent family-dev log =="

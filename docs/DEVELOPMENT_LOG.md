@@ -1,5 +1,15 @@
 # Development Decision Log
 
+## 2026-07-08: WS2 monitor reports service health and checkpoint uniqueness
+
+The read-only Windows family-dev monitor now prints `MainPID`, `NRestarts`,
+`Result`, and active/sub states for active family/Ollama units. It also audits
+every existing WS2 checkpoint for expected phase size, unique IDs, and duplicate
+count. The first live audit reported Google and Ollama active with zero restarts,
+and all Mistral/Google checkpoints had zero duplicates; Google untyped remained
+in progress at 33/60. The monitor does not mutate services or outputs and does
+not read held-out/test inputs.
+
 ## 2026-07-08: Google/Gemma passed the mid-run identity and uniqueness audit
 
 At 15:15 CST, Google/Gemma had completed both 5-row calibration arms, the
