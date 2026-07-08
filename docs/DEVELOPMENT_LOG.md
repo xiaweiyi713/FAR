@@ -2896,6 +2896,13 @@ evidence bundle verified successfully, releasing the GPU.
   long-term status check、repository-maintenance check 与 WS2 independent release verifier
   全部通过。按本阶段约束未在本机运行任何 test，也未访问 held-out/test；WS3 仍等待新提交
   的 CI 成功后再启动。
+- 第二轮 CI 的 Python 3.10--3.13 作业全部通过，但 public diagnostic 在 GitHub 的 depth-1
+  checkout 中无法证明历史运行提交 `bd575857...` 是 `origin/main` 祖先；重算 evaluation
+  report 时，`publication.benchmark_manifest` 的绝对主机路径也导致 Mac 与 Linux 间的
+  逐字节假差异。public diagnostic checkout 现仅为该 provenance 检查获取完整历史；WS2
+  verifier 对 scores 继续逐字节比较，对 report 则在且仅在路径以
+  `/bench/manifest.json` 结尾时规范化该主机前缀后做完整对象比较。模型输出、指标、release
+  artifact 与指纹均未改写。
 - 首次授权执行
   `FAR_FAMILY_DEV_TRAINING_ALLOWED=1 scripts/start_windows_family_dev_next.sh google --execute`
   先启动 `far-ollama-family-dev.service`，但 digest preflight 在 Ollama 冷启动阶段查询

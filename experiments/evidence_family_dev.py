@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import copy
 import json
 import subprocess
 import tempfile
@@ -52,6 +53,20 @@ def _same_rows_by_sample_id(
         and len(predictions_by_id) == len(predictions)
         and checkpoint_by_id == predictions_by_id
     )
+
+
+def _portable_evaluation_report(report: dict[str, Any]) -> dict[str, Any]:
+    """Remove the evaluator's host-specific absolute manifest prefix."""
+
+    normalized = copy.deepcopy(report)
+    publication = normalized.get("publication")
+    if isinstance(publication, dict):
+        manifest_path = publication.get("benchmark_manifest")
+        if isinstance(manifest_path, str) and Path(manifest_path).as_posix().endswith(
+            "/bench/manifest.json"
+        ):
+            publication["benchmark_manifest"] = "bench/manifest.json"
+    return normalized
 
 
 def _verify_run(
@@ -200,11 +215,17 @@ def verify_release(output_root: Path) -> dict[str, Any]:
                         seed=BOOTSTRAP_SEED,
                         benchmark_manifest_path=ROOT / "bench" / "manifest.json",
                     )
-                    for name in ("scores.jsonl", "report.json"):
-                        if (recomputed_dir / name).read_bytes() != (
-                            output_root / "evaluations" / family / method / name
-                        ).read_bytes():
-                            errors.append(f"{family}/{method}: {name} differs from recomputation")
+                    scores_path = output_root / "evaluations" / family / method / "scores.jsonl"
+                    if (recomputed_dir / "scores.jsonl").read_bytes() != scores_path.read_bytes():
+                        errors.append(f"{family}/{method}: scores.jsonl differs from recomputation")
+                    observed_report = _read_object(
+                        output_root / "evaluations" / family / method / "report.json"
+                    )
+                    recomputed_report = _read_object(recomputed_dir / "report.json")
+                    if _portable_evaluation_report(
+                        recomputed_report
+                    ) != _portable_evaluation_report(observed_report):
+                        errors.append(f"{family}/{method}: report.json differs from recomputation")
                 except (
                     FileNotFoundError,
                     json.JSONDecodeError,
