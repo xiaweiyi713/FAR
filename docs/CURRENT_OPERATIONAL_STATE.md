@@ -1,6 +1,6 @@
 # FAR 当前运行状态
 
-状态时间：2026-07-08 09:25 CST
+状态时间：2026-07-08 09:45 CST
 适用范围：WS2 跨家族 dev 复现（Windows GPU / D: 盘 / `family_dev_v1`）
 
 ## 当前结论
@@ -32,6 +32,11 @@
   - `far-family-dev.service`：`inactive`；
   - `far-boundary.service` / `far-ollama-boundary.service`：未启动。
 - 二次复核没有残留 `experiments.family_dev`、`ollama serve` 或 `llama-server` 进程。
+- 远端 D: 工作树 `/mnt/d/FAR-workspace/FAR-longterm` 当前仍在旧提交 `bd57585`，
+  `origin/main` 也仍为 `bd57585`；本地当前提交为 `067f8b6`。因此明天恢复任何 WS2/WS3
+  运行前必须先同步远端工作树到最新 main。
+- 新增的 `scripts/prepare_windows_longterm_worktree.sh windows-gpu` dry-run 已验证：
+  服务全 inactive、远端工作树干净，并只打印 fast-forward 计划；未修改远端文件。
 - GPU 停止后最近复核：RTX 4060 Laptop GPU，约 `536 MiB / 8188 MiB` 显存占用。
 - D: 盘最近复核：`752G` 总量，`681G` 已用，`71G` 可用，使用率 `91%`。
 - 未访问 held-out/test；输入 view 仍为 dev-only，`contains_train=false`、
@@ -72,8 +77,10 @@
 
 ## 继续原则
 
-- 今晚不再训练；明天训练允许后，从同一 D: 工作树、同一冻结提交、同一输出目录恢复
-  WS2 Google/Gemma。
+- 今晚不再训练；明天训练允许后，先运行
+  `scripts/prepare_windows_longterm_worktree.sh windows-gpu` dry-run。确认无误后才用
+  `FAR_WINDOWS_PREP_ALLOWED=1 scripts/prepare_windows_longterm_worktree.sh --execute windows-gpu`
+  将 D: 工作树 fast-forward 到最新 main，再从同一输出目录恢复 WS2 Google/Gemma。
 - 不修改实验代码、配置、模型 digest、样本、指标、G-F/G-P、claim level 或输出目录。
 - 恢复前先 dry-run guarded starter；只有确认训练允许时才加
   `FAR_FAMILY_DEV_TRAINING_ALLOWED=1` 与 `--execute`。

@@ -1,5 +1,25 @@
 # Development Decision Log
 
+## 2026-07-08: Windows D: worktree preparer added for next training window
+
+Added `scripts/prepare_windows_longterm_worktree.sh` as a dry-run-by-default
+preparation step for the Windows GPU D:-backed worktree. The script checks WS2
+family-dev and WS3 boundary service state, refuses active FAR GPU runners,
+refuses dirty remote worktrees, and with explicit
+`FAR_WINDOWS_PREP_ALLOWED=1 --execute` performs only a clean
+`git fetch origin main` + `git merge --ff-only origin/main` to the current local
+commit. It can optionally install the tracked WS3 boundary systemd units after
+the fast-forward. It does not start training, run predictions, delete
+checkpoints, or inspect held-out/test inputs.
+
+A dry-run against `windows-gpu` confirmed that all FAR WS2/WS3 services are
+inactive, `/mnt/d/FAR-workspace/FAR-longterm` is clean, and both remote HEAD and
+remote `origin/main` are still at old commit `bd57585` while local main is
+`067f8b6`. The execute path was also checked without the required environment
+variable and correctly refused before any SSH action. `docs/REPRODUCING.md`,
+`docs/CURRENT_OPERATIONAL_STATE.md`, and the README now route tomorrow's WS2/WS3
+resume through this preparer before any guarded starter is used.
+
 ## 2026-07-08: WS4 TMLR result-integration matrix added
 
 Added `reports/tmlr_result_integration_matrix.md` as a zero-model WS4 writing
