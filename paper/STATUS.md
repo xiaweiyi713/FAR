@@ -55,6 +55,14 @@ limits, A/B/C outcome rules, reproducibility contract, and label/test boundary.
 `paper/supplement.tex` is retained only as the legacy AAAI upgrade-path
 supplement and is not the active TMLR evidence appendix.
 
+The main text now contains a dedicated mechanism-interpretation section. It
+frames retrieval, type mapping, detection, action selection, and revision as an
+opportunity chain rather than a monotone pipeline; explains why the local Qwen
+signal and RAMDocs nulls can coexist without claiming that construct alignment
+is the proven sole cause; and marks selective revision as an unevaluated future
+design hypothesis. WS2/WS3 remain the registered tests that determine which
+A/B/C interpretation is eventually licensed.
+
 ## Relaxed single-author machine-audited profile
 
 This profile is complete and checked by `falsirag-solo-paper-readiness`.

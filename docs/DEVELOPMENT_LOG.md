@@ -1,5 +1,18 @@
 # Development Decision Log
 
+## 2026-07-08: TMLR mechanism discussion answers the narrowed research question
+
+The active draft already reported the Qwen typed-control signal, RAMDocs double
+failure, WS1 attribution, and applicability checklist, but it did not yet turn
+them into a direct answer to “when, when not, and why.” Added a scoped mechanism
+discussion that treats typed control as a five-stage opportunity chain,
+reconciles the construction-derived local signal with the external nulls,
+identifies revision as both carrier and risk, and states exactly what WS2/WS3
+can still identify. Selective revision is labeled as an unevaluated future
+hypothesis, not a current result. The section does not alter F1--F10, reopen
+G-A, insert pending WS2/WS3 outcomes, or access held-out/test data. This was a
+zero-model paper edit.
+
 ## 2026-07-08: TMLR evidence appendix replaces the stale active supplement
 
 The standalone `paper/supplement.tex` still reflected the retained AAAI shell

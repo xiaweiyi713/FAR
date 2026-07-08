@@ -162,6 +162,59 @@ Conclusions survive metric choice & Collection F1 changes by $-0.003$ with an in
 
 On a visible 100-pair FEVER SUPPORTS/REFUTES transfer diagnostic, the heuristic and NLI detectors both obtain 0.72 accuracy. NLI raises conflict recall from 0.30 to 0.40, but the paired accuracy difference is 0 with a 95\% bootstrap interval of $[-0.05,0.05]$ and McNemar $p=1.0$. This does not validate typed FAR behavior outside the controlled benchmark.
 
+\section{Mechanism Interpretation and Applicability Boundary}
+
+\subsection{An opportunity chain, not a monotone pipeline}
+
+Typed conflict control can influence an answer only through a sequence of
+opportunities: relevant counter-evidence must be retrievable; the observed
+relation must map to a usable conflict type; the detector must expose that
+type; the policy must select an appropriate action; and the realized revision
+must preserve correct content while changing the error. The completed evidence
+does not license a multiplicative causal decomposition of these stages, but it
+does show why success at one stage is not sufficient. Complete correct-document
+retrieval does not restore a RAMDocs advantage, the detected-conflict subset is
+not reliably positive, and detected-then-wrong revision is the largest shared
+failure bucket. Typed control is therefore best understood as an opportunity
+to intervene, not as a monotone improvement applied after retrieval.
+
+\subsection{Why the local gain and external null can coexist}
+
+FalsiRAG-Bench makes counter-evidence lexically reachable and constructs labels
+in the same temporal, numerical, entity, causal, definition, and source-quality
+vocabulary used by the controller. That alignment creates a diagnostic in
+which the typed mechanism can be observed; it does not establish that the
+mechanism transports. RAMDocs instead evaluates end-to-end answer-set recovery
+under ambiguity, misinformation, and noise. Its two failed gates show that the
+local signal is insufficient on that distribution. They do not, by themselves,
+prove that construct alignment is the sole cause: the registered
+H-conflict-shape test is also not supported. The defensible synthesis is thus
+conditional rather than contradictory---the typed mechanism has a local signal,
+while its transport conditions remain only partially identified.
+
+\subsection{Revision is both carrier and risk}
+
+Every observed positive Qwen typed-minus-untyped delta passes through a changed
+revision, yet removing typed revision raises the aggregate answer score. This
+combination rules out both a detection-only account and an always-revise policy.
+It suggests a future selective-intervention design: revise only when the
+expected benefit of the typed action exceeds its risk, and otherwise preserve
+or abstain. No such selector has been evaluated here, so this is a design
+hypothesis rather than a reported FAR capability. A proper test would register
+the selector before execution and score selective risk, coverage, and answer
+quality without replacing the current frozen gates.
+
+\subsection{What the remaining workstreams can identify}
+
+WS2 asks whether the local signal is specific to Qwen or directionally recurs
+across Mistral, Gemma, and Llama under a fixed two-arm protocol. WS3 asks whether
+typed effects track preregistered external conflict conditions rather than only
+the construction-derived diagnostic. Until their independently verified
+releases exist, neither cross-family recurrence nor an external applicability
+condition is a result. Their role is to choose among the registered A/B/C paper
+lines, not to rescue RAMDocs G-A, unlock held-out data, or reinstate a general
+end-to-end claim.
+
 \section{Limitations and Responsible Use}
 The candidate set reuses a small controlled source corpus, includes synthetic passages, and has correlated variants. Its labels are not human-validated gold, the reported split is development data, and evaluation is not externally blind. The machine audit measures agreement with construction labels and cannot reveal errors shared by construction, the LLM signal, and deterministic rules. Current completed results come from one local model and do not yet establish multi-model generality. Rule conflict detectors are high precision but incomplete; model detectors inherit calibration and domain-shift risk. Retrieval failure can hide a true counterexample, while spurious low-quality contradictions can induce over-correction. The benchmark is not current factual advice and is unsuitable for medical, legal, financial, or policy decisions. Final authors remain responsible for checking all text, citations, experiments, and disclosure requirements.
 
