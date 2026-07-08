@@ -32,6 +32,22 @@ def _object(path: Path) -> dict[str, Any]:
     return value
 
 
+def _same_rows_by_sample_id(
+    checkpoint: list[dict[str, Any]],
+    predictions: list[dict[str, Any]],
+) -> bool:
+    """Compare finalized rows without requiring checkpoint execution order."""
+
+    checkpoint_by_id = {str(row.get("sample_id")): row for row in checkpoint}
+    predictions_by_id = {str(row.get("sample_id")): row for row in predictions}
+    return (
+        len(checkpoint) == len(predictions)
+        and len(checkpoint_by_id) == len(checkpoint)
+        and len(predictions_by_id) == len(predictions)
+        and checkpoint_by_id == predictions_by_id
+    )
+
+
 def _verify_run(
     path: Path,
     *,
@@ -65,7 +81,7 @@ def _verify_run(
         "errors": int(manifest.get("errors", -1)) == 0,
         "prediction_hash": manifest.get("predictions_sha256")
         == sha256_file(path / "predictions.jsonl"),
-        "checkpoint": checkpoint == predictions,
+        "checkpoint": _same_rows_by_sample_id(checkpoint, predictions),
         "signature": manifest.get("run_signature") == identity.get("run_signature"),
         "config": identity.get("config_sha256") == CONFIG_SHA256,
         "data_manifest": identity.get("data_manifest_sha256")

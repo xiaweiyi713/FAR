@@ -15,18 +15,18 @@
 | 工作流 | 状态 | 门禁/证据 | 摘要 |
 |---|---|---|---|
 | WS1 | `complete` | G-R1 | 226 shared RAMDocs errors uniquely bucketed; four hypotheses recorded |
-| WS2 | `in_progress_active` | G-F | a WS2 single-family dev run is active on the Windows GPU |
+| WS2 | `complete` | G-F | verified three-family directional reproduction; G-F passed with 3/3 positive family directions |
 | WS3 | `registered_inputs_ready_pending_predictions` | G-B | two public dev imports and protocol are frozen; no model predictions yet |
-| WS4 | `in_progress_waiting_for_ws2_ws3` | paper readiness / claim scope | TMLR mechanism-boundary direction is documented; final paper waits for WS2/WS3 |
+| WS4 | `in_progress_waiting_for_ws3` | paper readiness / claim scope | verified WS2 is integrated into the TMLR draft; final branch waits for WS3 |
 | WS5 | `complete` | G-P | power gate is institutionalized; WS2 forced to directional reproduction |
 | WS6 | `baseline_complete_ongoing_maintenance` | repository-maintenance audit | tracked diagnostics size and output/outputs hygiene are machine-audited |
 
 ## 进度解释
 
-- 已闭合或已建立基线: WS1, WS5, WS6
-- 仍未完成: WS2, WS3, WS4
+- 已闭合或已建立基线: WS1, WS2, WS5, WS6
+- 仍未完成: WS3, WS4
 - 总目标完成: `false`
-- 当前首要动作: monitor the active WS2 single-family dev run until it completes or fails
+- 当前首要动作: prepare the Windows worktree at latest main and start the registered WS3 public-dev boundary mapping only after its guarded preflight passes
 
 ## 安全边界
 

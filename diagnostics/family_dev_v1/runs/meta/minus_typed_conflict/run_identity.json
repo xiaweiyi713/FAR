@@ -1,0 +1,97 @@
+{
+  "benchmark_input": "falsirag_bench.jsonl",
+  "benchmark_input_sha256": "63db7916ef42d3da7e70fe977471a6958afec2a760bcad3d43526052ecd5dff3",
+  "config_sha256": "127eff6e860dc81b1252a8d8507fe499da4b5bad1e095097686f3c696e6f4090",
+  "corpus_sha256": "cca5f62db0fbb51e1bae8111ea85fe169fba7be5a8e63847a9c1c048cdae25cd",
+  "created_at": "2026-07-08T11:02:40.158563+00:00",
+  "environment": {
+    "packages": {
+      "PyYAML": "6.0.3",
+      "anthropic": "0.109.1",
+      "faiss-cpu": "1.14.3",
+      "huggingface-hub": "1.19.0",
+      "numpy": "2.4.4",
+      "ollama": "0.6.2",
+      "openai": "2.41.1",
+      "rank-bm25": "0.2.2",
+      "sentence-transformers": "5.5.1",
+      "torch": "2.12.0+cu126",
+      "transformers": "5.11.0",
+      "verarag": "0.1.0"
+    },
+    "platform": "Linux-6.18.33.1-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+    "python": "3.11.15"
+  },
+  "implementation_sha256": "4c38fbf9853120af29c998f8ad5562f05cf889ccef9f26dfe1be8fc3e5ab94c2",
+  "limit": null,
+  "llm": {
+    "base_url": "http://localhost:11434",
+    "cache_enabled": true,
+    "cache_namespace": "far-llama3.1-8b-v1",
+    "cache_path": "/mnt/d/FAR-outputs/cache/llama_open.sqlite3",
+    "enabled": true,
+    "max_tokens": 1200,
+    "model": "llama3.1:8b",
+    "provider": "ollama",
+    "temperature": 0.0,
+    "unload_after_sample": true
+  },
+  "llm_runtime": {
+    "enabled": true,
+    "model": "llama3.1:8b",
+    "ollama_model": {
+      "details": {
+        "context_length": 131072,
+        "embedding_length": 4096,
+        "families": [
+          "llama"
+        ],
+        "family": "llama",
+        "format": "gguf",
+        "parameter_size": "8.0B",
+        "parent_model": "",
+        "quantization_level": "Q4_K_M"
+      },
+      "digest": "46e0c10c039e019119339687c3c1757cc81b9da49709a3b3924863ba87ca666e",
+      "model": "llama3.1:8b",
+      "modified_at": "2026-07-06T13:43:44.1125502+08:00",
+      "size": 4920753328
+    },
+    "provider": "ollama"
+  },
+  "method": "far_minus_typed_conflict",
+  "retrieval": {
+    "allow_dense_fallback": false,
+    "backend": "vera_hybrid",
+    "dense": {
+      "batch_size": 32,
+      "device": "cpu",
+      "local_files_only": true,
+      "model_name": "BAAI/bge-base-en-v1.5",
+      "revision": "a5beb1e3e68b9ab74eb54cfd186867f64f240e1a"
+    },
+    "dense_weight": 0.6,
+    "rerank": {
+      "batch_size": 16,
+      "candidate_k": 20,
+      "device": "cpu",
+      "enabled": true,
+      "local_files_only": true,
+      "model_name": "BAAI/bge-reranker-base",
+      "preserve_base_top_k": 1,
+      "revision": "2cfc18c9415c912f9d8155881c133215df768a70"
+    },
+    "sparse": {
+      "b": 0.75,
+      "k1": 1.5
+    },
+    "sparse_weight": 0.4
+  },
+  "run_signature": "29f79532256c7f7206bf102c603d905568b7c97a038ae2e93bd5fb921e1667fc",
+  "schema_version": "far-run-signature-v2",
+  "source_revision": {
+    "git_commit": "bd57585716b4c046db97311209a0d9f7ec340e6d",
+    "git_dirty": false
+  },
+  "split": "dev"
+}

@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import Any
 
 from bench.build.common import sha256_file, write_json
+from experiments.evidence_family_dev import verify_release as verify_family_dev_release
 from experiments.protocol_boundary import verify_boundary_protocol
 from experiments.protocol_family_dev import verify_family_protocol
 from experiments.protocol_longterm import FROZEN_FACT_IDS, ROOT, verify_active_roadmap
@@ -152,9 +153,22 @@ def _ws2(root: Path) -> dict[str, Any]:
     )
     paused_checkpoint_documented = "minus_typed_conflict" in current_text and "7/60" in current_text
     errors = [f"protocol: {item}" for item in protocol.get("errors", [])]
+    release_audit: dict[str, Any] = {}
     if release_exists:
-        status = "release_present_unverified"
-        summary = "local family-dev release exists and should be verified with evidence_family_dev"
+        try:
+            release_audit = verify_family_dev_release(release_manifest.parent)
+        except (OSError, ValueError, json.JSONDecodeError) as exc:
+            errors.append(f"release audit failed: {exc}")
+        if release_audit.get("valid") is True:
+            status = "complete"
+            summary = (
+                "verified three-family directional reproduction; G-F passed with 3/3 "
+                "positive family directions"
+            )
+        else:
+            status = "release_present_invalid"
+            summary = "local family-dev release exists but independent verification failed"
+            errors.extend(f"release: {item}" for item in release_audit.get("errors", []))
     elif active_run_documented:
         status = "in_progress_active"
         summary = "a WS2 single-family dev run is active on the Windows GPU"
@@ -177,7 +191,11 @@ def _ws2(root: Path) -> dict[str, Any]:
         "priority": "P0",
         "status": status,
         "gate": "G-F",
-        "gate_passed": None,
+        "gate_passed": (
+            release_audit.get("gate_f_passed")
+            if release_audit.get("valid") is True
+            else None
+        ),
         "protocol_valid": bool(protocol.get("valid")),
         "required_claim_level": protocol.get("required_claim_level"),
         "test_accessed": protocol.get("test_accessed"),
@@ -193,6 +211,8 @@ def _ws2(root: Path) -> dict[str, Any]:
             "methods": protocol.get("methods"),
             "samples": protocol.get("samples"),
             "local_release_present": release_exists,
+            "release_verified": release_audit.get("valid") is True,
+            "direction_consistent": release_audit.get("direction_consistent"),
             "active_run_documented": active_run_documented,
             "mistral_complete_paused_documented": mistral_complete_paused_documented,
             "google_preflight_documented": google_preflight_documented,
@@ -280,12 +300,12 @@ def _ws4(root: Path) -> dict[str, Any]:
     return {
         "name": "WS4 paper and venue repositioning",
         "priority": "P0",
-        "status": "in_progress_waiting_for_ws2_ws3" if not errors else "incomplete",
+        "status": "in_progress_waiting_for_ws3" if not errors else "incomplete",
         "gate": "paper readiness / claim scope",
         "gate_passed": ready_relaxed,
         "test_accessed": False,
         "human_iaa": False,
-        "summary": "TMLR mechanism-boundary direction is documented; final paper waits for WS2/WS3",
+        "summary": "verified WS2 is integrated into the TMLR draft; final branch waits for WS3",
         "key_evidence": [
             _file_record(root, status_path),
             _file_record(root, main_path),
@@ -297,7 +317,8 @@ def _ws4(root: Path) -> dict[str, Any]:
             "strict_aaai_inactive": strict_inactive,
             "result_integration_matrix_present": integration_matrix_present,
             "relaxed_machine_audited_paper_ready": ready_relaxed,
-            "waiting_for_ws2_ws3": True,
+            "ws2_integrated": "WS2 is now complete and independently verified" in status_text,
+            "waiting_for_ws3": True,
         },
         "errors": errors,
     }
@@ -404,7 +425,12 @@ def build_status(root: Path = ROOT) -> dict[str, Any]:
     ]
     ws2_status = str(workstreams["WS2"].get("status"))
     ws2_details = workstreams["WS2"].get("details", {})
-    if ws2_status == "in_progress_active":
+    if ws2_status == "complete":
+        next_training_step = (
+            "prepare the Windows worktree at latest main and start the registered WS3 "
+            "public-dev boundary mapping only after its guarded preflight passes"
+        )
+    elif ws2_status == "in_progress_active":
         next_training_step = (
             "monitor the active WS2 single-family dev run until it completes or fails"
         )

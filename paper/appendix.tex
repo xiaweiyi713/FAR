@@ -31,8 +31,13 @@ registered hypotheses are not supported & A revision-mediated heterogeneous
 effect and observed boundary, not an upstream-only or metric-rescue explanation \\
 G-P power audit & Estimated WS2 exact-McNemar power is 0.414 for a +0.078 effect
 & WS2 is directional; nonsignificance cannot establish absence \\
-WS2 / WS3 & Registered and partly operational, but final verified releases do
-not yet exist & No cross-family or external-boundary result may be inserted yet \\
+WS2 family development & Mistral, Gemma, and Llama are 3/3 positive; combined
+typed-minus-untyped answer difference is $+0.0645$, G-F passes, and the
+independent release audit is valid & Directional reproduction across these
+local machine-audited development families; not external or human validation \\
+WS3 public development & Protocol and two imports are frozen, but no model
+prediction or verified release exists & No external-boundary result may be
+inserted yet \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -42,7 +47,8 @@ The machine-readable sources for these rows are
 \path{diagnostics/solo_v1},
 \path{diagnostics/ramdocs_v2},
 \path{diagnostics/attribution_v1/manifest.json}, and
-\path{diagnostics/power_v1/manifest.json}. The active roadmap fingerprint is
+\path{diagnostics/power_v1/manifest.json}, and
+\path{diagnostics/family_dev_v1/manifest.json}. The active roadmap fingerprint is
 \texttt{91eb3205fe127271bc5f4882025243d9974a711e311ef074fcbde09aa86e7cf7};
 it binds the ten frozen facts F1--F10 and is not changed by this appendix.
 
@@ -123,12 +129,18 @@ two of three family directions are positive is 0.929. The protocol therefore
 fixes \texttt{directional\_reproduction} as the claim level. There is one
 registered run and no Round~2.
 
-The eventual paper branch is selected only after independently verified WS2
-and WS3 releases exist. A positive, directionally consistent WS2 plus at least
-one matched external condition yields the A-line mechanism-and-boundary paper;
-directional WS2 with null or mixed WS3 yields the B-line bounded-transfer
-paper; inconsistent or nonpositive WS2 yields the C-line Qwen-specific
-falsification account. None of these branches permits end-to-end superiority,
+The completed release has positive family-level answer differences for
+Mistral, Gemma, and Llama ($+0.0528$, $+0.0673$, and $+0.0735$). The combined
+difference is $+0.0645$; stratified exact McNemar counts are 31 versus 9
+($p=0.000680$), and the family-cluster bootstrap 95\% interval is
+$[+0.0528,+0.0735]$. G-F passes, but the low-power designation and all
+machine-audited development qualifiers remain binding.
+
+The verified WS2 result closes the C-line family-inconsistency branch. The
+eventual paper branch is selected after the independently verified WS3 release:
+at least one matched external condition yields the A-line
+mechanism-and-boundary paper, whereas null or mixed WS3 evidence yields the
+B-line bounded-transfer paper. Neither branch permits end-to-end superiority,
 human-gold, or external-blind language under the current evidence.
 
 \section{Reproducibility and Runtime Contract}
@@ -172,6 +184,6 @@ gold for FAR's conflict and revision traces.
 The 58-item FalsiRAG-Bench held-out input and RAMDocs test split remain locked
 and unevaluated. Phase~B LLM jury, author adjudication, G-K/G-S, jury rescoring,
 and the earlier three-system-family matrix were not run after the RAMDocs stop
-rule. Future WS2 evidence remains machine-audited development evidence; future
-WS3 evidence remains public-development boundary evidence. Neither may be
+rule. Completed WS2 evidence remains machine-audited development evidence;
+future WS3 evidence remains public-development boundary evidence. Neither may be
 described as human IAA, publication gold, or external blind testing.

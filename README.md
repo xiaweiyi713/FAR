@@ -80,9 +80,9 @@ flowchart LR
 | 开发集实验 | Qwen3.5 9B 上的 FAR、6 个基线和 4 个消融均已完成；typed-vs-untyped 为正，其余消融为混合或负结果 |
 | WS1 机制归因 | G-R1 通过、零模型调用；226 条共同错误唯一分桶，H-upstream / H-conflict-shape / H-metric / H-component 均为 not supported。证据见 [机制归因报告](reports/mechanism_attribution.md)。 |
 | G-P 功效门 | 历史回顾与独立 verifier 已完成；WS2 的分层 McNemar 功效为 0.414，强制 claim level 为 `directional_reproduction`。见 [功效报告](reports/power_retrospective.md)。 |
-| WS2 跨家族复现 | Mistral / Gemma / Llama 的 digest、配置和两臂协议已冻结；仅运行 60 条 dev，不触碰 held-out。Mistral 与 Google/Gemma 两个 family 的两臂均已完成 60/60 并生成 complete manifest；Meta/Llama 两个校准臂与正式 FAR 臂已完成，正式 untyped 臂正在运行。WS2 的全部 family 必须使用 preparer 的 `--family-dev` 模式，保持远端工作树 detached 在冻结提交 `bd57585`，不得切到最新 main。运维事实见 [当前运行状态](docs/CURRENT_OPERATIONAL_STATE.md)。 |
+| WS2 跨家族复现 | Mistral / Gemma / Llama 三家族的 typed/untyped 正式臂均已完成 60/60，独立 verifier 通过。三家族方向 3/3 为正，合并 answer-correctness 差 `+0.0645`，分层 exact McNemar `31 vs 9`、`p=0.000680`，家族 bootstrap 95% CI `[+0.0528,+0.0735]`，G-F 通过。鉴于 G-P 功效仅 0.414，结论仍限定为机器审计 dev 上的 `directional_reproduction`，不是人类金标、盲测或端到端优越性。证据见 [WS2 报告](diagnostics/family_dev_v1/family_dev_report.md)与[当前运行状态](docs/CURRENT_OPERATIONAL_STATE.md)。 |
 | WS3 外部边界测绘 | 已注册为 `directional_boundary_mapping`；WikiContradict 与 Google CONFLICTS 两个公开 dev 诊断已导入并通过 verifier。尚未运行模型 prediction。已新增 dry-run 默认的 guarded starter/stopper；只有 WS2 完整释放 GPU 后，才使用 worktree preparer 的显式 `--latest` 模式切回最新 main、安装 WS3 units 并启动。见 [WS3 预注册](docs/PLAN_BOUNDARY_MAPPING.md)与[选型备忘录](reports/boundary_benchmark_selection.md)。 |
-| WS6 工程维护 | 仓库维护基线已命令化并接入公开 CI：`diagnostics/` 跟踪体积约 28.233 MiB，`output/` 已停用，`outputs/` 仅保留 `.gitkeep`。见 [仓库维护报告](reports/repository_maintenance.md)。 |
+| WS6 工程维护 | 仓库维护基线已命令化并接入公开 CI：纳入 WS2 release 后 `diagnostics/` 跟踪体积约 37.106 MiB，仍低于 200 MiB 门限；`output/` 已停用，`outputs/` 仅保留 `.gitkeep`。见 [仓库维护报告](reports/repository_maintenance.md)。 |
 | 2+4 外部验证 | RAMDocs dev Round 1：8 方法 × 350 条已完整冻结并通过指纹校验；FAR 与最强 Multi-Query 基线 exact match 均为 0.3114，G-A 失败。Round 2 只重跑 FAR 的最终答案合并层，完整 350 条后 FAR 为 0.3086、冻结 Multi-Query 基线为 0.3114，配对差 -0.0029、95% CI [-0.0314, 0.0286]、McNemar p=1.0；第二次 G-A 失败触发停止规则和论文降级。证据包见 [diagnostics/ramdocs_v2](diagnostics/ramdocs_v2)。 |
 | 跨家族陪审团 | 工具已实现，但因 G-A 失败未执行；不存在 jury gold，更不得称为真人 IAA |
 | 正式多模型矩阵 | 工具已实现，但按停止规则不运行 jury-gold 矩阵或投稿包装 |

@@ -20,7 +20,7 @@
 \maketitle
 
 \begin{abstract}
-Retrieval-augmented language agents typically seek evidence that supports an emerging answer, while reflection remains weakly grounded in retrievable counter-evidence. We introduce Falsification-Augmented Retrieval (FAR), which decomposes an answer into dependent claims, assigns typed evidence requirements, retrieves support, refutation, and boundary evidence, and exposes a typed revision trace. On a 60-item Qwen3.5 9B machine-audited development diagnostic, typed control improves answer correctness over an otherwise matched untyped ablation by 0.078 (95\% paired bootstrap [0.034, 0.124]). This signal does not transfer into an end-to-end advantage on 350 upstream-labelled RAMDocs development items in either of two preregistered rounds. A frozen, zero-model-call attribution of the 226 shared errors finds 103 cases where conflict was detected but revision remained wrong; complete retrieval and partial-credit scoring do not restore a FAR advantage. All 34 positive per-item typed deltas on the Qwen diagnostic pass through changed revisions, even though removing typed revision improves the overall mean. Typed revision therefore mediates heterogeneous benefit and harm rather than a uniformly positive correction stage. We claim a narrow, machine-audited mechanism signal and characterize its observed boundary; we do not claim human-validated gold, external blindness, or general end-to-end superiority.
+Retrieval-augmented language agents typically seek evidence that supports an emerging answer, while reflection remains weakly grounded in retrievable counter-evidence. We introduce Falsification-Augmented Retrieval (FAR), which decomposes an answer into dependent claims, assigns typed evidence requirements, retrieves support, refutation, and boundary evidence, and exposes a typed revision trace. On a 60-item Qwen3.5 9B machine-audited development diagnostic, typed control improves answer correctness over an otherwise matched untyped ablation by 0.078 (95\% paired bootstrap [0.034, 0.124]). A preregistered development reproduction is positive for Mistral, Gemma, and Llama, with a combined typed-minus-untyped difference of 0.0645 and G-F passing. This signal does not transfer into an end-to-end advantage on 350 upstream-labelled RAMDocs development items in either of two preregistered rounds. A frozen, zero-model-call attribution of the 226 shared errors finds 103 cases where conflict was detected but revision remained wrong; complete retrieval and partial-credit scoring do not restore a FAR advantage. All 34 positive per-item typed deltas on the Qwen diagnostic pass through changed revisions, even though removing typed revision improves the overall mean. Typed revision therefore mediates heterogeneous benefit and harm rather than a uniformly positive correction stage. We claim a narrow, machine-audited mechanism signal and directional local-family reproduction; we do not claim human-validated gold, external blindness, external-domain transfer, or general end-to-end superiority.
 \end{abstract}
 
 \section{Introduction}
@@ -32,7 +32,7 @@ FAR makes this loop explicit. It (1) builds a claim dependency graph, (2) assign
 \begin{itemize}
     \item an explicit typed-conflict control framework with auditable claim, evidence, conflict, and revision traces, evaluated against a matched untyped control;
     \item a reproducible machine-audited synthetic benchmark and evaluation contract that keeps positive, negative, and mixed component evidence visible; and
-    \item an applicability-boundary account that combines the positive Qwen development signal with two preregistered RAMDocs null results and frozen mechanism attribution.
+    \item an applicability-boundary account that combines the positive Qwen development signal, directional recurrence across three additional local model families, two preregistered RAMDocs null results, and frozen mechanism attribution.
 \end{itemize}
 The empirical claim is intentionally narrower than the full architecture: the present evidence supports typed conflict control, not a positive marginal contribution from every query family or revision component.
 
@@ -204,19 +204,32 @@ hypothesis rather than a reported FAR capability. A proper test would register
 the selector before execution and score selective risk, coverage, and answer
 quality without replacing the current frozen gates.
 
-\subsection{What the remaining workstreams can identify}
+\subsection{Cross-family directional reproduction}
 
-WS2 asks whether the local signal is specific to Qwen or directionally recurs
-across Mistral, Gemma, and Llama under a fixed two-arm protocol. WS3 asks whether
-typed effects track preregistered external conflict conditions rather than only
-the construction-derived diagnostic. Until their independently verified
-releases exist, neither cross-family recurrence nor an external applicability
-condition is a result. Their role is to choose among the registered A/B/C paper
-lines, not to rescue RAMDocs G-A, unlock held-out data, or reinstate a general
+WS2 tested the matched typed and untyped controls on 60 development items for
+each of Mistral, Gemma, and Llama. All three family-level answer-correctness
+differences are positive: $+0.0528$, $+0.0673$, and $+0.0735$, respectively.
+The preregistered combined difference is $+0.0645$ over 180 pairs; the
+stratified exact McNemar comparison has 31 typed-only versus 9 untyped-only
+successes ($p=0.000680$), and the family-cluster bootstrap 95\% interval is
+$[+0.0528,+0.0735]$. G-F therefore passes with 3/3 positive family directions.
+The independently verified release remains machine-audited development
+evidence. Because prospective G-P power was only 0.414, it licenses
+directional reproduction across these local families, not human validation,
+blind external generalization, or end-to-end superiority.
+
+\subsection{What external boundary mapping can identify}
+
+WS3 asks whether typed effects track preregistered external conflict conditions
+rather than only the construction-derived diagnostic. The verified WS2 result
+rules out the registered C-line family-inconsistency branch, but the A-line
+mechanism-and-boundary and B-line bounded-transfer interpretations remain
+unresolved until the WS3 public-development release is independently verified.
+WS3 cannot rescue RAMDocs G-A, unlock held-out data, or reinstate a general
 end-to-end claim.
 
 \section{Limitations and Responsible Use}
-The candidate set reuses a small controlled source corpus, includes synthetic passages, and has correlated variants. Its labels are not human-validated gold, the reported split is development data, and evaluation is not externally blind. The machine audit measures agreement with construction labels and cannot reveal errors shared by construction, the LLM signal, and deterministic rules. Current completed results come from one local model and do not yet establish multi-model generality. Rule conflict detectors are high precision but incomplete; model detectors inherit calibration and domain-shift risk. Retrieval failure can hide a true counterexample, while spurious low-quality contradictions can induce over-correction. The benchmark is not current factual advice and is unsuitable for medical, legal, financial, or policy decisions. Final authors remain responsible for checking all text, citations, experiments, and disclosure requirements.
+The candidate set reuses a small controlled source corpus, includes synthetic passages, and has correlated variants. Its labels are not human-validated gold, the reported split is development data, and evaluation is not externally blind. The machine audit measures agreement with construction labels and cannot reveal errors shared by construction, the LLM signal, and deterministic rules. The completed family reproduction uses four local model families on the same constructed development distribution and therefore does not establish external-domain or deployment generality. Rule conflict detectors are high precision but incomplete; model detectors inherit calibration and domain-shift risk. Retrieval failure can hide a true counterexample, while spurious low-quality contradictions can induce over-correction. The benchmark is not current factual advice and is unsuitable for medical, legal, financial, or policy decisions. Final authors remain responsible for checking all text, citations, experiments, and disclosure requirements.
 
 Our preregistered no-budget 2+4 profile completed only its external Phase A and
 then stopped. Round 1 on 350 RAMDocs development items with upstream labels gave
@@ -235,11 +248,11 @@ agreement, not publication-grade human gold, and not an externally held test.
 Any future attempt to revive this profile would have to start from the recorded
 failure analysis, disclose the negative refutation and boundary ablations, the
 typed revision trade-off, and the FEVER null result, and demonstrate transfer
-across 7--9B open-model families before replacing this single-model diagnostic
-claim.
+beyond the completed directional local-family reproduction before replacing
+the current machine-audited development claim.
 
 \section{Conclusion}
-FAR turns ``what could make this answer wrong?'' into a typed, retrievable control protocol. On the released machine-audited Qwen development diagnostic, typed conflict control outperforms a matched untyped alternative, but two preregistered RAMDocs rounds and the frozen attribution reject a general end-to-end or upstream-only explanation. Revision is the path through which all observed positive typed deltas occur and also the component whose removal raises the aggregate score. The resulting contribution is a narrow, reproducible account of revision-mediated heterogeneous effects and their observed boundary---not human-gold, blind-test, or general superiority evidence.
+FAR turns ``what could make this answer wrong?'' into a typed, retrievable control protocol. On the released machine-audited Qwen development diagnostic, typed conflict control outperforms a matched untyped alternative, and the direction recurs across Mistral, Gemma, and Llama. However, two preregistered RAMDocs rounds and the frozen attribution reject a general end-to-end or upstream-only explanation. Revision is the path through which all observed positive typed deltas occur and also the component whose removal raises the aggregate score. The resulting contribution is a narrow, reproducible account of revision-mediated heterogeneous effects and their observed boundary---not human-gold, blind-test, external-domain, or general superiority evidence.
 
 \bibliography{references}
 \end{document}

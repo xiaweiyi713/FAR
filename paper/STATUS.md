@@ -27,6 +27,16 @@ study at a +0.078 effect. WS2 is consequently a directional reproduction: a
 nonsignificant G-F cannot establish absence, while fewer than 2/3 positive
 families or a nonpositive combined effect narrows the claim to Qwen-specific.
 
+WS2 is now complete and independently verified. Mistral, Gemma, and Llama have
+positive typed-minus-untyped answer differences of +0.0528, +0.0673, and
++0.0735. The combined difference is +0.0645 over 180 pairs; stratified exact
+McNemar counts are 31 typed-only versus 9 untyped-only successes
+(`p=0.000680`), and the family-cluster bootstrap 95% interval is
+[+0.0528,+0.0735]. G-F passes with 3/3 positive directions. These are local,
+machine-audited development results under the preregistered
+`directional_reproduction` claim level, not human gold, blind validation, or a
+restored end-to-end superiority claim.
+
 WS3 is now preregistered separately as `directional_boundary_mapping`.
 WikiContradict and Google CONFLICTS are frozen as two public development
 diagnostics with verified import manifests. The registered runner compares FAR
@@ -39,9 +49,11 @@ publication gold, or external blind testing.
 The active result-integration checklist is
 `reports/tmlr_result_integration_matrix.md`. It maps every WS2/WS3 outcome
 combination onto the A/B/C paper lines from the roadmap and fixes the section
-edits that are allowed after the verified WS2/WS3 releases exist. Until then,
-the draft must keep its current narrow Qwen mechanism claim and cannot import
-unverified WS2/WS3 placeholders.
+edits allowed after verified releases exist. WS2 now closes the C-line
+family-inconsistency branch; WS3 will select between the A-line
+mechanism-and-boundary and B-line bounded-transfer interpretations. The draft
+may include the verified WS2 result but must not insert an unverified WS3
+placeholder.
 
 The active text now also has a reproducible TMLR submission build path:
 `scripts/build_tmlr_paper.sh` takes the scientific body from `paper/main.tex`,
@@ -60,8 +72,9 @@ frames retrieval, type mapping, detection, action selection, and revision as an
 opportunity chain rather than a monotone pipeline; explains why the local Qwen
 signal and RAMDocs nulls can coexist without claiming that construct alignment
 is the proven sole cause; and marks selective revision as an unevaluated future
-design hypothesis. WS2/WS3 remain the registered tests that determine which
-A/B/C interpretation is eventually licensed.
+design hypothesis. The verified WS2 result establishes directional family
+recurrence; WS3 remains the registered test that determines whether the final
+interpretation is A-line or B-line.
 
 ## Relaxed single-author machine-audited profile
 

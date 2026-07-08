@@ -4,11 +4,12 @@ This report turns the roadmap decision tree into a writing checklist for the
 active TMLR mechanism-and-boundary paper. It is not a new empirical result and
 does not alter F1--F10, G-F, G-B, G-P, label status, or held-out/test policy.
 
-## Fixed baseline before WS2/WS3 finish
+## Fixed baseline before WS3 finishes
 
 - The paper line is mechanism-and-boundary, not end-to-end superiority.
-- The completed positive evidence is still the 60-item Qwen development
-  typed-vs-untyped signal under machine-audited labels.
+- The completed positive evidence now includes the 60-item Qwen development
+  typed-vs-untyped signal and the independently verified WS2 directional
+  recurrence across Mistral, Gemma, and Llama under machine-audited labels.
 - The completed negative evidence is still two preregistered RAMDocs development
   failures plus WS1 attribution: complete retrieval, partial-credit scoring, and
   a detection-only explanation do not rescue the original broad claim.
@@ -25,6 +26,16 @@ does not alter F1--F10, G-F, G-B, G-P, label status, or held-out/test policy.
 | B-line | G-F passes or remains directionally positive, but not enough for strong cross-family language | WS3 is all null, underpowered, or mixed without clear matched hypotheses | The mechanism is real on the constructed Qwen diagnostic, but external transfer is tightly bounded | "The evidence supports a local typed-control mechanism while showing that external public-dev transfer is fragile and boundary-dependent." | Do not call null WS3 evidence of absence; emphasize G-P underpowering and RAMDocs upstream bottlenecks |
 | C-line | WS2 is directionally inconsistent, nonpositive, or family-specific | Any WS3 result, including positives, is insufficient to generalize the Qwen effect | Typed conflict control is Qwen- and distribution-specific; the contribution is a negative boundary map plus infrastructure | "The positive typed-control signal does not survive the planned generalization checks, turning the contribution into a reproducible account of where the mechanism fails." | No cross-family claim; any WS3 positive is a hypothesis for future work, not rescue evidence |
 
+## Current verified selection state
+
+WS2 passes G-F with a combined typed-minus-untyped answer difference of
+`+0.0645`, 3/3 positive family directions, stratified exact McNemar counts of
+31 versus 9 (`p=0.000680`), and a family-cluster bootstrap 95% interval of
+`[+0.0528,+0.0735]`. The independent release audit is valid. The C-line
+family-inconsistency condition is therefore closed; WS3 will select between the
+A-line and B-line. The `directional_reproduction` ceiling remains binding
+because G-P power is 0.414.
+
 ## Section-level editing rules
 
 | Paper section | A-line edit | B-line edit | C-line edit |
@@ -39,6 +50,8 @@ does not alter F1--F10, G-F, G-B, G-P, label status, or held-out/test policy.
 
 - Insert WS2 only after `diagnostics/family_dev_v1/manifest.json` exists and
   `experiments.evidence_family_dev verify` passes.
+- The WS2 insertion condition is now satisfied; its release manifest and
+  independent audit both pass.
 - Insert WS3 only after `diagnostics/boundary_v1/manifest.json` exists,
   `reports/boundary_matrix.md` exists, and `experiments.evidence_boundary verify`
   passes.

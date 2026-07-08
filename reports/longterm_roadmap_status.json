@@ -4,16 +4,16 @@
   "progress": {
     "complete_workstreams": [
       "WS1",
+      "WS2",
       "WS5",
       "WS6"
     ],
     "goal_complete": false,
     "incomplete_workstreams": [
-      "WS2",
       "WS3",
       "WS4"
     ],
-    "next_training_step": "monitor the active WS2 single-family dev run until it completes or fails"
+    "next_training_step": "prepare the Windows worktree at latest main and start the registered WS3 public-dev boundary mapping only after its guarded preflight passes"
   },
   "roadmap": {
     "active_sha256": "91eb3205fe127271bc5f4882025243d9974a711e311ef074fcbde09aa86e7cf7",
@@ -84,7 +84,8 @@
     },
     "WS2": {
       "details": {
-        "active_run_documented": true,
+        "active_run_documented": false,
+        "direction_consistent": true,
         "families": [
           "mistral",
           "google",
@@ -93,18 +94,19 @@
         "google_preflight_documented": false,
         "google_started_paused_documented": false,
         "guarded_starter_documented": true,
-        "local_release_present": false,
+        "local_release_present": true,
         "methods": [
           "far",
           "minus_typed_conflict"
         ],
         "mistral_complete_paused_documented": false,
         "paused_checkpoint_documented": false,
+        "release_verified": true,
         "samples": 60
       },
       "errors": [],
       "gate": "G-F",
-      "gate_passed": null,
+      "gate_passed": true,
       "human_iaa": false,
       "key_evidence": [
         {
@@ -115,20 +117,20 @@
         {
           "exists": true,
           "path": "docs/CURRENT_OPERATIONAL_STATE.md",
-          "sha256": "f82acc2a265455382ca6dcdacdf91c4652f060e368d3e633b21501e9d668050d"
+          "sha256": "673560b5936aa05187fd78154e13ed66deeca033ba5316878d0378918c7b1153"
         },
         {
-          "exists": false,
+          "exists": true,
           "path": "diagnostics/family_dev_v1/manifest.json",
-          "sha256": null
+          "sha256": "b3602c31f3b7721c91e2e4b0f4466eb2403b3c59cf216e90e0a03a22328e807d"
         }
       ],
       "name": "WS2 cross-family typed/untyped dev reproduction",
       "priority": "P0",
       "protocol_valid": true,
       "required_claim_level": "directional_reproduction",
-      "status": "in_progress_active",
-      "summary": "a WS2 single-family dev run is active on the Windows GPU",
+      "status": "complete",
+      "summary": "verified three-family directional reproduction; G-F passed with 3/3 positive family directions",
       "test_accessed": false
     },
     "WS3": {
@@ -184,7 +186,8 @@
         "result_integration_matrix_present": true,
         "strict_aaai_inactive": true,
         "tmlr_relocated": true,
-        "waiting_for_ws2_ws3": true
+        "waiting_for_ws3": true,
+        "ws2_integrated": true
       },
       "errors": [],
       "gate": "paper readiness / claim scope",
@@ -194,12 +197,12 @@
         {
           "exists": true,
           "path": "paper/STATUS.md",
-          "sha256": "c72a8ed274f18c9257fa25c4f5a4574f436a337e5c5589de8b5c73ee136cfe7f"
+          "sha256": "5112025dc840529d0960421bc831291c4d757c2a12fdcc9648cae92a5bfd2686"
         },
         {
           "exists": true,
           "path": "paper/main.tex",
-          "sha256": "b437b19c285edb77067b8e3073877c1dc725f5eb5026feee7b6e34f9abb7b8ea"
+          "sha256": "4e81b370bb59b8e546ebb9ecf05678afbd0e460c5ce5c582ef1d04be0cd2db57"
         },
         {
           "exists": true,
@@ -209,13 +212,13 @@
         {
           "exists": true,
           "path": "reports/tmlr_result_integration_matrix.md",
-          "sha256": "55d84382c4005ea2e4029a27eb9a8d9ec913038d9a296b60b5e6029287179eee"
+          "sha256": "183ba7eb9d48ffb1387ee36729f6ba437965930b32b98f1c58a8ae460171843b"
         }
       ],
       "name": "WS4 paper and venue repositioning",
       "priority": "P0",
-      "status": "in_progress_waiting_for_ws2_ws3",
-      "summary": "TMLR mechanism-boundary direction is documented; final paper waits for WS2/WS3",
+      "status": "in_progress_waiting_for_ws3",
+      "summary": "verified WS2 is integrated into the TMLR draft; final branch waits for WS3",
       "test_accessed": false
     },
     "WS5": {
@@ -249,9 +252,9 @@
     },
     "WS6": {
       "details": {
-        "diagnostics_mib": 28.233,
+        "diagnostics_mib": 37.106,
         "outputs_tracks_only_gitkeep": true,
-        "tracked_files": 487
+        "tracked_files": 553
       },
       "errors": [],
       "gate": "repository-maintenance audit",

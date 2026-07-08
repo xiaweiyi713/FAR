@@ -1,0 +1,86 @@
+{
+  "api_cost_usd": 0,
+  "calibration_pipeline_samples": 10,
+  "config_sha256": "127eff6e860dc81b1252a8d8507fe499da4b5bad1e095097686f3c696e6f4090",
+  "digest": "46e0c10c039e019119339687c3c1757cc81b9da49709a3b3924863ba87ca666e",
+  "family": "meta",
+  "formal_pipeline_samples": 120,
+  "human_iaa": false,
+  "input": {
+    "contains_test": false,
+    "contains_train": false,
+    "corpus_sha256": "cca5f62db0fbb51e1bae8111ea85fe169fba7be5a8e63847a9c1c048cdae25cd",
+    "dev_sha256": "63db7916ef42d3da7e70fe977471a6958afec2a760bcad3d43526052ecd5dff3",
+    "protocol_fingerprint": "5acc611bf8bb79740a996cc7bc9bd262bc55a661373f070670da19f7aa48433b",
+    "samples": 60,
+    "schema_version": "far-family-dev-input-v1",
+    "source": "bench/splits/dev.jsonl",
+    "split": "dev",
+    "test_accessed": false
+  },
+  "input_manifest_sha256": "b78b2f647c465fa9fb07863870bc5337abf7faabdb730b565db4ea7524c0016e",
+  "manifests": {
+    "calibration": {
+      "far": {
+        "completed": 5,
+        "errors": 0,
+        "expected": 5,
+        "method": "far",
+        "missing_ids": [],
+        "partial": true,
+        "predictions_sha256": "773006924d72fa7d12dcbf3caa2d3e3c655ec462bc6f5516c10aadd7abd53d40",
+        "run_signature": "9c3ce4ccaf53cece74ea991c4751857b7c00b97d0dd588be5e42cc8d9b41dc55",
+        "schema_version": "far-run-manifest-v1",
+        "split": "dev",
+        "status": "complete"
+      },
+      "minus_typed_conflict": {
+        "completed": 5,
+        "errors": 0,
+        "expected": 5,
+        "method": "far_minus_typed_conflict",
+        "missing_ids": [],
+        "partial": true,
+        "predictions_sha256": "8cab296862f5ab07fe68cd389e373f17bac43a27f148f325ff12599c69e732d5",
+        "run_signature": "09bfb9166885a5bd1b3cd6669538df747e4128d1c0ba96f9d322bcb3785812ae",
+        "schema_version": "far-run-manifest-v1",
+        "split": "dev",
+        "status": "complete"
+      }
+    },
+    "formal": {
+      "far": {
+        "completed": 60,
+        "errors": 0,
+        "expected": 60,
+        "method": "far",
+        "missing_ids": [],
+        "partial": false,
+        "predictions_sha256": "9346aaedcfe3463fa0aff9aad78f60b5dd0bb22c2d6a2ce70e4e8ea93fd048bd",
+        "run_signature": "b1cb5adff5c7c5e149bd660a3c59933d8bf75935f324c2eef28e5fe526e80240",
+        "schema_version": "far-run-manifest-v1",
+        "split": "dev",
+        "status": "complete"
+      },
+      "minus_typed_conflict": {
+        "completed": 60,
+        "errors": 0,
+        "expected": 60,
+        "method": "far_minus_typed_conflict",
+        "missing_ids": [],
+        "partial": false,
+        "predictions_sha256": "b817be0fce003965c7a68957c752190d3ff1e280d603e5d71d4e50fde8477d9b",
+        "run_signature": "29f79532256c7f7206bf102c603d905568b7c97a038ae2e93bd5fb921e1667fc",
+        "schema_version": "far-run-manifest-v1",
+        "split": "dev",
+        "status": "complete"
+      }
+    }
+  },
+  "model": "llama3.1:8b",
+  "protocol_fingerprint": "5acc611bf8bb79740a996cc7bc9bd262bc55a661373f070670da19f7aa48433b",
+  "publication_gold": false,
+  "schema_version": "far-family-dev-family-run-v1",
+  "source_commit": "bd57585716b4c046db97311209a0d9f7ec340e6d",
+  "test_accessed": false
+}

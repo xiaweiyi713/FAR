@@ -1,5 +1,34 @@
 # Development Decision Log
 
+## 2026-07-08: WS2 completed, independently verified, and passed G-F
+
+Meta/Llama completed formal `minus_typed_conflict` at 60/60 with 60 unique IDs,
+zero duplicates, and a complete zero-error manifest, then wrote the Meta family
+manifest and exited normally with zero service restarts. The guarded stopper
+released the WS2 Ollama service without touching WS3. The dev-only raw release
+was rsynced from D: to `diagnostics/family_dev_v1`, finalized exactly once, and
+independently recomputed.
+
+The verified primary result is a combined typed-minus-untyped answer difference
+of +0.0645 over 180 pairs. All three family directions are positive (Mistral
++0.0528, Gemma +0.0673, Llama +0.0735); stratified exact McNemar counts are 31
+typed-only versus 9 untyped-only successes (`p=0.000680`), and the family-cluster
+bootstrap 95% interval is [+0.0528,+0.0735]. G-F passes. G-P still limits the
+claim to `directional_reproduction` because prospective power is 0.414; this is
+machine-audited local development evidence, not human gold, blind validation,
+or end-to-end superiority.
+
+The first independent audit exposed a verifier-only ordering defect: every
+five-row calibration checkpoint retained registered execution order, whereas
+`CheckpointWriter.finalize` intentionally sorted `predictions.jsonl` by
+`sample_id`. The rows were byte-for-byte equal after indexing by sample ID, but
+the verifier incorrectly required list-order equality. Both WS2 and the
+isomorphic WS3 verifier now compare complete row mappings by sample ID while
+also rejecting duplicate IDs. No prediction, checkpoint, score, gate, protocol,
+or frozen fact changed. The rerun audit returned `valid=true`, `errors=[]`,
+`gate_f_passed=true`, and `test_accessed=false`. No held-out/test input or test
+suite was accessed.
+
 ## 2026-07-08: Meta/Llama formal FAR completed and untyped reached 40/60
 
 The read-only audit at 20:36 CST confirmed Meta/Llama formal `runs/far` complete

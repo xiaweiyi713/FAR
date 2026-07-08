@@ -1,0 +1,105 @@
+{
+  "adequately_powered": false,
+  "api_cost_usd": 0,
+  "calibration_pipeline_samples": 30,
+  "families": [
+    {
+      "digest": "6577803aa9a036369e481d648a2baebb381ebc6e897f2bb9a766a2aa7bfbc1cf",
+      "direction_positive": true,
+      "family": "mistral",
+      "mcnemar": {
+        "baseline_only": 3,
+        "candidate_only": 8,
+        "discordant": 11,
+        "method": "exact-two-sided-mcnemar-v1",
+        "p_value": 0.2265625
+      },
+      "model": "mistral:7b-instruct",
+      "samples": 60,
+      "typed_minus_untyped_answer_correctness": 0.05277616366702962,
+      "typed_minus_untyped_revision_accuracy": 0.08333333333333333,
+      "typed_minus_untyped_typed_conflict_f1": 0.4
+    },
+    {
+      "digest": "ff02c3702f322b9e075e9568332d96c0a7028002f1a5a056e0a6784320a4db0b",
+      "direction_positive": true,
+      "family": "google",
+      "mcnemar": {
+        "baseline_only": 4,
+        "candidate_only": 14,
+        "discordant": 18,
+        "method": "exact-two-sided-mcnemar-v1",
+        "p_value": 0.0308837890625
+      },
+      "model": "gemma2:9b",
+      "samples": 60,
+      "typed_minus_untyped_answer_correctness": 0.06728632940101414,
+      "typed_minus_untyped_revision_accuracy": 0.26666666666666666,
+      "typed_minus_untyped_typed_conflict_f1": 0.4
+    },
+    {
+      "digest": "46e0c10c039e019119339687c3c1757cc81b9da49709a3b3924863ba87ca666e",
+      "direction_positive": true,
+      "family": "meta",
+      "mcnemar": {
+        "baseline_only": 2,
+        "candidate_only": 9,
+        "discordant": 11,
+        "method": "exact-two-sided-mcnemar-v1",
+        "p_value": 0.0654296875
+      },
+      "model": "llama3.1:8b",
+      "samples": 60,
+      "typed_minus_untyped_answer_correctness": 0.07351444463834247,
+      "typed_minus_untyped_revision_accuracy": 0.25,
+      "typed_minus_untyped_typed_conflict_f1": 0.3741935483870968
+    }
+  ],
+  "formal_pipeline_samples": 360,
+  "gate_p_completed": true,
+  "human_iaa": false,
+  "machine_disposition_sensitivity": {
+    "machine_confirmed": {
+      "combined_delta": 0.06427250423795804,
+      "pairs": 105
+    },
+    "machine_disputed": {
+      "combined_delta": 0.06488004423196775,
+      "pairs": 75
+    }
+  },
+  "primary": {
+    "binary_threshold": 0.8,
+    "combined_delta": 0.06452564590212874,
+    "direction_consistent": true,
+    "family_cluster_bootstrap": {
+      "clusters": 3,
+      "confidence": 0.95,
+      "lower": 0.05277616366702962,
+      "method": "family-cluster-percentile-bootstrap-v1",
+      "pairs_per_cluster": 60,
+      "probability_positive": 1.0,
+      "resamples": 2000,
+      "seed": 1729,
+      "upper": 0.07351444463834247
+    },
+    "gate_f_passed": true,
+    "metric": "typed_minus_untyped_answer_correctness",
+    "pairs": 180,
+    "positive_families": 3,
+    "stratified_exact_mcnemar": {
+      "baseline_only": 9,
+      "candidate_only": 31,
+      "discordant": 40,
+      "method": "exact-two-sided-mcnemar-v1",
+      "p_value": 0.0006795482549932785
+    }
+  },
+  "protocol_fingerprint": "5acc611bf8bb79740a996cc7bc9bd262bc55a661373f070670da19f7aa48433b",
+  "publication_gold": false,
+  "required_claim_level": "directional_reproduction",
+  "schema_version": "far-family-dev-result-v1",
+  "source_commit": "bd57585716b4c046db97311209a0d9f7ec340e6d",
+  "split": "dev",
+  "test_accessed": false
+}
