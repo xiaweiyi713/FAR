@@ -1,5 +1,14 @@
 # Development Decision Log
 
+## 2026-07-08: Meta/Llama formal FAR reached 40/60
+
+The read-only monitor at 18:15 CST reported Meta/Llama formal `runs/far` at
+40/60 rows. `far-family-dev@meta.service` remained active with `MainPID=994572`
+and `NRestarts=0`; no duplicate checkpoint rows or service-health anomaly were
+observed. This remains an in-progress WS2 checkpoint only: Meta has not yet
+written a family manifest, no G-F gate has been evaluated, and no held-out/test
+input was accessed.
+
 ## 2026-07-08: Meta/Llama formal FAR reached 30/60
 
 The read-only monitor at 17:53 CST reported Meta/Llama formal `runs/far` at
