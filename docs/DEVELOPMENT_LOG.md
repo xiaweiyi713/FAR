@@ -1,5 +1,19 @@
 # Development Decision Log
 
+## 2026-07-08: WS4 TMLR result-integration matrix added
+
+Added `reports/tmlr_result_integration_matrix.md` as a zero-model WS4 writing
+control. It converts the long-term roadmap's A/B/C decision tree into a concrete
+paper-editing matrix for all WS2/WS3 outcome combinations. The matrix fixes the
+allowed title claim, abstract sentence, section edits, and mandatory caveats for
+the A-line, B-line, and C-line without changing F1-F10, G-F, G-B, G-P, labels,
+or held-out/test policy.
+
+`paper/STATUS.md`, `reports/README.md`, and the public README now point to the
+matrix. `experiments.longterm_status` treats the matrix as WS4 key evidence and
+requires the A/B/C lines plus the held-out/test caveat before marking WS4 as
+properly relocated and waiting for WS2/WS3.
+
 ## 2026-07-08: WS3 boundary guarded starter added
 
 Added a dry-run-by-default WS3 start path without launching training:

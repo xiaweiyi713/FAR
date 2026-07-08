@@ -247,8 +247,10 @@ def _ws4(root: Path) -> dict[str, Any]:
     status_path = root / "paper/STATUS.md"
     main_path = root / "paper/main.tex"
     readiness_path = root / "reports/solo_paper_readiness.json"
+    integration_path = root / "reports/tmlr_result_integration_matrix.md"
     status_text = _read_text(status_path)
     main_text = _read_text(main_path)
+    integration_text = _read_text(integration_path)
     errors: list[str] = []
     try:
         readiness = _json(readiness_path)
@@ -260,8 +262,20 @@ def _ws4(root: Path) -> dict[str, Any]:
     boundary_claim = (
         "machine-audited mechanism signal" in main_text and "observed boundary" in main_text
     )
+    integration_matrix_present = (
+        "A-line" in integration_text
+        and "B-line" in integration_text
+        and "C-line" in integration_text
+        and "held-out/test policy" in integration_text
+    )
     ready_relaxed = readiness.get("ready") is True
-    if not (tmlr_relocated and strict_inactive and boundary_claim and ready_relaxed):
+    if not (
+        tmlr_relocated
+        and strict_inactive
+        and boundary_claim
+        and integration_matrix_present
+        and ready_relaxed
+    ):
         errors.append("WS4 paper relocation evidence is incomplete")
     return {
         "name": "WS4 paper and venue repositioning",
@@ -276,10 +290,12 @@ def _ws4(root: Path) -> dict[str, Any]:
             _file_record(root, status_path),
             _file_record(root, main_path),
             _file_record(root, readiness_path),
+            _file_record(root, integration_path),
         ],
         "details": {
             "tmlr_relocated": tmlr_relocated,
             "strict_aaai_inactive": strict_inactive,
+            "result_integration_matrix_present": integration_matrix_present,
             "relaxed_machine_audited_paper_ready": ready_relaxed,
             "waiting_for_ws2_ws3": True,
         },

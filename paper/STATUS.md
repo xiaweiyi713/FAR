@@ -36,6 +36,13 @@ pass/fail result. No WS3 model prediction has been run yet; its eventual
 results must be presented as public-dev boundary evidence, not human IAA,
 publication gold, or external blind testing.
 
+The active result-integration checklist is
+`reports/tmlr_result_integration_matrix.md`. It maps every WS2/WS3 outcome
+combination onto the A/B/C paper lines from the roadmap and fixes the section
+edits that are allowed after the verified WS2/WS3 releases exist. Until then,
+the draft must keep its current narrow Qwen mechanism claim and cannot import
+unverified WS2/WS3 placeholders.
+
 ## Relaxed single-author machine-audited profile
 
 This profile is complete and checked by `falsirag-solo-paper-readiness`.

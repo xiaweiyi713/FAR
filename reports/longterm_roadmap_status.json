@@ -181,6 +181,7 @@
     "WS4": {
       "details": {
         "relaxed_machine_audited_paper_ready": true,
+        "result_integration_matrix_present": true,
         "strict_aaai_inactive": true,
         "tmlr_relocated": true,
         "waiting_for_ws2_ws3": true
@@ -193,7 +194,7 @@
         {
           "exists": true,
           "path": "paper/STATUS.md",
-          "sha256": "20055fde66f94c66058b829c780b57ad88fe4c1a5d3ca338f841fee42fc7f99e"
+          "sha256": "fd6cb65ba286c3f7d27fe119776f92ff35da017efd45012d32ab73b6c982bd3d"
         },
         {
           "exists": true,
@@ -204,6 +205,11 @@
           "exists": true,
           "path": "reports/solo_paper_readiness.json",
           "sha256": "b071eb74d98984b5cfa11b01a3c1debdb5a884c6b9f668de2c2188c63ab65415"
+        },
+        {
+          "exists": true,
+          "path": "reports/tmlr_result_integration_matrix.md",
+          "sha256": "55d84382c4005ea2e4029a27eb9a8d9ec913038d9a296b60b5e6029287179eee"
         }
       ],
       "name": "WS4 paper and venue repositioning",
@@ -245,7 +251,7 @@
       "details": {
         "diagnostics_mib": 28.233,
         "outputs_tracks_only_gitkeep": true,
-        "tracked_files": 483
+        "tracked_files": 484
       },
       "errors": [],
       "gate": "repository-maintenance audit",

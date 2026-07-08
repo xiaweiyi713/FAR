@@ -14,6 +14,9 @@ This directory contains durable, versioned reports derived from tracked project 
   [machine-readable JSON](longterm_roadmap_status.json): a generated WS1--WS6
   ledger for the post-stop-rule roadmap. It is a status dashboard, not a new
   empirical gate or submission waiver.
+- [TMLR result-integration matrix](tmlr_result_integration_matrix.md): the WS4
+  writing checklist that maps verified WS2/WS3 outcome combinations to the
+  A/B/C paper lines without changing frozen facts, gates, or evidence status.
 - [Single-author machine-audited paper readiness](solo_paper_readiness.md) and
   [machine-readable JSON](solo_paper_readiness.json): the explicitly relaxed
   paper gate. It permits only the narrow typed-control mechanism claim and
