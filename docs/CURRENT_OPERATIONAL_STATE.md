@@ -1,6 +1,6 @@
 # FAR 当前运行状态
 
-状态时间：2026-07-08 18:15 CST
+状态时间：2026-07-08 18:39 CST
 适用范围：WS2 跨家族 dev 复现（Windows GPU / D: 盘 / `family_dev_v1`）
 
 ## 当前结论
@@ -65,7 +65,7 @@
     `errors=0`、`partial=true`；
   - Meta/Llama untyped 校准：`5/5`、5 个 ID 唯一，complete manifest 已核验为
     `errors=0`、`partial=true`；
-  - Meta/Llama 正式 `runs/far`：`40/60`、ID 唯一、无重复，runner 正在继续；
+  - Meta/Llama 正式 `runs/far`：`50/60`、ID 唯一、无重复，runner 正在继续；
   - Meta calibration run identity 已复核为冻结提交 `bd575857...`、`git_dirty=false`、
     `llama3.1:8b`、预注册 digest/config SHA、`split=dev`、`limit=5`。
 - 当前日志位置：
