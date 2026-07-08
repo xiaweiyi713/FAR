@@ -1,6 +1,6 @@
 # FAR 当前运行状态
 
-状态时间：2026-07-08 10:50 CST
+状态时间：2026-07-08 15:15 CST
 适用范围：WS2 跨家族 dev 复现（Windows GPU / D: 盘 / `family_dev_v1`）
 
 ## 当前结论
@@ -9,8 +9,8 @@
   `far-family-dev@google.service` 与 `far-ollama-family-dev.service` 当前均为
   `active`；Meta/Llama 与 WS3 boundary 仍未启动。
 - WS2 Mistral family 已完整完成。Google/Gemma 已从原有 2 条
-  `calibration/google/far` checkpoint 安全恢复；截至本状态快照已完成 4/5，正在处理
-  第 5 条。没有启动任何 held-out/test 运行。
+  `calibration/google/far` checkpoint 安全恢复；截至本状态快照，两组校准均为 5/5，
+  typed 正式臂为 60/60，untyped 正式臂为 32/60。没有启动任何 held-out/test 运行。
 - 启动与暂停路径：
   1. `scripts/start_windows_family_dev_next.sh google` dry-run 返回 `valid=true`；
   2. 首次授权启动先启动了 `far-ollama-family-dev.service`，但
@@ -42,8 +42,8 @@
   WS2 完成前不得切换到最新 main。
 - `scripts/prepare_windows_longterm_worktree.sh` 已修正为必须显式选择目标：
   `--family-dev` 保持 WS2 冻结提交，`--latest` 仅供 WS3 或维护使用。
-- GPU 最近复核：RTX 4060 Laptop GPU，约 `1389 MiB / 8188 MiB`，利用率 `19%`；
-  模型处于当前样本阶段间的加载/推理波动中。
+- GPU 最近复核：RTX 4060 Laptop GPU，约 `7439 MiB / 8188 MiB`，利用率 `11%`；
+  Gemma 正在执行当前 untyped 样本。
 - D: 盘最近复核：`752G` 总量，`681G` 已用，`71G` 可用，使用率 `91%`。
 - 未访问 held-out/test；输入 view 仍为 dev-only，`contains_train=false`、
   `contains_test=false`、`test_accessed=false`。
@@ -54,10 +54,13 @@
 - 输入目录：`/mnt/d/FAR-outputs/family_dev_input_v1`
 - 当前运行 family：Google/Gemma
 - 当前进度：
-  - `calibration/google/far/checkpoint.jsonl`：`4/5` 行，4 个已完成 ID 唯一；
-  - `calibration/google/minus_typed_conflict/checkpoint.jsonl`：尚未写出；
-  - `runs/google/far/checkpoint.jsonl`：尚未写出；
-  - `runs/google/minus_typed_conflict/checkpoint.jsonl`：尚未写出。
+  - `calibration/google/far/checkpoint.jsonl`：`5/5` 行、5 个 ID 唯一，complete manifest 已写出；
+  - `calibration/google/minus_typed_conflict/checkpoint.jsonl`：`5/5` 行、5 个 ID 唯一，complete manifest 已写出；
+  - `runs/google/far/checkpoint.jsonl`：`60/60` 行、60 个 ID 唯一，complete manifest 已写出；
+  - `runs/google/minus_typed_conflict/checkpoint.jsonl`：`32/60` 行、32 个 ID 唯一，正在运行。
+  - 当前 untyped `run_identity.json` 已复核：`source_commit=bd575857...`、
+    `git_dirty=false`、`model=gemma2:9b`、冻结 digest/config SHA 匹配、`split=dev`、
+    `limit=null`。
 - 当前日志位置：
   - `journalctl --user -u far-family-dev@google.service -n 120 --no-pager`
   - `journalctl --user -u far-ollama-family-dev.service -n 120 --no-pager`

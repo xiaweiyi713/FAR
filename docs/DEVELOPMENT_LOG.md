@@ -1,5 +1,16 @@
 # Development Decision Log
 
+## 2026-07-08: Google/Gemma passed the mid-run identity and uniqueness audit
+
+At 15:15 CST, Google/Gemma had completed both 5-row calibration arms, the
+60-row formal FAR arm, and 32/60 rows of the formal untyped arm. Every observed
+checkpoint had a unique sample ID set of the expected current size. The active
+untyped identity remained bound to clean commit
+`bd57585716b4c046db97311209a0d9f7ec340e6d`, frozen `gemma2:9b` digest and
+config SHA, `split=dev`, and `limit=null`. The Google and Ollama services were
+active, while Meta and WS3 remained inactive. No checkpoint was edited, no
+model/config/gate changed, and no held-out/test input was accessed.
+
 ## 2026-07-08: resume revealed and fixed WS2/WS3 worktree-target ambiguity
 
 Training resumed after the user reopened the window. A clean D:-backed
