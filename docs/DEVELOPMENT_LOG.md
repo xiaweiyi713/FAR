@@ -12,8 +12,10 @@ The guarded Meta dry-run then returned `valid=true`. Its online preflight
 confirmed the preregistered `llama3.1:8b` digest before starting
 `far-family-dev@meta.service` (initial PID 994572, zero restarts). Mistral and
 Google therefore remain frozen predecessors while Meta is the only family GPU
-runner. No configuration, checkpoint, metric, gate, or held-out/test input was
-changed or accessed.
+runner. The first Meta FAR calibration row (`F0182`) then landed with a unique
+ID and a run identity matching the frozen commit, clean worktree, Llama digest,
+config SHA, dev split, and five-row limit. No configuration, checkpoint,
+metric, gate, or held-out/test input was changed or accessed.
 
 ## 2026-07-08: WS2 monitor reports service health and checkpoint uniqueness
 
