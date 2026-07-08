@@ -1,5 +1,16 @@
 # Development Decision Log
 
+## 2026-07-08: Meta/Llama completed calibration and entered formal FAR
+
+The read-only monitor at 16:46 CST reported `far-family-dev@meta.service`
+still active with `MainPID=994572`, `NRestarts=0`, and `far-ollama-family-dev`
+active. Meta/Llama now has both calibration arms complete at 5/5 with unique
+IDs and zero duplicates, while the formal `far` arm has started and written
+1/60 rows. Mistral and Google/Gemma remain complete with their family manifests;
+no Meta family manifest or final WS2 manifest exists yet. The run remains bound
+to the D:-backed frozen WS2 worktree and dev-only input view. No checkpoint,
+configuration, gate, metric, or held-out/test input was changed or accessed.
+
 ## 2026-07-08: Google/Gemma completed and Meta/Llama started in frozen order
 
 Google/Gemma finished the formal untyped arm at 60/60 and exited normally with

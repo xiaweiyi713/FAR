@@ -1,6 +1,6 @@
 # FAR 当前运行状态
 
-状态时间：2026-07-08 16:35 CST
+状态时间：2026-07-08 16:46 CST
 适用范围：WS2 跨家族 dev 复现（Windows GPU / D: 盘 / `family_dev_v1`）
 
 ## 当前结论
@@ -43,7 +43,8 @@
   WS2 完成前不得切换到最新 main。
 - `scripts/prepare_windows_longterm_worktree.sh` 已修正为必须显式选择目标：
   `--family-dev` 保持 WS2 冻结提交，`--latest` 仅供 WS3 或维护使用。
-- Meta 刚启动时 runner 正在初始化；GPU 占用会随 Llama 加载与推理变化。
+- Meta/Llama 两个校准臂已经完成，runner 已进入正式 `far` 臂；GPU 占用会随 Llama
+  加载与推理变化。
 - D: 盘最近复核：`752G` 总量，约 `688G` 已用，`65G` 可用，使用率 `92%`。
 - 未访问 held-out/test；输入 view 仍为 dev-only，`contains_train=false`、
   `contains_test=false`、`test_accessed=false`。
@@ -62,11 +63,13 @@
     manifest 的协议、模型、digest、config SHA、冻结 source commit 与安全标志均匹配。
   - Meta/Llama typed 校准：`5/5`、5 个 ID 唯一，complete manifest 已核验为
     `errors=0`、`partial=true`；
-  - Meta/Llama untyped 校准：`1/5`，已自动开始下一臂；
-  - Meta run identity 已复核为冻结提交 `bd575857...`、`git_dirty=false`、
+  - Meta/Llama untyped 校准：`5/5`、5 个 ID 唯一，complete manifest 已核验为
+    `errors=0`、`partial=true`；
+  - Meta/Llama 正式 `runs/far`：`1/60`、ID 唯一、无重复，runner 正在继续；
+  - Meta calibration run identity 已复核为冻结提交 `bd575857...`、`git_dirty=false`、
     `llama3.1:8b`、预注册 digest/config SHA、`split=dev`、`limit=5`。
 - 当前日志位置：
-  - `journalctl --user -u far-family-dev@google.service -n 120 --no-pager`
+  - `journalctl --user -u far-family-dev@meta.service -n 120 --no-pager`
   - `journalctl --user -u far-ollama-family-dev.service -n 120 --no-pager`
   - `scripts/watch_windows_family_dev.sh windows-gpu`
 - 已完成 family：Mistral
