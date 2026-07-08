@@ -1,5 +1,18 @@
 # Development Decision Log
 
+## 2026-07-08: active TMLR manuscript gets a reproducible venue shell
+
+The roadmap had already relocated the active paper from AAAI-27 to TMLR, but
+the only direct manuscript build still used the retained AAAI style. Added
+`scripts/build_tmlr_paper.sh`, which keeps `paper/main.tex` as the single
+scientific body and generates an anonymous TMLR submission under the ignored
+`paper/build/tmlr/` directory. The builder fetches and verifies the unmodified
+official `JmlrOrg/tmlr-style-file` at commit
+`7bf90efe3a0debbba703c05c43f3ff7e4d4a2992`, records the manuscript SHA in a
+generated lock, and uses the TMLR bibliography style. This closes a WS4
+packaging gap without inserting unverified WS2/WS3 results or changing F1--F10.
+It performs no model call, experiment, evaluator, or held-out/test access.
+
 ## 2026-07-08: Windows D: worktree preparer added for next training window
 
 Added `scripts/prepare_windows_longterm_worktree.sh` as a dry-run-by-default

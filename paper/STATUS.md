@@ -43,6 +43,13 @@ edits that are allowed after the verified WS2/WS3 releases exist. Until then,
 the draft must keep its current narrow Qwen mechanism claim and cannot import
 unverified WS2/WS3 placeholders.
 
+The active text now also has a reproducible TMLR submission build path:
+`scripts/build_tmlr_paper.sh` takes the scientific body from `paper/main.tex`,
+wraps it in the unmodified official TMLR anonymous-submission style pinned at
+upstream commit `7bf90efe3a0debbba703c05c43f3ff7e4d4a2992`, and writes only ignored
+artifacts under `paper/build/tmlr/`. The AAAI source remains an inactive upgrade
+artifact; it is no longer the only compilable shell for the active paper.
+
 ## Relaxed single-author machine-audited profile
 
 This profile is complete and checked by `falsirag-solo-paper-readiness`.

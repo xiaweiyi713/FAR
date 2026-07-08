@@ -32,9 +32,10 @@
   - `far-family-dev.service`：`inactive`；
   - `far-boundary.service` / `far-ollama-boundary.service`：未启动。
 - 二次复核没有残留 `experiments.family_dev`、`ollama serve` 或 `llama-server` 进程。
-- 远端 D: 工作树 `/mnt/d/FAR-workspace/FAR-longterm` 当前仍在旧提交 `bd57585`，
-  `origin/main` 也仍为 `bd57585`；本地当前提交为 `067f8b6`。因此明天恢复任何 WS2/WS3
-  运行前必须先同步远端工作树到最新 main。
+- 远端 D: 工作树 `/mnt/d/FAR-workspace/FAR-longterm` 最近复核仍在旧提交 `bd57585`，
+  `origin/main` 也仍为 `bd57585`；本地 `main` 已继续前进。因此明天恢复任何 WS2/WS3
+  运行前必须先通过 preparer 同步到届时本地最新提交；具体目标 SHA 由脚本运行时读取，
+  不在本状态页硬编码。
 - 新增的 `scripts/prepare_windows_longterm_worktree.sh windows-gpu` dry-run 已验证：
   服务全 inactive、远端工作树干净，并只打印 fast-forward 计划；未修改远端文件。
 - GPU 停止后最近复核：RTX 4060 Laptop GPU，约 `536 MiB / 8188 MiB` 显存占用。

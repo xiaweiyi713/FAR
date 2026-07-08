@@ -1,5 +1,21 @@
 # Reproduction Guide
 
+## Build the active TMLR manuscript
+
+The active mechanism-and-boundary paper shares one scientific body with the
+retained AAAI draft, but is built through the official anonymous TMLR shell:
+
+```bash
+bash scripts/build_tmlr_paper.sh
+```
+
+The builder fetches the official `JmlrOrg/tmlr-style-file` repository at the
+pinned commit recorded in the script, verifies that commit, and writes the
+generated source, style files, source lock, and PDF under
+`paper/build/tmlr/`. Use `--prepare-only` on a machine without `latexmk`.
+This command performs no model calls, experiments, scoring, or held-out/test
+access. Do not edit the generated source; edit `paper/main.tex` and rebuild.
+
 For the role-by-role path from completed annotation through external blind
 custody, trusted scoring, and final acceptance, use
 `docs/EXTERNAL_ACTION_PACKET.md`.

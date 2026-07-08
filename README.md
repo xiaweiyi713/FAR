@@ -389,7 +389,7 @@ bench/        候选基准、语料、数据结构、构造与标注工具
 baselines/    六个透明的对照系统
 eval/         指标、置信区间与配对显著性检验
 experiments/  运行器、配置、结果校验、评分与发布门禁
-paper/        AAAI-27 正文、补充材料、样式文件与复现清单
+paper/        TMLR 主线正文、结果整合状态与保留的 AAAI-27 升级制品
 submission/   不含密钥的证据与盲测声明模板
 docs/         架构、协议、实验计划与完成度审计
 tests/        单元、集成、来源追踪与失败关闭回归测试
@@ -408,7 +408,8 @@ tests/        单元、集成、来源追踪与失败关闭回归测试
 - [企划追踪矩阵](docs/PROPOSAL_TRACEABILITY.md)
 - [项目完成度审计](docs/COMPLETION_AUDIT.md)
 - [开发日志](docs/DEVELOPMENT_LOG.md)
-- [匿名论文草稿](paper/main.tex)
+- [TMLR 论文状态与构建说明](paper/STATUS.md)
+- [共享科学正文](paper/main.tex)
 
 ## 许可证
 
