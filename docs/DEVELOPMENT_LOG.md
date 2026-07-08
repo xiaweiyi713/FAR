@@ -1,5 +1,25 @@
 # Development Decision Log
 
+## 2026-07-08: WS3 boundary guarded starter added
+
+Added a dry-run-by-default WS3 start path without launching training:
+`scripts/preflight_windows_boundary.sh` and `scripts/start_windows_boundary.sh`.
+The preflight is read-only and checks the Windows D:-backed worktree, current
+expected commit, frozen WS3 plan/config/import fingerprints, public dev task
+counts, service state, finalized-release absence, active WS2/family-dev process
+absence, and optional Qwen/Ollama digest verification. The starter requires
+`FAR_BOUNDARY_TRAINING_ALLOWED=1` plus `--execute`; when authorized, it starts
+the WS3 Ollama unit first, reruns preflight with `FAR_BOUNDARY_REQUIRE_OLLAMA=1`,
+and only then starts `far-boundary.service`.
+
+A read-only preflight against `windows-gpu` failed closed, as intended: the
+remote `/mnt/d/FAR-workspace/FAR-longterm` checkout is still at old commit
+`bd57585`, the WS3 systemd units are not installed for the user, and that stale
+checkout lacks the frozen WS3 public dev imports/config files. No service was
+started, no model call was made, and no held-out/test input was inspected.
+`docs/REPRODUCING.md` now routes WS3 startup through the guarded starter rather
+than raw `systemctl start`.
+
 ## 2026-07-08: WS3 boundary stopper added without starting training
 
 After pausing WS2 for the training window, a zero-model operational gap remained

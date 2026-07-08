@@ -827,14 +827,31 @@ under `bench/external/wikicontradict_v1` and
 or held-out/test evidence.
 
 Windows/WSL 长时运行可安装 D: 盘持久化 units；只能在 WS2 已释放 GPU、Qwen digest
-复核通过且正式工作树干净并位于 `origin/main` 时启动：
+复核通过且正式工作树干净并位于当前 `origin/main` 时启动。启动前先 dry-run guarded
+starter；它只做只读 preflight，不启动服务：
+
+```bash
+scripts/start_windows_boundary.sh
+```
+
+如果 dry-run 通过，并且处于允许训练窗口，才显式授权启动：
+
+```bash
+FAR_BOUNDARY_TRAINING_ALLOWED=1 scripts/start_windows_boundary.sh --execute
+```
+
+The starter runs offline preflight, starts the D:-backed WS3 Ollama unit, reruns
+preflight with `FAR_BOUNDARY_REQUIRE_OLLAMA=1` to verify the frozen Qwen digest,
+and only then starts `far-boundary.service`. It refuses dirty/stale worktrees,
+missing public dev imports, active WS2 family-dev jobs, finalized boundary
+releases, missing systemd units, or Qwen digest drift.
+
+The underlying units can be installed with:
 
 ```bash
 cp scripts/systemd/far-ollama-boundary.service ~/.config/systemd/user/
 cp scripts/systemd/far-boundary.service ~/.config/systemd/user/
 systemctl --user daemon-reload
-systemctl --user start far-ollama-boundary.service
-systemctl --user start far-boundary.service
 ```
 
 `far-boundary.service` 仅调用注册的 `run-all` 入口，输出固定为
