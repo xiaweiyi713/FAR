@@ -1,5 +1,14 @@
 # Development Decision Log
 
+## 2026-07-08: Meta/Llama formal FAR reached 10/60
+
+The read-only checkpoint monitor at 17:08 CST reported Meta/Llama formal
+`runs/far` at 10/60 rows with the family service still active, `MainPID=994572`,
+and `NRestarts=0`. The process and GPU remained active through slower samples,
+so no recovery action was taken. Mistral and Google/Gemma remain complete, Meta
+has no family manifest yet, and WS3 boundary remains inactive. No checkpoint,
+configuration, gate, metric, or held-out/test input was changed or accessed.
+
 ## 2026-07-08: Meta/Llama completed calibration and entered formal FAR
 
 The read-only monitor at 16:46 CST reported `far-family-dev@meta.service`
