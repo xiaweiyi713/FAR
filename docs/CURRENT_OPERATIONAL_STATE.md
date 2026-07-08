@@ -1,16 +1,17 @@
 # FAR 当前运行状态
 
-状态时间：2026-07-08 15:15 CST
+状态时间：2026-07-08 16:22 CST
 适用范围：WS2 跨家族 dev 复现（Windows GPU / D: 盘 / `family_dev_v1`）
 
 ## 当前结论
 
-- 用户已在第二天重新授权继续训练。远端 `windows-gpu` 上
-  `far-family-dev@google.service` 与 `far-ollama-family-dev.service` 当前均为
-  `active`；Meta/Llama 与 WS3 boundary 仍未启动。
-- WS2 Mistral family 已完整完成。Google/Gemma 已从原有 2 条
-  `calibration/google/far` checkpoint 安全恢复；截至本状态快照，两组校准均为 5/5，
-  typed 正式臂为 60/60，untyped 正式臂为 32/60。没有启动任何 held-out/test 运行。
+- 用户已在第二天重新授权继续训练。远端 `windows-gpu` 上 Google/Gemma 已完整完成并
+  正常退出；`far-family-dev@meta.service` 与 `far-ollama-family-dev.service` 当前均为
+  `active`。WS3 boundary 仍未启动。
+- WS2 Mistral 与 Google 两个 family 已完整完成。Google/Gemma 从原有 2 条 checkpoint
+  安全恢复后，两组校准均完成 5/5、两组正式臂均完成 60/60，并写出 Google family
+  manifest。随后 Meta/Llama 通过 offline 与在线 digest preflight 后按冻结顺序启动。
+  没有启动任何 held-out/test 运行。
 - 启动与暂停路径：
   1. `scripts/start_windows_family_dev_next.sh google` dry-run 返回 `valid=true`；
   2. 首次授权启动先启动了 `far-ollama-family-dev.service`，但
@@ -29,22 +30,21 @@
   fail-closed。未改写任何 checkpoint；在确认工作树干净后，将其安全恢复为该冻结提交的
   detached 状态，复核配置、模型 digest 与运行身份一致后才启动 runner。
 - 远端 `windows-gpu` 最新 service 状态：
-  - `far-family-dev@google.service`：`active`；
-  - `far-family-dev@meta.service`：`inactive`；
+  - `far-family-dev@google.service`：`inactive`（正常完成，`NRestarts=0`）；
+  - `far-family-dev@meta.service`：`active`（`MainPID=994572`，`NRestarts=0`）；
   - `far-ollama-family-dev.service`：`active`；
   - `far-family-dev-mistral-resume.service`：`inactive`；
   - `far-family-dev.service`：`inactive`；
   - `far-boundary.service` / `far-ollama-boundary.service`：未启动。
-- 进程复核可见 `experiments.family_dev`、`ollama serve` 和当前 Gemma `llama-server`；
+- 进程复核可见 Meta `experiments.family_dev` 与 `ollama serve`；
   没有第二个 FAR GPU runner。
 - 远端 D: 工作树 `/mnt/d/FAR-workspace/FAR-longterm` 当前故意 detached 在冻结提交
   `bd57585716b4c046db97311209a0d9f7ec340e6d`；`origin/main` 为 `70c5400`。
   WS2 完成前不得切换到最新 main。
 - `scripts/prepare_windows_longterm_worktree.sh` 已修正为必须显式选择目标：
   `--family-dev` 保持 WS2 冻结提交，`--latest` 仅供 WS3 或维护使用。
-- GPU 最近复核：RTX 4060 Laptop GPU，约 `7439 MiB / 8188 MiB`，利用率 `11%`；
-  Gemma 正在执行当前 untyped 样本。
-- D: 盘最近复核：`752G` 总量，`681G` 已用，`71G` 可用，使用率 `91%`。
+- Meta 刚启动时 runner 正在初始化；GPU 占用会随 Llama 加载与推理变化。
+- D: 盘最近复核：`752G` 总量，约 `688G` 已用，`65G` 可用，使用率 `92%`。
 - 未访问 held-out/test；输入 view 仍为 dev-only，`contains_train=false`、
   `contains_test=false`、`test_accessed=false`。
 
@@ -52,15 +52,15 @@
 
 - 输出目录：`/mnt/d/FAR-outputs/family_dev_v1`
 - 输入目录：`/mnt/d/FAR-outputs/family_dev_input_v1`
-- 当前运行 family：Google/Gemma
+- 当前运行 family：Meta/Llama
 - 当前进度：
-  - `calibration/google/far/checkpoint.jsonl`：`5/5` 行、5 个 ID 唯一，complete manifest 已写出；
-  - `calibration/google/minus_typed_conflict/checkpoint.jsonl`：`5/5` 行、5 个 ID 唯一，complete manifest 已写出；
-  - `runs/google/far/checkpoint.jsonl`：`60/60` 行、60 个 ID 唯一，complete manifest 已写出；
-  - `runs/google/minus_typed_conflict/checkpoint.jsonl`：`32/60` 行、32 个 ID 唯一，正在运行。
-  - 当前 untyped `run_identity.json` 已复核：`source_commit=bd575857...`、
-    `git_dirty=false`、`model=gemma2:9b`、冻结 digest/config SHA 匹配、`split=dev`、
-    `limit=null`。
+  - Google `calibration/far`：`5/5`，complete；
+  - Google `calibration/minus_typed_conflict`：`5/5`，complete；
+  - Google `runs/far`：`60/60`，complete；
+  - Google `runs/minus_typed_conflict`：`60/60`，complete；
+  - 上述四个 Google checkpoint 均为预期行数、ID 唯一、`errors=0`；Google family
+    manifest 的协议、模型、digest、config SHA、冻结 source commit 与安全标志均匹配。
+  - Meta/Llama：服务已启动，正在初始化，尚未写出首条 calibration checkpoint。
 - 当前日志位置：
   - `journalctl --user -u far-family-dev@google.service -n 120 --no-pager`
   - `journalctl --user -u far-ollama-family-dev.service -n 120 --no-pager`
@@ -81,17 +81,16 @@
     `2643726e3965e86a58cb6afab0223695fc4db7c0df28a3862782c2275d802ae3`
 - Mistral family manifest：
   `/mnt/d/FAR-outputs/family_dev_v1/family_manifests/mistral.json`
-- 当前 runner 已从已有断点续跑 Google/Gemma。Google/Gemma family manifest 完成并
-  核验前，不启动 Meta/Llama。
+- 已完成 family：Mistral、Google/Gemma。当前 runner 按预注册顺序执行 Meta/Llama。
 
 ## 继续原则
 
-- Google/Gemma 当前为 `active`；保持服务、输出目录、冻结 worktree 和运行身份不变，
+- Meta/Llama 当前为 `active`；保持服务、输出目录、冻结 worktree 和运行身份不变，
   通过 `scripts/watch_windows_family_dev.sh windows-gpu` 只读监控。
 - WS2 如需重新准备工作树，只能使用 `scripts/prepare_windows_longterm_worktree.sh
   --family-dev windows-gpu`；不得在 WS2 期间使用 `--latest`。
-- 只有 Google/Gemma 完成并核验 family manifest 后，才可按相同冻结协议启动 Meta/Llama。
-  WS2 全部完成并释放 GPU 后，WS3 才能用 `--latest` 切换到最新 main。
+- Meta/Llama 完成并核验 family manifest 后，才可 finalize 和独立 verify WS2。WS2
+  全部完成并释放 GPU 后，WS3 才能用 `--latest` 切换到最新 main。
 - 不修改实验代码、配置、模型 digest、样本、指标、G-F/G-P、claim level 或输出目录。
 - 任何重新启动前先 dry-run guarded starter；只有确认训练允许时才加
   `FAR_FAMILY_DEV_TRAINING_ALLOWED=1` 与 `--execute`。

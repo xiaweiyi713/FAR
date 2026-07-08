@@ -1,5 +1,20 @@
 # Development Decision Log
 
+## 2026-07-08: Google/Gemma completed and Meta/Llama started in frozen order
+
+Google/Gemma finished the formal untyped arm at 60/60 and exited normally with
+zero service restarts. Both 5-row calibrations and both 60-row formal arms had
+the exact expected unique-ID counts, complete manifests, and zero errors. The
+Google family manifest matched the frozen protocol, model digest, config SHA,
+source commit, and non-gold/non-human/dev-only safety flags.
+
+The guarded Meta dry-run then returned `valid=true`. Its online preflight
+confirmed the preregistered `llama3.1:8b` digest before starting
+`far-family-dev@meta.service` (initial PID 994572, zero restarts). Mistral and
+Google therefore remain frozen predecessors while Meta is the only family GPU
+runner. No configuration, checkpoint, metric, gate, or held-out/test input was
+changed or accessed.
+
 ## 2026-07-08: WS2 monitor reports service health and checkpoint uniqueness
 
 The read-only Windows family-dev monitor now prints `MainPID`, `NRestarts`,
