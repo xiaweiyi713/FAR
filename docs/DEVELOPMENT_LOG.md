@@ -2574,3 +2574,26 @@ evidence bundle verified successfully, releasing the GPU.
   repository-maintenance freshness check、project-status verify、Markdown link check 与
   bash 语法检查均通过。本轮不启动训练、不启动 Ollama、不运行 prediction、不访问
   held-out/test。
+
+## 2026-07-08 — WS2 Google/Gemma family-dev started
+
+- 09:13 CST 前置巡检确认：本地 `main` 在 `15e1315` 且最新 CI 成功；远端
+  `far-family-dev@google.service`、`far-family-dev@meta.service`、旧
+  `far-family-dev.service`、Mistral resume、WS2 Ollama 与 WS3 boundary 相关 service 均为
+  inactive；未发现 `experiments.family_dev`、Ollama runner、`llama-server` 或 `train.py`
+  进程。D: 盘 `/mnt/d` 约 `71G` 可用，输入 view 仍为 dev-only。
+- `scripts/start_windows_family_dev_next.sh google` dry-run 返回 `valid=true`，确认冻结 D:
+  工作树、Mistral predecessor manifest、dev-only input manifest 与 family 顺序均有效。
+- 首次授权执行
+  `FAR_FAMILY_DEV_TRAINING_ALLOWED=1 scripts/start_windows_family_dev_next.sh google --execute`
+  先启动 `far-ollama-family-dev.service`，但 digest preflight 在 Ollama 冷启动阶段查询
+  `/api/tags` 超时，脚本 fail-closed 退出；此时 `far-family-dev@google.service` 仍为
+  inactive，没有启动 prediction。
+- Ollama 响应后确认 `gemma2:9b` digest 精确匹配预注册值
+  `ff02c3702f322b9e075e9568332d96c0a7028002f1a5a056e0a6784320a4db0b`。第二次授权执行通过
+  offline preflight 与 `FAR_FAMILY_DEV_REQUIRE_OLLAMA=1` digest preflight，随后启动
+  `far-family-dev@google.service`。
+- 09:14 CST 只读监控显示 `far-family-dev@google.service` active（`MainPID=2715`）、
+  `far-ollama-family-dev.service` active（`MainPID=2329`），Meta、boundary 和旧串联 service
+  均 inactive；Google checkpoint 尚未写出，Python runner 正在初始化。未访问
+  held-out/test，未启动 Meta/Llama 或 WS3 boundary。

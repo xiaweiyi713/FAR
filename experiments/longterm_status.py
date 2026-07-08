@@ -120,7 +120,11 @@ def _ws2(root: Path) -> dict[str, Any]:
     release_exists = release_manifest.is_file()
     current_text = _read_text(current_state)
     active_run_documented = (
-        "far-family-dev-mistral-resume.service" in current_text
+        (
+            "far-family-dev-mistral-resume.service" in current_text
+            or "far-family-dev@google.service" in current_text
+            or "far-family-dev@meta.service" in current_text
+        )
         and "`active`" in current_text
         and "当前进度" in current_text
         and "当前日志位置" in current_text
@@ -146,7 +150,7 @@ def _ws2(root: Path) -> dict[str, Any]:
         summary = "local family-dev release exists and should be verified with evidence_family_dev"
     elif active_run_documented:
         status = "in_progress_active"
-        summary = "Mistral untyped resumed from documented checkpoint and is currently running"
+        summary = "a WS2 single-family dev run is active on the Windows GPU"
     elif mistral_complete_paused_documented:
         status = "in_progress_paused"
         summary = (
@@ -375,7 +379,7 @@ def build_status(root: Path = ROOT) -> dict[str, Any]:
     ws2_details = workstreams["WS2"].get("details", {})
     if ws2_status == "in_progress_active":
         next_training_step = (
-            "monitor active WS2 Mistral minus_typed_conflict run until it completes or fails"
+            "monitor the active WS2 single-family dev run until it completes or fails"
         )
     elif ws2_details.get("mistral_complete_paused_documented") is True:
         if ws2_details.get("google_preflight_documented") is True:

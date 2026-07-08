@@ -1,46 +1,53 @@
 # FAR 当前运行状态
 
-状态时间：2026-07-07 18:00 CST
+状态时间：2026-07-08 09:14 CST
 适用范围：WS2 跨家族 dev 复现（Windows GPU / D: 盘 / `family_dev_v1`）
 
 ## 当前结论
 
-- 按用户“今天晚上不能训练了，明天再训练”的要求，今晚不启动 Google/Gemma、
-  Meta/Llama、WS3 boundary 或任何新模型 prediction。最近巡检显示所有 WS2 family-dev
-  训练相关 service 已处于 `inactive`。
+- WS2 Google/Gemma family 已按预注册顺序启动；当前仅运行 Google/Gemma，不启动
+  Meta/Llama、WS3 boundary 或任何 held-out/test 运行。
+- 启动路径符合 guarded starter：
+  1. `scripts/start_windows_family_dev_next.sh google` dry-run 返回 `valid=true`；
+  2. 首次授权启动先启动了 `far-ollama-family-dev.service`，但
+     `FAR_FAMILY_DEV_REQUIRE_OLLAMA=1` digest preflight 因 Ollama 冷启动 `/api/tags`
+     超时而 fail-closed，未启动 family-dev；
+  3. Ollama 响应后确认 `gemma2:9b` digest 为
+     `ff02c3702f322b9e075e9568332d96c0a7028002f1a5a056e0a6784320a4db0b`；
+  4. 重新运行
+     `FAR_FAMILY_DEV_TRAINING_ALLOWED=1 scripts/start_windows_family_dev_next.sh google --execute`
+     后，offline preflight 与 digest preflight 均为 `valid=true`，随后启动
+     `far-family-dev@google.service`。
 - 远端 `windows-gpu` 当前 service 状态：
-  - `far-family-dev-mistral-resume.service`：`inactive`，`Result=success`，`NRestarts=0`；
-  - `far-family-dev.service`：`inactive`，`Result=success`，`NRestarts=0`；
-  - `far-ollama-family-dev.service`：`inactive`，`Result=success`，`NRestarts=0`；
-  - `far-tmux-server.service`：`active`，只维持 tmux server，不运行 FAR prediction。
-- GPU 复核进程表只剩 `/Xwayland` 桌面进程；WSL 报告的桌面显存占用会随 Windows 会话波动
-  （最近约 0.8–4.1 GiB），但未发现 `experiments.family_dev`、Ollama runner、
-  boundary/family-dev runner 或 `train.py` 进程。
-- WS2 Mistral family 已完整完成：FAR formal 与 `minus_typed_conflict` formal 均为
-  `60/60`、60 个 ID 唯一、无重复组，两个 run manifest 均为 `status=complete`、
-  `partial=false`、`errors=0`。
-- Mistral family manifest 已生成在
-  `/mnt/d/FAR-outputs/family_dev_v1/family_manifests/mistral.json`，`human_iaa=false`，
-  `publication_gold=false`，`test_accessed=false`，`source_commit` 仍为冻结提交
-  `bd57585716b4c046db97311209a0d9f7ec340e6d`。
-- 未启动 WS3 boundary、Google/Gemma、Meta/Llama 或任何 held-out/test 运行。最近一次
-  GitHub Actions main 分支巡检已成功；具体提交以 GitHub Actions 最新 main run 为准。
-- 已新增并执行零模型预启动核验脚本
-  `scripts/preflight_windows_family_dev_next.sh google`。该脚本只读检查远端 service、
-  冻结 worktree、dev-only 输入 view、Mistral predecessor manifest、目标 family 顺序与可选
-  Ollama digest；不启动/停止 service、不写远端文件、不运行 prediction。
-- 已新增并 dry-run 执行 guarded starter：`scripts/start_windows_family_dev_next.sh google`。
-  dry-run 只复用上述 preflight 并打印计划动作；复核显示 `far-family-dev@google.service`
-  与 `far-ollama-family-dev.service` 仍为 `inactive/dead`，没有训练进程。
-- 预启动核验发现远端尚未安装单 family systemd 模板，已仅部署
-  `~/.config/systemd/user/far-family-dev@.service` 并执行 `systemctl --user daemon-reload`；
-  `far-family-dev@google.service` 与 `far-family-dev@meta.service` 当前均为 `loaded` 且
-  `inactive/dead`。部署模板没有启动训练。
+  - `far-family-dev@google.service`：`active`，`MainPID=2715`，`NRestarts=0`；
+  - `far-ollama-family-dev.service`：`active`，`MainPID=2329`，`NRestarts=0`；
+  - `far-family-dev@meta.service`：`inactive`；
+  - `far-family-dev-mistral-resume.service`：`inactive`；
+  - `far-family-dev.service`：`inactive`；
+  - `far-boundary.service` / `far-ollama-boundary.service`：`inactive`。
+- 当前进程：`python -m experiments.family_dev run-family --family google --input-dir
+  /mnt/d/FAR-outputs/family_dev_input_v1 --output-dir /mnt/d/FAR-outputs/family_dev_v1`
+  与 `ollama serve`。
+- GPU 最近复核：RTX 4060 Laptop GPU，约 `626 MiB / 8188 MiB` 显存占用；已看到
+  `llama-server` runner（PID 2981）由 Ollama 启动，Google/Gemma 已进入模型服务阶段。
+- D: 盘最近复核：`752G` 总量，`681G` 已用，`71G` 可用，使用率 `91%`。
+- 未访问 held-out/test；输入 view 仍为 dev-only，`contains_train=false`、
+  `contains_test=false`、`test_accessed=false`。
 
 ## 当前 WS2 断点
 
 - 输出目录：`/mnt/d/FAR-outputs/family_dev_v1`
-- 已完成 family：`mistral`
+- 输入目录：`/mnt/d/FAR-outputs/family_dev_input_v1`
+- 当前运行 family：Google/Gemma
+- 当前进度：
+  - `calibration/google/far/checkpoint.jsonl`：尚未写出；
+  - `calibration/google/minus_typed_conflict/checkpoint.jsonl`：尚未写出；
+  - `runs/google/far/checkpoint.jsonl`：尚未写出；
+  - `runs/google/minus_typed_conflict/checkpoint.jsonl`：尚未写出。
+- 当前日志位置：
+  - `journalctl --user -u far-family-dev@google.service -n 120 --no-pager`
+  - `scripts/watch_windows_family_dev.sh windows-gpu`
+- 已完成 family：Mistral
 - `mistral / far`
   - checkpoint：`/mnt/d/FAR-outputs/family_dev_v1/runs/mistral/far/checkpoint.jsonl`
   - 完整性：`60/60` 行、60 个 ID 唯一、无重复组
@@ -56,32 +63,16 @@
     `2643726e3965e86a58cb6afab0223695fc4db7c0df28a3862782c2275d802ae3`
 - Mistral family manifest：
   `/mnt/d/FAR-outputs/family_dev_v1/family_manifests/mistral.json`
-- 待运行 family：Google/Gemma、Meta/Llama。今晚暂停，明天恢复前需重新确认 GPU 空闲、
-  Ollama digest、D: 空间、正式工作树冻结提交与当前输出目录完整性。
-- Google/Gemma 离线 preflight 结果：`valid=true`（未要求 Ollama 在线 digest 检查）。
-- `scripts/watch_windows_family_dev.sh windows-gpu` 已能在只读输出中直接显示
-  `/mnt/d/FAR-outputs/family_dev_v1/family_manifests/mistral.json`，并列出 WS2/WS3 相关
-  service 状态；最新巡检均为 inactive，未见训练进程。
-- 已新增并 dry-run 执行 `scripts/stop_windows_family_dev.sh`。默认 dry-run 只打印当前
-  WS2/WS3 相关 service 状态、相关进程和将要执行的 WS2 stop 命令；本次输出确认所有
-  family-dev、boundary 与 Ollama 相关 service 均为 inactive，未发现相关进程，且没有执行
-  stop/start 动作。
+- 待运行 family：Meta/Llama。Google/Gemma family manifest 完成并核验前，不启动 Meta/Llama。
 
 ## 继续原则
 
-- 继续只允许从同一 D: 工作树、同一冻结提交、同一输出目录前进。
+- 只允许从同一 D: 工作树、同一冻结提交、同一输出目录前进。
 - 不修改实验代码、配置、模型 digest、样本、指标、G-F/G-P、claim level 或输出目录。
-- 明天恢复时，先 dry-run `scripts/start_windows_family_dev_next.sh google`；确认输出仍为
-  `valid=true` 且用户允许训练后，再显式运行
-  `FAR_FAMILY_DEV_TRAINING_ALLOWED=1 scripts/start_windows_family_dev_next.sh google --execute`。
-  缺少该环境变量时，guarded starter 会在任何 SSH 动作前退出。执行模式会按顺序启动
-  `far-ollama-family-dev.service`、用
-  `FAR_FAMILY_DEV_REQUIRE_OLLAMA=1 scripts/preflight_windows_family_dev_next.sh google`
-  精确核验 `gemma2:9b` digest，然后才启动 `far-family-dev@google.service`。
-  Google/Gemma family manifest 完成并核验前，不启动 Meta/Llama。
+- 当前动作是监控 `far-family-dev@google.service` 直到完成或失败；若异常停止，先诊断
+  service 状态、GPU、checkpoint 行数/唯一性、日志错误与 daemon-reload 状态，不直接改方法
+  或重跑已完成样本。
 - 若需要暂停或停止 WS2 runner，先运行 `scripts/stop_windows_family_dev.sh` dry-run；只有
   确认需要真实停止时才加 `--execute`，只有需要同时停止 WS2 Ollama 时才再加
   `--stop-ollama`。该脚本不停止 WS3 boundary units、不删除 checkpoint。
-- 若进程异常停止，先诊断服务状态、GPU、checkpoint 行数/唯一性、日志错误、daemon-reload
-  是否复发；不得直接改方法或重跑已完成样本。
 - 仍不得访问 held-out/test，仍不得把 LLM jury 称为真人 IAA。

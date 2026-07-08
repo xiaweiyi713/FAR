@@ -13,7 +13,7 @@
       "WS3",
       "WS4"
     ],
-    "next_training_step": "when training is allowed, dry-run the guarded Google/Gemma starter, then execute it with FAR_FAMILY_DEV_TRAINING_ALLOWED=1 to verify Ollama digest and start WS2 Google/Gemma"
+    "next_training_step": "monitor the active WS2 single-family dev run until it completes or fails"
   },
   "roadmap": {
     "active_sha256": "91eb3205fe127271bc5f4882025243d9974a711e311ef074fcbde09aa86e7cf7",
@@ -84,20 +84,20 @@
     },
     "WS2": {
       "details": {
-        "active_run_documented": false,
+        "active_run_documented": true,
         "families": [
           "mistral",
           "google",
           "meta"
         ],
-        "google_preflight_documented": true,
+        "google_preflight_documented": false,
         "guarded_starter_documented": true,
         "local_release_present": false,
         "methods": [
           "far",
           "minus_typed_conflict"
         ],
-        "mistral_complete_paused_documented": true,
+        "mistral_complete_paused_documented": false,
         "paused_checkpoint_documented": false,
         "samples": 60
       },
@@ -114,7 +114,7 @@
         {
           "exists": true,
           "path": "docs/CURRENT_OPERATIONAL_STATE.md",
-          "sha256": "c0c3b12db84968bc0bfb83e9af5085843ac09cc45008596901ffb0da6108fbc2"
+          "sha256": "d6b669f760dff92409fbd1dab44e776e65ae243dfbcfb049d6520fc8ede16869"
         },
         {
           "exists": false,
@@ -126,8 +126,8 @@
       "priority": "P0",
       "protocol_valid": true,
       "required_claim_level": "directional_reproduction",
-      "status": "in_progress_paused",
-      "summary": "Mistral family is complete; next registered family waits for the next training window",
+      "status": "in_progress_active",
+      "summary": "a WS2 single-family dev run is active on the Windows GPU",
       "test_accessed": false
     },
     "WS3": {
