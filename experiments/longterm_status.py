@@ -143,6 +143,13 @@ def _ws2(root: Path) -> dict[str, Any]:
         "scripts/start_windows_family_dev_next.sh google" in current_text
         and "--execute" in current_text
     )
+    google_started_paused_documented = (
+        "Google/Gemma 已按 guarded starter 启动后暂停" in current_text
+        and "calibration/google/far/checkpoint.jsonl" in current_text
+        and "`2` 行" in current_text
+        and "`inactive`" in current_text
+        and "今晚不再训练" in current_text
+    )
     paused_checkpoint_documented = "minus_typed_conflict" in current_text and "7/60" in current_text
     errors = [f"protocol: {item}" for item in protocol.get("errors", [])]
     if release_exists:
@@ -151,6 +158,9 @@ def _ws2(root: Path) -> dict[str, Any]:
     elif active_run_documented:
         status = "in_progress_active"
         summary = "a WS2 single-family dev run is active on the Windows GPU"
+    elif google_started_paused_documented:
+        status = "in_progress_paused"
+        summary = "Google/Gemma is paused after 2 FAR calibration checkpoints"
     elif mistral_complete_paused_documented:
         status = "in_progress_paused"
         summary = (
@@ -187,6 +197,7 @@ def _ws2(root: Path) -> dict[str, Any]:
             "mistral_complete_paused_documented": mistral_complete_paused_documented,
             "google_preflight_documented": google_preflight_documented,
             "guarded_starter_documented": guarded_starter_documented,
+            "google_started_paused_documented": google_started_paused_documented,
             "paused_checkpoint_documented": paused_checkpoint_documented,
         },
         "errors": errors,
@@ -380,6 +391,12 @@ def build_status(root: Path = ROOT) -> dict[str, Any]:
     if ws2_status == "in_progress_active":
         next_training_step = (
             "monitor the active WS2 single-family dev run until it completes or fails"
+        )
+    elif ws2_details.get("google_started_paused_documented") is True:
+        next_training_step = (
+            "when training is allowed tomorrow, dry-run the guarded Google/Gemma "
+            "starter, then resume WS2 Google/Gemma from the documented checkpoint "
+            "with FAR_FAMILY_DEV_TRAINING_ALLOWED=1"
         )
     elif ws2_details.get("mistral_complete_paused_documented") is True:
         if ws2_details.get("google_preflight_documented") is True:

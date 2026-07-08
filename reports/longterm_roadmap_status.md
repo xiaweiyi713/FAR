@@ -15,7 +15,7 @@
 | 工作流 | 状态 | 门禁/证据 | 摘要 |
 |---|---|---|---|
 | WS1 | `complete` | G-R1 | 226 shared RAMDocs errors uniquely bucketed; four hypotheses recorded |
-| WS2 | `in_progress_active` | G-F | a WS2 single-family dev run is active on the Windows GPU |
+| WS2 | `in_progress_paused` | G-F | Google/Gemma is paused after 2 FAR calibration checkpoints |
 | WS3 | `registered_inputs_ready_pending_predictions` | G-B | two public dev imports and protocol are frozen; no model predictions yet |
 | WS4 | `in_progress_waiting_for_ws2_ws3` | paper readiness / claim scope | TMLR mechanism-boundary direction is documented; final paper waits for WS2/WS3 |
 | WS5 | `complete` | G-P | power gate is institutionalized; WS2 forced to directional reproduction |
@@ -26,7 +26,7 @@
 - 已闭合或已建立基线: WS1, WS5, WS6
 - 仍未完成: WS2, WS3, WS4
 - 总目标完成: `false`
-- 当前首要动作: monitor the active WS2 single-family dev run until it completes or fails
+- 当前首要动作: when training is allowed tomorrow, dry-run the guarded Google/Gemma starter, then resume WS2 Google/Gemma from the documented checkpoint with FAR_FAMILY_DEV_TRAINING_ALLOWED=1
 
 ## 安全边界
 

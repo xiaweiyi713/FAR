@@ -1,13 +1,16 @@
 # FAR 当前运行状态
 
-状态时间：2026-07-08 09:14 CST
+状态时间：2026-07-08 09:25 CST
 适用范围：WS2 跨家族 dev 复现（Windows GPU / D: 盘 / `family_dev_v1`）
 
 ## 当前结论
 
-- WS2 Google/Gemma family 已按预注册顺序启动；当前仅运行 Google/Gemma，不启动
-  Meta/Llama、WS3 boundary 或任何 held-out/test 运行。
-- 启动路径符合 guarded starter：
+- 按用户最新指令，今晚暂停训练，明天再恢复；远端 `windows-gpu` 上本轮
+  Google/Gemma family-dev 和配套 Ollama 已安全停止。
+- WS2 Mistral family 已完整完成。Google/Gemma 已按 guarded starter 启动后暂停；
+  当前只留下 2 条 `calibration/google/far` checkpoint，没有启动 Meta/Llama、
+  WS3 boundary 或任何 held-out/test 运行。
+- 启动与暂停路径：
   1. `scripts/start_windows_family_dev_next.sh google` dry-run 返回 `valid=true`；
   2. 首次授权启动先启动了 `far-ollama-family-dev.service`，但
      `FAR_FAMILY_DEV_REQUIRE_OLLAMA=1` digest preflight 因 Ollama 冷启动 `/api/tags`
@@ -17,19 +20,19 @@
   4. 重新运行
      `FAR_FAMILY_DEV_TRAINING_ALLOWED=1 scripts/start_windows_family_dev_next.sh google --execute`
      后，offline preflight 与 digest preflight 均为 `valid=true`，随后启动
-     `far-family-dev@google.service`。
-- 远端 `windows-gpu` 当前 service 状态：
-  - `far-family-dev@google.service`：`active`，`MainPID=2715`，`NRestarts=0`；
-  - `far-ollama-family-dev.service`：`active`，`MainPID=2329`，`NRestarts=0`；
+     `far-family-dev@google.service`；
+  5. 收到“今天晚上不能训练了，明天再训练”后，停止
+     `far-family-dev@google.service`、`far-family-dev@meta.service` 和
+     `far-ollama-family-dev.service`。
+- 远端 `windows-gpu` 最新 service 状态：
+  - `far-family-dev@google.service`：`inactive`；
   - `far-family-dev@meta.service`：`inactive`；
+  - `far-ollama-family-dev.service`：`inactive`；
   - `far-family-dev-mistral-resume.service`：`inactive`；
   - `far-family-dev.service`：`inactive`；
-  - `far-boundary.service` / `far-ollama-boundary.service`：`inactive`。
-- 当前进程：`python -m experiments.family_dev run-family --family google --input-dir
-  /mnt/d/FAR-outputs/family_dev_input_v1 --output-dir /mnt/d/FAR-outputs/family_dev_v1`
-  与 `ollama serve`。
-- GPU 最近复核：RTX 4060 Laptop GPU，约 `626 MiB / 8188 MiB` 显存占用；已看到
-  `llama-server` runner（PID 2981）由 Ollama 启动，Google/Gemma 已进入模型服务阶段。
+  - `far-boundary.service` / `far-ollama-boundary.service`：未启动。
+- 二次复核没有残留 `experiments.family_dev`、`ollama serve` 或 `llama-server` 进程。
+- GPU 停止后最近复核：RTX 4060 Laptop GPU，约 `536 MiB / 8188 MiB` 显存占用。
 - D: 盘最近复核：`752G` 总量，`681G` 已用，`71G` 可用，使用率 `91%`。
 - 未访问 held-out/test；输入 view 仍为 dev-only，`contains_train=false`、
   `contains_test=false`、`test_accessed=false`。
@@ -38,14 +41,15 @@
 
 - 输出目录：`/mnt/d/FAR-outputs/family_dev_v1`
 - 输入目录：`/mnt/d/FAR-outputs/family_dev_input_v1`
-- 当前运行 family：Google/Gemma
+- 当前暂停 family：Google/Gemma
 - 当前进度：
-  - `calibration/google/far/checkpoint.jsonl`：尚未写出；
+  - `calibration/google/far/checkpoint.jsonl`：`2` 行；
   - `calibration/google/minus_typed_conflict/checkpoint.jsonl`：尚未写出；
   - `runs/google/far/checkpoint.jsonl`：尚未写出；
   - `runs/google/minus_typed_conflict/checkpoint.jsonl`：尚未写出。
 - 当前日志位置：
   - `journalctl --user -u far-family-dev@google.service -n 120 --no-pager`
+  - `journalctl --user -u far-ollama-family-dev.service -n 120 --no-pager`
   - `scripts/watch_windows_family_dev.sh windows-gpu`
 - 已完成 family：Mistral
 - `mistral / far`
@@ -63,16 +67,15 @@
     `2643726e3965e86a58cb6afab0223695fc4db7c0df28a3862782c2275d802ae3`
 - Mistral family manifest：
   `/mnt/d/FAR-outputs/family_dev_v1/family_manifests/mistral.json`
-- 待运行 family：Meta/Llama。Google/Gemma family manifest 完成并核验前，不启动 Meta/Llama。
+- 待恢复 family：Google/Gemma。Google/Gemma family manifest 完成并核验前，不启动
+  Meta/Llama。
 
 ## 继续原则
 
-- 只允许从同一 D: 工作树、同一冻结提交、同一输出目录前进。
+- 今晚不再训练；明天训练允许后，从同一 D: 工作树、同一冻结提交、同一输出目录恢复
+  WS2 Google/Gemma。
 - 不修改实验代码、配置、模型 digest、样本、指标、G-F/G-P、claim level 或输出目录。
-- 当前动作是监控 `far-family-dev@google.service` 直到完成或失败；若异常停止，先诊断
-  service 状态、GPU、checkpoint 行数/唯一性、日志错误与 daemon-reload 状态，不直接改方法
-  或重跑已完成样本。
-- 若需要暂停或停止 WS2 runner，先运行 `scripts/stop_windows_family_dev.sh` dry-run；只有
-  确认需要真实停止时才加 `--execute`，只有需要同时停止 WS2 Ollama 时才再加
-  `--stop-ollama`。该脚本不停止 WS3 boundary units、不删除 checkpoint。
+- 恢复前先 dry-run guarded starter；只有确认训练允许时才加
+  `FAR_FAMILY_DEV_TRAINING_ALLOWED=1` 与 `--execute`。
+- 若恢复或停止 WS2 runner，优先使用 guarded scripts；不删除已有 checkpoint，不重跑已完成样本。
 - 仍不得访问 held-out/test，仍不得把 LLM jury 称为真人 IAA。

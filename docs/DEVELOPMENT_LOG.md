@@ -1,5 +1,22 @@
 # Development Decision Log
 
+## 2026-07-08: WS2 Google/Gemma paused for training window
+
+Following the user instruction that training should not continue tonight, the
+Windows GPU run was stopped before any Meta/Llama, WS3 boundary, or held-out/test
+work began. At stop time, `far-family-dev@google.service` had written two
+`calibration/google/far` checkpoints under `/mnt/d/FAR-outputs/family_dev_v1`.
+The paired `minus_typed_conflict` calibration file and both Google run files had
+not yet been created.
+
+The stop was limited to the WS2 family-dev units and their D:-backed Ollama
+service: `far-family-dev@google.service`, `far-family-dev@meta.service`, and
+`far-ollama-family-dev.service` all reported `inactive` after the stop. A second
+process check found no residual `experiments.family_dev`, `ollama serve`, or
+`llama-server` process. The existing checkpoints were left intact so that the
+registered Google/Gemma family can resume from the same output directory when
+training is allowed again.
+
 ## 2026-07-04: RAMDocs document-type leakage caught before scoring
 
 Operational QA found that the first RAMDocs import encoded upstream document
