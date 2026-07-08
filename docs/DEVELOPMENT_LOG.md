@@ -2868,6 +2868,34 @@ evidence bundle verified successfully, releasing the GPU.
   进程。D: 盘 `/mnt/d` 约 `71G` 可用，输入 view 仍为 dev-only。
 - `scripts/start_windows_family_dev_next.sh google` dry-run 返回 `valid=true`，确认冻结 D:
   工作树、Mistral predecessor manifest、dev-only input manifest 与 family 顺序均有效。
+
+## 2026-07-08 — WS2 family reproduction finalized and independently verified
+
+- Mistral、Gemma 与 Llama 三个 family 的 calibration/formal 运行均完成；正式运行各覆盖
+  60 条唯一 dev 样本，typed/untyped 两方法齐全，无重复、无运行错误。冻结 release 的
+  combined typed-minus-untyped answer-correctness difference 为 `+0.0645256459`，三族方向
+  全部为正；分层 exact McNemar 为 `31` 对 `9`、`p=0.0006795483`，family-cluster bootstrap
+  95% CI 为 `[+0.052776, +0.073514]`，因此 G-F 通过。G-P power 仅 `0.414`，claim level
+  继续严格限制为 `directional_reproduction`。
+- 首次独立 release verifier 发现六个 calibration checkpoint 与 finalized predictions 的
+  行序不同。逐 sample-id 比对证明内容完全相同：checkpoint 保留注册执行顺序，finalizer
+  明确按 sample-id 排序。verifier 已改为拒绝重复 ID 后按完整 sample-id row map 比较；正式
+  运行仍保持逐字节一致。复核结果为 `valid=true`、`errors=[]`、`gate_f_passed=true`。
+- 远端 WS2 runner 与 Ollama 均已正常停止，WS3 service 未被启动；原始 D: 输出同步到
+  `diagnostics/family_dev_v1` 后完成唯一 finalize、指纹封存、TMLR 文稿集成与独立验证。
+  本结果不是真人 IAA、真人金标、外部盲测或端到端优越性证据，且未访问 held-out/test。
+
+## 2026-07-08 — WS2 release CI freshness repair
+
+- WS2 release 提交 `79861b4` 的公开 CI 首轮失败：`experiments/longterm_status.py` 有一处
+  Ruff 格式化差异；`reports/solo_paper_readiness.json` 与
+  `reports/project_status_snapshot.{json,md}` 在论文最终改动后未重新生成，进而使项目状态
+  freshness 检查失败。故障不涉及实验运行、分数或证据指纹。
+- 仅格式化目标模块，并按依赖顺序重新生成 solo-paper、project-status、long-term 与
+  repository-maintenance 账本。随后 Ruff、solo-paper readiness、project-status verify、
+  long-term status check、repository-maintenance check 与 WS2 independent release verifier
+  全部通过。按本阶段约束未在本机运行任何 test，也未访问 held-out/test；WS3 仍等待新提交
+  的 CI 成功后再启动。
 - 首次授权执行
   `FAR_FAMILY_DEV_TRAINING_ALLOWED=1 scripts/start_windows_family_dev_next.sh google --execute`
   先启动 `far-ollama-family-dev.service`，但 digest preflight 在 Ollama 冷启动阶段查询

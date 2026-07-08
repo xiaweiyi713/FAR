@@ -192,9 +192,7 @@ def _ws2(root: Path) -> dict[str, Any]:
         "status": status,
         "gate": "G-F",
         "gate_passed": (
-            release_audit.get("gate_f_passed")
-            if release_audit.get("valid") is True
-            else None
+            release_audit.get("gate_f_passed") if release_audit.get("valid") is True else None
         ),
         "protocol_valid": bool(protocol.get("valid")),
         "required_claim_level": protocol.get("required_claim_level"),
