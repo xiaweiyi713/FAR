@@ -1,5 +1,18 @@
 # Development Decision Log
 
+## 2026-07-08: Meta/Llama formal FAR completed and untyped reached 40/60
+
+The read-only audit at 20:36 CST confirmed Meta/Llama formal `runs/far` complete
+at 60/60 with 60 unique IDs, zero duplicates, and a complete manifest reporting
+`errors=0`, `missing_ids=[]`, `partial=false`, and `split=dev`. Its prediction
+SHA-256 is
+`9346aaedcfe3463fa0aff9aad78f60b5dd0bb22c2d6a2ce70e4e8ea93fd048bd`.
+The same uninterrupted family service then entered formal
+`minus_typed_conflict`, which reached 40/60 unique rows while the service stayed
+active with `MainPID=994572` and `NRestarts=0`. Meta has not written its family
+manifest and G-F has not been evaluated. WS3 remains inactive, and no
+held-out/test input was accessed.
+
 ## 2026-07-08: Meta/Llama formal FAR reached 50/60
 
 The read-only monitor at 18:39 CST reported Meta/Llama formal `runs/far` at
