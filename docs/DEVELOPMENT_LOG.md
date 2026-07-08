@@ -2559,3 +2559,18 @@ evidence bundle verified successfully, releasing the GPU.
   复制到裸执行命令。
 - 本次只修改本地脚本与文档，不启动训练、不启动 Ollama、不运行 prediction、不访问
   held-out/test。
+
+## 2026-07-08 — Long-term ledger avoids WS6 self-fingerprinting
+
+- `falsirag-longterm-status` 的 WS6 evidence 之前会记录
+  `reports/repository_maintenance.{json,md}` 的 SHA-256；而 repository-maintenance 报告又
+  统计全仓 tracked 文件体积，包含 long-term ledger 本身。这会让两个生成报告在刷新顺序上
+  互相追逐，容易出现 stale false positive。
+- 现改为：long-term ledger 对 WS6 maintenance ledger 只记录路径与存在性，SHA-256 置为
+  `null`；WS6 是否有效仍由同一次运行中实时重算的 repository-maintenance audit 决定。
+  普通非自引用证据仍继续记录 SHA-256。
+- 重新生成 `reports/longterm_roadmap_status.{json,md}` 与
+  `reports/repository_maintenance.{json,md}` 后，`falsirag-longterm-status --check`、
+  repository-maintenance freshness check、project-status verify、Markdown link check 与
+  bash 语法检查均通过。本轮不启动训练、不启动 Ollama、不运行 prediction、不访问
+  held-out/test。

@@ -13,7 +13,7 @@
       "WS3",
       "WS4"
     ],
-    "next_training_step": "when training is allowed, dry-run the guarded Google/Gemma starter, then execute it to verify Ollama digest and start WS2 Google/Gemma"
+    "next_training_step": "when training is allowed, dry-run the guarded Google/Gemma starter, then execute it with FAR_FAMILY_DEV_TRAINING_ALLOWED=1 to verify Ollama digest and start WS2 Google/Gemma"
   },
   "roadmap": {
     "active_sha256": "91eb3205fe127271bc5f4882025243d9974a711e311ef074fcbde09aa86e7cf7",
@@ -254,12 +254,12 @@
         {
           "exists": true,
           "path": "reports/repository_maintenance.json",
-          "sha256": "cfa0b212e3dbdac7e1e26da5d256572aa141f8537cbe6fd6fc8e35431733d534"
+          "sha256": null
         },
         {
           "exists": true,
           "path": "reports/repository_maintenance.md",
-          "sha256": "2407f573c55de8976f00ade2dc8a288bbac36fe7c179bc7845334db406795488"
+          "sha256": null
         }
       ],
       "name": "WS6 engineering maintenance",

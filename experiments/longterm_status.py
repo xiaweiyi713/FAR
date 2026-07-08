@@ -40,12 +40,12 @@ def _rel(root: Path, path: Path) -> str:
         return path.as_posix()
 
 
-def _file_record(root: Path, path: Path) -> dict[str, Any]:
+def _file_record(root: Path, path: Path, *, include_sha256: bool = True) -> dict[str, Any]:
     exists = path.is_file()
     return {
         "path": _rel(root, path),
         "exists": exists,
-        "sha256": sha256_file(path) if exists else None,
+        "sha256": sha256_file(path) if exists and include_sha256 else None,
     }
 
 
@@ -323,8 +323,21 @@ def _ws6(root: Path) -> dict[str, Any]:
         "human_iaa": False,
         "summary": "tracked diagnostics size and output/outputs hygiene are machine-audited",
         "key_evidence": [
-            _file_record(root, root / "reports/repository_maintenance.json"),
-            _file_record(root, root / "reports/repository_maintenance.md"),
+            # Avoid a cyclic freshness dependency: repository-maintenance
+            # records tracked-file size, which includes this long-term ledger,
+            # while this ledger summarizes WS6.  Existence plus the recomputed
+            # audit result below is the stable evidence; hashing the generated
+            # maintenance ledger here makes the two ledgers chase each other.
+            _file_record(
+                root,
+                root / "reports/repository_maintenance.json",
+                include_sha256=False,
+            ),
+            _file_record(
+                root,
+                root / "reports/repository_maintenance.md",
+                include_sha256=False,
+            ),
         ],
         "details": {
             "diagnostics_mib": report.get("diagnostics", {}).get("mib"),
@@ -369,7 +382,8 @@ def build_status(root: Path = ROOT) -> dict[str, Any]:
             if ws2_details.get("guarded_starter_documented") is True:
                 next_training_step = (
                     "when training is allowed, dry-run the guarded Google/Gemma starter, "
-                    "then execute it to verify Ollama digest and start WS2 Google/Gemma"
+                    "then execute it with FAR_FAMILY_DEV_TRAINING_ALLOWED=1 to verify "
+                    "Ollama digest and start WS2 Google/Gemma"
                 )
             else:
                 next_training_step = (
