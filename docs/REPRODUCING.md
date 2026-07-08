@@ -14,7 +14,9 @@ pinned commit recorded in the script, verifies that commit, and writes the
 generated source, style files, source lock, and PDF under
 `paper/build/tmlr/`. Use `--prepare-only` on a machine without `latexmk`.
 This command performs no model calls, experiments, scoring, or held-out/test
-access. Do not edit the generated source; edit `paper/main.tex` and rebuild.
+access. The generated lock binds both `paper/main.tex` and the active
+content-only `paper/appendix.tex`. Do not edit the generated source; edit those
+tracked sources and rebuild.
 
 For the role-by-role path from completed annotation through external blind
 custody, trusted scoring, and final acceptance, use

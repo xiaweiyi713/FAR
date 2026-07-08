@@ -1,5 +1,18 @@
 # Development Decision Log
 
+## 2026-07-08: TMLR evidence appendix replaces the stale active supplement
+
+The standalone `paper/supplement.tex` still reflected the retained AAAI shell
+and pre-stop-rule evidence. Added a content-only `paper/appendix.tex` for the
+active TMLR paper and made `scripts/build_tmlr_paper.sh` insert it immediately
+before the bibliography. The appendix records the claim--evidence ceiling,
+WS1 freeze commit and all four not-supported hypotheses, G-P power limits,
+A/B/C interpretation rules, reproducibility contract, and machine-label/test
+boundaries. Its SHA-256 is included in the generated source lock. The old
+supplement is explicitly marked as an inactive AAAI upgrade artifact. No
+unfinished WS2/WS3 result was inserted; F1--F10 and all gates remain unchanged.
+This was a zero-model document change with no held-out/test access.
+
 ## 2026-07-08: active TMLR manuscript gets a reproducible venue shell
 
 The roadmap had already relocated the active paper from AAAI-27 to TMLR, but

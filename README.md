@@ -410,6 +410,7 @@ tests/        单元、集成、来源追踪与失败关闭回归测试
 - [开发日志](docs/DEVELOPMENT_LOG.md)
 - [TMLR 论文状态与构建说明](paper/STATUS.md)
 - [共享科学正文](paper/main.tex)
+- [TMLR 证据与边界附录](paper/appendix.tex)
 
 ## 许可证
 

@@ -38,6 +38,7 @@ script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 repo_root="$(cd "${script_dir}/.." && pwd)"
 paper_dir="${repo_root}/paper"
 source_tex="${paper_dir}/main.tex"
+appendix_tex="${paper_dir}/appendix.tex"
 output_dir="${paper_dir}/build/tmlr"
 style_cache="${paper_dir}/build/tmlr-style-source"
 style_repo="https://github.com/JmlrOrg/tmlr-style-file.git"
@@ -56,6 +57,10 @@ sha256_file() {
 
 if [[ ! -f "${source_tex}" ]]; then
   echo "missing manuscript source: ${source_tex}" >&2
+  exit 1
+fi
+if [[ ! -f "${appendix_tex}" ]]; then
+  echo "missing TMLR appendix source: ${appendix_tex}" >&2
   exit 1
 fi
 
@@ -100,7 +105,6 @@ generated_tex="${output_dir}/main.tex"
 \usepackage{amsmath}
 \usepackage{hyperref}
 \hypersetup{hidelinks}
-\setcounter{secnumdepth}{0}
 
 \title{When Does Typed Conflict Control Help? Falsification-Guided Retrieval and Its Observed Boundaries}
 
@@ -119,6 +123,8 @@ EOF
     /^\\begin\{document\}$/ { body = 1 }
     body {
       if ($0 == "\\bibliography{references}") {
+        print "\\appendix"
+        print "\\input{appendix}"
         print "\\bibliographystyle{tmlr}"
       }
       print
@@ -129,6 +135,8 @@ EOF
 cat >"${output_dir}/SOURCE.lock" <<EOF
 source=paper/main.tex
 source_sha256=$(sha256_file "${source_tex}")
+appendix=paper/appendix.tex
+appendix_sha256=$(sha256_file "${appendix_tex}")
 style_repository=${style_repo}
 style_commit=${style_commit}
 mode=anonymous_submission
@@ -162,3 +170,4 @@ fi
 echo "pdf=${pdf}"
 echo "style_commit=${style_commit}"
 echo "source_sha256=$(sha256_file "${source_tex}")"
+echo "appendix_sha256=$(sha256_file "${appendix_tex}")"

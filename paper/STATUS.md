@@ -49,6 +49,11 @@ wraps it in the unmodified official TMLR anonymous-submission style pinned at
 upstream commit `7bf90efe3a0debbba703c05c43f3ff7e4d4a2992`, and writes only ignored
 artifacts under `paper/build/tmlr/`. The AAAI source remains an inactive upgrade
 artifact; it is no longer the only compilable shell for the active paper.
+The same builder inserts `paper/appendix.tex` before the references. That active
+appendix carries the claim--evidence ledger, registered WS1 details, G-P power
+limits, A/B/C outcome rules, reproducibility contract, and label/test boundary.
+`paper/supplement.tex` is retained only as the legacy AAAI upgrade-path
+supplement and is not the active TMLR evidence appendix.
 
 ## Relaxed single-author machine-audited profile
 

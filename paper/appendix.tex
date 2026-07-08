@@ -1,0 +1,177 @@
+% Active TMLR appendix. This file is content-only and is included by
+% scripts/build_tmlr_paper.sh before the bibliography.
+
+\section{Claim--Evidence Ledger}
+\label{app:claim-ledger}
+
+Table~\ref{tab:claim-ledger} fixes the strongest statement licensed by each
+completed evidence layer. It is deliberately asymmetric: later negative or
+boundary evidence can narrow an earlier claim, but an unfinished workstream
+cannot strengthen it.
+
+\begin{table}[h]
+\caption{Claim ceiling by evidence layer. ``Pending'' rows are protocol facts,
+not empirical results.}
+\label{tab:claim-ledger}
+\begin{center}
+\small
+\begin{tabular}{p{0.18\textwidth}p{0.32\textwidth}p{0.39\textwidth}}
+\toprule
+Evidence layer & Completed observation & Maximum licensed claim \\
+\midrule
+Qwen development & 60 machine-audited items; typed minus untyped answer score
++0.078, with positive intervals on both machine-disposition strata & A local,
+construction-derived typed-control signal; not human validation or model-family
+generality \\
+RAMDocs development & Two preregistered 350-item rounds fail G-A; Round~2 is
+$-0.0029$ against the frozen strongest baseline & No demonstrated end-to-end
+advantage on this upstream-labelled external development distribution \\
+WS1 frozen attribution & 226 shared errors are uniquely bucketed; all four
+registered hypotheses are not supported & A revision-mediated heterogeneous
+effect and observed boundary, not an upstream-only or metric-rescue explanation \\
+G-P power audit & Estimated WS2 exact-McNemar power is 0.414 for a +0.078 effect
+& WS2 is directional; nonsignificance cannot establish absence \\
+WS2 / WS3 & Registered and partly operational, but final verified releases do
+not yet exist & No cross-family or external-boundary result may be inserted yet \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{table}
+
+The machine-readable sources for these rows are
+\path{diagnostics/solo_v1},
+\path{diagnostics/ramdocs_v2},
+\path{diagnostics/attribution_v1/manifest.json}, and
+\path{diagnostics/power_v1/manifest.json}. The active roadmap fingerprint is
+\texttt{91eb3205fe127271bc5f4882025243d9974a711e311ef074fcbde09aa86e7cf7};
+it binds the ten frozen facts F1--F10 and is not changed by this appendix.
+
+\section{Registered Attribution Details}
+\label{app:attribution}
+
+The WS1 classifier and verifier were frozen at Git commit
+\texttt{cded2b7e76067a59294c687fef01ce990a33feef} before the formal inputs were
+read. The release verifier binds that commit to the roadmap, classifier,
+evidence builder, protocol module, and classification tests. It records zero
+model calls, no held-out/test access, and no human-IAA or publication-gold
+claim.
+
+\begin{table}[h]
+\caption{Earliest-failure assignment for all 226 RAMDocs items missed by both
+FAR and Multi-Query RAG. Every item has exactly one bucket.}
+\label{tab:failure-buckets}
+\begin{center}
+\small
+\begin{tabular}{lr}
+\toprule
+Registered bucket & Count \\
+\midrule
+Retrieval miss & 4 \\
+Conflict undetected & 72 \\
+Conflict detected, revision wrong & 103 \\
+Answer set incomplete & 35 \\
+Answer set overfull & 12 \\
+Format / exact-match mismatch & 0 \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{table}
+
+All four preregistered hypotheses are \texttt{not\_supported}. For
+H-upstream, the 179 complete-retrieval items retain a FAR-minus-baseline exact
+difference of $-0.011$ with 95\% bootstrap interval $[-0.050,0.028]$. For
+H-metric, descriptive collection F1 changes by $-0.003$ with interval
+$[-0.020,0.013]$; this alternative metric never reopens G-A. For
+H-conflict-shape, conflict detection is lower on RAMDocs than on the Qwen
+diagnostic (0.449 versus 0.883), but the detected subset is only $+0.006$ with
+an interval crossing zero. For H-component, all 34 positive continuous Qwen
+typed-minus-untyped deltas pass through a changed revision, while none occurs
+after detection without a changed revision. These facts support the
+heterogeneous-mediator interpretation and reject the registered detection-only
+prediction.
+
+\section{Power and Outcome-Conditioned Interpretation}
+\label{app:power}
+
+The G-P release uses frozen paired discordance rates and records zero model
+calls and no held-out/test access. Table~\ref{tab:power} reports the historical
+minimum detectable effects (MDEs) and the prospective WS2 designation.
+
+\begin{table}[h]
+\caption{Power audit under two-sided exact McNemar testing. MDE is a design
+diagnostic, not an acceptable-effect threshold.}
+\label{tab:power}
+\begin{center}
+\small
+\begin{tabular}{lrrrr}
+\toprule
+Design & $n$ & Discordance & MDE@60\% & MDE@80\% \\
+\midrule
+Qwen typed/untyped & 60 & 0.317 & 0.171 & 0.206 \\
+RAMDocs Round~1 & 350 & 0.091 & 0.038 & 0.047 \\
+RAMDocs Round~2 & 350 & 0.089 & 0.038 & 0.046 \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{table}
+
+For WS2, the registered three-family design contains 180 paired development
+observations. At the Qwen discordance rate and a +0.078 target effect, simulated
+exact-McNemar power is 0.414, the probability that the family-clustered
+bootstrap lower bound exceeds zero is 0.595, and the probability that at least
+two of three family directions are positive is 0.929. The protocol therefore
+fixes \texttt{directional\_reproduction} as the claim level. There is one
+registered run and no Round~2.
+
+The eventual paper branch is selected only after independently verified WS2
+and WS3 releases exist. A positive, directionally consistent WS2 plus at least
+one matched external condition yields the A-line mechanism-and-boundary paper;
+directional WS2 with null or mixed WS3 yields the B-line bounded-transfer
+paper; inconsistent or nonpositive WS2 yields the C-line Qwen-specific
+falsification account. None of these branches permits end-to-end superiority,
+human-gold, or external-blind language under the current evidence.
+
+\section{Reproducibility and Runtime Contract}
+\label{app:reproducibility}
+
+The completed Qwen diagnostic runs one inference pass per method over the same
+60 development items, with no repeated sampling or best-of-$n$ selection.
+Qwen3.5 9B runs through Ollama at temperature zero, thinking disabled, and a
+1,200-token output cap. Retrieval uses two documents per query, BM25
+($k_1=1.5$, $b=0.75$), BGE-base-en-v1.5 dense scores, 0.4/0.6 sparse/dense
+fusion, BGE-reranker-base over 20 candidates, and nli-distilroberta-base. The
+recorded host is WSL2 with an NVIDIA RTX 4060 Laptop GPU. Model digest,
+configuration hash, implementation hash, predictions, and report hashes are
+retained in the public diagnostic bundle.
+
+Every formal run identity covers its YAML configuration, dev-only operational
+input, corpus, model digest, and implementation fingerprints. Checkpoints are
+written after each sample, and resume rejects identity drift. Structured model
+outputs are schema-validated; provider failures remain errors rather than
+silently changing the experimental arm.
+
+The active paper can be rebuilt with
+\texttt{bash scripts/build\_tmlr\_paper.sh}. The builder pins the official TMLR
+style at commit
+\texttt{7bf90efe3a0debbba703c05c43f3ff7e4d4a2992}, records the main-text and
+appendix SHA-256 values, and generates only ignored build artifacts. The WS1,
+WS2, WS3, G-P, and repository evidence verifiers remain separate fail-closed
+checks; successful PDF compilation is not treated as empirical validation.
+
+\section{Label, Test, and Release Boundaries}
+\label{app:boundaries}
+
+All 300 FalsiRAG-Bench construction labels are
+\texttt{machine\_seeded}. Qwen2.5 structured preannotation and deterministic
+weak supervision jointly confirm 178 rows; 122 remain machine-disputed. This
+is a quality audit against the same construction reference, not independent
+human annotation, adjudication, or inter-annotator agreement. RAMDocs supplies
+external upstream answer and document-type labels, not publication-grade human
+gold for FAR's conflict and revision traces.
+
+The 58-item FalsiRAG-Bench held-out input and RAMDocs test split remain locked
+and unevaluated. Phase~B LLM jury, author adjudication, G-K/G-S, jury rescoring,
+and the earlier three-system-family matrix were not run after the RAMDocs stop
+rule. Future WS2 evidence remains machine-audited development evidence; future
+WS3 evidence remains public-development boundary evidence. Neither may be
+described as human IAA, publication gold, or external blind testing.
