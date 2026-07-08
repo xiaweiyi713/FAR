@@ -1,5 +1,14 @@
 # Development Decision Log
 
+## 2026-07-08: Meta/Llama formal FAR reached 30/60
+
+The read-only monitor at 17:53 CST reported Meta/Llama formal `runs/far` at
+30/60 rows. The Meta family service remained active with `MainPID=994572` and
+`NRestarts=0`, and no duplicate or service-health anomaly was observed during
+monitoring. This is a mid-run operational checkpoint only: no final family
+manifest exists yet, no G-F decision has been made, WS3 remains inactive, and no
+held-out/test input was accessed.
+
 ## 2026-07-08: Meta/Llama formal FAR reached 20/60
 
 The read-only monitor at 17:30 CST reported Meta/Llama formal `runs/far` at
