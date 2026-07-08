@@ -1,6 +1,6 @@
 # FAR 当前运行状态
 
-状态时间：2026-07-08 16:25 CST
+状态时间：2026-07-08 16:35 CST
 适用范围：WS2 跨家族 dev 复现（Windows GPU / D: 盘 / `family_dev_v1`）
 
 ## 当前结论
@@ -60,8 +60,10 @@
   - Google `runs/minus_typed_conflict`：`60/60`，complete；
   - 上述四个 Google checkpoint 均为预期行数、ID 唯一、`errors=0`；Google family
     manifest 的协议、模型、digest、config SHA、冻结 source commit 与安全标志均匹配。
-  - Meta/Llama：`calibration/meta/far/checkpoint.jsonl` 已写出 `1/5`（`F0182`，ID 唯一）。
-    对应 run identity 已复核为冻结提交 `bd575857...`、`git_dirty=false`、
+  - Meta/Llama typed 校准：`5/5`、5 个 ID 唯一，complete manifest 已核验为
+    `errors=0`、`partial=true`；
+  - Meta/Llama untyped 校准：`1/5`，已自动开始下一臂；
+  - Meta run identity 已复核为冻结提交 `bd575857...`、`git_dirty=false`、
     `llama3.1:8b`、预注册 digest/config SHA、`split=dev`、`limit=5`。
 - 当前日志位置：
   - `journalctl --user -u far-family-dev@google.service -n 120 --no-pager`

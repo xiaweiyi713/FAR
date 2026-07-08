@@ -14,8 +14,11 @@ confirmed the preregistered `llama3.1:8b` digest before starting
 Google therefore remain frozen predecessors while Meta is the only family GPU
 runner. The first Meta FAR calibration row (`F0182`) then landed with a unique
 ID and a run identity matching the frozen commit, clean worktree, Llama digest,
-config SHA, dev split, and five-row limit. No configuration, checkpoint,
-metric, gate, or held-out/test input was changed or accessed.
+config SHA, dev split, and five-row limit. The typed calibration subsequently
+completed 5/5 with five unique IDs, a complete manifest, and zero errors; the
+runner then automatically entered the untyped calibration and wrote its first
+row. No configuration, checkpoint, metric, gate, or held-out/test input was
+changed or accessed.
 
 ## 2026-07-08: WS2 monitor reports service health and checkpoint uniqueness
 
