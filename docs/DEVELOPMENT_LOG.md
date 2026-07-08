@@ -1,5 +1,14 @@
 # Development Decision Log
 
+## 2026-07-08: Meta/Llama formal FAR reached 20/60
+
+The read-only monitor at 17:30 CST reported Meta/Llama formal `runs/far` at
+20/60 rows. `far-family-dev@meta.service` remained active with `MainPID=994572`
+and `NRestarts=0`; slower samples were allowed to finish naturally because the
+runner CPU/GPU signals remained healthy. No recovery, restart, checkpoint edit,
+configuration change, gate change, metric change, WS3 boundary run, or
+held-out/test access occurred.
+
 ## 2026-07-08: Meta/Llama formal FAR reached 10/60
 
 The read-only checkpoint monitor at 17:08 CST reported Meta/Llama formal
