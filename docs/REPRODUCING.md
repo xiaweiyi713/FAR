@@ -732,22 +732,28 @@ interrupted Windows GPU run, first read `docs/CURRENT_OPERATIONAL_STATE.md` and
 honor any active user pause window.
 
 From the Mac side, prepare the D:-backed Windows worktree before any WS2/WS3
-starter. This preparer is dry-run by default and refuses active FAR GPU services
-or a dirty remote worktree. With explicit authorization it performs only a
-clean fast-forward to the current local commit; it does not start training,
-delete checkpoints, or inspect held-out/test inputs:
+starter. The target mode is mandatory because the two workstreams require
+different source identities. `--family-dev` checks out the preregistered WS2
+commit `bd57585716b4c046db97311209a0d9f7ec340e6d` in detached mode; `--latest`
+fast-forwards main to the current local commit for WS3. The preparer is dry-run
+by default and refuses active FAR GPU services or a dirty remote worktree. It
+does not start training, delete checkpoints, or inspect held-out/test inputs.
+
+For WS2, always use the frozen family-dev target:
 
 ```bash
-scripts/prepare_windows_longterm_worktree.sh
-FAR_WINDOWS_PREP_ALLOWED=1 scripts/prepare_windows_longterm_worktree.sh --execute
+scripts/prepare_windows_longterm_worktree.sh --family-dev
+FAR_WINDOWS_PREP_ALLOWED=1 scripts/prepare_windows_longterm_worktree.sh \
+  --family-dev --execute
 ```
 
-If WS3 boundary units also need installation after the fast-forward, add
-`--install-boundary-units` during the same authorized preparation step:
+Only after WS2 has completed and released the GPU, prepare latest main for WS3.
+Boundary-unit installation is accepted only with `--latest`:
 
 ```bash
+scripts/prepare_windows_longterm_worktree.sh --latest
 FAR_WINDOWS_PREP_ALLOWED=1 scripts/prepare_windows_longterm_worktree.sh \
-  --execute --install-boundary-units
+  --latest --execute --install-boundary-units
 ```
 
 On the Windows GPU host, prepare the input
@@ -866,9 +872,10 @@ under `bench/external/wikicontradict_v1` and
 or held-out/test evidence.
 
 Windows/WSL 长时运行可安装 D: 盘持久化 units；只能在 WS2 已释放 GPU、Qwen digest
-复核通过且正式工作树干净并位于当前 `origin/main` 时启动。若 D: 工作树尚未同步，先使用
-上文的 `scripts/prepare_windows_longterm_worktree.sh` dry-run/authorized fast-forward
-流程。启动前再 dry-run guarded starter；它只做只读 preflight，不启动服务：
+复核通过且正式工作树干净并位于当前 `origin/main` 时启动。WS2 运行期间工作树故意
+detached 在冻结 family-dev commit，不能就地切换。WS2 完成并停止服务后，先使用上文
+preparer 的显式 `--latest` dry-run/authorized fast-forward 流程，再安装 units。启动前再
+dry-run guarded starter；它只做只读 preflight，不启动服务：
 
 ```bash
 scripts/start_windows_boundary.sh

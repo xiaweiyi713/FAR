@@ -1,5 +1,25 @@
 # Development Decision Log
 
+## 2026-07-08: resume revealed and fixed WS2/WS3 worktree-target ambiguity
+
+Training resumed after the user reopened the window. A clean D:-backed
+worktree was first fast-forwarded to current main according to the previous
+runbook, but the WS2 preflight correctly rejected it: all existing Mistral and
+Google checkpoints are bound to preregistered source commit
+`bd57585716b4c046db97311209a0d9f7ec340e6d`. The clean worktree was therefore
+returned to that commit in detached mode; the preflight passed, the frozen
+Gemma digest was independently confirmed, and Google/Gemma resumed from the
+existing 2-row calibration checkpoint. The third row (`F0242`) then completed,
+with three unique IDs and the original source/config/model/digest identity.
+
+The operational defect was in preparation guidance, not the registered run.
+`scripts/prepare_windows_longterm_worktree.sh` now requires one explicit,
+mutually exclusive target: `--family-dev` detaches at the frozen WS2 commit,
+while `--latest` fast-forwards main for WS3 or maintenance. Boundary-unit
+installation is valid only with `--latest`. No checkpoint was deleted or
+recomputed, no gate/config/digest changed, and no held-out/test input was
+accessed.
+
 ## 2026-07-08: TMLR mechanism discussion answers the narrowed research question
 
 The active draft already reported the Qwen typed-control signal, RAMDocs double

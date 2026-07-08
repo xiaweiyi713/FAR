@@ -13,7 +13,7 @@
       "WS3",
       "WS4"
     ],
-    "next_training_step": "when training is allowed tomorrow, dry-run the guarded Google/Gemma starter, then resume WS2 Google/Gemma from the documented checkpoint with FAR_FAMILY_DEV_TRAINING_ALLOWED=1"
+    "next_training_step": "monitor the active WS2 single-family dev run until it completes or fails"
   },
   "roadmap": {
     "active_sha256": "91eb3205fe127271bc5f4882025243d9974a711e311ef074fcbde09aa86e7cf7",
@@ -84,21 +84,21 @@
     },
     "WS2": {
       "details": {
-        "active_run_documented": false,
+        "active_run_documented": true,
         "families": [
           "mistral",
           "google",
           "meta"
         ],
         "google_preflight_documented": false,
-        "google_started_paused_documented": true,
+        "google_started_paused_documented": false,
         "guarded_starter_documented": true,
         "local_release_present": false,
         "methods": [
           "far",
           "minus_typed_conflict"
         ],
-        "mistral_complete_paused_documented": true,
+        "mistral_complete_paused_documented": false,
         "paused_checkpoint_documented": false,
         "samples": 60
       },
@@ -115,7 +115,7 @@
         {
           "exists": true,
           "path": "docs/CURRENT_OPERATIONAL_STATE.md",
-          "sha256": "197585900410e04699fc3250d462396dbab35d3abdd2d2760b34dd679870e972"
+          "sha256": "9d1b9b1e79e5a5fbae7e0a61c8bba98ffb463b2c4e39dcb78240122661c16186"
         },
         {
           "exists": false,
@@ -127,8 +127,8 @@
       "priority": "P0",
       "protocol_valid": true,
       "required_claim_level": "directional_reproduction",
-      "status": "in_progress_paused",
-      "summary": "Google/Gemma is paused after 2 FAR calibration checkpoints",
+      "status": "in_progress_active",
+      "summary": "a WS2 single-family dev run is active on the Windows GPU",
       "test_accessed": false
     },
     "WS3": {
