@@ -841,6 +841,18 @@ systemctl --user start far-boundary.service
 `/mnt/d/FAR-outputs/boundary_v1`；runner 自身强制 Wiki→Google、calibration→formal、
 两臂和 checkpoint 身份。不得与 family-dev 或其他 GPU 作业并行启动。
 
+Stopping WS3 boundary services is also guarded and dry-run by default:
+
+```bash
+scripts/stop_windows_boundary.sh
+scripts/stop_windows_boundary.sh --execute
+scripts/stop_windows_boundary.sh --execute --stop-ollama
+```
+
+The stopper only targets `far-boundary.service` unless `--stop-ollama` is
+passed. It deliberately does not stop WS2 family-dev units, does not delete
+checkpoints, and does not inspect held-out/test inputs.
+
 To rebuild an import from the pinned public source and verify byte-for-byte
 equivalence:
 

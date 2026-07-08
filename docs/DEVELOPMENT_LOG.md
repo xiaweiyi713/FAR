@@ -1,5 +1,21 @@
 # Development Decision Log
 
+## 2026-07-08: WS3 boundary stopper added without starting training
+
+After pausing WS2 for the training window, a zero-model operational gap remained
+for WS3: the repository had persistent Windows GPU units for boundary mapping
+but no symmetric guarded stopper. Added `scripts/stop_windows_boundary.sh`, which
+is dry-run by default, stops only `far-boundary.service` with `--execute`, and
+stops `far-ollama-boundary.service` only when `--stop-ollama` is explicitly
+passed.
+
+The stopper prints WS3/WS2 service state and relevant boundary/Ollama processes
+before any action, then rechecks after execution. It deliberately does not stop
+WS2 family-dev units, delete checkpoints, inspect held-out/test inputs, or kill
+arbitrary processes. `docs/REPRODUCING.md` now documents the stop path, and the
+README WS2 status now reflects the paused Google/Gemma checkpoint rather than
+the earlier pre-start state.
+
 ## 2026-07-08: WS2 Google/Gemma paused for training window
 
 Following the user instruction that training should not continue tonight, the
