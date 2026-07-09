@@ -2916,3 +2916,38 @@ evidence bundle verified successfully, releasing the GPU.
   `far-ollama-family-dev.service` active（`MainPID=2329`），Meta、boundary 和旧串联 service
   均 inactive；Google checkpoint 尚未写出，Python runner 正在初始化。未访问
   held-out/test，未启动 Meta/Llama 或 WS3 boundary。
+
+## 2026-07-09 — WS3 boundary pre-formal failure closed before prediction
+
+- WS3 Windows/D: worktree was fast-forwarded to clean `origin/main` commit
+  `864a6024c717f3a97ebceecdbf42f7bf9bf64c53` after the WS2 release CI passed.
+  The guarded boundary starter first failed closed during Ollama cold start while
+  querying `/api/tags`; no boundary runner was launched in that attempt.
+- After Ollama responded and the frozen `qwen3.5:9b` digest
+  `6488c96fa5faab64bb65cbd30d4289e20e6130ef535a93ef9a49f42eda893ea7` matched,
+  the second authorized starter launched `far-boundary.service`. The runner
+  exited before writing any prediction: only
+  `/mnt/d/FAR-outputs/boundary_v1/calibration/wikicontradict/far/run_identity.json`
+  existed, and `checkpoint.jsonl`, `predictions.jsonl`, and `run_manifest.json`
+  were absent.
+- The stop rule was applied immediately: `far-boundary.service` was stopped and
+  confirmed inactive before diagnosis. The log showed
+  `ValueError: conflict_graph.enable_entity_lexicon_conflict requires a corpus entity lexicon`
+  at the first WikiContradict calibration sample (`WIKI0001`).
+- Root cause: the frozen WS3 config intentionally keeps the formal typed
+  conflict stack with `enable_entity_lexicon_conflict=true`, but the public
+  boundary imports carry empty top-level `entities` arrays. Unlike RAMDocs,
+  WS3 is not a no-entity closed-corpus branch; disabling the component would
+  change the registered formal stack. The runner now derives a small
+  non-oracle entity list from each public corpus document's own `entities`
+  field when present, title variants, and bounded capitalized phrases from the
+  public title/content. It does not read `reference_answers`, scorer labels, or
+  held-out/test data.
+- Local verification confirms every WikiContradict and Google CONFLICTS runtime
+  document now has at least one public corpus-derived entity, and a stub
+  `VeraConflictDetector` construction no longer triggers the original missing
+  lexicon error. Full prediction remains closed until this deviation repair is
+  committed, pushed, synced to D:, the stale zero-prediction `run_identity.json`
+  directory is removed, and the guarded WS3 preflight passes again. This is not
+  a Round 2 and does not alter the frozen samples, labels, metrics, model
+  digest, or claim level.

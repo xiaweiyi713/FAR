@@ -1,13 +1,20 @@
 # FAR 当前运行状态
 
-状态时间：2026-07-08 21:27 CST
-适用范围：WS2 跨家族 dev 复现（Windows GPU / D: 盘 / `family_dev_v1`）
+状态时间：2026-07-09 09:40 CST
+适用范围：WS3 外部 boundary dev 测绘（Windows GPU / D: 盘 / `boundary_v1`）
 
 ## 当前结论
 
 - WS2 三个 family 已全部完成并正常退出；本地 release 已 finalize，独立
   verifier 返回 `valid=true`、`errors=[]`、`gate_f_passed=true`、
-  `direction_consistent=true`。WS3 boundary 仍未启动。
+  `direction_consistent=true`。
+- WS3 已做一次受控启动尝试，但在首个 WikiContradict calibration sample 写出任何
+  prediction 前 fail-closed；`far-boundary.service` 已停止，`far-ollama-boundary.service`
+  也处于 inactive。当前没有有效 boundary checkpoint 或 manifest。
+- WS3 失败根因为公开 boundary corpus 的 `entities` 字段为空，而 frozen
+  `qwen_boundary.yaml` 启用了正式 typed stack 的 corpus-entity lexicon。修复方向是在
+  runner 中从公开 corpus 文档标题/正文派生非金标实体词表；不读取 `reference_answers`、
+  不访问 held-out/test、不关闭 frozen typed component。
 - WS2 Mistral、Google 与 Meta 三个 family 已完整完成。Google/Gemma 从原有 2 条 checkpoint
   安全恢复后，两组校准均完成 5/5、两组正式臂均完成 60/60，并写出 Google family
   manifest。随后 Meta/Llama 通过 offline 与在线 digest preflight 后按冻结顺序完成。
@@ -35,11 +42,13 @@
   - `far-ollama-family-dev.service`：`inactive`（WS2 完成后由 guarded stopper 停止）；
   - `far-family-dev-mistral-resume.service`：`inactive`；
   - `far-family-dev.service`：`inactive`；
-  - `far-boundary.service` / `far-ollama-boundary.service`：未启动。
-- 进程复核已无 `experiments.family_dev`、`ollama serve` 或 boundary runner；GPU 已释放。
-- 远端 D: 工作树 `/mnt/d/FAR-workspace/FAR-longterm` 当前故意 detached 在冻结提交
-  `bd57585716b4c046db97311209a0d9f7ec340e6d`；`origin/main` 为 `70c5400`。
-  WS2 证据仍绑定该冻结提交；下一步 WS3 可按手册切换到最新 main。
+  - `far-boundary.service`：`inactive`（首样本前失败后已停止）；
+  - `far-ollama-boundary.service`：`inactive`。
+- 进程复核已无 `experiments.family_dev`、`experiments.boundary`、`ollama serve`、
+  `llama-server` 或 `train.py`；GPU 已释放。
+- 远端 D: 工作树 `/mnt/d/FAR-workspace/FAR-longterm` 已切到最新 WS3 main
+  `864a6024c717f3a97ebceecdbf42f7bf9bf64c53` 且 clean。下一次启动必须先同步新的修复提交，
+  删除仅含旧 `run_identity.json` 的零 prediction 失败目录，再跑 guarded preflight。
 - `scripts/prepare_windows_longterm_worktree.sh` 已修正为必须显式选择目标：
   `--family-dev` 保持 WS2 冻结提交，`--latest` 仅供 WS3 或维护使用。
 - Meta/Llama 两个校准臂与两个正式臂均已完成，family manifest 已核验。
@@ -101,11 +110,11 @@
 ## 继续原则
 
 - WS2 已 finalize 并通过独立 verifier；不得重跑、改写或增设 Round 2。
-- 下一步使用 `scripts/prepare_windows_longterm_worktree.sh --latest windows-gpu`
-  dry-run；只有 preflight 通过后才可显式授权切到最新 main、安装 WS3 units。
-- WS3 仍只能运行已冻结的公开 dev boundary 协议，不得触碰 held-out/test。
-- 不修改实验代码、配置、模型 digest、样本、指标、G-F/G-P、claim level 或输出目录。
-- 任何重新启动前先 dry-run guarded starter；只有确认训练允许时才加
-  `FAR_FAMILY_DEV_TRAINING_ALLOWED=1` 与 `--execute`。
+- WS3 仍只能运行已冻结的公开 dev boundary 协议，不得触碰 held-out/test；这次修复只允许处理
+  “首个 prediction 前发现的公开 corpus entity lexicon 缺失”。
+- 不修改 frozen config、模型 digest、样本、指标、G-F/G-P、claim level 或输出目录。
+- 任何重新启动前先同步修复提交到 D: 工作树、确认 worktree clean、清理零 prediction 失败目录，
+  再 dry-run guarded starter；只有确认训练允许时才加
+  `FAR_BOUNDARY_TRAINING_ALLOWED=1` 与 `--execute`。
 - 若恢复或停止 WS2 runner，优先使用 guarded scripts；不删除已有 checkpoint，不重跑已完成样本。
 - 仍不得访问 held-out/test，仍不得把 LLM jury 称为真人 IAA。

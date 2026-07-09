@@ -46,6 +46,35 @@ CONFLICT_TERMS = re.compile(
     r"different answers|depending on)\b",
     flags=re.I,
 )
+PUBLIC_ENTITY_PHRASE = re.compile(
+    r"\b(?:[A-Z][A-Za-z0-9&'./-]+|[A-Z]{2,})"
+    r"(?:\s+(?:of|the|and|for|in|on|at|by|de|van|"
+    r"[A-Z][A-Za-z0-9&'./-]+|[A-Z]{2,})){0,5}\b"
+)
+PUBLIC_ENTITY_STOPWORDS = {
+    "a",
+    "an",
+    "and",
+    "are",
+    "by",
+    "for",
+    "from",
+    "how",
+    "in",
+    "is",
+    "list",
+    "of",
+    "on",
+    "the",
+    "this",
+    "to",
+    "what",
+    "when",
+    "where",
+    "which",
+    "who",
+    "why",
+}
 
 
 def _contains_phrase(container: tuple[str, ...], phrase: tuple[str, ...]) -> bool:
@@ -90,6 +119,40 @@ def _tasks(data_dir: Path) -> list[dict[str, Any]]:
     return sorted(rows, key=lambda row: str(row["id"]))
 
 
+def _public_corpus_entities(row: dict[str, Any]) -> list[str]:
+    """Derive a small non-oracle entity list from public corpus text only."""
+
+    entities: list[str] = [
+        str(entity).strip() for entity in row.get("entities", []) if str(entity).strip()
+    ]
+    title = str(row.get("title") or "")
+    content = str(row.get("content") or "")
+    title_variants = [
+        title,
+        re.sub(r"\s+-\s+Wikipedia$", "", title),
+        re.sub(r"\s+\|\s+.*$", "", title),
+        re.sub(r"\s*\([^)]*\)", "", title),
+    ]
+    candidates = [*title_variants]
+    for text in (title, content[:1200]):
+        candidates.extend(PUBLIC_ENTITY_PHRASE.findall(text))
+    for candidate in candidates:
+        if re.search(r"[.!?]\s", candidate):
+            continue
+        entity = re.sub(r"\s+", " ", candidate).strip(" \t\r\n:;,.-")
+        if not entity:
+            continue
+        tokens = entity.split()
+        if len(entity) < 3 or len(tokens) > 8:
+            continue
+        if all(token.casefold() in PUBLIC_ENTITY_STOPWORDS for token in tokens):
+            continue
+        if tokens[0].casefold() in {"a", "an", "the"} and len(tokens) > 1:
+            entity = " ".join(tokens[1:])
+        entities.append(entity)
+    return list(dict.fromkeys(entities))[:24]
+
+
 def _documents(data_dir: Path) -> dict[str, list[EvidenceDocument]]:
     grouped: dict[str, list[EvidenceDocument]] = defaultdict(list)
     for row in read_jsonl(data_dir / "corpus.jsonl"):
@@ -104,7 +167,7 @@ def _documents(data_dir: Path) -> dict[str, list[EvidenceDocument]]:
                 source=str(row["source"]),
                 date=row.get("date"),
                 url=row.get("url"),
-                metadata={"entities": list(row.get("entities", []))},
+                metadata={"entities": _public_corpus_entities(row)},
             )
         )
     return grouped
