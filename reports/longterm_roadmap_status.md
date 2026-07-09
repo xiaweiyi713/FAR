@@ -16,17 +16,17 @@
 |---|---|---|---|
 | WS1 | `complete` | G-R1 | 226 shared RAMDocs errors uniquely bucketed; four hypotheses recorded |
 | WS2 | `complete` | G-F | verified three-family directional reproduction; G-F passed with 3/3 positive family directions |
-| WS3 | `registered_inputs_ready_pending_predictions` | G-B | two public dev imports and protocol are frozen; no model predictions yet |
-| WS4 | `in_progress_waiting_for_ws3` | paper readiness / claim scope | verified WS2 is integrated into the TMLR draft; final branch waits for WS3 |
+| WS3 | `complete` | G-B | verified public-dev boundary matrix; result supports directional boundary mapping rather than a global win/loss claim |
+| WS4 | `complete` | paper readiness / claim scope | verified WS2 and WS3 are integrated into the TMLR mechanism-and-boundary draft |
 | WS5 | `complete` | G-P | power gate is institutionalized; WS2 forced to directional reproduction |
 | WS6 | `baseline_complete_ongoing_maintenance` | repository-maintenance audit | tracked diagnostics size and output/outputs hygiene are machine-audited |
 
 ## 进度解释
 
-- 已闭合或已建立基线: WS1, WS2, WS5, WS6
-- 仍未完成: WS3, WS4
-- 总目标完成: `false`
-- 当前首要动作: prepare the Windows worktree at latest main and start the registered WS3 public-dev boundary mapping only after its guarded preflight passes
+- 已闭合或已建立基线: WS1, WS2, WS3, WS4, WS5, WS6
+- 仍未完成: none
+- 总目标完成: `true`
+- 当前首要动作: no required roadmap work remains; optional next steps are commit/push, release packaging, and human author review before external submission
 
 ## 安全边界
 

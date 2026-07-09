@@ -1,0 +1,17 @@
+{
+  "dataset": "rag_conflicts",
+  "human_iaa": false,
+  "method": "far",
+  "metrics": {
+    "binary_success": 0.94,
+    "boundary_score": 0.9534541727962781,
+    "conflict_acknowledged": 0.013333333333333334,
+    "conflict_detection_correct": 0.6133333333333333
+  },
+  "predictions_sha256": "084517177f665dd41b6601d0890c802cdd2c3383821f59658ed6c2ed81c65b5b",
+  "publication_gold": false,
+  "samples": 150,
+  "schema_version": "far-boundary-evaluation-v1",
+  "scores_sha256": "d64f0924f50ce515ec82cc07fdf9f5dd357d811042a6a2bc6cc674741bb1467e",
+  "test_accessed": false
+}

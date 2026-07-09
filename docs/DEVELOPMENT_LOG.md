@@ -2951,3 +2951,47 @@ evidence bundle verified successfully, releasing the GPU.
   directory is removed, and the guarded WS3 preflight passes again. This is not
   a Round 2 and does not alter the frozen samples, labels, metrics, model
   digest, or claim level.
+
+## 2026-07-09 — WS3 boundary release completed and folded into WS4
+
+- After the public-corpus entity-lexicon repair was committed and synced to the
+  Windows D: worktree, the registered WS3 boundary run completed all eight
+  required arms without accessing held-out/test: WikiContradict calibration
+  `5/5 + 5/5`, WikiContradict formal `150/150 + 150/150`, Google/RAG conflicts
+  calibration `5/5 + 5/5`, and Google/RAG conflicts formal `150/150 + 150/150`.
+  Every run manifest is `status=complete` with `errors=0`.
+- The remote runner exited normally; `far-boundary.service` was inactive before
+  shutdown. The guarded stopper then stopped `far-ollama-boundary.service`.
+  Follow-up checks found no `experiments.boundary`, `ollama serve`,
+  `llama-server`, or `train.py` processes and no GPU compute applications. The
+  remaining ~600MiB GPU memory was `/Xwayland` display baseline, not FAR/Ollama.
+- The D: output `/mnt/d/FAR-outputs/boundary_v1` was synchronized to
+  `diagnostics/boundary_v1`. `falsirag-boundary finalize` produced
+  `reports/boundary_matrix.md`, `diagnostics/boundary_v1/result.json`, and
+  `diagnostics/boundary_v1/manifest.json` with `formal_pipeline_samples=600`,
+  `calibration_pipeline_samples=20`, `gate_b_complete=true`,
+  `global_pass_fail=null`, `publication_gold=false`, `human_iaa=false`, and
+  `test_accessed=false`.
+- The first independent WS3 verifier run exposed a release-audit bug rather
+  than a data mismatch: `finalize()` adds `source_commit` to `result.json`, but
+  the recomputed result did not inject the already verified unique source
+  commit before comparison. The verifier now inserts that commit when the
+  release has exactly one source commit. Re-running
+  `falsirag-boundary-evidence --output-dir diagnostics/boundary_v1 --report reports/boundary_matrix.md`
+  returns `valid=true`, `errors=[]`, and `gate_b_complete=true`.
+- WS3's verified matrix is near-null at the dataset level:
+  WikiContradict typed-minus-untyped boundary score is `+0.0033`
+  (95% CI `[-0.0067,+0.0167]`) and Google/RAG conflicts is `-0.0007`
+  (95% CI `[-0.0271,+0.0262]`), with both Holm-adjusted McNemar values equal
+  to `1.0`. The preregistered Google outdated-information subgroup is
+  directionally positive (`+0.0040`) and the no-conflict subgroup stays within
+  the safety margin (`-0.0042 >= -0.03`), while the Wiki explicit/implicit
+  predictions are contradicted. This supports only a weak A-line
+  mechanism-and-boundary story, not global external transfer or end-to-end
+  superiority.
+- WS4 materials were updated to include the verified WS3 result: `paper/main.tex`
+  now reports the boundary matrix in the abstract and mechanism-boundary
+  section, `paper/STATUS.md` records WS3 completion and its claim limits, and
+  `reports/tmlr_result_integration_matrix.md` records the weak A-line selection.
+  `experiments/longterm_status.py` now independently verifies the WS3 release
+  before marking WS3 complete and checks that WS3 is integrated into WS4.

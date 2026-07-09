@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import Any
 
 from bench.build.common import sha256_file, write_json
+from experiments.evidence_boundary import verify_release as verify_boundary_release
 from experiments.evidence_family_dev import verify_release as verify_family_dev_release
 from experiments.protocol_boundary import verify_boundary_protocol
 from experiments.protocol_family_dev import verify_family_protocol
@@ -228,9 +229,22 @@ def _ws3(root: Path) -> dict[str, Any]:
     matrix = root / "reports/boundary_matrix.md"
     release_exists = release_manifest.is_file()
     errors = [f"protocol: {item}" for item in protocol.get("errors", [])]
+    release_audit: dict[str, Any] = {}
     if release_exists and matrix.is_file():
-        status = "release_present_unverified"
-        summary = "boundary release artifacts exist and should be independently verified"
+        try:
+            release_audit = verify_boundary_release(release_manifest.parent, matrix)
+        except (OSError, ValueError, json.JSONDecodeError) as exc:
+            errors.append(f"release audit failed: {exc}")
+        if release_audit.get("valid") is True:
+            status = "complete"
+            summary = (
+                "verified public-dev boundary matrix; result supports directional boundary "
+                "mapping rather than a global win/loss claim"
+            )
+        else:
+            status = "release_present_invalid"
+            summary = "boundary release artifacts exist but independent verification failed"
+            errors.extend(f"release: {item}" for item in release_audit.get("errors", []))
     else:
         status = "registered_inputs_ready_pending_predictions"
         summary = "two public dev imports and protocol are frozen; no model predictions yet"
@@ -239,11 +253,15 @@ def _ws3(root: Path) -> dict[str, Any]:
         "priority": "P1",
         "status": status,
         "gate": "G-B",
-        "gate_passed": None,
+        "gate_passed": (
+            release_audit.get("gate_b_complete") if release_audit.get("valid") is True else None
+        ),
         "protocol_valid": bool(protocol.get("valid")),
-        "required_claim_level": protocol.get("required_claim_level"),
-        "test_accessed": protocol.get("test_accessed"),
-        "human_iaa": protocol.get("human_iaa"),
+        "required_claim_level": release_audit.get(
+            "required_claim_level", protocol.get("required_claim_level")
+        ),
+        "test_accessed": release_audit.get("test_accessed", protocol.get("test_accessed")),
+        "human_iaa": release_audit.get("human_iaa", protocol.get("human_iaa")),
         "summary": summary,
         "key_evidence": [
             _file_record(root, root / "docs/PLAN_BOUNDARY_MAPPING.md"),
@@ -256,6 +274,8 @@ def _ws3(root: Path) -> dict[str, Any]:
             "methods": protocol.get("methods"),
             "samples_per_dataset": protocol.get("samples_per_dataset"),
             "local_release_present": release_exists,
+            "release_verified": release_audit.get("valid") is True,
+            "global_pass_fail": release_audit.get("global_pass_fail"),
         },
         "errors": errors,
     }
@@ -280,6 +300,13 @@ def _ws4(root: Path) -> dict[str, Any]:
     boundary_claim = (
         "machine-audited mechanism signal" in main_text and "observed boundary" in main_text
     )
+    ws3_integrated = (
+        "public-development boundary map is near-null overall" in main_text
+        and "outdated-information condition" in main_text
+        and "weak A-line" in status_text
+        and "WS3 is also independently" in integration_text
+        and "verified: WikiContradict" in integration_text
+    )
     integration_matrix_present = (
         "A-line" in integration_text
         and "B-line" in integration_text
@@ -291,6 +318,7 @@ def _ws4(root: Path) -> dict[str, Any]:
         tmlr_relocated
         and strict_inactive
         and boundary_claim
+        and ws3_integrated
         and integration_matrix_present
         and ready_relaxed
     ):
@@ -298,12 +326,12 @@ def _ws4(root: Path) -> dict[str, Any]:
     return {
         "name": "WS4 paper and venue repositioning",
         "priority": "P0",
-        "status": "in_progress_waiting_for_ws3" if not errors else "incomplete",
+        "status": "complete" if not errors else "incomplete",
         "gate": "paper readiness / claim scope",
         "gate_passed": ready_relaxed,
         "test_accessed": False,
         "human_iaa": False,
-        "summary": "verified WS2 is integrated into the TMLR draft; final branch waits for WS3",
+        "summary": "verified WS2 and WS3 are integrated into the TMLR mechanism-and-boundary draft",
         "key_evidence": [
             _file_record(root, status_path),
             _file_record(root, main_path),
@@ -316,7 +344,8 @@ def _ws4(root: Path) -> dict[str, Any]:
             "result_integration_matrix_present": integration_matrix_present,
             "relaxed_machine_audited_paper_ready": ready_relaxed,
             "ws2_integrated": "WS2 is now complete and independently verified" in status_text,
-            "waiting_for_ws3": True,
+            "ws3_integrated": ws3_integrated,
+            "waiting_for_ws3": False,
         },
         "errors": errors,
     }
@@ -423,7 +452,20 @@ def build_status(root: Path = ROOT) -> dict[str, Any]:
     ]
     ws2_status = str(workstreams["WS2"].get("status"))
     ws2_details = workstreams["WS2"].get("details", {})
-    if ws2_status == "complete":
+    ws3_status = str(workstreams["WS3"].get("status"))
+    ws4_status = str(workstreams["WS4"].get("status"))
+    goal_complete = not errors and not incomplete_workstreams
+    if goal_complete:
+        next_training_step = (
+            "no required roadmap work remains; optional next steps are commit/push, release "
+            "packaging, and human author review before external submission"
+        )
+    elif ws2_status == "complete" and ws3_status == "complete" and ws4_status != "complete":
+        next_training_step = (
+            "integrate the verified WS3 boundary matrix into the TMLR paper and update the "
+            "A/B/C decision-tree narrative; no further GPU work is needed tonight"
+        )
+    elif ws2_status == "complete":
         next_training_step = (
             "prepare the Windows worktree at latest main and start the registered WS3 "
             "public-dev boundary mapping only after its guarded preflight passes"
@@ -473,7 +515,7 @@ def build_status(root: Path = ROOT) -> dict[str, Any]:
         "progress": {
             "complete_workstreams": complete_workstreams,
             "incomplete_workstreams": incomplete_workstreams,
-            "goal_complete": False,
+            "goal_complete": goal_complete,
             "next_training_step": next_training_step,
         },
         "safety": {

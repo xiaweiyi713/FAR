@@ -5,15 +5,14 @@
     "complete_workstreams": [
       "WS1",
       "WS2",
+      "WS3",
+      "WS4",
       "WS5",
       "WS6"
     ],
-    "goal_complete": false,
-    "incomplete_workstreams": [
-      "WS3",
-      "WS4"
-    ],
-    "next_training_step": "prepare the Windows worktree at latest main and start the registered WS3 public-dev boundary mapping only after its guarded preflight passes"
+    "goal_complete": true,
+    "incomplete_workstreams": [],
+    "next_training_step": "no required roadmap work remains; optional next steps are commit/push, release packaging, and human author review before external submission"
   },
   "roadmap": {
     "active_sha256": "91eb3205fe127271bc5f4882025243d9974a711e311ef074fcbde09aa86e7cf7",
@@ -93,7 +92,7 @@
         ],
         "google_preflight_documented": false,
         "google_started_paused_documented": false,
-        "guarded_starter_documented": true,
+        "guarded_starter_documented": false,
         "local_release_present": true,
         "methods": [
           "far",
@@ -117,7 +116,7 @@
         {
           "exists": true,
           "path": "docs/CURRENT_OPERATIONAL_STATE.md",
-          "sha256": "e31183d1472a515afa88af1349cd22d0043d5cdadc8b1a053f2bf0ce6b1b28ad"
+          "sha256": "30036896d17283837536d74a7df4afc18dbb7ed906d8d12f99c82f7f433f3713"
         },
         {
           "exists": true,
@@ -139,16 +138,18 @@
           "wikicontradict",
           "rag_conflicts"
         ],
-        "local_release_present": false,
+        "global_pass_fail": null,
+        "local_release_present": true,
         "methods": [
           "far",
           "far_minus_typed_conflict"
         ],
+        "release_verified": true,
         "samples_per_dataset": 150
       },
       "errors": [],
       "gate": "G-B",
-      "gate_passed": null,
+      "gate_passed": true,
       "human_iaa": false,
       "key_evidence": [
         {
@@ -162,22 +163,22 @@
           "sha256": "c27f48391e364322e6bcac8345f1cf185873fbd3049faebc8903e2ac9b156ec5"
         },
         {
-          "exists": false,
+          "exists": true,
           "path": "diagnostics/boundary_v1/manifest.json",
-          "sha256": null
+          "sha256": "115f22a9b405248de7311b3d617ebb7a74ac5b11cf84eef8c8c533ebf3281a7f"
         },
         {
-          "exists": false,
+          "exists": true,
           "path": "reports/boundary_matrix.md",
-          "sha256": null
+          "sha256": "4df9ff3236b143ce08df3968857921fb5ecc06d961def7d898b6a47ed05cffa9"
         }
       ],
       "name": "WS3 external boundary mapping",
       "priority": "P1",
       "protocol_valid": true,
       "required_claim_level": "directional_boundary_mapping",
-      "status": "registered_inputs_ready_pending_predictions",
-      "summary": "two public dev imports and protocol are frozen; no model predictions yet",
+      "status": "complete",
+      "summary": "verified public-dev boundary matrix; result supports directional boundary mapping rather than a global win/loss claim",
       "test_accessed": false
     },
     "WS4": {
@@ -186,8 +187,9 @@
         "result_integration_matrix_present": true,
         "strict_aaai_inactive": true,
         "tmlr_relocated": true,
-        "waiting_for_ws3": true,
-        "ws2_integrated": true
+        "waiting_for_ws3": false,
+        "ws2_integrated": true,
+        "ws3_integrated": true
       },
       "errors": [],
       "gate": "paper readiness / claim scope",
@@ -197,28 +199,28 @@
         {
           "exists": true,
           "path": "paper/STATUS.md",
-          "sha256": "5112025dc840529d0960421bc831291c4d757c2a12fdcc9648cae92a5bfd2686"
+          "sha256": "d3f4be6d8e673c2165b3f9e6c0ed0ef437ca160e7431a1adefd5e42f40c7c507"
         },
         {
           "exists": true,
           "path": "paper/main.tex",
-          "sha256": "4e81b370bb59b8e546ebb9ecf05678afbd0e460c5ce5c582ef1d04be0cd2db57"
+          "sha256": "5411828273fc70e4a888cd2c622dc862fc202079a9a5a727ce706badc37de3f3"
         },
         {
           "exists": true,
           "path": "reports/solo_paper_readiness.json",
-          "sha256": "ef3d3519ea03e04fa8a403efbdab5313a1bfcc9c5fd767b431725818af7a292a"
+          "sha256": "e2aa0c45b947520e9e9f7c722a4e75c8a8df21b20d8b3f3067a79bc50d46cbe9"
         },
         {
           "exists": true,
           "path": "reports/tmlr_result_integration_matrix.md",
-          "sha256": "183ba7eb9d48ffb1387ee36729f6ba437965930b32b98f1c58a8ae460171843b"
+          "sha256": "96d1a56efa27ccfeaa6e5b5cfaad02c35a6ba3da3291a7d5b440eb6c053a442c"
         }
       ],
       "name": "WS4 paper and venue repositioning",
       "priority": "P0",
-      "status": "in_progress_waiting_for_ws3",
-      "summary": "verified WS2 is integrated into the TMLR draft; final branch waits for WS3",
+      "status": "complete",
+      "summary": "verified WS2 and WS3 are integrated into the TMLR mechanism-and-boundary draft",
       "test_accessed": false
     },
     "WS5": {
@@ -252,9 +254,9 @@
     },
     "WS6": {
       "details": {
-        "diagnostics_mib": 37.106,
+        "diagnostics_mib": 40.115,
         "outputs_tracks_only_gitkeep": true,
-        "tracked_files": 553
+        "tracked_files": 597
       },
       "errors": [],
       "gate": "repository-maintenance audit",

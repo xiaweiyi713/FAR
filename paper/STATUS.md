@@ -37,23 +37,32 @@ machine-audited development results under the preregistered
 `directional_reproduction` claim level, not human gold, blind validation, or a
 restored end-to-end superiority claim.
 
-WS3 is now preregistered separately as `directional_boundary_mapping`.
-WikiContradict and Google CONFLICTS are frozen as two public development
-diagnostics with verified import manifests. The registered runner compares FAR
-with `far_minus_typed_conflict`, enforces calibration before formal runs and
-Wiki before Google, and produces a boundary matrix rather than a global
-pass/fail result. No WS3 model prediction has been run yet; its eventual
-results must be presented as public-dev boundary evidence, not human IAA,
-publication gold, or external blind testing.
+WS3 is now complete and independently verified as
+`directional_boundary_mapping`. WikiContradict and Google CONFLICTS are two
+public development diagnostics, not held-out/test, human IAA, publication gold,
+or external blind testing. The verified release contains 600 formal pipeline
+predictions plus 20 calibration predictions, with `gate_b_complete=true`,
+`publication_gold=false`, `human_iaa=false`, and `test_accessed=false`.
+Overall typed-minus-untyped boundary-score differences are near null:
+WikiContradict `+0.0033` with 95% CI `[-0.0067,+0.0167]`, and Google CONFLICTS
+`-0.0007` with 95% CI `[-0.0271,+0.0262]`; both Holm-adjusted McNemar values
+are `1.0`. The preregistered Google outdated-information subgroup is positive
+(`+0.0040`) and the no-conflict subgroup stays within the safety margin
+(`-0.0042 >= -0.03`), while the Wiki explicit/implicit predictions are
+contradicted. The paper therefore uses WS3 as a weak A-line boundary result:
+there are identifiable, narrow public-dev conditions where typed control can
+help, but no global external transfer or end-to-end superiority claim.
 
 The active result-integration checklist is
 `reports/tmlr_result_integration_matrix.md`. It maps every WS2/WS3 outcome
 combination onto the A/B/C paper lines from the roadmap and fixes the section
-edits allowed after verified releases exist. WS2 now closes the C-line
-family-inconsistency branch; WS3 will select between the A-line
-mechanism-and-boundary and B-line bounded-transfer interpretations. The draft
-may include the verified WS2 result but must not insert an unverified WS3
-placeholder.
+edits allowed after verified releases exist. WS2 closes the C-line
+family-inconsistency branch; WS3 selects only a weak A-line
+mechanism-and-boundary interpretation because one preregistered external
+condition is directionally positive without a no-conflict safety violation, but
+both dataset-level comparisons are near null. The draft may include the
+verified WS2 and WS3 releases only with the public-dev, machine-audited,
+low-power caveats.
 
 The active text now also has a reproducible TMLR submission build path:
 `scripts/build_tmlr_paper.sh` takes the scientific body from `paper/main.tex`,
@@ -73,8 +82,8 @@ opportunity chain rather than a monotone pipeline; explains why the local Qwen
 signal and RAMDocs nulls can coexist without claiming that construct alignment
 is the proven sole cause; and marks selective revision as an unevaluated future
 design hypothesis. The verified WS2 result establishes directional family
-recurrence; WS3 remains the registered test that determines whether the final
-interpretation is A-line or B-line.
+recurrence; the verified WS3 result now adds a public-dev boundary matrix with
+near-null global transfer and a narrow positive outdated-information condition.
 
 ## Relaxed single-author machine-audited profile
 

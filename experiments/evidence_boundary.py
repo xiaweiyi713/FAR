@@ -190,6 +190,8 @@ def verify_release(output_root: Path, report_path: Path) -> dict[str, Any]:
                     errors.append(f"{dataset}/{method}: evaluation failed: {exc}")
     try:
         recomputed = compute_boundary_result(output_root)
+        if len(commits) == 1:
+            recomputed["source_commit"] = next(iter(commits))
         if result != recomputed:
             errors.append("boundary result differs from recomputation")
         report = _report_text(recomputed).encode()

@@ -4,7 +4,7 @@ This report turns the roadmap decision tree into a writing checklist for the
 active TMLR mechanism-and-boundary paper. It is not a new empirical result and
 does not alter F1--F10, G-F, G-B, G-P, label status, or held-out/test policy.
 
-## Fixed baseline before WS3 finishes
+## Fixed baseline after WS3
 
 - The paper line is mechanism-and-boundary, not end-to-end superiority.
 - The completed positive evidence now includes the 60-item Qwen development
@@ -15,8 +15,12 @@ does not alter F1--F10, G-F, G-B, G-P, label status, or held-out/test policy.
   a detection-only explanation do not rescue the original broad claim.
 - WS2 is directional because G-P estimates low power for the three-family
   reproduction. A nonsignificant G-F cannot be written as evidence of absence.
-- WS3 has no global pass/fail. Its deliverable is a public-dev boundary matrix,
-  not human IAA, publication gold, or external blind validation.
+- WS3 has no global pass/fail. Its verified public-dev boundary matrix is not
+  human IAA, publication gold, or external blind validation.
+- WS3 is near-null at the dataset level but has one preregistered positive
+  external condition (Google CONFLICTS outdated information) and no no-conflict
+  safety violation. This selects a weak A-line mechanism-and-boundary story,
+  not a global transfer story.
 
 ## Outcome-to-paper mapping
 
@@ -32,9 +36,17 @@ WS2 passes G-F with a combined typed-minus-untyped answer difference of
 `+0.0645`, 3/3 positive family directions, stratified exact McNemar counts of
 31 versus 9 (`p=0.000680`), and a family-cluster bootstrap 95% interval of
 `[+0.0528,+0.0735]`. The independent release audit is valid. The C-line
-family-inconsistency condition is therefore closed; WS3 will select between the
-A-line and B-line. The `directional_reproduction` ceiling remains binding
-because G-P power is 0.414.
+family-inconsistency condition is therefore closed. WS3 is also independently
+verified: WikiContradict has a typed-minus-untyped boundary-score difference of
+`+0.0033` with 95% CI `[-0.0067,+0.0167]`, Google CONFLICTS has `-0.0007` with
+95% CI `[-0.0271,+0.0262]`, and both Holm-adjusted McNemar values are `1.0`.
+The preregistered Google outdated-information subgroup is positive (`+0.0040`)
+and the no-conflict subgroup is safely noninferior (`-0.0042 >= -0.03`), while
+the Wiki explicit/implicit hypotheses are contradicted. This selects the A-line
+only in a weak, boundary-mapping sense: there is an identifiable public-dev
+condition where typed control helps, but the dataset-level external transfer is
+near null. The `directional_reproduction` and `directional_boundary_mapping`
+ceilings remain binding.
 
 ## Section-level editing rules
 
@@ -55,6 +67,8 @@ because G-P power is 0.414.
 - Insert WS3 only after `diagnostics/boundary_v1/manifest.json` exists,
   `reports/boundary_matrix.md` exists, and `experiments.evidence_boundary verify`
   passes.
+- The WS3 insertion condition is now satisfied; its release manifest,
+  boundary matrix, and independent audit all pass.
 - Never convert WS2 or WS3 machine/public-dev evidence into human IAA,
   publication gold, or external blind testing.
 - Never use WS3 subgroup positives to reopen RAMDocs G-A or to claim end-to-end

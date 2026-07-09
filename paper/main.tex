@@ -20,7 +20,7 @@
 \maketitle
 
 \begin{abstract}
-Retrieval-augmented language agents typically seek evidence that supports an emerging answer, while reflection remains weakly grounded in retrievable counter-evidence. We introduce Falsification-Augmented Retrieval (FAR), which decomposes an answer into dependent claims, assigns typed evidence requirements, retrieves support, refutation, and boundary evidence, and exposes a typed revision trace. On a 60-item Qwen3.5 9B machine-audited development diagnostic, typed control improves answer correctness over an otherwise matched untyped ablation by 0.078 (95\% paired bootstrap [0.034, 0.124]). A preregistered development reproduction is positive for Mistral, Gemma, and Llama, with a combined typed-minus-untyped difference of 0.0645 and G-F passing. This signal does not transfer into an end-to-end advantage on 350 upstream-labelled RAMDocs development items in either of two preregistered rounds. A frozen, zero-model-call attribution of the 226 shared errors finds 103 cases where conflict was detected but revision remained wrong; complete retrieval and partial-credit scoring do not restore a FAR advantage. All 34 positive per-item typed deltas on the Qwen diagnostic pass through changed revisions, even though removing typed revision improves the overall mean. Typed revision therefore mediates heterogeneous benefit and harm rather than a uniformly positive correction stage. We claim a narrow, machine-audited mechanism signal and directional local-family reproduction; we do not claim human-validated gold, external blindness, external-domain transfer, or general end-to-end superiority.
+Retrieval-augmented language agents typically seek evidence that supports an emerging answer, while reflection remains weakly grounded in retrievable counter-evidence. We introduce Falsification-Augmented Retrieval (FAR), which decomposes an answer into dependent claims, assigns typed evidence requirements, retrieves support, refutation, and boundary evidence, and exposes a typed revision trace. On a 60-item Qwen3.5 9B machine-audited development diagnostic, typed control improves answer correctness over an otherwise matched untyped ablation by 0.078 (95\% paired bootstrap [0.034, 0.124]). A preregistered development reproduction is positive for Mistral, Gemma, and Llama, with a combined typed-minus-untyped difference of 0.0645 and G-F passing. This signal does not transfer into an end-to-end advantage on 350 upstream-labelled RAMDocs development items in either of two preregistered rounds. A frozen, zero-model-call attribution of the 226 shared errors finds 103 cases where conflict was detected but revision remained wrong; complete retrieval and partial-credit scoring do not restore a FAR advantage. All 34 positive per-item typed deltas on the Qwen diagnostic pass through changed revisions, even though removing typed revision improves the overall mean. A preregistered public-development boundary map is near-null overall on WikiContradict and Google CONFLICTS, but identifies a narrow outdated-information condition without a no-conflict safety violation. Typed revision therefore mediates heterogeneous benefit and harm rather than a uniformly positive correction stage. We claim a narrow, machine-audited mechanism signal, directional local-family reproduction, and an observed applicability boundary; we do not claim human-validated gold, external blindness, external-domain transfer, or general end-to-end superiority.
 \end{abstract}
 
 \section{Introduction}
@@ -32,7 +32,7 @@ FAR makes this loop explicit. It (1) builds a claim dependency graph, (2) assign
 \begin{itemize}
     \item an explicit typed-conflict control framework with auditable claim, evidence, conflict, and revision traces, evaluated against a matched untyped control;
     \item a reproducible machine-audited synthetic benchmark and evaluation contract that keeps positive, negative, and mixed component evidence visible; and
-    \item an applicability-boundary account that combines the positive Qwen development signal, directional recurrence across three additional local model families, two preregistered RAMDocs null results, and frozen mechanism attribution.
+    \item an applicability-boundary account that combines the positive Qwen development signal, directional recurrence across three additional local model families, two preregistered RAMDocs null results, frozen mechanism attribution, and a verified public-development boundary matrix.
 \end{itemize}
 The empirical claim is intentionally narrower than the full architecture: the present evidence supports typed conflict control, not a positive marginal contribution from every query family or revision component.
 
@@ -221,12 +221,26 @@ blind external generalization, or end-to-end superiority.
 \subsection{What external boundary mapping can identify}
 
 WS3 asks whether typed effects track preregistered external conflict conditions
-rather than only the construction-derived diagnostic. The verified WS2 result
-rules out the registered C-line family-inconsistency branch, but the A-line
-mechanism-and-boundary and B-line bounded-transfer interpretations remain
-unresolved until the WS3 public-development release is independently verified.
-WS3 cannot rescue RAMDocs G-A, unlock held-out data, or reinstate a general
-end-to-end claim.
+rather than only the construction-derived diagnostic. Its independently
+verified public-development release contains 600 formal pipeline predictions
+over WikiContradict and Google CONFLICTS, plus 20 calibration predictions. The
+global typed-minus-untyped boundary-score differences are near zero:
+$+0.0033$ on WikiContradict (95\% CI $[-0.0067,+0.0167]$) and $-0.0007$ on
+Google CONFLICTS (95\% CI $[-0.0271,+0.0262]$), with Holm-adjusted McNemar
+$p=1.0$ for both. These global nulls do not establish absence, because the
+registered power ceiling remains low and the release is public development
+evidence.
+
+The boundary matrix is nevertheless informative. The preregistered
+WikiContradict explicit and implicit predictions are contradicted: explicit
+items have zero mean typed advantage, while implicit items are descriptively
+larger. In contrast, the Google CONFLICTS outdated-information subgroup matches
+the predicted positive direction ($+0.0040$), and the no-conflict subgroup
+stays within the registered noninferiority margin ($-0.0042 \geq -0.03$). This
+selects only a weak A-line reading: typed conflict control has identifiable
+conditions where it can help, but the observed external effect is tiny,
+dataset-dependent, and not a global transfer result. WS3 cannot rescue RAMDocs
+G-A, unlock held-out data, or reinstate a general end-to-end claim.
 
 \section{Limitations and Responsible Use}
 The candidate set reuses a small controlled source corpus, includes synthetic passages, and has correlated variants. Its labels are not human-validated gold, the reported split is development data, and evaluation is not externally blind. The machine audit measures agreement with construction labels and cannot reveal errors shared by construction, the LLM signal, and deterministic rules. The completed family reproduction uses four local model families on the same constructed development distribution and therefore does not establish external-domain or deployment generality. Rule conflict detectors are high precision but incomplete; model detectors inherit calibration and domain-shift risk. Retrieval failure can hide a true counterexample, while spurious low-quality contradictions can induce over-correction. The benchmark is not current factual advice and is unsuitable for medical, legal, financial, or policy decisions. Final authors remain responsible for checking all text, citations, experiments, and disclosure requirements.

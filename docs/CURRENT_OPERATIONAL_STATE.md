@@ -1,60 +1,37 @@
 # FAR 当前运行状态
 
-状态时间：2026-07-09 09:40 CST
-适用范围：WS3 外部 boundary dev 测绘（Windows GPU / D: 盘 / `boundary_v1`）
+状态时间：2026-07-09 22:05 CST
+适用范围：长期路线 WS1--WS6；今晚不再使用 GPU。
 
 ## 当前结论
 
-- WS2 三个 family 已全部完成并正常退出；本地 release 已 finalize，独立
-  verifier 返回 `valid=true`、`errors=[]`、`gate_f_passed=true`、
-  `direction_consistent=true`。
-- WS3 已做一次受控启动尝试，但在首个 WikiContradict calibration sample 写出任何
-  prediction 前 fail-closed；`far-boundary.service` 已停止，`far-ollama-boundary.service`
-  也处于 inactive。当前没有有效 boundary checkpoint 或 manifest。
-- WS3 失败根因为公开 boundary corpus 的 `entities` 字段为空，而 frozen
-  `qwen_boundary.yaml` 启用了正式 typed stack 的 corpus-entity lexicon。修复方向是在
-  runner 中从公开 corpus 文档标题/正文派生非金标实体词表；不读取 `reference_answers`、
-  不访问 held-out/test、不关闭 frozen typed component。
-- WS2 Mistral、Google 与 Meta 三个 family 已完整完成。Google/Gemma 从原有 2 条 checkpoint
-  安全恢复后，两组校准均完成 5/5、两组正式臂均完成 60/60，并写出 Google family
-  manifest。随后 Meta/Llama 通过 offline 与在线 digest preflight 后按冻结顺序完成。
-  没有启动任何 held-out/test 运行。
-- 启动与暂停路径：
-  1. `scripts/start_windows_family_dev_next.sh google` dry-run 返回 `valid=true`；
-  2. 首次授权启动先启动了 `far-ollama-family-dev.service`，但
-     `FAR_FAMILY_DEV_REQUIRE_OLLAMA=1` digest preflight 因 Ollama 冷启动 `/api/tags`
-     超时而 fail-closed，未启动 family-dev；
-  3. Ollama 响应后确认 `gemma2:9b` digest 为
-     `ff02c3702f322b9e075e9568332d96c0a7028002f1a5a056e0a6784320a4db0b`；
-  4. 重新运行
-     `FAR_FAMILY_DEV_TRAINING_ALLOWED=1 scripts/start_windows_family_dev_next.sh google --execute`
-     后，offline preflight 与 digest preflight 均为 `valid=true`，随后启动
-     `far-family-dev@google.service`；
-  5. 收到“今天晚上不能训练了，明天再训练”后，相关服务已安全停止；第二天收到
-     “继续”后重新执行只读 preflight 和显式授权启动，从已有 checkpoint 续跑。
-- 恢复时发现旧版 preparer 会把远端工作树切到最新 main，但 WS2 的运行身份冻结在
-  `bd57585716b4c046db97311209a0d9f7ec340e6d`。family-dev preflight 因此正确地
-  fail-closed。未改写任何 checkpoint；在确认工作树干净后，将其安全恢复为该冻结提交的
-  detached 状态，复核配置、模型 digest 与运行身份一致后才启动 runner。
-- 远端 `windows-gpu` 最新 service 状态：
-  - `far-family-dev@google.service`：`inactive`（正常完成，`NRestarts=0`）；
-  - `far-family-dev@meta.service`：`inactive/dead`（正常完成，`NRestarts=0`）；
-  - `far-ollama-family-dev.service`：`inactive`（WS2 完成后由 guarded stopper 停止）；
-  - `far-family-dev-mistral-resume.service`：`inactive`；
-  - `far-family-dev.service`：`inactive`；
-  - `far-boundary.service`：`inactive`（首样本前失败后已停止）；
-  - `far-ollama-boundary.service`：`inactive`。
-- 进程复核已无 `experiments.family_dev`、`experiments.boundary`、`ollama serve`、
-  `llama-server` 或 `train.py`；GPU 已释放。
-- 远端 D: 工作树 `/mnt/d/FAR-workspace/FAR-longterm` 已切到最新 WS3 main
-  `864a6024c717f3a97ebceecdbf42f7bf9bf64c53` 且 clean。下一次启动必须先同步新的修复提交，
-  删除仅含旧 `run_identity.json` 的零 prediction 失败目录，再跑 guarded preflight。
-- `scripts/prepare_windows_longterm_worktree.sh` 已修正为必须显式选择目标：
-  `--family-dev` 保持 WS2 冻结提交，`--latest` 仅供 WS3 或维护使用。
-- Meta/Llama 两个校准臂与两个正式臂均已完成，family manifest 已核验。
-- D: 盘最近复核：`752G` 总量，约 `688G` 已用，`65G` 可用，使用率 `92%`。
-- 未访问 held-out/test；输入 view 仍为 dev-only，`contains_train=false`、
-  `contains_test=false`、`test_accessed=false`。
+- WS1--WS6 均已有本地可复算证据，长期路线账本返回 `valid=true` 且
+  `goal_complete=true`。后续不再需要 GPU；剩余动作是可选的 commit/push、release
+  packaging 与作者人工审阅，而不是路线内必需实验。
+- WS2 三个 family 已全部完成并正常退出；本地 release 已 finalize，独立 verifier 返回
+  `valid=true`、`errors=[]`、`gate_f_passed=true`、`direction_consistent=true`。
+- WS3 外部 boundary mapping 已完成、同步回本地并 finalize。独立 verifier 返回
+  `valid=true`、`errors=[]`、`gate_b_complete=true`、`global_pass_fail=null`、
+  `required_claim_level=directional_boundary_mapping`、`publication_gold=false`、
+  `human_iaa=false`、`test_accessed=false`。
+- WS3 release 覆盖 600 条 formal pipeline predictions 与 20 条 calibration predictions：
+  - WikiContradict calibration：`5/5 + 5/5`，formal：`150/150 + 150/150`；
+  - Google/RAG conflicts calibration：`5/5 + 5/5`，formal：`150/150 + 150/150`；
+  - 8 个 run manifest 均为 `status=complete`、`errors=0`。
+- WS3 主结论不是全局胜负：WikiContradict typed-minus-untyped boundary score 为
+  `+0.0033`，95% CI `[-0.0067,+0.0167]`；Google/RAG conflicts 为 `-0.0007`，
+  95% CI `[-0.0271,+0.0262]`；两个 Holm-adjusted McNemar p 均为 `1.0`。
+  预注册假设中 Google outdated-information 子组正向（`+0.0040`）、no-conflict 子组
+  保持安全非劣（`-0.0042 >= -0.03`），Wiki explicit/implicit 预测被反驳。论文应写成
+  “弱 A-line/窄边界”，不得写成外部全局 transfer 或 end-to-end superiority。
+- 远端 `windows-gpu` 上 `far-boundary.service` 与 `far-ollama-boundary.service` 均已停止；
+  `far-family-dev@google.service`、`far-family-dev@meta.service`、
+  `far-ollama-family-dev.service`、旧 Mistral resume service 也均为 inactive。进程复核无
+  `experiments.family_dev`、`experiments.boundary`、`ollama serve`、`llama-server` 或
+  `train.py`；GPU compute app 为空，仅剩 `/Xwayland` 桌面基础显存占用约 600MiB。
+- 今晚不再启动 GPU、Ollama、远程训练或任何 held-out/test 运行。若继续工作，只做本地
+  非 test verifier、提交整理或论文人工审阅。
+- 未访问 held-out/test；仍不得把 LLM jury 或机器标签称为真人 IAA。
 
 ## WS2 最终证据
 
