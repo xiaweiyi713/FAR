@@ -283,6 +283,7 @@ def test_source_archive_includes_reader_facing_reports(tmp_path: Path) -> None:
     assert report_members == {
         "reports/README.md",
         "reports/boundary_benchmark_selection.md",
+        "reports/boundary_matrix.md",
         "reports/longterm_roadmap_status.json",
         "reports/longterm_roadmap_status.md",
         "reports/mechanism_attribution.md",
