@@ -376,7 +376,7 @@ print(result.revised_answer, result.to_dict()["conflicts"])
 | P5 | `ablations.py` 三新臂；`minus_typed_revision_aggressive` + `flat_claims` 轻量重跑 | 研究 | P3 | H3/H5 结论 | 增强 |
 | P6 | 类型可映射性标注 + 回归（C3） | 研究 | P3 | `reports/type_mappability.md` | 增强 |
 | **P7（完成）** | 切断默认 VeraRAG（自足 BM25 + 直连 Ollama）+ 删活跃代码硬编码路径 + quickstart + package smoke | 开源 | — | 开箱可跑 | 开源必做 |
-| P8 | README 产品化重构 + `docs/RESEARCH_STATUS.md` 下沉 | 开源 | P7 | 产品化 README | 开源必做 |
+| **P8（完成）** | README 产品化重构 + `docs/RESEARCH_STATUS.md` 下沉 | 开源 | P7 | 产品化 README + 完整诚实性披露 | 开源必做 |
 | P9 | CLI 收敛（子命令树 + deprecated alias） | 开源 | P7 | 单主命令 | 开源建议 |
 | P10 | 命名空间收拢（`far.*`）+ 数据/代码分离（lfs/release） | 工程 | P9 | 消除 hack、轻 clone | 开源建议 |
 
