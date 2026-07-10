@@ -117,6 +117,22 @@ export FAR_VERA_HOME=/absolute/path/to/VeraRAG
 
 作者内部数据构建也可直接传 `--source-dir`；公共运行路径不读取这些私有源目录。
 
+## 单一命令入口
+
+`falsirag --help` 把原有平铺脚本收敛为分组命令树：
+
+```bash
+falsirag run --help
+falsirag diag attribution --help
+falsirag bench validate --data-dir bench
+falsirag jury readiness --help
+falsirag ops repository-maintenance --check
+falsirag release solo verify diagnostics/solo_v1
+```
+
+分组为 `run / diag / bench / jury / ops / release`，另保留常用的 `suite / baselines / eval` 顶层入口。
+旧 `falsirag-*` 与 `far-*` console scripts 暂时兼容，但会在 stderr 给出迁移目标。
+
 ## 运行与验证
 
 运行离线、类别均衡的小规模诊断：

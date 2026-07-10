@@ -50,6 +50,7 @@ dev = [
 ]
 
 [project.scripts]
+falsirag = "far.cli:main"
 falsirag-run = "far.cli:run_far_main"
 falsirag-baselines = "far.cli:run_baselines_main"
 falsirag-eval = "far.cli:run_eval_main"

@@ -14,6 +14,7 @@ from far.adapters import BM25Retriever
 from far.models import EvidenceDocument
 
 EXPECTED_ENTRY_POINTS = {
+    "falsirag",
     "falsirag-attribution-evidence",
     "falsirag-boundary-evidence",
     "falsirag-build-boundary",
