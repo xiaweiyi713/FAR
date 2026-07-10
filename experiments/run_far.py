@@ -19,7 +19,11 @@ from experiments.runner import (
     load_run_inputs,
     select_samples,
 )
-from far.adapters import HeuristicConflictDetector, VeraConflictDetector
+from far.adapters import (
+    HeuristicConflictDetector,
+    NLIOnlyConflictDetector,
+    VeraConflictDetector,
+)
 from far.models import EvidenceDocument
 from far.revision import RevisionAction, RevisionTrace
 
@@ -36,7 +40,14 @@ _PRIMARY_ACTION_PRIORITY = {
 }
 
 
-def _detector(config: dict[str, Any], documents: list[EvidenceDocument]) -> Any:
+def _detector(
+    config: dict[str, Any],
+    documents: list[EvidenceDocument],
+    *,
+    ablation: str = "full",
+) -> Any:
+    if ablation == "minus_typed_detection_nli":
+        return NLIOnlyConflictDetector(config)
     name = config.get("run", {}).get("conflict_detector", "heuristic")
     if name == "heuristic":
         return HeuristicConflictDetector()
@@ -103,7 +114,7 @@ def run(
     pipeline = build_ablation(
         ablation,
         retriever,
-        conflict_detector=_detector(config, documents),
+        conflict_detector=_detector(config, documents, ablation=ablation),
         text_generator=generator,
         top_k_per_query=int(config.get("run", {}).get("top_k_per_query", 5)),
     )

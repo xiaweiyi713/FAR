@@ -19,7 +19,12 @@ from experiments.run_far import run as run_far
 from experiments.runner import ROOT, load_config, one_shot_test_scope
 from experiments.validate_results import validate_result_bundle
 
-DEFAULT_ABLATIONS = tuple(name for name in ABLATION_NAMES if name != "full")
+DEFAULT_ABLATIONS = (
+    "minus_typed_conflict",
+    "minus_refutation_query",
+    "minus_boundary_query",
+    "minus_typed_revision",
+)
 
 
 def _suite_request(

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 import re
 from collections.abc import Iterable
 from difflib import SequenceMatcher
@@ -242,6 +243,183 @@ class HeuristicConflictDetector:
         evidence_times = set(self._TIME.findall(text))
         claim_times = set(claim.time_expressions)
         return bool(evidence_times and claim_times.isdisjoint(evidence_times))
+
+
+class NLIOnlyConflictDetector:
+    """Detect contradictions with one NLI cross-encoder and no rule fallback.
+
+    This adapter exists for the ``minus_typed_detection_nli`` ablation.  It is
+    intentionally separate from :class:`VeraConflictDetector`, whose graph
+    builder runs rule-based detectors before its optional NLI layer.  Treating
+    that layered output as "NLI-only" would make the ablation label false.
+    """
+
+    def __init__(self, config: dict[str, Any], *, model: Any | None = None) -> None:
+        conflict_config = dict(config.get("conflict_graph", {}))
+        if not bool(conflict_config.get("enable_nli", False)):
+            raise ValueError("minus_typed_detection_nli requires conflict_graph.enable_nli=true")
+        if not bool(conflict_config.get("require_nli", False)):
+            raise ValueError("minus_typed_detection_nli requires conflict_graph.require_nli=true")
+        self.threshold = float(conflict_config.get("nli_threshold", 0.7))
+        if not 0.0 <= self.threshold <= 1.0:
+            raise ValueError("conflict_graph.nli_threshold must be in [0, 1]")
+        self.model_id = str(
+            conflict_config.get("nli_model", "cross-encoder/nli-distilroberta-base")
+        )
+        self.model_revision = (
+            str(conflict_config["nli_revision"]) if conflict_config.get("nli_revision") else None
+        )
+        if model is None:
+            resolved_model = resolve_huggingface_snapshot(
+                self.model_id,
+                self.model_revision,
+                local_files_only=bool(conflict_config.get("nli_local_files_only", False)),
+            )
+            try:
+                from sentence_transformers import CrossEncoder
+            except ImportError as exc:
+                raise RuntimeError(
+                    "NLI-only detection requires sentence-transformers; install FAR's "
+                    "`models` or `experiment` extra."
+                ) from exc
+            try:
+                model = CrossEncoder(
+                    resolved_model,
+                    local_files_only=bool(conflict_config.get("nli_local_files_only", False)),
+                )
+            except Exception as exc:
+                raise RuntimeError(
+                    f"The required NLI-only model {self.model_id!r} could not be loaded."
+                ) from exc
+        self.model = model
+        self._label_indices = self._resolve_label_indices(model)
+
+    def detect(
+        self,
+        claim: ClaimNode,
+        evidence: EvidenceDocument,
+        *,
+        question: str = "",
+    ) -> tuple[TypedConflict, ...]:
+        return self.detect_many(claim, (evidence,), question=question)
+
+    def detect_many(
+        self,
+        claim: ClaimNode,
+        evidence: tuple[EvidenceDocument, ...],
+        *,
+        question: str = "",
+    ) -> tuple[TypedConflict, ...]:
+        del question
+        if not evidence:
+            return ()
+        try:
+            raw_scores = self.model.predict(
+                [(item.text, claim.text) for item in evidence],
+                show_progress_bar=False,
+            )
+        except Exception as exc:
+            raise RuntimeError("The required NLI-only detector failed to score evidence.") from exc
+        rows = self._score_rows(raw_scores, expected=len(evidence))
+        contradiction_index, _entailment_index, _neutral_index = self._label_indices
+        conflicts: list[TypedConflict] = []
+        for item, logits in zip(evidence, rows, strict=True):
+            probabilities = self._softmax(logits)
+            confidence = probabilities[contradiction_index]
+            if confidence < self.threshold:
+                continue
+            conflicts.append(
+                TypedConflict(
+                    claim_id=claim.claim_id,
+                    evidence_id=item.evidence_id,
+                    conflict_type=EvidenceType.COUNTER_EVIDENCE,
+                    confidence=confidence,
+                    rationale=f"NLI-only contradiction probability: {confidence:.3f}",
+                    strength="strong" if confidence >= 0.75 else "weak",
+                    metadata={
+                        "detector": "nli_only_cross_encoder",
+                        "model": self.model_id,
+                        "model_revision": self.model_revision,
+                        "threshold": self.threshold,
+                        "input_order": "evidence_premise_claim_hypothesis",
+                        "contradiction_label_index": contradiction_index,
+                    },
+                )
+            )
+        return tuple(conflicts)
+
+    @staticmethod
+    def _resolve_label_indices(model: Any) -> tuple[int, int, int]:
+        config = getattr(getattr(model, "model", None), "config", None)
+        raw_labels = getattr(config, "id2label", {}) or {}
+        labels: dict[int, str] = {}
+        if isinstance(raw_labels, dict):
+            for index, label in raw_labels.items():
+                try:
+                    parsed_index = int(index)
+                except (TypeError, ValueError):
+                    continue
+                if 0 <= parsed_index < 3:
+                    labels[parsed_index] = str(label).lower()
+
+        def find(marker: str) -> int | None:
+            return next(
+                (index for index, label in labels.items() if marker in label),
+                None,
+            )
+
+        recognized = any(
+            marker in label
+            for label in labels.values()
+            for marker in ("contrad", "entail", "neutral")
+        )
+        if not recognized:
+            raise RuntimeError(
+                "The NLI model does not expose semantic contradiction, entailment, "
+                "and neutral labels."
+            )
+        contradiction = find("contrad")
+        entailment = find("entail")
+        neutral = find("neutral")
+        if contradiction is None or entailment is None or neutral is None:
+            raise RuntimeError("The NLI model exposes an incomplete id2label mapping.")
+        indices = (contradiction, entailment, neutral)
+        if len(set(indices)) != 3:
+            raise RuntimeError("The NLI model exposes an ambiguous id2label mapping.")
+        return indices
+
+    @staticmethod
+    def _score_rows(raw_scores: Any, *, expected: int) -> tuple[tuple[float, ...], ...]:
+        if hasattr(raw_scores, "tolist"):
+            raw_scores = raw_scores.tolist()
+        if (
+            expected == 1
+            and isinstance(raw_scores, (list, tuple))
+            and len(raw_scores) == 3
+            and all(isinstance(item, (int, float)) for item in raw_scores)
+        ):
+            raw_scores = [raw_scores]
+        if not isinstance(raw_scores, (list, tuple)) or len(raw_scores) != expected:
+            raise RuntimeError("The NLI model returned an unexpected batch shape.")
+        rows: list[tuple[float, ...]] = []
+        for raw_row in raw_scores:
+            if not isinstance(raw_row, (list, tuple)) or len(raw_row) != 3:
+                raise RuntimeError("The NLI model must return exactly three logits per pair.")
+            try:
+                row = tuple(float(value) for value in raw_row)
+            except (TypeError, ValueError) as exc:
+                raise RuntimeError("The NLI model returned non-numeric logits.") from exc
+            if not all(math.isfinite(value) for value in row):
+                raise RuntimeError("The NLI model returned non-finite logits.")
+            rows.append(row)
+        return tuple(rows)
+
+    @staticmethod
+    def _softmax(logits: tuple[float, ...]) -> tuple[float, ...]:
+        maximum = max(logits)
+        weights = tuple(math.exp(value - maximum) for value in logits)
+        denominator = sum(weights)
+        return tuple(weight / denominator for weight in weights)
 
 
 class VeraConflictDetector:

@@ -213,53 +213,17 @@ CLI 入口（沿用现有 shim 风格，见 `far/cli.py`）：`falsirag-oracle-l
 
 ### 2.1.3 `experiments/ablations.py`（改）——补 3 个干净消融臂
 
-当前 untyped 臂被固定为保守（RETRACT/QUALIFY），typed 是激进纠正 ⇒ 混淆"类型"与"激进度"。补：
+当前 untyped 臂固定为保守 qualify，会混淆“显式类型”与“主动修订强度”。三个新臂已实现：
 
-```python
-from dataclasses import replace
-from far.claims import ClaimGraph, ClaimDecomposer
+- `minus_typed_revision_aggressive`：只按 confidence/strength 控制强弱，删除类型和 suggested revision；正式
+  LLM 运行继续使用与 full 相同的生成器，但提示不提供类型名。
+- `flat_claims`：只清空 `depends_on`，claim 文本、类型、顺序及其余字段保持不变。
+- `minus_typed_detection_nli`：独立 cross-encoder 只读取 contradiction probability，不经过 VeraRAG
+  规则优先图、词典或 heuristic fallback；缺模型/错误输出时失败关闭。
 
-ABLATION_NAMES = (
-    "full", "minus_typed_conflict", "minus_refutation_query", "minus_boundary_query",
-    "minus_typed_revision",
-    "minus_typed_revision_aggressive",  # 新：untyped 但同等激进（隔离 H3）
-    "minus_typed_detection_nli",        # 新：检测层换 NLI-only（隔离 H1）
-    "flat_claims",                      # 新：去依赖/拓扑序（隔离 H5）
-)
-
-class AggressiveGenericRevisionEngine(TypedRevisionEngine):
-    """untyped 但与 typed 同等激进：用证据主动改写，不退化为 qualify。
-    与 minus_typed_revision（GenericRevisionEngine，保守 qualify）配对，
-    差值 = 类型信息的独立贡献；与 full 的差 = 激进度以外的类型贡献。"""
-    def revise(self, claim, conflicts, evidence):
-        if not conflicts:
-            return super().revise(claim, conflicts, evidence)
-        # 关键：改写强度与 typed 相同，但不读 conflict_type（去掉类型信息，保留激进度）
-        controlling = max(conflicts, key=lambda c: c.confidence)
-        after = self._rewrite(claim.text, controlling, RevisionAction.RETRACT
-                              if controlling.strength == "strong" else RevisionAction.QUALIFY_UNCERTAINTY)
-        return RevisionTrace(claim_id=claim.claim_id, before=claim.text, after=after,
-                             action=RevisionAction.RETRACT, conflict_types=(),
-                             evidence_ids=tuple(c.evidence_id for c in conflicts),
-                             rationale="Aggressive untyped repair (type-blind, same intensity).",
-                             confidence=controlling.confidence)
-
-class FlatClaimDecomposer:
-    """包裹任意 decomposer，清空 depends_on，消除图结构（隔离 claim graph 的贡献）。"""
-    def __init__(self, inner: ClaimDecomposer) -> None:
-        self.inner = inner
-    def decompose(self, answer: str) -> ClaimGraph:
-        graph = self.inner.decompose(answer)
-        return ClaimGraph(tuple(replace(c, depends_on=()) for c in graph.claims))
-
-# build_ablation 里新增分支：
-#   elif name == "minus_typed_revision_aggressive": revision_engine = AggressiveGenericRevisionEngine()
-#   elif name == "flat_claims": decomposer = FlatClaimDecomposer(decomposer or RuleBasedClaimDecomposer())
-#   elif name == "minus_typed_detection_nli": detector = NLIOnlyConflictDetector(...)  # 依赖模型，成本高
-```
-
-> `minus_typed_revision_aggressive` 与 `flat_claims` 可纯离线/轻量重跑；`minus_typed_detection_nli`
-> 需要 NLI 模型（`far/adapters/conflict.py` 已有 NLI 挂点，默认关闭），归入增强层。
+三臂已进入 `ABLATION_NAMES` 和 runner；为避免意外模型成本及改变旧 release 默认方法集，不自动加入默认 suite。
+精确干预语义与正式运行门禁冻结于
+[P5 amendment](PREREG_ORACLE_ATTRIBUTION_AMENDMENT_2026-07-10_P5_ABLATIONS.md)。
 
 ### 2.1.4 类型可映射性研究（`experiments/type_mappability.py` 新建，C3）
 
@@ -373,7 +337,7 @@ print(result.revised_answer, result.to_dict()["conflicts"])
 | **P2（已选 B）** | 冻结零调用、capability-aware trace attribution；8 方法仅比较 retrieval/answer-change，检测/动作只在 FAR 两臂描述，不称 oracle gap | 工程 | P1 | `...TRACE_MAP.md` amendment | ✅ |
 | **P3（完成）** | `experiments/stage_trace_map.py`：8 方法观察性失效地图 + verifier + 指纹；T1 8/8，T2 +0.3914 [0.3554,0.4275] | 工程 | P2 | `reports/stage_trace_map.{json,md}` | ✅ |
 | **P4（完成）** | TMLR MVP 重写：capability-aware 协议 + 8 方法地图 + FAR 阴性/边界；标题、摘要、主表、附录和 claim ladder 对齐 | 研究 | P3 | 12 页可编译 TMLR 稿 | ✅ |
-| P5 | `ablations.py` 三新臂；`minus_typed_revision_aggressive` + `flat_claims` 轻量重跑 | 研究 | P3 | H3/H5 结论 | 增强 |
+| **P5（代码完成）** | 三新臂已实现、测试并通过 5 条离线端到端 smoke；RAMDocs 350 条正式重跑尚未执行 | 研究 | P3 | 实现与 amendment 已就绪；H3/H5 结论待跑 | 增强 |
 | P6 | 类型可映射性标注 + 回归（C3） | 研究 | P3 | `reports/type_mappability.md` | 增强 |
 | **P7（完成）** | 切断默认 VeraRAG（自足 BM25 + 直连 Ollama）+ 删活跃代码硬编码路径 + quickstart + package smoke | 开源 | — | 开箱可跑 | 开源必做 |
 | **P8（完成）** | README 产品化重构 + `docs/RESEARCH_STATUS.md` 下沉 | 开源 | P7 | 产品化 README + 完整诚实性披露 | 开源必做 |

@@ -48,6 +48,9 @@ METHODS = (
     "far_minus_refutation_query",
     "far_minus_boundary_query",
     "far_minus_typed_revision",
+    "far_minus_typed_revision_aggressive",
+    "far_minus_typed_detection_nli",
+    "far_flat_claims",
     *BASELINE_CLASSES,
 )
 
@@ -187,7 +190,7 @@ def _far_prediction(
     pipeline = build_ablation(
         ablation,
         retriever,
-        conflict_detector=_detector(config, documents),
+        conflict_detector=_detector(config, documents, ablation=ablation),
         text_generator=generator,
         top_k_per_query=min(len(documents), int(config.get("run", {}).get("top_k_per_query", 5))),
     )

@@ -1,4 +1,4 @@
-"""Resolve immutable optional model assets used by VeraRAG adapters."""
+"""Resolve immutable optional model assets used by FAR model adapters."""
 
 from __future__ import annotations
 
@@ -33,7 +33,7 @@ def resolve_huggingface_snapshot(
     except ImportError as exc:
         raise RuntimeError(
             "Pinned Hugging Face models require huggingface-hub; install FAR's "
-            "`experiment` extra and the local VeraRAG package."
+            "`models` or `experiment` extra."
         ) from exc
     try:
         return str(
