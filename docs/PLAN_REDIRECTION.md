@@ -185,7 +185,9 @@ def ladder_scores(predictions, tasks) -> list[float]:
     return scores
 ```
 
-**验收**：baseline 精确复现已知 EM/coverage/exclusion；末级 = 1.0 仅证明 label injection 与 scorer 对齐。
+**验收**：baseline 精确复现已知 EM/coverage/exclusion；末级达到 label-constrained attainable ceiling。
+首次 P1 运行发现 9/350 条 upstream gold/wrong 标签重叠，因此全样本可达 EM 上限为 341/350，
+label-feasible 341 条上应为 1.0；详见 `docs/PREREG_ORACLE_ATTRIBUTION_AMENDMENT_2026-07-10.md`。
 R/D/A 在下游 replay 落地前必须拒绝执行，不能用不改答案的占位干预生成论文曲线。
 
 ### 2.1.2 `experiments/oracle_ladder.py`（新建）——编排 + 跨方法地图
@@ -366,7 +368,7 @@ print(result.revised_answer, result.to_dict()["conflicts"])
 | 阶段 | 动作 | 线 | 依赖 | 产物 | MVP |
 |---|---|---|---|---|---|
 | **P0** | 预注册 `docs/PREREG_ORACLE_ATTRIBUTION.md`（RQ1–5/H1–5/oracle 四算子定义/判据），`git tag prereg-oracle-v1`；旧战线归档 | 研究 | — | 冻结预注册 | ✅ |
-| **P1** | `far/oracle.py` + 单测：先实现 baseline + revision label-injection ceiling 两级，对 FAR 验证"ceiling=1.0、baseline=已知 EM" | 工程 | P0 | 评分对齐与修订 ceiling | ✅ |
+| **P1** | `far/oracle.py` + 单测：实现 baseline + revision label-injection ceiling；验证 baseline=已知 EM、全体 ceiling=341/350、label-feasible ceiling=1.0 | 工程 | P0 | 评分对齐、标签碰撞审计与修订 ceiling | ✅ |
 | **P2** | 选择并冻结：A) R/D/A 下游 replay（需要模型调用），或 B) 零调用 trace attribution（不得称 oracle gap）；弱金标冲突 + ~50 条人工校验披露 κ | 工程 | P1 | 有效传播的阶梯或观察性失效图 | ✅ |
 | **P3** | `experiments/oracle_ladder.py`：8 方法跨方法失效地图 + 热图 + verifier + 指纹 | 工程 | P2 | `reports/failure_map.md`（C2） | ✅ |
 | **P4** | 论文重写 MVP 版（C1 协议 + C2 地图 + C4 阴性），claim ladder 对齐 | 研究 | P3 | TMLR 稿 | ✅ |
@@ -386,7 +388,7 @@ print(result.revised_answer, result.to_dict()["conflicts"])
 
 1. 写 `docs/PREREG_ORACLE_ATTRIBUTION.md` 并 `git tag prereg-oracle-v1`。
 2. 起 `far/oracle.py` + `tests/test_oracle.py`：只做 baseline + revision label-injection ceiling 两级；
-   baseline 复现证明无意外泄漏，ceiling=1.0 只证明标签/评分对齐。
+   baseline 复现证明无意外泄漏；ceiling 必须同时报告全样本可达上限、label-feasible 子集的 1.0 与标签碰撞。
 3. 把本文件从"提案"提升为"已采纳路线"，`README.md` 状态表加一行"WS-D 诊断重定位（进行中）"。
 
 ## 4.2 诚实性守则（延续既有传统，不可退让）
