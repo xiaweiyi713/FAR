@@ -26,6 +26,11 @@ generality \\
 RAMDocs development & Two preregistered 350-item rounds fail G-A; Round~2 is
 $-0.0029$ against the frozen strongest baseline & No demonstrated end-to-end
 advantage on this upstream-labelled external development distribution \\
+Capability-aware trace map & Eight methods $\times$ 350 items; changed-wrong
+errors after retrieving correct evidence exceed retrieval misses in 8/8 methods;
+pooled difference $+0.3914$ with 95\% CI $[+0.3554,+0.4275]$ & A cross-method
+post-retrieval answer-transformation failure pattern; not a detection/action
+oracle decomposition \\
 WS1 frozen attribution & 226 shared errors are uniquely bucketed; all four
 registered hypotheses are not supported & A revision-mediated heterogeneous
 effect and observed boundary, not an upstream-only or metric-rescue explanation \\
@@ -35,9 +40,10 @@ WS2 family development & Mistral, Gemma, and Llama are 3/3 positive; combined
 typed-minus-untyped answer difference is $+0.0645$, G-F passes, and the
 independent release audit is valid & Directional reproduction across these
 local machine-audited development families; not external or human validation \\
-WS3 public development & Protocol and two imports are frozen, but no model
-prediction or verified release exists & No external-boundary result may be
-inserted yet \\
+WS3 public development & 600 formal predictions plus 20 calibration predictions;
+global differences are near null, with a narrow positive outdated-information
+condition & A weak public-development applicability boundary; not global transfer
+or held-out evidence \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -48,7 +54,8 @@ The machine-readable sources for these rows are
 \path{diagnostics/ramdocs_v2},
 \path{diagnostics/attribution_v1/manifest.json}, and
 \path{diagnostics/power_v1/manifest.json}, and
-\path{diagnostics/family_dev_v1/manifest.json}. The active roadmap fingerprint is
+\path{diagnostics/family_dev_v1/manifest.json}, and
+\path{reports/stage_trace_map.json}. The active roadmap fingerprint is
 \texttt{91eb3205fe127271bc5f4882025243d9974a711e311ef074fcbde09aa86e7cf7};
 it binds the ten frozen facts F1--F10 and is not changed by this appendix.
 
@@ -95,6 +102,39 @@ typed-minus-untyped deltas pass through a changed revision, while none occurs
 after detection without a changed revision. These facts support the
 heterogeneous-mediator interpretation and reject the registered detection-only
 prediction.
+
+\section{Capability-Aware Cross-Method Trace Map}
+\label{app:stage-trace}
+
+The P2-B protocol was selected after a schema-only audit showed that six of the
+eight Round~1 methods do not expose typed conflict, revision action, or
+claim-level revision fields. The analysis therefore uses only fields shared by
+all methods: retrieved evidence identifiers, the shared initial answer, and the
+final answer. Missing detector fields are marked unavailable rather than imputed
+as failures.
+
+The unique bucket order is: correct; retrieval unscorable; retrieval miss;
+post-retrieval unchanged wrong; and post-retrieval changed wrong. Bracketed
+citations are removed before applying the frozen RAMDocs normalizer to the
+initial and final answers. Two misinformation items, RAM0008 and RAM0060, have
+no upstream document labelled correct and are therefore retrieval-unscorable
+for every method. They remain in the 2,800-cell denominator and are not deleted
+or relabelled.
+
+T1 requires the changed-wrong count to exceed retrieval misses in at least six
+methods; all eight pass. T2 resamples sample IDs while retaining all eight
+methods per cluster. With 5,000 resamples and seed 1729, the pooled proportion
+difference is $+0.3914$ with 95\% percentile interval
+$[+0.3554,+0.4275]$. The tracked JSON and Markdown reports are independently
+recomputed by \texttt{falsirag diag trace-map verify}; they record zero model
+calls, \texttt{causal\_attribution=false},
+\texttt{publication\_gold=false}, and \texttt{test\_accessed=false}.
+
+This result licenses only the statement that error mass remains after evidence
+availability and textual answer transformation. It does not show that detection
+was sufficient or that revision is the independent causal bottleneck. Typed
+detection/action detail is reported only for FAR and untyped FAR, the two methods
+with matching instrumentation.
 
 \section{Power and Outcome-Conditioned Interpretation}
 \label{app:power}
@@ -185,5 +225,5 @@ The 58-item FalsiRAG-Bench held-out input and RAMDocs test split remain locked
 and unevaluated. Phase~B LLM jury, author adjudication, G-K/G-S, jury rescoring,
 and the earlier three-system-family matrix were not run after the RAMDocs stop
 rule. Completed WS2 evidence remains machine-audited development evidence;
-future WS3 evidence remains public-development boundary evidence. Neither may be
+completed WS3 evidence remains public-development boundary evidence. Neither may be
 described as human IAA, publication gold, or external blind testing.

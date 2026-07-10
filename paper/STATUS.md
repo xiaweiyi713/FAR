@@ -5,6 +5,29 @@ existing anonymous AAAI-27 source is retained as a compilable working draft and
 future upgrade path, but the strict AAAI profile receives no further investment
 under the single-author/no-human-annotator constraint.
 
+## Capability-aware cross-method result
+
+The active paper is now led by the preregistered P2-B stage trace map rather
+than a causal ``detection is not the bottleneck'' claim. A schema-only audit
+showed that six of eight RAMDocs Round 1 methods lack comparable typed detection,
+revision-action, and claim-level revision traces. The frozen analysis therefore
+uses only retrieved evidence IDs plus shared initial/final answers across all
+eight methods and reserves detection/action detail for the two FAR arms.
+
+The verified 8-method $\times$ 350-item map passes both registered descriptive
+criteria. Post-retrieval changed-wrong errors exceed retrieval misses for 8/8
+methods. The pooled sample-cluster difference is +0.3914 with 95% bootstrap
+interval [+0.3554,+0.4275]. Two items lack upstream correct-document labels and
+are retained as retrieval-unscorable. The report and verifier are tracked at
+`reports/stage_trace_map.{json,md}` and record zero model calls,
+`causal_attribution:false`, `publication_gold:false`, and `test_accessed:false`.
+
+The maximum licensed cross-method claim is that errors concentrate after
+retrieval and observable textual answer transformation. It does not establish
+that detection is sufficient, identify an action/revision implementation gap,
+or estimate a causal oracle ladder. FAR-specific traces remain a narrower case
+study of revision-mediated heterogeneous gains and harms.
+
 ## Post-stop-rule mechanism evidence
 
 The registered WS1 analysis was frozen before inspecting the 226 RAMDocs

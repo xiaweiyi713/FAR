@@ -12,6 +12,7 @@ from bench.build.common import read_jsonl, sha256_file, write_json
 from eval.stats import paired_bootstrap_comparison
 from experiments.diagnostic_release import verify_solo_release
 from experiments.evaluate_fever_binary import verify_evaluation as verify_fever_binary
+from experiments.stage_trace_map import verify_reports as verify_stage_trace_map
 
 SCHEMA_VERSION = "far-solo-paper-readiness-v1"
 REQUIRED_PAPER_FRAGMENTS = (
@@ -31,6 +32,9 @@ REQUIRED_PAPER_FRAGMENTS = (
     "not externally blind",
     "does not establish multi-model generality",
     "McNemar $p=1.0$",
+    "Across eight methods and 350 upstream-labelled RAMDocs development items",
+    "T1 passes for 8/8 methods",
+    "cannot identify a cross-method detection bottleneck",
 )
 FORBIDDEN_PAPER_FRAGMENTS = (
     "PENDING-EMPIRICAL-RUN",
@@ -172,11 +176,18 @@ def audit(root: Path, *, paper_path: Path | None = None) -> dict[str, Any]:
         root / "bench/external/fever_pair_candidates_v1",
         root / "diagnostics/fever_binary_v1",
     )
+    stage_trace = verify_stage_trace_map(
+        ramdocs_data_dir=root / "bench/external/ramdocs_v1",
+        round1_dir=root / "diagnostics/ramdocs_v2/round1",
+        output_json=root / "reports/stage_trace_map.json",
+        output_report=root / "reports/stage_trace_map.md",
+    )
     claim_scope = audit_claim_scope(root, paper_text)
     gates = {
         "tracked_solo_evidence": bool(solo.get("valid")),
         "claim_scope_matches_observed_ablations": bool(claim_scope["valid"]),
         "frozen_fever_negative_transfer_disclosed": bool(fever.get("valid")),
+        "tracked_stage_trace_map": bool(stage_trace.get("valid")),
     }
     ready = all(gates.values())
     return {
@@ -189,6 +200,7 @@ def audit(root: Path, *, paper_path: Path | None = None) -> dict[str, Any]:
         "evidence": {
             "solo_release": solo,
             "fever_binary": fever,
+            "stage_trace_map": stage_trace,
             "paper_main_sha256": sha256_file(paper),
             "paper_supplement_sha256": sha256_file(root / "paper/supplement.tex"),
             "paper_checklist_sha256": sha256_file(
@@ -207,6 +219,7 @@ def audit(root: Path, *, paper_path: Path | None = None) -> dict[str, Any]:
             "typed revision trades lower answer correctness for non-zero revision behavior",
             "FEVER binary transfer shows no paired accuracy gain",
             "machine-disposition sensitivity is post-hoc and not independent label validation",
+            "cross-method trace attribution does not identify detection or action causal gaps",
         ],
         "forbidden_claims": [
             "human inter-annotator agreement",
@@ -229,6 +242,7 @@ def render_markdown(report: dict[str, Any]) -> str:
     solo_evidence = str(gates["tracked_solo_evidence"]).lower()
     claim_scope = str(gates["claim_scope_matches_observed_ablations"]).lower()
     fever = str(gates["frozen_fever_negative_transfer_disclosed"]).lower()
+    stage_trace = str(gates["tracked_stage_trace_map"]).lower()
     far_answer = observed["far_answer_correctness"]
     answer_delta = observed["typed_minus_untyped_answer_correctness"]
     f1_delta = observed["typed_minus_untyped_conflict_f1"]
@@ -249,6 +263,7 @@ multi-model generality.
 | Tracked solo evidence | `{solo_evidence}` |
 | Paper claim scope matches ablations | `{claim_scope}` |
 | FEVER negative transfer disclosed | `{fever}` |
+| Tracked stage trace map | `{stage_trace}` |
 
 ## Narrow supported claim
 

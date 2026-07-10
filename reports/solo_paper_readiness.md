@@ -11,6 +11,7 @@ multi-model generality.
 | Tracked solo evidence | `true` |
 | Paper claim scope matches ablations | `true` |
 | FEVER negative transfer disclosed | `true` |
+| Tracked stage trace map | `true` |
 
 ## Narrow supported claim
 
@@ -32,6 +33,7 @@ On a construction-derived, machine-audited 60-item Qwen development diagnostic, 
 - typed revision trades lower answer correctness for non-zero revision behavior
 - FEVER binary transfer shows no paired accuracy gain
 - machine-disposition sensitivity is post-hoc and not independent label validation
+- cross-method trace attribution does not identify detection or action causal gaps
 
 ## Forbidden claims
 

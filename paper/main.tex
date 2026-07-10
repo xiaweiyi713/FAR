@@ -12,7 +12,7 @@
 \pdfinfo{/TemplateVersion (2027.1)}
 \setcounter{secnumdepth}{0}
 
-\title{When Does Typed Conflict Control Help? Falsification-Guided Retrieval and Its Observed Boundaries}
+\title{Evidence Retrieved, Answers Still Wrong: Capability-Aware Failure Traces for Self-Correcting RAG}
 \author{Anonymous Submission}
 \affiliations{}
 
@@ -20,7 +20,7 @@
 \maketitle
 
 \begin{abstract}
-Retrieval-augmented language agents typically seek evidence that supports an emerging answer, while reflection remains weakly grounded in retrievable counter-evidence. We introduce Falsification-Augmented Retrieval (FAR), which decomposes an answer into dependent claims, assigns typed evidence requirements, retrieves support, refutation, and boundary evidence, and exposes a typed revision trace. On a 60-item Qwen3.5 9B machine-audited development diagnostic, typed control improves answer correctness over an otherwise matched untyped ablation by 0.078 (95\% paired bootstrap [0.034, 0.124]). A preregistered development reproduction is positive for Mistral, Gemma, and Llama, with a combined typed-minus-untyped difference of 0.0645 and G-F passing. This signal does not transfer into an end-to-end advantage on 350 upstream-labelled RAMDocs development items in either of two preregistered rounds. A frozen, zero-model-call attribution of the 226 shared errors finds 103 cases where conflict was detected but revision remained wrong; complete retrieval and partial-credit scoring do not restore a FAR advantage. All 34 positive per-item typed deltas on the Qwen diagnostic pass through changed revisions, even though removing typed revision improves the overall mean. A preregistered public-development boundary map is near-null overall on WikiContradict and Google CONFLICTS, but identifies a narrow outdated-information condition without a no-conflict safety violation. Typed revision therefore mediates heterogeneous benefit and harm rather than a uniformly positive correction stage. We claim a narrow, machine-audited mechanism signal, directional local-family reproduction, and an observed applicability boundary; we do not claim human-validated gold, external blindness, external-domain transfer, or general end-to-end superiority.
+End-to-end accuracy does not reveal whether a self-correcting retrieval system failed to find evidence or failed after evidence became available. We introduce a capability-aware trace attribution protocol that compares only instrumentation shared by all methods and fails closed when a stage is not observed. Across eight methods and 350 upstream-labelled RAMDocs development items, every method has more errors after at least one correct document was retrieved and the answer text changed than retrieval-miss errors. The pooled difference is $+0.3914$ (95\% sample-cluster bootstrap $[+0.3554,+0.4275]$). This is evidence of post-retrieval answer-transformation failure, not a causal oracle decomposition: six baselines do not expose comparable detection or action traces, and two items lack upstream correct-document labels. FAR provides an instrumented case study. On a 60-item Qwen3.5 9B machine-audited development diagnostic, typed control improves over a matched untyped ablation by 0.078 (95\% paired bootstrap [0.034, 0.124]), with a positive directional reproduction across Mistral, Gemma, and Llama. Yet two preregistered RAMDocs rounds show no end-to-end advantage, all 34 positive Qwen item-level deltas pass through changed revisions, and removing typed revision improves the overall mean. We therefore claim a reproducible cross-method concentration of errors after retrieval and answer transformation, plus a narrower typed-control case study; we do not claim a cross-method detection bottleneck, human-validated gold, external blindness, or general superiority.
 \end{abstract}
 
 \section{Introduction}
@@ -28,13 +28,13 @@ Retrieval-augmented generation (RAG) grounds language models in external memory 
 
 We study \emph{falsification-guided retrieval}: given an initial answer, actively formulate retrievable evidence needs that could show where it is wrong. The central hypothesis is not merely that counter-evidence helps. It is that a \emph{typed evidence conflict} can serve as a control signal for both the next query and the revision action. A temporal conflict asks for version boundaries and repairs a timeline; a numerical conflict asks for alternative measurements and replaces or qualifies a value; a causal conflict seeks confounding or association-only evidence and downgrades the causal claim.
 
-FAR makes this loop explicit. It (1) builds a claim dependency graph, (2) assigns positive typed evidence requirements, (3) generates support, refutation, and boundary queries, and (4) applies a typed revision with an auditable trace. We contribute an evaluation protocol, FalsiRAG-Bench, that places counter-evidence inside the retrieval corpus and scores whether it is found and used correctly. Our contributions are:
+FAR makes this loop explicit. It (1) builds a claim dependency graph, (2) assigns positive typed evidence requirements, (3) generates support, refutation, and boundary queries, and (4) applies a typed revision with an auditable trace. The broader empirical problem is that methods expose different internal signals: treating an absent typed-conflict field as a failed detector would bias a cross-method analysis toward FAR. We therefore separate common observable traces from method-specific instrumentation. Our contributions are:
 \begin{itemize}
-    \item an explicit typed-conflict control framework with auditable claim, evidence, conflict, and revision traces, evaluated against a matched untyped control;
-    \item a reproducible machine-audited synthetic benchmark and evaluation contract that keeps positive, negative, and mixed component evidence visible; and
-    \item an applicability-boundary account that combines the positive Qwen development signal, directional recurrence across three additional local model families, two preregistered RAMDocs null results, frozen mechanism attribution, and a verified public-development boundary matrix.
+    \item a preregistered, capability-aware stage-trace protocol and verifier that distinguish retrieval misses from post-retrieval unchanged and changed-answer failures without imputing unobserved detection or action states;
+    \item an 8-method, 2,800-cell failure map in which post-retrieval changed-answer errors exceed retrieval misses for every method, with sample-cluster uncertainty; and
+    \item an instrumented FAR case study that combines a local typed-control signal, directional recurrence across three additional model families, negative component evidence, two RAMDocs nulls, and a public-development applicability boundary.
 \end{itemize}
-The empirical claim is intentionally narrower than the full architecture: the present evidence supports typed conflict control, not a positive marginal contribution from every query family or revision component.
+The empirical claim is intentionally narrower than the architecture: the cross-method evidence locates failure after retrieval and textual answer transformation, but only the two FAR arms expose typed detection, action, and claim-level revision traces. It cannot identify a cross-method detection bottleneck or causal implementation gap.
 
 \section{Related Work}
 Active retrieval and post-hoc repair are not new. FLARE retrieves from predicted upcoming sentences when generation confidence is low \cite{jiang2023flare}; Self-RAG learns reflection tokens for retrieval and critique \cite{asai2024selfrag}; and CRAG triggers corrective retrieval after assessing retrieval quality \cite{yan2024crag}. RARR researches attribution for generated claims and edits unsupported text while preserving the draft \cite{gao2023rarr}. Chain-of-Verification asks independent verification questions \cite{dhuliawala2024cove}, while RQ-RAG learns query rewriting, decomposition, and disambiguation \cite{chan2024rqrag}.
@@ -61,7 +61,7 @@ where $q_i^{+}$ seeks corroboration, $q_i^{-}$ seeks an observation incompatible
 Retrieved passages are compared with the claim using high-precision rules or the layered VeraRAG conflict graph. FAR maps detected relations to seven control types. A fixed priority policy chooses an action: correct time, requalify entity, replace number, downgrade causality, prefer reliable source, clarify definition, retract, or qualify uncertainty. An optional language model realizes the selected action but cannot select a different policy. Every trace records before and after text, action, conflict types, evidence IDs, rationale, and confidence. No retrieved counter-evidence is treated as absence of a detected conflict, not proof of the claim.
 
 \section{FalsiRAG-Bench}
-The benchmark schema contains question, erroneous initial answer, atomic claims and dependencies, construction-reference evidence, counter-evidence with the refuted claim, typed conflict, expected revision, split, provenance, and annotation status.
+The machine-audited synthetic benchmark schema contains question, erroneous initial answer, atomic claims and dependencies, construction-reference evidence, counter-evidence with the refuted claim, typed conflict, expected revision, split, provenance, and annotation status.
 
 \begin{table}[t]
 \centering
@@ -90,6 +90,28 @@ We evaluate a locally hashed Qwen3.5 9B model with matched retrieval settings. B
 
 Ablations remove typed conflict (untyped contradiction and generic queries), refutation queries, boundary queries, or typed revision. The primary gate compares typed and untyped FAR on aligned examples. Metrics are answer soft F1, unsupported claim rate, evidence precision, typed conflict F1, revision accuracy, overclaim reduction, and counter-evidence recall. We report category-stratified bootstrap confidence intervals, dependency-group sensitivity intervals, paired bootstrap differences, and exact McNemar tests for revision success.
 
+\subsection{Capability-aware stage trace attribution}
+
+We additionally reanalyse the frozen RAMDocs Round~1 artifacts for Vanilla,
+Multi-Query, CRAG-style, Self-RAG-style, Reflective, CounterRefine-style, FAR,
+and untyped FAR. All eight methods expose retrieved evidence identifiers, a
+shared initial answer, and a final answer. Only the two FAR arms expose typed
+conflicts, revision actions, and claim-level revision traces. The registered
+cross-method map therefore uses only common observables and does not impute a
+missing conflict field as a detector failure.
+
+Each method--item cell is assigned once, in order, to: correct; retrieval
+unscorable because no upstream correct document is labelled; retrieval miss;
+post-retrieval unchanged wrong; or post-retrieval changed wrong. Answer change
+is computed after removing bracketed citations and applying the frozen RAMDocs
+normalizer. It denotes textual transformation, not factual correction. T1
+requires changed-wrong errors to exceed retrieval misses in at least six of
+eight methods. T2 bootstraps sample IDs 5,000 times, retaining all eight methods
+per sampled cluster, for the pooled proportion difference. The protocol and a
+second amendment for two retrieval-unscorable items were frozen before either
+T1 or T2 was computed. Detection/action detail is descriptive and restricted to
+the two FAR arms.
+
 Power is treated as a gate on claim strength rather than repaired after observing results. A preregistered simulation using the Qwen discordance pattern estimates only 0.414 exact-McNemar power for the planned three-family, 60-pair-per-family reproduction at a +0.078 effect. That study is therefore designated a directional reproduction: a nonsignificant result cannot establish absence, and family-level directions must be disclosed. The same retrospective audit shows that the RAMDocs gate had a confidence-interval half-width near three percentage points, too coarse to adjudicate smaller effects.
 
 \begin{table}[t]
@@ -117,6 +139,54 @@ As a post-hoc label-audit sensitivity check, we stratify the same paired compari
 
 The remaining ablations contradict a stronger component-wise story. Removing refutation queries does not reduce answer correctness (0.826 versus 0.797), despite a small counter-evidence recall decrease. Removing boundary queries is also neutral on answer correctness (0.801 versus 0.797). Removing typed revision increases answer correctness to 0.873 while reducing revision accuracy and revision-action correctness to zero. Typed revision therefore provides explicit revision behavior at an answer-score cost; it is not supported as an unconditional accuracy improvement. We report these outcomes as negative or mixed evidence rather than attributing gains to all three query families or every repair stage.
 
+\subsection{Cross-method stage trace map}
+
+Table~\ref{tab:stage-trace} reports the registered common-observable map. T1 passes for 8/8 methods: changed-answer errors after retrieving at least one
+upstream correct document exceed retrieval misses in every method. Across all
+2,800 method--item cells, T2 estimates
+\[
+P(\text{post-retrieval changed wrong})-P(\text{retrieval miss})=+0.3914,
+\]
+with a 95\% sample-cluster bootstrap interval of $[+0.3554,+0.4275]$.
+Retrieval miss counts range from two to six per method, whereas changed-wrong
+counts range from 102 to 197. Two items have no upstream correct-document label
+and contribute one retrieval-unscorable cell per method; they are not relabelled
+as retrieval failures.
+
+\begin{table*}[t]
+\centering
+\small
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lrrrrr}
+\toprule
+Method & Correct & Retrieval unscorable & Retrieval miss & Retrieved + unchanged wrong & Retrieved + changed wrong \\
+\midrule
+Vanilla RAG & 101 & 2 & 6 & 89 & 152 \\
+Multi-Query RAG & 109 & 2 & 2 & 101 & 136 \\
+CRAG-style & 104 & 2 & 5 & 99 & 140 \\
+Self-RAG-style & 103 & 2 & 2 & 118 & 125 \\
+Reflective RAG & 106 & 2 & 4 & 75 & 163 \\
+CounterRefine-style & 102 & 2 & 2 & 47 & 197 \\
+FAR & 109 & 2 & 3 & 134 & 102 \\
+FAR minus typed conflict & 106 & 2 & 2 & 133 & 107 \\
+\bottomrule
+\end{tabular}
+}
+\caption{Capability-aware observational trace map on 350 upstream-labelled
+RAMDocs development items per method. ``Changed'' means citation-stripped,
+normalized answer text differs from the shared initial answer; it does not mean
+the revision is factually correct.}
+\label{tab:stage-trace}
+\end{table*}
+
+This map licenses a cross-method statement about where errors remain visible:
+correct-document availability and answer transformation often occur without a
+correct endpoint. It does \emph{not} isolate why the transformation failed.
+Six baselines do not expose typed detection or action traces, so the map cannot
+show that detection is sufficient, estimate a detection oracle gap, or separate
+action selection from realization. Those questions require prospectively
+instrumented downstream replay.
+
 The registered post-stop-rule attribution sharpens this trade-off. Among the
 226 RAMDocs items missed by both FAR and Multi-Query RAG, the earliest-failure
 buckets are 4 retrieval misses, 72 undetected conflicts, 103 detected conflicts
@@ -130,7 +200,8 @@ diagnostic (0.883), the detected subset has only a $+0.006$ paired difference
 with a confidence interval crossing zero. Accordingly, all four preregistered
 mechanism hypotheses are not supported.
 
-The component path analysis also rejects our detection-only prediction. FAR has
+Within the two instrumented FAR arms, the component path analysis also rejects
+our detection-only prediction. FAR has
 34 positive continuous answer-score deltas over the untyped ablation, and every
 one occurs on a changed-revision path; none occurs after detection without a
 changed revision. Together with the higher mean obtained when typed revision is
@@ -172,11 +243,15 @@ relation must map to a usable conflict type; the detector must expose that
 type; the policy must select an appropriate action; and the realized revision
 must preserve correct content while changing the error. The completed evidence
 does not license a multiplicative causal decomposition of these stages, but it
-does show why success at one stage is not sufficient. Complete correct-document
-retrieval does not restore a RAMDocs advantage, the detected-conflict subset is
-not reliably positive, and detected-then-wrong revision is the largest shared
-failure bucket. Typed control is therefore best understood as an opportunity
-to intervene, not as a monotone improvement applied after retrieval.
+does show why success at one stage is not sufficient. Across all eight methods,
+changed-answer errors after retrieval exceed retrieval misses; within FAR,
+complete correct-document retrieval does not restore an advantage, the
+detected-conflict subset is not reliably positive, and detected-then-wrong
+revision is the largest shared failure bucket. The first result is a common
+observable trace, while the latter results depend on FAR-specific instrumentation.
+Neither is a causal oracle decomposition. Typed control is therefore best
+understood as an opportunity to intervene, not as a monotone improvement applied
+after retrieval.
 
 \subsection{Why the local gain and external null can coexist}
 
@@ -194,9 +269,11 @@ while its transport conditions remain only partially identified.
 
 \subsection{Revision is both carrier and risk}
 
-Every observed positive Qwen typed-minus-untyped delta passes through a changed
+Within the FAR case study, every observed positive Qwen typed-minus-untyped delta passes through a changed
 revision, yet removing typed revision raises the aggregate answer score. This
-combination rules out both a detection-only account and an always-revise policy.
+combination rules out both a detection-only account of that local typed effect
+and an always-revise policy. It does not establish that the six less-instrumented
+baselines detected conflicts adequately.
 It suggests a future selective-intervention design: revise only when the
 expected benefit of the typed action exceeds its risk, and otherwise preserve
 or abstain. No such selector has been evaluated here, so this is a design
@@ -245,6 +322,15 @@ G-A, unlock held-out data, or reinstate a general end-to-end claim.
 \section{Limitations and Responsible Use}
 The candidate set reuses a small controlled source corpus, includes synthetic passages, and has correlated variants. Its labels are not human-validated gold, the reported split is development data, and evaluation is not externally blind. The machine audit measures agreement with construction labels and cannot reveal errors shared by construction, the LLM signal, and deterministic rules. The completed family reproduction uses four local model families on the same constructed development distribution and therefore does not establish external-domain or deployment generality. Rule conflict detectors are high precision but incomplete; model detectors inherit calibration and domain-shift risk. Retrieval failure can hide a true counterexample, while spurious low-quality contradictions can induce over-correction. The benchmark is not current factual advice and is unsuitable for medical, legal, financial, or policy decisions. Final authors remain responsible for checking all text, citations, experiments, and disclosure requirements.
 
+The cross-method trace map is limited by heterogeneous instrumentation. It can
+compare retrieved document identifiers and textual answer changes, but it cannot
+infer unrecorded detector states, distinguish semantic repair from paraphrase,
+or assign causal credit among detection, action, and realization. Citation-only
+changes are removed before comparison, yet other meaning-preserving rewrites may
+still count as changed. Two RAMDocs items have no upstream correct-document
+label and are reported as retrieval-unscorable. These constraints make the map
+a failure-location diagnostic rather than an oracle ladder.
+
 Our preregistered no-budget 2+4 profile completed only its external Phase A and
 then stopped. Round 1 on 350 RAMDocs development items with upstream labels gave
 FAR and the strongest baseline, Multi-Query RAG, the same 0.311 strict exact
@@ -266,7 +352,19 @@ beyond the completed directional local-family reproduction before replacing
 the current machine-audited development claim.
 
 \section{Conclusion}
-FAR turns ``what could make this answer wrong?'' into a typed, retrievable control protocol. On the released machine-audited Qwen development diagnostic, typed conflict control outperforms a matched untyped alternative, and the direction recurs across Mistral, Gemma, and Llama. However, two preregistered RAMDocs rounds and the frozen attribution reject a general end-to-end or upstream-only explanation. Revision is the path through which all observed positive typed deltas occur and also the component whose removal raises the aggregate score. The resulting contribution is a narrow, reproducible account of revision-mediated heterogeneous effects and their observed boundary---not human-gold, blind-test, external-domain, or general superiority evidence.
+End-to-end accuracy hides a recurrent pattern: across eight frozen methods,
+correct evidence is usually not absent when the system remains wrong, and many
+errors follow an observable answer transformation. The registered trace map
+finds this direction in 8/8 methods and a pooled difference of $+0.3914$, but
+its capability matrix also prevents a stronger claim: six methods do not expose
+comparable detection or action states. FAR turns ``what could make this answer
+wrong?'' into an instrumented typed-control case study. Its local typed signal
+recurs directionally across three additional families, while two RAMDocs nulls
+and the revision ablation show that transformation is not reliably correction.
+The resulting contribution is a reproducible account of post-retrieval answer-
+transformation failure and a narrower revision-mediated FAR effect---not a
+causal detection bottleneck, human-gold, blind-test, external-domain, or general
+superiority claim.
 
 \bibliography{references}
 \end{document}

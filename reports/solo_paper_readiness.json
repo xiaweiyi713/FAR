@@ -132,7 +132,7 @@
       "valid": true
     },
     "paper_checklist_sha256": "e3b92d8cc9e056eb1ebba33e91c6b338a6bbbb29e34e19abe7f3eb94c42b967a",
-    "paper_main_sha256": "5411828273fc70e4a888cd2c622dc862fc202079a9a5a727ce706badc37de3f3",
+    "paper_main_sha256": "e3efc2028d3685d439926f5c929302eda56982b141633b31601f2b76a36d290a",
     "paper_supplement_sha256": "17a325914f811c66aa97ce5c996ca8365fb793b2b45fc284baa98b0d8b57aefb",
     "solo_release": {
       "errors": [],
@@ -140,6 +140,15 @@
       "methods": 11,
       "publication_ready": false,
       "schema_version": "far-solo-diagnostic-release-audit-v1",
+      "valid": true
+    },
+    "stage_trace_map": {
+      "causal_attribution": false,
+      "errors": [],
+      "model_calls": 0,
+      "publication_gold": false,
+      "schema_version": "far-stage-trace-map-audit-v1",
+      "test_accessed": false,
       "valid": true
     }
   },
@@ -154,7 +163,8 @@
   "gates": {
     "claim_scope_matches_observed_ablations": true,
     "frozen_fever_negative_transfer_disclosed": true,
-    "tracked_solo_evidence": true
+    "tracked_solo_evidence": true,
+    "tracked_stage_trace_map": true
   },
   "ready": true,
   "required_limitations": [
@@ -164,7 +174,8 @@
     "refutation and boundary query ablations do not support positive marginal claims",
     "typed revision trades lower answer correctness for non-zero revision behavior",
     "FEVER binary transfer shows no paired accuracy gain",
-    "machine-disposition sensitivity is post-hoc and not independent label validation"
+    "machine-disposition sensitivity is post-hoc and not independent label validation",
+    "cross-method trace attribution does not identify detection or action causal gaps"
   ],
   "schema_version": "far-solo-paper-readiness-v1",
   "strict_aaai_submission_ready": false,
