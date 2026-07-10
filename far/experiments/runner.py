@@ -199,10 +199,9 @@ def generator_sample_scope(generator: TextGenerator | None) -> Any:
 
 def _implementation_sha256() -> str:
     digest = hashlib.sha256()
-    for package in ("far", "baselines", "eval", "experiments", "bench"):
-        for path in sorted((ROOT / package).rglob("*.py")):
-            digest.update(str(path.relative_to(ROOT)).encode())
-            digest.update(path.read_bytes())
+    for path in sorted((ROOT / "far").rglob("*.py")):
+        digest.update(str(path.relative_to(ROOT)).encode())
+        digest.update(path.read_bytes())
     return digest.hexdigest()
 
 

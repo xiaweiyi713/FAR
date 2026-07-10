@@ -133,6 +133,74 @@ def paired_bootstrap_comparison(
     }
 
 
+def paired_sample_cluster_bootstrap_comparison(
+    baseline_rows: list[dict[str, Any]],
+    candidate_rows: list[dict[str, Any]],
+    metric: str,
+    *,
+    resamples: int = 2000,
+    confidence: float = 0.90,
+    seed: int = 1729,
+    higher_is_better: bool = True,
+) -> dict[str, Any]:
+    """Bootstrap aligned sample IDs without category stratification.
+
+    A RAMDocs item is the sampling cluster. Each item contributes one aligned
+    metric difference, so resampling sample IDs is the registered P5
+    sample-cluster bootstrap.
+    """
+
+    if resamples < 1:
+        raise ValueError("paired sample-cluster bootstrap requires at least one resample")
+    if not 0.0 < confidence < 1.0:
+        raise ValueError("confidence must be in (0, 1)")
+    if len({str(row["sample_id"]) for row in baseline_rows}) != len(baseline_rows):
+        raise ValueError("baseline rows contain duplicate sample IDs")
+    if len({str(row["sample_id"]) for row in candidate_rows}) != len(candidate_rows):
+        raise ValueError("candidate rows contain duplicate sample IDs")
+    baseline = {str(row["sample_id"]): row for row in baseline_rows}
+    candidate = {str(row["sample_id"]): row for row in candidate_rows}
+    if set(baseline) != set(candidate):
+        raise ValueError("paired comparison requires identical sample IDs")
+    sample_ids = [
+        sample_id
+        for sample_id in sorted(baseline)
+        if baseline[sample_id].get(metric) is not None
+        and candidate[sample_id].get(metric) is not None
+    ]
+    if not sample_ids:
+        raise ValueError(f"metric {metric} has no aligned values")
+    differences = [
+        float(candidate[sample_id][metric]) - float(baseline[sample_id][metric])
+        for sample_id in sample_ids
+    ]
+    rng = random.Random(seed)
+    bootstrap = [
+        sum(rng.choice(differences) for _ in differences) / len(differences)
+        for _ in range(resamples)
+    ]
+    observed = sum(differences) / len(differences)
+    alpha = (1.0 - confidence) / 2.0
+    return {
+        "method": "paired-sample-cluster-percentile-bootstrap-v1",
+        "cluster_key": "sample_id",
+        "metric": metric,
+        "candidate_minus_baseline": observed,
+        "lower": _percentile(bootstrap, alpha),
+        "upper": _percentile(bootstrap, 1.0 - alpha),
+        "higher_is_better": higher_is_better,
+        "probability_candidate_better": sum(
+            value > 0 if higher_is_better else value < 0 for value in bootstrap
+        )
+        / len(bootstrap),
+        "confidence": confidence,
+        "resamples": resamples,
+        "seed": seed,
+        "clusters": len(differences),
+        "pairs": len(differences),
+    }
+
+
 def _typed_conflict_f1(rows: list[dict[str, Any]]) -> float:
     rows = [row for row in rows if row.get("typed_conflict_correct") is not None]
     true_positives = sum(

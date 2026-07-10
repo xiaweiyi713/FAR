@@ -3019,3 +3019,21 @@ evidence bundle verified successfully, releasing the GPU.
   The pack/verify/install workflow rejects unsafe archives and overwrites.
   External upload is intentionally pending; tracked diagnostics are not
   removed until an authorized release upload is downloaded back and verified.
+
+## 2026-07-10 — P5 registered ablation execution gate
+
+- Added a fail-closed `falsirag diag p5-ablations` workflow for the registered
+  3×350 RAMDocs development rerun. Preflight freezes the amendment, tag ancestry,
+  configuration, initial answers, benchmark files, local NLI snapshot, clean
+  source commit, and exact Ollama model digest.
+- The three arms are checkpoint-resumable and must share one source commit,
+  implementation fingerprint, configuration, initial-answer bundle, and LLM
+  runtime identity. The runner cannot select the hidden test split.
+- Finalization performs the registered 2,000-resample 90% paired sample-cluster
+  bootstrap for H3 and H5. An independent zero-model-call verifier recomputes
+  all scores, intervals, reports, and artifact fingerprints and rejects partial,
+  mixed-identity, stale, or tampered releases.
+- Synthetic 350-item formal-bundle tests cover positive contrast orientation,
+  equivalence and non-equivalence verdicts, and report-tamper rejection. The
+  formal model rerun remains pending until the exact local runtime is installed
+  and the execution-gate commit is clean.

@@ -427,6 +427,13 @@ def type_mappability_main() -> None:
     main()
 
 
+def p5_ablations_main() -> None:
+    _warn_legacy_alias()
+    from far.experiments.p5_ablations import main
+
+    main()
+
+
 def diagnostic_artifacts_main() -> None:
     _warn_legacy_alias()
     from far.artifacts import main
@@ -625,6 +632,13 @@ def _build_parser() -> argparse.ArgumentParser:
         type_mappability_main,
         "Prepare or analyze the P6 type-mappability study.",
         "diag type-mappability",
+    )
+    _add_leaf(
+        diag,
+        "p5-ablations",
+        p5_ablations_main,
+        "Run or verify the registered P5 RAMDocs ablations.",
+        "diag p5-ablations",
     )
 
     jury = _add_group(commands, "jury", "Run the optional cross-family jury workflow.")
