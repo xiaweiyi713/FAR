@@ -22,7 +22,7 @@ cd /mnt/d/FAR-workspace/FAR
 Create a blind packet:
 
 ```bash
-uv run python -m bench.build.annotate_packet build \
+uv run python -m far.bench.build.annotate_packet build \
   --data-dir bench \
   --output-dir /mnt/d/FAR-outputs/falsirag_annotation_packet \
   --annotator machine_qwen \
@@ -37,12 +37,12 @@ annotation-helper config:
 falsirag-auto-annotate generate \
   --packet-dir /mnt/d/FAR-outputs/falsirag_annotation_packet \
   --output-dir /mnt/d/FAR-outputs/qwen25_preannotations \
-  --config experiments/configs/qwen25_autolabel.yaml \
+  --config far/experiments/configs/qwen25_autolabel.yaml \
   --preannotator-id qwen25_7b_ollama_machine_weak \
   --overwrite
 ```
 
-`experiments/configs/qwen25_autolabel.yaml` is an annotation-helper config, not
+`far/experiments/configs/qwen25_autolabel.yaml` is an annotation-helper config, not
 part of the formal model-comparison matrix. The completed Windows GPU run wrote
 300/300 rows with one conservative fallback after retry:
 
@@ -71,7 +71,7 @@ written, restart without discarding completed rows:
 falsirag-auto-annotate generate \
   --packet-dir /mnt/d/FAR-outputs/falsirag_annotation_packet \
   --output-dir /mnt/d/FAR-outputs/qwen25_preannotations \
-  --config experiments/configs/qwen25_autolabel.yaml \
+  --config far/experiments/configs/qwen25_autolabel.yaml \
   --preannotator-id qwen25_7b_ollama_machine_weak \
   --resume
 ```
@@ -83,7 +83,7 @@ plus any missing rows:
 falsirag-auto-annotate generate \
   --packet-dir /mnt/d/FAR-outputs/falsirag_annotation_packet \
   --output-dir /mnt/d/FAR-outputs/qwen25_preannotations \
-  --config experiments/configs/qwen25_autolabel.yaml \
+  --config far/experiments/configs/qwen25_autolabel.yaml \
   --preannotator-id qwen25_7b_ollama_machine_weak \
   --resume \
   --retry-fallbacks
@@ -244,7 +244,7 @@ machine/reference disagreements should I inspect first?”
 Create a blind packet first:
 
 ```bash
-uv run python -m bench.build.annotate_packet build \
+uv run python -m far.bench.build.annotate_packet build \
   --data-dir bench \
   --output-dir outputs/falsirag_annotation_packet \
   --annotator reviewer_a \
@@ -265,7 +265,7 @@ Generate a small pilot before scaling:
 uv run falsirag-auto-annotate generate \
   --packet-dir outputs/falsirag_annotation_packet \
   --output-dir outputs/deepseek_preannotations_pilot \
-  --config experiments/configs/deepseek.yaml \
+  --config far/experiments/configs/deepseek.yaml \
   --preannotator-id deepseek_chat_v1 \
   --limit 25 \
   --overwrite
@@ -344,7 +344,7 @@ packet fingerprint mismatches. Install the validated result atomically without
 editing `packet_manifest.json`:
 
 ```bash
-uv run python -m bench.build.annotate_packet install-review \
+uv run python -m far.bench.build.annotate_packet install-review \
   --packet-dir outputs/falsirag_annotation_packet \
   --review-file outputs/label_studio_reviewed_reviewer_a/annotations_reviewer_a.jsonl \
   --reviewer-id reviewer_a
@@ -356,7 +356,7 @@ adjudication.
 At any point, inspect packet progress and source compatibility:
 
 ```bash
-uv run python -m bench.build.annotate_packet status \
+uv run python -m far.bench.build.annotate_packet status \
   --packet-dir outputs/falsirag_annotation_packet \
   --data-dir bench
 ```
@@ -381,7 +381,7 @@ uv run falsirag-auto-annotate adjudication-label-studio-import \
   --adjudicator-id adjudicator_1 \
   --overwrite
 
-uv run python -m bench.build.annotate_packet install-adjudication \
+uv run python -m far.bench.build.annotate_packet install-adjudication \
   --packet-dir outputs/falsirag_annotation_packet \
   --adjudication-file outputs/label_studio_adjudicated/adjudications.jsonl \
   --adjudicator-id adjudicator_1

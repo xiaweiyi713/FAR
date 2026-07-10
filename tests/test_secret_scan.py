@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from experiments.scan_secrets import scan_paths
+from far.experiments.scan_secrets import scan_paths
 
 
 def _fake_key() -> str:

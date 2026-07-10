@@ -61,7 +61,7 @@ uv run falsirag-build-blind-bundle audit \
 uv run falsirag-build-blind-bundle package \
   --bundle-dir outputs/handoff/falsirag_blind_test_v1 \
   --output-dir outputs/handoff/custodian_deepseek_handoff \
-  --config experiments/configs/deepseek.yaml \
+  --config far/experiments/configs/deepseek.yaml \
   --frozen-commit "$(git rev-parse HEAD)" \
   --overwrite
 ```
@@ -129,7 +129,7 @@ For a full FAR test prediction run:
 
 ```bash
 falsirag-suite \
-  --config experiments/configs/deepseek.yaml \
+  --config far/experiments/configs/deepseek.yaml \
   --data-dir /path/to/falsirag_blind_test_v1 \
   --output-dir /path/to/returned/deepseek_test_far \
   --split test \

@@ -85,7 +85,7 @@ def test_legacy_alias_prints_migration_hint(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     monkeypatch.setattr(sys, "argv", ["falsirag-run"])
-    cli._prefer_far_repo()
+    cli._warn_legacy_alias()
 
     error = capsys.readouterr().err
     assert "deprecated" in error
@@ -97,12 +97,21 @@ def test_new_dispatch_suppresses_legacy_hint(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     def fake_run() -> None:
-        cli._prefer_far_repo()
+        cli._warn_legacy_alias()
 
     monkeypatch.setattr(cli, "run_far_main", fake_run)
     cli.main(["run"])
 
     assert "deprecated" not in capsys.readouterr().err
+
+
+def test_legacy_warning_does_not_rewrite_import_path(monkeypatch: pytest.MonkeyPatch) -> None:
+    original = list(sys.path)
+    monkeypatch.setattr(sys, "argv", ["falsirag-run"])
+
+    cli._warn_legacy_alias()
+
+    assert sys.path == original
 
 
 def test_every_legacy_console_script_has_a_valid_migration_target() -> None:

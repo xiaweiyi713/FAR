@@ -3,7 +3,7 @@ from __future__ import annotations
 import shutil
 from pathlib import Path
 
-from experiments.diagnostic_release import verify_solo_release
+from far.experiments.diagnostic_release import verify_solo_release
 
 ROOT = Path(__file__).resolve().parents[1]
 RELEASE = ROOT / "diagnostics/solo_v1"

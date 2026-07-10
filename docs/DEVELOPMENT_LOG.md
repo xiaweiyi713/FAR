@@ -634,7 +634,7 @@ independent human annotation or Cohen's kappa gates.
 
 The full Qwen3.5 run completed 300/300 rows but produced 219 schema fallbacks,
 so it was retained only as a rough review bundle. A non-thinking Qwen2.5
-annotation-helper config (`experiments/configs/qwen25_autolabel.yaml`) was then
+annotation-helper config (`far/experiments/configs/qwen25_autolabel.yaml`) was then
 added and run on the same D:-backed Windows GPU host. The Qwen2.5 pilot passed
 10/10 after normalising common no-action aliases, and the full run completed:
 
@@ -935,9 +935,9 @@ credentials before any publication-relevant run. To make the next credentialed
 step fail closed, `scripts/check_cloud_run_readiness.sh` now verifies the
 cloud-backed configuration without printing or persisting secrets:
 
-- `experiments/configs/deepseek.yaml` must use provider `deepseek`, model
+- `far/experiments/configs/deepseek.yaml` must use provider `deepseek`, model
   `deepseek-v4-flash`, and environment variable `DEEPSEEK_API_KEY`;
-- `experiments/configs/qwen_plus.yaml` must use provider `dashscope`, model
+- `far/experiments/configs/qwen_plus.yaml` must use provider `dashscope`, model
   `qwen3.7-plus-2026-05-26`, and environment variable `DASHSCOPE_API_KEY`;
 - both configs must retain `vera_hybrid`, `allow_dense_fallback: false`, local
   dense/reranker snapshots, `require_nli: true`, and local NLI loading;
@@ -1787,7 +1787,7 @@ evidence bundle verified successfully, releasing the GPU.
   `gold_answers` 或 `wrong_answers`。目标是按实体、时间、范围和独立证据支持
   合并答案，并从最终文本中删除已拒绝候选。
 - Round 1 配置与证据保持不变。Round 2 使用
-  `experiments/configs/ramdocs_qwen_round2.yaml`、独立缓存 namespace 和独立输出
+  `far/experiments/configs/ramdocs_qwen_round2.yaml`、独立缓存 namespace 和独立输出
   目录。正式 dev 重跑将记为第二轮；若 G-A 再次失败，严格执行论文降级规则。
 - 仅 FAR 方法发生变化，因此 Round 2 复用 Round 1 已冻结且有 SHA-256 指纹的
   初始答案与最强基线分数，只重跑 FAR 350 条；最终仍对同一 350 个 sample ID
@@ -2993,5 +2993,29 @@ evidence bundle verified successfully, releasing the GPU.
   now reports the boundary matrix in the abstract and mechanism-boundary
   section, `paper/STATUS.md` records WS3 completion and its claim limits, and
   `reports/tmlr_result_integration_matrix.md` records the weak A-line selection.
-  `experiments/longterm_status.py` now independently verifies the WS3 release
+  `far/experiments/longterm_status.py` now independently verifies the WS3 release
   before marking WS3 complete and checks that WS3 is integrated into WS4.
+
+## 2026-07-10 — P10 namespace consolidation and artifact-release staging
+
+- Moved every executable `experiments`, `bench`, `baselines`, and `eval` module
+  under `far.*`; updated imports, module launch commands, CI, packaging, tests,
+  and active documentation. The root `bench/` is now data-only.
+- Removed the CLI `sys.path` rewrite. Deprecated console aliases still print
+  their migration target, but all handlers import unambiguous `far.*` modules.
+  Frozen pre-P10 config identities remain readable through an explicit path
+  resolver so existing run manifests and protocol fingerprints are unchanged.
+- Added package-safe configuration and benchmark paths. The wheel carries an
+  exact candidate-benchmark snapshot, and a regression test requires every
+  bundled file to match the repository data byte for byte.
+- Excluded `diagnostics/` and `bench/external/` from wheel/sdist releases. The
+  sdist fell from about 8.0MB to 1.0MB; the wheel is about 550KB. Isolated
+  wheel and sdist smoke tests confirm that `baselines`, `bench`, `eval`, and
+  `experiments` are absent as top-level import namespaces.
+- Frozen all 333 diagnostic files (43,267,220 bytes) in
+  `far/data/diagnostics-v1.json` and built a deterministic 5,557,784-byte
+  archive with SHA-256
+  `ad2b99d59de170d8bfa375e85d8f2a816a63dcafb1bf12c415a19f14af35693d`.
+  The pack/verify/install workflow rejects unsafe archives and overwrites.
+  External upload is intentionally pending; tracked diagnostics are not
+  removed until an authorized release upload is downloaded back and verified.

@@ -290,6 +290,11 @@ sys.path hack 是治标。迁移到 `far.` 命名空间：`far.experiments` / `f
 `diagnostics/` 约 41MB（8×350 predictions/checkpoint 等）压在 git 历史里拖慢 clone。
 迁到 git-lfs 或独立 `far-artifacts` 数据分支/release，主仓只留 `reports/` 摘要与指纹。保留现有 200MB 门限校验。
 
+执行状态（2026-07-10）：Python 包已全部迁入 `far.*`，`_prefer_far_repo()` 与顶层可执行包已删除；
+wheel/sdist 已排除 `diagnostics/` 和 `bench/external/`。333 个诊断文件已冻结为逐文件清单和 5.6MB
+确定性归档，见 `docs/ARTIFACT_STORAGE.md`。外部 release 尚未获授权上传，因此主树中的 `diagnostics/`
+暂不删除；上传、回读验证与删除必须作为第二阶段原子切换，旧历史清理另需显式授权。
+
 ---
 
 # Part 3 · 开源化
@@ -347,7 +352,8 @@ print(result.revised_answer, result.to_dict()["conflicts"])
 | **P7（完成）** | 切断默认 VeraRAG（自足 BM25 + 直连 Ollama）+ 删活跃代码硬编码路径 + quickstart + package smoke | 开源 | — | 开箱可跑 | 开源必做 |
 | **P8（完成）** | README 产品化重构 + `docs/RESEARCH_STATUS.md` 下沉 | 开源 | P7 | 产品化 README + 完整诚实性披露 | 开源必做 |
 | **P9（完成）** | `falsirag` 子命令树 + 全量 deprecated alias 迁移提示 | 开源 | P7 | 单主命令，旧自动化兼容 | 开源建议 |
-| P10 | 命名空间收拢（`far.*`）+ 数据/代码分离（lfs/release） | 工程 | P9 | 消除 hack、轻 clone | 开源建议 |
+| **P10-A（完成）** | 命名空间收拢（`far.*`）+ 安装包数据分离 + release 清单/归档/安装器 | 工程 | P9 | 消除 hack、轻量 wheel/sdist、可校验 cutover | 开源建议 |
+| P10-B | 授权上传诊断 release、回读验证后从主树删除 `diagnostics/`；历史重写/LFS 另议 | 外部 | P10-A | 轻 checkout；历史清理需单独授权 | 开源建议 |
 
 **关键路径（出论文核心结果）**：P0 → P1 为零模型调用；P2 若选择真正因果 oracle，R/D/A 必须重放下游并产生新答案，
 因此不能再宣称全程零模型调用。若坚持零调用，则 P2/P3 必须降格为 trace attribution，避免循环论证。

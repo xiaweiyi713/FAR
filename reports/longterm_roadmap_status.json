@@ -199,22 +199,22 @@
         {
           "exists": true,
           "path": "paper/STATUS.md",
-          "sha256": "d3f4be6d8e673c2165b3f9e6c0ed0ef437ca160e7431a1adefd5e42f40c7c507"
+          "sha256": "1b6a14d98cb6f30882fb4171a8b6c1f9da6a54b645a568f2dab7f77ef6231c18"
         },
         {
           "exists": true,
           "path": "paper/main.tex",
-          "sha256": "5411828273fc70e4a888cd2c622dc862fc202079a9a5a727ce706badc37de3f3"
+          "sha256": "e3efc2028d3685d439926f5c929302eda56982b141633b31601f2b76a36d290a"
         },
         {
           "exists": true,
           "path": "reports/solo_paper_readiness.json",
-          "sha256": "e2aa0c45b947520e9e9f7c722a4e75c8a8df21b20d8b3f3067a79bc50d46cbe9"
+          "sha256": "96cf0d2b0053469432d4a87c863e3c1d6ecce2528ea2df7d9aa000a1609ccc6d"
         },
         {
           "exists": true,
           "path": "reports/tmlr_result_integration_matrix.md",
-          "sha256": "96d1a56efa27ccfeaa6e5b5cfaad02c35a6ba3da3291a7d5b440eb6c053a442c"
+          "sha256": "80c13ba15e141211f17cea913af4675cf486d2ef2e1172450b0b9f8d2a36719f"
         }
       ],
       "name": "WS4 paper and venue repositioning",
@@ -254,9 +254,9 @@
     },
     "WS6": {
       "details": {
-        "diagnostics_mib": 40.115,
+        "diagnostics_mib": 41.263,
         "outputs_tracks_only_gitkeep": true,
-        "tracked_files": 597
+        "tracked_files": 637
       },
       "errors": [],
       "gate": "repository-maintenance audit",

@@ -66,7 +66,7 @@ for label in far minus_typed_conflict; do
   rsync -az \
     "${REMOTE_HOST}:${REMOTE_ROOT}/runs/${label}/" \
     "${LOCAL_ROOT}/runs/${label}/"
-  uv run python -m experiments.validate_results \
+  uv run python -m far.experiments.validate_results \
     --run-dir "${LOCAL_ROOT}/runs/${label}" \
     --output "${LOCAL_ROOT}/${label}_validation_pre_eval.json"
 done
@@ -88,7 +88,7 @@ uv run falsirag-eval \
   --seed "${SEED}"
 
 for label in far minus_typed_conflict; do
-  uv run python -m experiments.validate_results \
+  uv run python -m far.experiments.validate_results \
     --run-dir "${LOCAL_ROOT}/runs/${label}" \
     --evaluation-dir "${LOCAL_ROOT}/evaluations/${label}" \
     --output "${LOCAL_ROOT}/${label}_validation.json"

@@ -5,8 +5,8 @@ from pathlib import Path
 
 import pytest
 
-from bench.build.common import read_jsonl, write_json, write_jsonl
-from experiments.type_mappability import (
+from far.bench.build.common import read_jsonl, write_json, write_jsonl
+from far.experiments.type_mappability import (
     DATASET_ORDER,
     HUMAN_ROLES,
     MAPPABILITY_LABELS,
@@ -252,11 +252,11 @@ def test_machine_prelabel_is_resumable_provenanced_and_released_once(
 
     generator = FakeGenerator()
     monkeypatch.setattr(
-        "experiments.type_mappability.build_generator",
+        "far.experiments.type_mappability.build_generator",
         lambda value: generator,
     )
     monkeypatch.setattr(
-        "experiments.type_mappability._llm_runtime_identity",
+        "far.experiments.type_mappability._llm_runtime_identity",
         lambda value: {"ollama_model": {"digest": "sha256:" + "4" * 64}},
     )
 

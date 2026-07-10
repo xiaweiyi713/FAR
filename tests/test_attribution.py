@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from experiments.attribution import (
+from far.experiments.attribution import (
     DEV_METHODS,
     classify_failure,
     collection_score,
@@ -13,8 +13,8 @@ from experiments.attribution import (
     retrieval_stratum,
     total_variation,
 )
-from experiments.evidence_attribution import verify_bundle
-from experiments.protocol_longterm import ROADMAP_ACTIVE_SHA256, verify_active_roadmap
+from far.experiments.evidence_attribution import verify_bundle
+from far.experiments.protocol_longterm import ROADMAP_ACTIVE_SHA256, verify_active_roadmap
 
 
 def _task(*, misinformation: bool = False) -> dict[str, object]:

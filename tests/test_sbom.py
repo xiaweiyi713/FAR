@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from experiments.generate_sbom import build_sbom, main, validate_sbom, write_sbom
+from far.experiments.generate_sbom import build_sbom, main, validate_sbom, write_sbom
 
 
 def _component(sbom: dict[str, object], name: str) -> dict[str, object]:

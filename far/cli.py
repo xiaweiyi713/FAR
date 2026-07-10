@@ -1,12 +1,4 @@
-"""Console entry point shims that are safe beside VeraRAG's top-level packages.
-
-FAR intentionally reuses VeraRAG as an editable local dependency during
-development. Both projects expose research helper packages with generic names
-such as ``experiments``. Console scripts are executed from the virtual
-environment, so import order can otherwise resolve those generic modules from
-VeraRAG instead of this repository. These small shims put FAR's repository root
-at the front of ``sys.path`` before importing the actual command modules.
-"""
+"""Unified FAR command tree and deprecated console-script aliases."""
 
 from __future__ import annotations
 
@@ -15,7 +7,6 @@ import sys
 from collections.abc import Callable, Sequence
 from contextvars import ContextVar
 from importlib.metadata import PackageNotFoundError, version
-from pathlib import Path
 from typing import Any
 
 _MAIN_CLI_DISPATCH: ContextVar[bool] = ContextVar("far_main_cli_dispatch", default=False)
@@ -76,367 +67,369 @@ _LEGACY_MIGRATIONS = {
 }
 
 
-def _prefer_far_repo() -> None:
-    invoked = Path(sys.argv[0]).name
+def _warn_legacy_alias() -> None:
+    invoked = sys.argv[0].rsplit("/", maxsplit=1)[-1]
     replacement = _LEGACY_MIGRATIONS.get(invoked)
     if replacement and not _MAIN_CLI_DISPATCH.get():
         print(
             f"warning: {invoked} is deprecated; use `{replacement}` instead",
             file=sys.stderr,
         )
-    root = Path(__file__).resolve().parents[1]
-    root_text = str(root)
-    if sys.path[:1] != [root_text]:
-        sys.path = [path for path in sys.path if path != root_text]
-        sys.path.insert(0, root_text)
 
 
 def run_far_main() -> None:
-    _prefer_far_repo()
-    from experiments.run_far import main
+    _warn_legacy_alias()
+    from far.experiments.run_far import main
 
     main()
 
 
 def run_baselines_main() -> None:
-    _prefer_far_repo()
-    from experiments.run_baselines import main
+    _warn_legacy_alias()
+    from far.experiments.run_baselines import main
 
     main()
 
 
 def run_eval_main() -> None:
-    _prefer_far_repo()
-    from eval.run_eval import main
+    _warn_legacy_alias()
+    from far.eval.run_eval import main
 
     main()
 
 
 def validate_bench_main() -> None:
-    _prefer_far_repo()
-    from bench.build.validate_bench import main
+    _warn_legacy_alias()
+    from far.bench.build.validate_bench import main
 
     main()
 
 
 def annotate_packet_main() -> None:
-    _prefer_far_repo()
-    from bench.build.annotate_packet import main
+    _warn_legacy_alias()
+    from far.bench.build.annotate_packet import main
 
     main()
 
 
 def auto_annotate_main() -> None:
-    _prefer_far_repo()
-    from bench.build.auto_annotate import main
+    _warn_legacy_alias()
+    from far.bench.build.auto_annotate import main
 
     main()
 
 
 def weak_label_main() -> None:
-    _prefer_far_repo()
-    from bench.build.weak_label import main
+    _warn_legacy_alias()
+    from far.bench.build.weak_label import main
 
     main()
 
 
 def machine_label_audit_main() -> None:
-    _prefer_far_repo()
-    from bench.build.machine_label_audit import main
+    _warn_legacy_alias()
+    from far.bench.build.machine_label_audit import main
 
     main()
 
 
 def machine_consensus_main() -> None:
-    _prefer_far_repo()
-    from bench.build.machine_consensus import main
+    _warn_legacy_alias()
+    from far.bench.build.machine_consensus import main
 
     main()
 
 
 def run_suite_main() -> None:
-    _prefer_far_repo()
-    from experiments.run_suite import main
+    _warn_legacy_alias()
+    from far.experiments.run_suite import main
 
     main()
 
 
 def build_artifacts_main() -> None:
-    _prefer_far_repo()
-    from experiments.build_artifacts import main
+    _warn_legacy_alias()
+    from far.experiments.build_artifacts import main
 
     main()
 
 
 def build_blind_bundle_main() -> None:
-    _prefer_far_repo()
-    from bench.build.build_blind_bundle import main
+    _warn_legacy_alias()
+    from far.bench.build.build_blind_bundle import main
 
     main()
 
 
 def generate_sbom_main() -> None:
-    _prefer_far_repo()
-    from experiments.generate_sbom import main
+    _warn_legacy_alias()
+    from far.experiments.generate_sbom import main
 
     main()
 
 
 def generate_release_checksums_main() -> None:
-    _prefer_far_repo()
-    from experiments.generate_release_checksums import main
+    _warn_legacy_alias()
+    from far.experiments.generate_release_checksums import main
 
     main()
 
 
 def scan_secrets_main() -> None:
-    _prefer_far_repo()
-    from experiments.scan_secrets import main
+    _warn_legacy_alias()
+    from far.experiments.scan_secrets import main
 
     main()
 
 
 def submission_readiness_main() -> None:
-    _prefer_far_repo()
-    from experiments.submission_readiness import main
+    _warn_legacy_alias()
+    from far.experiments.submission_readiness import main
 
     main()
 
 
 def solo_readiness_main() -> None:
-    _prefer_far_repo()
-    from experiments.solo_readiness import main
+    _warn_legacy_alias()
+    from far.experiments.solo_readiness import main
 
     main()
 
 
 def solo_release_main() -> None:
-    _prefer_far_repo()
-    from experiments.diagnostic_release import main
+    _warn_legacy_alias()
+    from far.experiments.diagnostic_release import main
 
     main()
 
 
 def evaluate_fever_binary_main() -> None:
-    _prefer_far_repo()
-    from experiments.evaluate_fever_binary import main
+    _warn_legacy_alias()
+    from far.experiments.evaluate_fever_binary import main
 
     main()
 
 
 def score_blind_return_main() -> None:
-    _prefer_far_repo()
-    from experiments.score_blind_return import main
+    _warn_legacy_alias()
+    from far.experiments.score_blind_return import main
 
     main()
 
 
 def review_priority_main() -> None:
-    _prefer_far_repo()
-    from experiments.review_priority import main
+    _warn_legacy_alias()
+    from far.experiments.review_priority import main
 
     main()
 
 
 def project_status_main() -> None:
-    _prefer_far_repo()
-    from experiments.project_status import main
+    _warn_legacy_alias()
+    from far.experiments.project_status import main
 
     main()
 
 
 def repository_maintenance_main() -> None:
-    _prefer_far_repo()
-    from experiments.repository_maintenance import main
+    _warn_legacy_alias()
+    from far.experiments.repository_maintenance import main
 
     main()
 
 
 def longterm_status_main() -> None:
-    _prefer_far_repo()
-    from experiments.longterm_status import main
+    _warn_legacy_alias()
+    from far.experiments.longterm_status import main
 
     main()
 
 
 def solo_paper_readiness_main() -> None:
-    _prefer_far_repo()
-    from experiments.solo_paper_readiness import main
+    _warn_legacy_alias()
+    from far.experiments.solo_paper_readiness import main
 
     main()
 
 
 def build_ramdocs_main() -> None:
-    _prefer_far_repo()
-    from bench.build.ramdocs import main
+    _warn_legacy_alias()
+    from far.bench.build.ramdocs import main
 
     main()
 
 
 def evaluate_ramdocs_main() -> None:
-    _prefer_far_repo()
-    from eval.ramdocs import main
+    _warn_legacy_alias()
+    from far.eval.ramdocs import main
 
     main()
 
 
 def run_ramdocs_main() -> None:
-    _prefer_far_repo()
-    from experiments.run_ramdocs import main
+    _warn_legacy_alias()
+    from far.experiments.run_ramdocs import main
 
     main()
 
 
 def jury_annotate_main() -> None:
-    _prefer_far_repo()
-    from bench.build.jury_annotate import main
+    _warn_legacy_alias()
+    from far.bench.build.jury_annotate import main
 
     main()
 
 
 def jury_consensus_main() -> None:
-    _prefer_far_repo()
-    from bench.build.jury_consensus import main
+    _warn_legacy_alias()
+    from far.bench.build.jury_consensus import main
 
     main()
 
 
 def jury_adjudication_main() -> None:
-    _prefer_far_repo()
-    from bench.build.jury_adjudication import main
+    _warn_legacy_alias()
+    from far.bench.build.jury_adjudication import main
 
     main()
 
 
 def ramdocs_suite_main() -> None:
-    _prefer_far_repo()
-    from experiments.ramdocs_suite import main
+    _warn_legacy_alias()
+    from far.experiments.ramdocs_suite import main
 
     main()
 
 
 def model_matrix_main() -> None:
-    _prefer_far_repo()
-    from experiments.model_matrix import main
+    _warn_legacy_alias()
+    from far.experiments.model_matrix import main
 
     main()
 
 
 def verify_2plus4_model_smoke_main() -> None:
-    _prefer_far_repo()
-    from experiments.model_smoke_2plus4 import main
+    _warn_legacy_alias()
+    from far.experiments.model_smoke_2plus4 import main
 
     main()
 
 
 def ramdocs_round2_failure_readiness_main() -> None:
-    _prefer_far_repo()
-    from experiments.ramdocs_round2_failure_readiness import main
+    _warn_legacy_alias()
+    from far.experiments.ramdocs_round2_failure_readiness import main
 
     main()
 
 
 def jury_rescore_main() -> None:
-    _prefer_far_repo()
-    from experiments.jury_rescore import main
+    _warn_legacy_alias()
+    from far.experiments.jury_rescore import main
 
     main()
 
 
 def one_shot_main() -> None:
-    _prefer_far_repo()
-    from experiments.one_shot import main
+    _warn_legacy_alias()
+    from far.experiments.one_shot import main
 
     main()
 
 
 def jury_paper_readiness_main() -> None:
-    _prefer_far_repo()
-    from experiments.jury_paper_readiness import main
+    _warn_legacy_alias()
+    from far.experiments.jury_paper_readiness import main
 
     main()
 
 
 def evidence_2plus4_main() -> None:
-    _prefer_far_repo()
-    from experiments.evidence_2plus4 import main
+    _warn_legacy_alias()
+    from far.experiments.evidence_2plus4 import main
 
     main()
 
 
 def jury_sensitivity_main() -> None:
-    _prefer_far_repo()
-    from experiments.jury_sensitivity import main
+    _warn_legacy_alias()
+    from far.experiments.jury_sensitivity import main
 
     main()
 
 
 def attribution_main() -> None:
-    _prefer_far_repo()
-    from experiments.attribution import main
+    _warn_legacy_alias()
+    from far.experiments.attribution import main
 
     main()
 
 
 def evidence_attribution_main() -> None:
-    _prefer_far_repo()
-    from experiments.evidence_attribution import main
+    _warn_legacy_alias()
+    from far.experiments.evidence_attribution import main
 
     main()
 
 
 def power_main() -> None:
-    _prefer_far_repo()
-    from experiments.power import main
+    _warn_legacy_alias()
+    from far.experiments.power import main
 
     main()
 
 
 def family_dev_main() -> None:
-    _prefer_far_repo()
-    from experiments.family_dev import main
+    _warn_legacy_alias()
+    from far.experiments.family_dev import main
 
     main()
 
 
 def evidence_family_dev_main() -> None:
-    _prefer_far_repo()
-    from experiments.evidence_family_dev import main
+    _warn_legacy_alias()
+    from far.experiments.evidence_family_dev import main
 
     main()
 
 
 def build_boundary_main() -> None:
-    _prefer_far_repo()
-    from bench.build.boundary import main
+    _warn_legacy_alias()
+    from far.bench.build.boundary import main
 
     main()
 
 
 def boundary_main() -> None:
-    _prefer_far_repo()
-    from experiments.boundary import main
+    _warn_legacy_alias()
+    from far.experiments.boundary import main
 
     main()
 
 
 def evidence_boundary_main() -> None:
-    _prefer_far_repo()
-    from experiments.evidence_boundary import main
+    _warn_legacy_alias()
+    from far.experiments.evidence_boundary import main
 
     main()
 
 
 def stage_trace_map_main() -> None:
-    _prefer_far_repo()
-    from experiments.stage_trace_map import main
+    _warn_legacy_alias()
+    from far.experiments.stage_trace_map import main
 
     main()
 
 
 def type_mappability_main() -> None:
-    _prefer_far_repo()
-    from experiments.type_mappability import main
+    _warn_legacy_alias()
+    from far.experiments.type_mappability import main
+
+    main()
+
+
+def diagnostic_artifacts_main() -> None:
+    _warn_legacy_alias()
+    from far.artifacts import main
 
     main()
 
@@ -688,6 +681,13 @@ def _build_parser() -> argparse.ArgumentParser:
         review_priority_main,
         "Build human-review priorities.",
         "ops review-priority",
+    )
+    _add_leaf(
+        ops,
+        "diagnostic-data",
+        diagnostic_artifacts_main,
+        "Pack, verify, or install diagnostic data.",
+        "ops diagnostic-data",
     )
 
     release = _add_group(commands, "release", "Build and verify public or submission artifacts.")

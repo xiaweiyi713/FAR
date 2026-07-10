@@ -6,22 +6,22 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from bench.build.build_blind_bundle import build as build_blind_bundle
-from bench.build.common import sha256_file
-from eval.run_eval import evaluate
-from experiments.build_artifacts import _load_plotting_backend, _mapping
-from experiments.build_artifacts import build as build_artifacts
-from experiments.run_far import _primary_trace, run
-from experiments.run_suite import run_suite
-from experiments.runner import (
+from far.bench.build.build_blind_bundle import build as build_blind_bundle
+from far.bench.build.common import sha256_file
+from far.eval.run_eval import evaluate
+from far.evidence_types import EvidenceType
+from far.experiments.build_artifacts import _load_plotting_backend, _mapping
+from far.experiments.build_artifacts import build as build_artifacts
+from far.experiments.run_far import _primary_trace, run
+from far.experiments.run_suite import run_suite
+from far.experiments.runner import (
     ROOT,
     _ollama_model_identity,
     load_benchmark,
     load_config,
     select_samples,
 )
-from experiments.validate_results import validate_result_bundle
-from far.evidence_types import EvidenceType
+from far.experiments.validate_results import validate_result_bundle
 from far.revision import RevisionAction, RevisionTrace
 
 
@@ -42,7 +42,7 @@ def test_sample_limit_is_category_balanced_and_test_is_guarded() -> None:
 
 def test_formal_configs_pin_one_shared_retrieval_and_conflict_stack() -> None:
     configs = [
-        load_config(ROOT / f"experiments/configs/{name}.yaml")
+        load_config(ROOT / f"far/experiments/configs/{name}.yaml")
         for name in (
             "deepseek",
             "qwen_plus",
@@ -105,7 +105,7 @@ def test_ollama_identity_resolves_the_tag_to_a_digest() -> None:
         }
     ).encode()
     response.__enter__.return_value = response
-    with patch("experiments.runner.urlopen", return_value=response):
+    with patch("far.experiments.runner.urlopen", return_value=response):
         identity = _ollama_model_identity("http://localhost:11434", "qwen3.5:9b")
     assert identity["digest"] == "sha256:fixed-model"
     assert identity["details"]["quantization_level"] == "Q4_K_M"
@@ -116,7 +116,7 @@ def test_ollama_identity_fails_closed_for_a_missing_model() -> None:
     response.read.return_value = b'{"models": []}'
     response.__enter__.return_value = response
     with (
-        patch("experiments.runner.urlopen", return_value=response),
+        patch("far.experiments.runner.urlopen", return_value=response),
         pytest.raises(RuntimeError, match="is not installed"),
     ):
         _ollama_model_identity("http://localhost:11434", "qwen3.5:9b")
@@ -162,7 +162,7 @@ def test_primary_trace_uses_confidence_then_specific_action_tiebreak() -> None:
 
 def test_runner_resumes_without_duplicates_and_evaluation_is_bound(tmp_path: Path) -> None:
     run_dir = tmp_path / "run"
-    config = ROOT / "experiments/configs/offline_smoke.yaml"
+    config = ROOT / "far/experiments/configs/offline_smoke.yaml"
     first = run(config, ROOT / "bench", run_dir, limit=5)
     second = run(config, ROOT / "bench", run_dir, limit=5)
     assert first["predictions_sha256"] == second["predictions_sha256"]
@@ -224,7 +224,7 @@ def test_runner_resumes_without_duplicates_and_evaluation_is_bound(tmp_path: Pat
 
 def test_suite_runs_far_baseline_ablation_and_artifacts(tmp_path: Path) -> None:
     manifest = run_suite(
-        ROOT / "experiments/configs/offline_smoke.yaml",
+        ROOT / "far/experiments/configs/offline_smoke.yaml",
         ROOT / "bench",
         tmp_path / "suite",
         limit=5,
@@ -306,7 +306,7 @@ def test_suite_runs_far_baseline_ablation_and_artifacts(tmp_path: Path) -> None:
         )
     with pytest.raises(ValueError, match="different suite request"):
         run_suite(
-            ROOT / "experiments/configs/offline_smoke.yaml",
+            ROOT / "far/experiments/configs/offline_smoke.yaml",
             ROOT / "bench",
             tmp_path / "suite",
             limit=5,
@@ -318,7 +318,7 @@ def test_suite_runs_far_baseline_ablation_and_artifacts(tmp_path: Path) -> None:
     far_predictions = tmp_path / "suite/runs/far/predictions.jsonl"
     prediction_fingerprint = sha256_file(far_predictions)
     rebuilt = run_suite(
-        ROOT / "experiments/configs/offline_smoke.yaml",
+        ROOT / "far/experiments/configs/offline_smoke.yaml",
         ROOT / "bench",
         tmp_path / "suite",
         limit=5,
@@ -366,7 +366,7 @@ def test_blind_test_suite_requires_committed_one_shot_intent(tmp_path: Path) -> 
 
     with pytest.raises(ValueError, match="one-shot-intent"):
         run_suite(
-            ROOT / "experiments/configs/offline_smoke.yaml",
+            ROOT / "far/experiments/configs/offline_smoke.yaml",
             data_dir,
             output_dir,
             split="test",
@@ -385,7 +385,7 @@ def test_blind_test_suite_requires_committed_one_shot_intent(tmp_path: Path) -> 
 def test_artifact_builder_explains_missing_eval_extra() -> None:
     with (
         patch(
-            "experiments.build_artifacts.importlib.import_module",
+            "far.experiments.build_artifacts.importlib.import_module",
             side_effect=ModuleNotFoundError("No module named 'matplotlib'"),
         ),
         pytest.raises(RuntimeError, match="optional eval dependencies"),

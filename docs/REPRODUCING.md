@@ -31,7 +31,7 @@ silently drift beyond the proposal's compatibility claim. Use:
 
 ```bash
 uv run ruff check .
-uv run mypy far bench baselines eval experiments tests scripts/package_smoke.py
+uv run mypy far tests scripts/package_smoke.py
 uv run python -m pytest
 ```
 
@@ -148,10 +148,10 @@ local workstation audit that also covers ignored `.env` files.
 ## Build and validate data
 
 ```bash
-uv run python -m bench.build.extend_from_verabench \
+uv run python -m far.bench.build.extend_from_verabench \
   --source-dir ../VeraRAG/data/verabench --output-dir bench
 uv run falsirag-validate-bench --output outputs/benchmark_validation.json
-uv run python -m bench.build.import_fever_slice
+uv run python -m far.bench.build.import_fever_slice
 ```
 
 The build is deterministic. Any data change requires regenerated fingerprints.
@@ -159,11 +159,11 @@ The build is deterministic. Any data change requires regenerated fingerprints.
 ## Human annotation
 
 ```bash
-uv run python -m bench.build.annotate_packet build \
+uv run python -m far.bench.build.annotate_packet build \
   --data-dir bench --output-dir outputs/annotations \
   --annotator annotator_a --annotator annotator_b
 # Freeze both completed files, then complete adjudications.jsonl.
-uv run python -m bench.build.annotate_packet compile \
+uv run python -m far.bench.build.annotate_packet compile \
   --data-dir bench --packet-dir outputs/annotations \
   --output-dir outputs/adjudicated_bench
 ```
@@ -181,7 +181,7 @@ export DEEPSEEK_API_KEY="<paste key here>"
 uv run falsirag-auto-annotate generate \
   --packet-dir outputs/annotations \
   --output-dir outputs/deepseek_preannotations \
-  --config experiments/configs/deepseek.yaml \
+  --config far/experiments/configs/deepseek.yaml \
   --preannotator-id deepseek_chat_v1
 ```
 
@@ -204,7 +204,7 @@ The compiler rejects unreviewed machine drafts until `human_reviewed` is set to
 
 ## Runs and resume
 
-Use `experiments/configs/{deepseek,qwen_plus,qwen_open}.yaml`. API configs name
+Use `far/experiments/configs/{deepseek,qwen_plus,qwen_open}.yaml`. API configs name
 the required environment variable. Re-run the identical command to resume;
 changing code, data, config, split, or limit requires a new output directory.
 The held-out test requires `--allow-test`.
@@ -250,12 +250,12 @@ conda activate train
 cd /mnt/d/FAR-workspace/FAR
 source scripts/windows_gpu_env.sh
 export DEEPSEEK_API_KEY="<rotated key>"
-CONFIG=experiments/configs/deepseek.yaml \
+CONFIG=far/experiments/configs/deepseek.yaml \
   bash scripts/start_windows_cloud_suite.sh
 ```
 
 For Qwen Plus, export `DASHSCOPE_API_KEY` and set
-`CONFIG=experiments/configs/qwen_plus.yaml`. The starter writes outputs under
+`CONFIG=far/experiments/configs/qwen_plus.yaml`. The starter writes outputs under
 `/mnt/d/FAR-outputs`, records the latest path in
 `/mnt/d/FAR-outputs/latest_far_cloud_suite_path.txt`, and refuses to overlap
 with an active `falsirag-suite` or Ollama `llama-server` unless
@@ -321,7 +321,7 @@ VeraRAG graph offline:
 
 ```bash
 uv run falsirag-run \
-  --config experiments/configs/formal_stack_smoke.yaml \
+  --config far/experiments/configs/formal_stack_smoke.yaml \
   --output-dir outputs/formal_stack_smoke \
   --limit 5
 ```
@@ -333,7 +333,7 @@ On the Windows host, use the CUDA variant before a cloud-backed formal run:
 
 ```bash
 falsirag-run \
-  --config experiments/configs/formal_stack_cuda_smoke.yaml \
+  --config far/experiments/configs/formal_stack_cuda_smoke.yaml \
   --output-dir /mnt/d/FAR-outputs/formal_stack_cuda_smoke \
   --limit 5
 ```
@@ -400,7 +400,7 @@ captured automatically in FAR's run signature:
 source /mnt/d/FAR-workspace/FAR/scripts/windows_gpu_env.sh
 ollama pull qwen3.5:9b
 CUDA_VISIBLE_DEVICES="" falsirag-run \
-  --config experiments/configs/qwen_open.yaml \
+  --config far/experiments/configs/qwen_open.yaml \
   --data-dir bench \
   --output-dir /mnt/d/FAR-outputs/qwen_open_dev \
   --split dev
@@ -469,7 +469,7 @@ artifact generation:
 
 ```bash
 uv run falsirag-suite \
-  --config experiments/configs/deepseek.yaml \
+  --config far/experiments/configs/deepseek.yaml \
   --output-dir outputs/suites/deepseek_dev \
   --split dev \
   --baseline vanilla_rag \
@@ -562,7 +562,7 @@ uv run falsirag-build-blind-bundle audit \
 uv run falsirag-build-blind-bundle package \
   --bundle-dir outputs/handoff/falsirag_blind_test \
   --output-dir outputs/handoff/custodian_deepseek_handoff \
-  --config experiments/configs/deepseek.yaml \
+  --config far/experiments/configs/deepseek.yaml \
   --frozen-commit "$(git rev-parse HEAD)" \
   --overwrite
 ```
@@ -578,7 +578,7 @@ runs predictions once, without receiving `falsirag_bench.jsonl`:
 
 ```bash
 falsirag-suite \
-  --config experiments/configs/deepseek.yaml \
+  --config far/experiments/configs/deepseek.yaml \
   --data-dir /path/to/falsirag_blind_test \
   --output-dir /path/to/returned/deepseek_test \
   --split test --allow-test \
@@ -597,9 +597,9 @@ now technically separated.
 For targeted debugging, run individual components:
 
 ```bash
-uv run falsirag-run --config experiments/configs/deepseek.yaml \
+uv run falsirag-run --config far/experiments/configs/deepseek.yaml \
   --output-dir outputs/runs/deepseek_far
-uv run falsirag-baselines --config experiments/configs/deepseek.yaml \
+uv run falsirag-baselines --config far/experiments/configs/deepseek.yaml \
   --output-dir outputs/runs/deepseek_baselines
 ```
 
@@ -657,7 +657,7 @@ uv run falsirag-eval-fever-binary run \
   --output-dir diagnostics/fever_binary_v1 \
   --detector heuristic \
   --detector vera_nli \
-  --config experiments/configs/fever_binary_nli.yaml \
+  --config far/experiments/configs/fever_binary_nli.yaml \
   --resamples 2000 \
   --overwrite
 

@@ -4,17 +4,17 @@ from types import SimpleNamespace
 
 import pytest
 
-from experiments.ablations import (
+from far.adapters import InMemoryRetriever, NLIOnlyConflictDetector
+from far.claims import ClaimGraph, ClaimNode, ClaimType
+from far.evidence_types import EvidenceType, TypedConflict
+from far.experiments.ablations import (
     ABLATION_NAMES,
     AggressiveGenericRevisionEngine,
     FlatClaimDecomposer,
     LLMAggressiveGenericRevisionEngine,
     build_ablation,
 )
-from experiments.run_suite import DEFAULT_ABLATIONS
-from far.adapters import InMemoryRetriever, NLIOnlyConflictDetector
-from far.claims import ClaimGraph, ClaimNode, ClaimType
-from far.evidence_types import EvidenceType, TypedConflict
+from far.experiments.run_suite import DEFAULT_ABLATIONS
 from far.models import EvidenceDocument
 from far.revision import RevisionAction
 

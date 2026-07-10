@@ -6,21 +6,21 @@ from pathlib import Path
 import pytest
 import yaml
 
-from bench.build.common import read_jsonl, sha256_file, write_jsonl
-from bench.build.ramdocs import UPSTREAM_SHA256, build_ramdocs, verify_ramdocs
-from eval.ramdocs import (
+from far.bench.build.common import read_jsonl, sha256_file, write_jsonl
+from far.bench.build.ramdocs import UPSTREAM_SHA256, build_ramdocs, verify_ramdocs
+from far.eval.ramdocs import (
     compare_ramdocs,
     evaluate_ramdocs,
     score_ramdocs_answer,
     unsupported_sentence_rate,
 )
-from experiments.run_ramdocs import _documents
+from far.experiments.run_ramdocs import _documents
 
 
 def test_ramdocs_config_disables_oracle_entity_lexicon() -> None:
     root = Path(__file__).resolve().parents[1]
     config = yaml.safe_load(
-        (root / "experiments/configs/ramdocs_qwen.yaml").read_text(encoding="utf-8")
+        (root / "far/experiments/configs/ramdocs_qwen.yaml").read_text(encoding="utf-8")
     )
     assert config["conflict_graph"]["enable_entity_lexicon_conflict"] is False
 
@@ -75,7 +75,7 @@ def test_ramdocs_builder_is_pinned_and_hides_test_labels(
 ) -> None:
     source = tmp_path / "source.jsonl"
     _source(source)
-    monkeypatch.setattr("bench.build.ramdocs.UPSTREAM_SHA256", sha256_file(source))
+    monkeypatch.setattr("far.bench.build.ramdocs.UPSTREAM_SHA256", sha256_file(source))
     output = tmp_path / "ramdocs"
     manifest = build_ramdocs(output, source_file=source)
     assert manifest["counts"]["dev"] == 350
@@ -99,7 +99,7 @@ def test_ramdocs_builder_is_pinned_and_hides_test_labels(
         set(row) == {"id", "question", "split"}
         for row in read_jsonl(output / "splits" / "test_inputs.jsonl")
     )
-    monkeypatch.setattr("bench.build.ramdocs.UPSTREAM_SHA256", manifest["upstream_sha256"])
+    monkeypatch.setattr("far.bench.build.ramdocs.UPSTREAM_SHA256", manifest["upstream_sha256"])
     assert verify_ramdocs(output)["valid"] is True
 
 

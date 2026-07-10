@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from baselines import (
+from far.adapters import HeuristicConflictDetector, InMemoryRetriever
+from far.baselines import (
     CounterRefineStyleBaseline,
     CRAGStyleBaseline,
     MultiQueryRAG,
@@ -8,8 +9,9 @@ from baselines import (
     SelfRAGStyleBaseline,
     VanillaRAG,
 )
-from eval.metrics import PredictionRecord, aggregate_scores, score_sample, soft_f1
-from eval.stats import (
+from far.claims import ClaimNode, ClaimType
+from far.eval.metrics import PredictionRecord, aggregate_scores, score_sample, soft_f1
+from far.eval.stats import (
     dependency_cluster_bootstrap_ci,
     dependency_cluster_typed_conflict_f1_ci,
     mcnemar_exact,
@@ -18,10 +20,8 @@ from eval.stats import (
     stratified_bootstrap_ci,
     stratified_typed_conflict_f1_ci,
 )
-from experiments.ablations import build_ablation
-from experiments.run_baselines import BASELINE_NAMES, _build
-from far.adapters import HeuristicConflictDetector, InMemoryRetriever
-from far.claims import ClaimNode, ClaimType
+from far.experiments.ablations import build_ablation
+from far.experiments.run_baselines import BASELINE_NAMES, _build
 from far.models import EvidenceDocument
 
 

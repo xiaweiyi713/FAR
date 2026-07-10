@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from experiments.stage_trace_map import (
+from far.experiments.stage_trace_map import (
     BUCKETS,
     FAR_TRACE_METHODS,
     METHODS,

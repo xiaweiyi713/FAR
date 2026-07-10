@@ -96,7 +96,7 @@ cd /mnt/d/FAR-workspace/FAR
 Build a blind packet if one is not already present:
 
 ```bash
-uv run python -m bench.build.annotate_packet build \
+uv run python -m far.bench.build.annotate_packet build \
   --data-dir bench \
   --output-dir /mnt/d/FAR-outputs/falsirag_annotation_packet \
   --annotator machine_qwen \
@@ -112,7 +112,7 @@ tmux new -s far-auto-label
 falsirag-auto-annotate generate \
   --packet-dir /mnt/d/FAR-outputs/falsirag_annotation_packet \
   --output-dir /mnt/d/FAR-outputs/qwen25_preannotations \
-  --config experiments/configs/qwen25_autolabel.yaml \
+  --config far/experiments/configs/qwen25_autolabel.yaml \
   --preannotator-id qwen25_7b_ollama_machine_weak \
   --overwrite
 ```

@@ -7,15 +7,15 @@ from pathlib import Path
 
 import pytest
 
-from experiments.generate_release_checksums import (
+from far.experiments.generate_release_checksums import (
     FINAL_RELEASE_ARTIFACT_ROLES,
     build_checksum_manifest,
     validate_checksum_manifest,
     write_checksum_manifest,
 )
-from experiments.generate_sbom import build_sbom, write_sbom
-from experiments.runner import _implementation_sha256
-from experiments.submission_readiness import Gate, _release_gate
+from far.experiments.generate_sbom import build_sbom, write_sbom
+from far.experiments.runner import _implementation_sha256
+from far.experiments.submission_readiness import Gate, _release_gate
 
 
 def _release_tree(tmp_path: Path) -> tuple[Path, Path]:

@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import pytest
 
-from experiments.runner import build_retriever
 from far.adapters import BM25Retriever, InMemoryRetriever
+from far.experiments.runner import build_retriever
 from far.models import EvidenceDocument
 
 

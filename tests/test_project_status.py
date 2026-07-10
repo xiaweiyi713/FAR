@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from experiments.project_status import (
+from far.experiments.project_status import (
     build_status_snapshot,
     render_markdown,
     verify_status_snapshot,

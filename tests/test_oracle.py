@@ -7,7 +7,7 @@ from typing import Any, cast
 
 import pytest
 
-from bench.build.common import read_jsonl
+from far.bench.build.common import read_jsonl
 from far.oracle import (
     ANSWER_METRICS,
     OracleConfig,

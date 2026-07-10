@@ -29,5 +29,5 @@ final paper because 300 candidates are not 300 independent contexts.
 Do not compare reports with different benchmark, corpus, configuration, or
 implementation hashes. A paired report records both method names and the
 baseline score fingerprint, and rejects sample/category/split/dependency-group
-mismatches. `experiments.validate_results` enforces prediction and evaluation
+mismatches. `far.experiments.validate_results` enforces prediction and evaluation
 provenance. Partial/demo reports are never publication evidence.

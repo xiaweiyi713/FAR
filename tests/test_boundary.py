@@ -3,15 +3,15 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from bench.build.common import sha256_file
-from experiments.boundary import (
+from far.bench.build.common import sha256_file
+from far.experiments.boundary import (
     _calibration_rows,
     _holm,
     _require_boundary_order,
     boundary_score,
 )
-from experiments.evidence_boundary import verify_release
-from experiments.protocol_boundary import verify_boundary_protocol
+from far.experiments.evidence_boundary import verify_release
+from far.experiments.protocol_boundary import verify_boundary_protocol
 
 
 def _complete_run(root: Path, section: str, dataset: str, method: str, expected: int) -> None:

@@ -100,7 +100,7 @@ done
 echo
 echo "relevant processes:"
 ps -eo pid,etime,pcpu,pmem,cmd \
-  | grep -E 'python -m experiments.boundary|falsirag-boundary|ollama serve|llama-server|train.py' \
+  | grep -E 'python -m far.experiments.boundary|falsirag-boundary|ollama serve|llama-server|train.py' \
   | grep -v grep || true
 REMOTE
 
@@ -151,6 +151,6 @@ done
 echo
 echo "relevant processes:"
 ps -eo pid,etime,pcpu,pmem,cmd \
-  | grep -E 'python -m experiments.boundary|falsirag-boundary|ollama serve|llama-server|train.py' \
+  | grep -E 'python -m far.experiments.boundary|falsirag-boundary|ollama serve|llama-server|train.py' \
   | grep -v grep || true
 REMOTE

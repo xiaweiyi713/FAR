@@ -6,21 +6,21 @@ from pathlib import Path
 
 import pytest
 
-from bench.build.common import sha256_file, write_json, write_jsonl
-from bench.build.jury_adjudication import (
+from far.bench.build.common import sha256_file, write_json, write_jsonl
+from far.bench.build.jury_adjudication import (
     build_round1,
     build_round2,
     compile_jury_labels,
     freeze_round1,
     freeze_round2,
 )
-from bench.build.jury_annotate import JUROR_SPECS, PROMPT_SHA256
-from bench.build.jury_consensus import (
+from far.bench.build.jury_annotate import JUROR_SPECS, PROMPT_SHA256
+from far.bench.build.jury_consensus import (
     build_jury_consensus,
     fleiss_kappa,
     verify_jury_consensus,
 )
-from experiments.protocol_2plus4 import PROTOCOL_ACTIVE_SHA256
+from far.experiments.protocol_2plus4 import PROTOCOL_ACTIVE_SHA256
 
 
 def _phase_b_gate() -> dict[str, object]:

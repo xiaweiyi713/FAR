@@ -109,16 +109,17 @@ include-package-data = false
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["far*", "bench*", "baselines*", "eval*", "experiments*"]
+include = ["far*"]
 
 [tool.setuptools.package-data]
-bench = [
-  "*.json",
-  "*.jsonl",
-  "*.md",
-  "splits/*.jsonl",
+far = ["data/*.json"]
+"far.bench" = [
+  "data/*.json",
+  "data/*.jsonl",
+  "data/*.md",
+  "data/splits/*.jsonl",
 ]
-experiments = ["configs/*.yaml"]
+"far.experiments" = ["configs/*.yaml"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

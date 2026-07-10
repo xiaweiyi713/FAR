@@ -77,10 +77,11 @@ flowchart LR
 | 组件 | 用途 |
 |---|---|
 | `far/` | 主张、证据需求、查询、冲突检测、修订和 oracle 安全门禁 |
-| `baselines/` | 六个透明对照方法 |
-| `bench/` | FalsiRAG-Bench 候选数据、语料、构建和标注工具 |
-| `eval/` | 指标、置信区间与配对检验 |
-| `experiments/` | 统一运行器、8 方法 RAMDocs harness、消融和 verifier |
+| `far/baselines/` | 六个透明对照方法 |
+| `far/bench/` | FalsiRAG-Bench 构建、标注与校验工具；安装包内含候选数据快照 |
+| `bench/` | 仓库内基准数据与外部数据导入，不再是 Python 包 |
+| `far/eval/` | 指标、置信区间与配对检验 |
+| `far/experiments/` | 统一运行器、8 方法 RAMDocs harness、消融和 verifier |
 | `diagnostics/` | 冻结预测、分数、报告与指纹证据 |
 | `paper/` | TMLR 主线正文与边界附录 |
 
@@ -145,7 +146,7 @@ falsirag release solo verify diagnostics/solo_v1
 
 ```bash
 uv run falsirag-suite \
-  --config experiments/configs/offline_smoke.yaml \
+  --config far/experiments/configs/offline_smoke.yaml \
   --output-dir outputs/smoke_suite \
   --limit 10 \
   --baseline vanilla_rag \
@@ -163,13 +164,15 @@ uv run falsirag-validate-bench
 uv run falsirag-scan-secrets --json
 uv run ruff check .
 uv run ruff format --check .
-uv run mypy far bench baselines eval experiments tests scripts/package_smoke.py
+uv run mypy far tests scripts/package_smoke.py
 uv run pytest
 uv build
 bash scripts/check_release_packages.sh
 ```
 
 wheel 与 sdist 的隔离安装 smoke 会验证：包内基准、离线配置、命令入口，以及自足 BM25 确实可用。
+生成的诊断运行不会进入安装包；其逐文件指纹、确定性归档流程和发布状态见
+[制品存储说明](docs/ARTIFACT_STORAGE.md)。
 
 ## 冻结研究证据
 

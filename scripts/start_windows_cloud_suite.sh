@@ -10,7 +10,7 @@ set -euo pipefail
 
 FAR_ROOT="${FAR_ROOT:-/mnt/d/FAR-workspace/FAR}"
 OUTPUT_ROOT="${OUTPUT_ROOT:-/mnt/d/FAR-outputs}"
-CONFIG="${CONFIG:-experiments/configs/deepseek.yaml}"
+CONFIG="${CONFIG:-far/experiments/configs/deepseek.yaml}"
 DATA_DIR="${DATA_DIR:-bench}"
 SPLIT="${SPLIT:-dev}"
 ALLOW_CONCURRENT="${ALLOW_CONCURRENT:-0}"
@@ -32,17 +32,17 @@ cd "${FAR_ROOT}"
 source scripts/windows_gpu_env.sh
 
 case "${CONFIG}" in
-  experiments/configs/deepseek.yaml)
+  far/experiments/configs/deepseek.yaml)
     REQUIRED_ENV=DEEPSEEK_API_KEY
     SUITE_NAME=deepseek
     ;;
-  experiments/configs/qwen_plus.yaml)
+  far/experiments/configs/qwen_plus.yaml)
     REQUIRED_ENV=DASHSCOPE_API_KEY
     SUITE_NAME=qwen_plus
     ;;
   *)
     echo "unsupported cloud config for guarded starter: ${CONFIG}" >&2
-    echo "expected experiments/configs/deepseek.yaml or experiments/configs/qwen_plus.yaml" >&2
+    echo "expected far/experiments/configs/deepseek.yaml or far/experiments/configs/qwen_plus.yaml" >&2
     exit 2
     ;;
 esac

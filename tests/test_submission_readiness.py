@@ -6,11 +6,11 @@ from pathlib import Path
 
 import pytest
 
-from bench.annotations import build_annotation_packet, compile_annotations
-from bench.build.build_blind_bundle import build as build_blind_bundle
-from bench.build.common import write_json
-from experiments.run_suite import run_suite
-from experiments.submission_readiness import (
+from far.bench.annotations import build_annotation_packet, compile_annotations
+from far.bench.build.build_blind_bundle import build as build_blind_bundle
+from far.bench.build.common import write_json
+from far.experiments.run_suite import run_suite
+from far.experiments.submission_readiness import (
     Gate,
     _attestation_gate,
     _paper_gate,
@@ -237,7 +237,7 @@ def test_external_blind_return_requires_committed_one_shot_intent(tmp_path: Path
 
     with pytest.raises(ValueError, match="one-shot-intent"):
         run_suite(
-            ROOT / "experiments/configs/offline_smoke.yaml",
+            ROOT / "far/experiments/configs/offline_smoke.yaml",
             bundle,
             returned,
             split="test",

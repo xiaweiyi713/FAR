@@ -4,14 +4,15 @@ from __future__ import annotations
 
 import json
 from importlib.metadata import entry_points, version
+from importlib.util import find_spec
 from pathlib import Path
 
-import bench
-import experiments
 import far
-from bench.build.validate_bench import validate
 from far.adapters import BM25Retriever
+from far.artifacts import DEFAULT_MANIFEST
+from far.bench.build.validate_bench import validate
 from far.models import EvidenceDocument
+from far.paths import benchmark_data_dir, experiment_config_dir
 
 EXPECTED_ENTRY_POINTS = {
     "falsirag",
@@ -34,8 +35,8 @@ EXPECTED_ENTRY_POINTS = {
 
 
 def main() -> None:
-    bench_dir = Path(bench.__file__).resolve().parent
-    config = Path(experiments.__file__).resolve().parent / "configs/offline_smoke.yaml"
+    bench_dir = benchmark_data_dir()
+    config = experiment_config_dir() / "offline_smoke.yaml"
     report = validate(bench_dir)
     installed_commands = {item.name for item in entry_points(group="console_scripts")}
     missing_commands = sorted(EXPECTED_ENTRY_POINTS - installed_commands)
@@ -49,9 +50,13 @@ def main() -> None:
     checks = {
         "candidate_benchmark": bool(report.get("candidate_ready")),
         "counter_evidence_recall": report.get("counter_evidence_retrieval", {}).get("recall"),
+        "diagnostic_manifest": DEFAULT_MANIFEST.is_file(),
         "offline_config": config.is_file(),
         "entry_points": not missing_commands,
         "far_import": Path(far.__file__).is_file(),
+        "generic_namespaces_absent": all(
+            find_spec(name) is None for name in ("baselines", "bench", "eval", "experiments")
+        ),
         "self_contained_bm25": bool(
             bm25_results and bm25_results[0].evidence_id == "bm25-relevant"
         ),

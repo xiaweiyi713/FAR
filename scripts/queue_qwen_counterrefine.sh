@@ -60,7 +60,7 @@ print("source suite complete: FAR + four ablations + original five baselines")
 PY
 
 falsirag-baselines \
-  --config experiments/configs/qwen_open.yaml \
+  --config far/experiments/configs/qwen_open.yaml \
   --data-dir bench \
   --output-dir "${SUITE_ROOT}/runs/baselines" \
   --method counterrefine_style_reproduction \
@@ -87,7 +87,7 @@ print(f"CounterRefine complete: {manifest.get('predictions_sha256')}")
 PY
 
 falsirag-suite \
-  --config experiments/configs/qwen_open.yaml \
+  --config far/experiments/configs/qwen_open.yaml \
   --data-dir bench \
   --output-dir "${SUITE_ROOT}" \
   --split dev \

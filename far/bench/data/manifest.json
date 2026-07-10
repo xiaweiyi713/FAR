@@ -1,0 +1,48 @@
+{
+  "annotation": {
+    "machine_seed_is_gold": false,
+    "minimum_binary_kappa": 0.6,
+    "required_adjudication": true,
+    "required_annotators": 2,
+    "status": "machine_seeded"
+  },
+  "construction_seed": 1729,
+  "counts": {
+    "categories": {
+      "causal_overclaim": 60,
+      "entity_confusion": 60,
+      "multi_source_conflict": 60,
+      "numerical_conflict": 60,
+      "temporal_shift": 60
+    },
+    "documents": 175,
+    "samples": 300,
+    "splits": {
+      "dev": 60,
+      "test": 58,
+      "train": 182
+    },
+    "synthetic_documents": 120
+  },
+  "dataset_id": "falsirag-bench-v0.2.0-candidate",
+  "fingerprints": {
+    "benchmark_sha256": "c5bd988f60646bde33d62f654ddb456d2c2c1279175bee92ef503f362addbd8f",
+    "corpus_sha256": "cca5f62db0fbb51e1bae8111ea85fe169fba7be5a8e63847a9c1c048cdae25cd",
+    "split_manifest_sha256": "ac83fa38d452371017a0c9f7fdf3447817071731032bce3579543f2e2524ce4a"
+  },
+  "publication_blockers": [
+    "two independent annotations per sample",
+    "adjudication of disagreements",
+    "Cohen's kappa report for conflict type and revision action",
+    "externally held blind-test protocol"
+  ],
+  "publication_ready": false,
+  "schema_version": "falsirag-bench-manifest-v1",
+  "source": {
+    "corpus_sha256": "bb99ce4d8b4ba7ee5a938595c7c786a8ad33601e4f096bec1bed844c43b6a8f3",
+    "dataset": "VeraBench-v1.1.2",
+    "license": "MIT; upstream scenario/source materials retain their own terms",
+    "questions_sha256": "c19e7401cbcd2526fb1e085c911d61095c8ce5bd19a664c13698a08024436882"
+  },
+  "version": "0.2.0-candidate"
+}

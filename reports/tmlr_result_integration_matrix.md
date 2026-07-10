@@ -61,11 +61,11 @@ ceilings remain binding.
 ## Evidence insertion checklist
 
 - Insert WS2 only after `diagnostics/family_dev_v1/manifest.json` exists and
-  `experiments.evidence_family_dev verify` passes.
+  `far.experiments.evidence_family_dev verify` passes.
 - The WS2 insertion condition is now satisfied; its release manifest and
   independent audit both pass.
 - Insert WS3 only after `diagnostics/boundary_v1/manifest.json` exists,
-  `reports/boundary_matrix.md` exists, and `experiments.evidence_boundary verify`
+  `reports/boundary_matrix.md` exists, and `far.experiments.evidence_boundary verify`
   passes.
 - The WS3 insertion condition is now satisfied; its release manifest,
   boundary matrix, and independent audit all pass.

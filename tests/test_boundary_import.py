@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 from typing import Any, cast
 
-from bench.build.boundary import (
+from far.bench.build.boundary import (
     CONFLICTS_QUOTAS,
     WIKI_QUOTAS,
     _conflicts_transform,

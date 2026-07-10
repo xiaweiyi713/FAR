@@ -4,7 +4,7 @@
 # Usage:
 #   bash scripts/check_cloud_run_readiness.sh
 #   bash scripts/check_cloud_run_readiness.sh --require-keys
-#   bash scripts/check_cloud_run_readiness.sh --config experiments/configs/deepseek.yaml --require-keys
+#   bash scripts/check_cloud_run_readiness.sh --config far/experiments/configs/deepseek.yaml --require-keys
 #   bash scripts/check_cloud_run_readiness.sh --output-root /mnt/d/FAR-outputs --require-keys
 
 set -euo pipefail
@@ -95,7 +95,7 @@ else
 fi
 
 if [[ "${#CONFIGS[@]}" -eq 0 ]]; then
-  CONFIGS=(experiments/configs/deepseek.yaml experiments/configs/qwen_plus.yaml)
+  CONFIGS=(far/experiments/configs/deepseek.yaml far/experiments/configs/qwen_plus.yaml)
 fi
 
 for config in "${CONFIGS[@]}"; do
@@ -114,13 +114,13 @@ output_root = Path(sys.argv[2])
 requested_configs = set(sys.argv[3:])
 
 expected = {
-    "experiments/configs/deepseek.yaml": {
+    "far/experiments/configs/deepseek.yaml": {
         "provider": "deepseek",
         "model": "deepseek-v4-flash",
         "api_key_env": "DEEPSEEK_API_KEY",
         "cache_path": "outputs/cache/deepseek.sqlite3",
     },
-    "experiments/configs/qwen_plus.yaml": {
+    "far/experiments/configs/qwen_plus.yaml": {
         "provider": "dashscope",
         "model": "qwen3.7-plus-2026-05-26",
         "api_key_env": "DASHSCOPE_API_KEY",

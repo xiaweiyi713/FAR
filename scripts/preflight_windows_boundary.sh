@@ -151,9 +151,9 @@ processes = run(["ps", "-eo", "pid,etime,cmd"]).stdout
 for raw in processes.splitlines():
     if "grep" in raw:
         continue
-    if "python -m experiments.boundary" in raw:
+    if "python -m far.experiments.boundary" in raw:
         errors.append(f"boundary runner already active: {raw.strip()}")
-    if "python -m experiments.family_dev" in raw:
+    if "python -m far.experiments.family_dev" in raw:
         errors.append(f"family-dev runner already active: {raw.strip()}")
     if "train.py" in raw:
         errors.append(f"train.py process already active: {raw.strip()}")
@@ -178,7 +178,7 @@ else:
         errors.append("remote boundary worktree is dirty")
     files = {
         "docs/PLAN_BOUNDARY_MAPPING.md": BOUNDARY_PLAN_SHA256,
-        "experiments/configs/qwen_boundary.yaml": CONFIG_SHA256,
+        "far/experiments/configs/qwen_boundary.yaml": CONFIG_SHA256,
     }
     for relative, expected_sha in files.items():
         path = worktree / relative

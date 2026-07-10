@@ -23,7 +23,7 @@ The required output is:
 Use stable, non-identifying reviewer IDs:
 
 ```bash
-uv run python -m bench.build.annotate_packet build \
+uv run python -m far.bench.build.annotate_packet build \
   --data-dir bench \
   --output-dir outputs/annotations/falsirag_packet_v1 \
   --annotator reviewer_a \
@@ -129,7 +129,7 @@ Before adjudication, verify both reviewer files are complete by running packet
 status:
 
 ```bash
-uv run python -m bench.build.annotate_packet status \
+uv run python -m far.bench.build.annotate_packet status \
   --packet-dir outputs/annotations/falsirag_packet_v1 \
   --data-dir bench
 ```
@@ -183,7 +183,7 @@ uv run falsirag-auto-annotate adjudication-label-studio-import \
   --output-dir outputs/annotations/label_studio_adjudicated \
   --adjudicator-id adjudicator_1
 
-uv run python -m bench.build.annotate_packet install-adjudication \
+uv run python -m far.bench.build.annotate_packet install-adjudication \
   --packet-dir outputs/annotations/falsirag_packet_v1 \
   --adjudication-file outputs/annotations/label_studio_adjudicated/adjudications.jsonl \
   --adjudicator-id adjudicator_1
@@ -202,7 +202,7 @@ adjudication, fingerprint, or visible-field errors first.
 After reviewer and adjudication files are complete:
 
 ```bash
-uv run python -m bench.build.annotate_packet compile \
+uv run python -m far.bench.build.annotate_packet compile \
   --data-dir bench \
   --packet-dir outputs/annotations/falsirag_packet_v1 \
   --output-dir outputs/annotations/falsirag_adjudicated_v1
@@ -228,7 +228,7 @@ The compiler:
 The frozen evidence can be re-audited at any time:
 
 ```bash
-uv run python -m bench.build.annotate_packet validate-evidence \
+uv run python -m far.bench.build.annotate_packet validate-evidence \
   --data-dir outputs/annotations/falsirag_adjudicated_v1
 ```
 

@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from experiments.power import (
+from far.experiments.power import (
     exact_mcnemar_power,
     minimum_detectable_effect,
     simulate_mcnemar_power,

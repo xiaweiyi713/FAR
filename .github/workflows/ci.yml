@@ -58,7 +58,7 @@ jobs:
           uv run --locked ruff format --check .
           uv run --locked ruff check .
       - name: Check types
-        run: uv run --locked mypy far bench baselines eval experiments tests scripts/package_smoke.py
+        run: uv run --locked mypy far tests scripts/package_smoke.py
       - name: Check Markdown local links
         run: uv run --locked python scripts/check_markdown_links.py
       - name: Audit repository maintenance invariants

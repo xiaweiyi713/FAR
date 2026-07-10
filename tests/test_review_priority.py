@@ -3,7 +3,7 @@ from __future__ import annotations
 import csv
 from pathlib import Path
 
-from experiments.review_priority import FIELDNAMES, build_priority_rows, write_priority_csv
+from far.experiments.review_priority import FIELDNAMES, build_priority_rows, write_priority_csv
 
 ROOT = Path(__file__).resolve().parents[1]
 CONSENSUS_ROWS = ROOT / "diagnostics/solo_v1/machine_annotation/machine_consensus_rows.jsonl"

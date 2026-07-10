@@ -6,19 +6,19 @@ include .github/workflows/ci.yml
 
 recursive-include docs *.md
 recursive-include reports *.md *.csv *.json
-recursive-include diagnostics *
 recursive-include examples *.py
 recursive-include scripts *.sh *.py
 include submission/blind_test_attestation.template.json
 include submission/evidence.template.json
 recursive-include paper *.tex *.bib *.bst *.sty *.txt *.md
-recursive-include bench/external *.md *.json *.jsonl
 
 prune outputs
 prune output
 prune tmp
 prune build
 prune dist
+prune bench
+prune diagnostics
 prune paper/aaai27
 include paper/aaai27/ReproducibilityChecklist.tex
 global-exclude __pycache__/*

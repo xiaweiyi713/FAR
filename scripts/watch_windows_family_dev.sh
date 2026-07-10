@@ -132,7 +132,7 @@ fi
 echo
 echo "== active processes =="
 ps -eo pid,etime,pcpu,pmem,cmd \
-  | grep -E 'python -m experiments.family_dev|ollama serve|llama-server' \
+  | grep -E 'python -m far.experiments.family_dev|ollama serve|llama-server' \
   | grep -v grep || true
 
 echo

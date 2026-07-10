@@ -97,9 +97,9 @@ done
 curl -fsS --max-time 3 http://127.0.0.1:11434/api/tags >/dev/null
 
 models=(
-  "mistral|mistral:7b-instruct|experiments/configs/mistral_open.yaml"
-  "google|gemma2:9b|experiments/configs/gemma_open.yaml"
-  "meta|llama3.1:8b|experiments/configs/jury_llama.yaml"
+  "mistral|mistral:7b-instruct|far/experiments/configs/mistral_open.yaml"
+  "google|gemma2:9b|far/experiments/configs/gemma_open.yaml"
+  "meta|llama3.1:8b|far/experiments/configs/jury_llama.yaml"
 )
 missing=0
 for entry in "${models[@]}"; do
@@ -212,5 +212,5 @@ done
 if (( missing != 0 )); then
   exit 3
 fi
-python -m experiments.model_smoke_2plus4 --output-dir "${output_dir}"
+python -m far.experiments.model_smoke_2plus4 --output-dir "${output_dir}"
 echo "2+4 local model smoke records: ${output_dir}"

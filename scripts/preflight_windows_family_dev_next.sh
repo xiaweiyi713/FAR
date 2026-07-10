@@ -188,7 +188,7 @@ processes = run(["ps", "-eo", "pid,etime,cmd"]).stdout
 for raw in processes.splitlines():
     if "grep" in raw:
         continue
-    if "python -m experiments.family_dev" in raw:
+    if "python -m far.experiments.family_dev" in raw:
         errors.append(f"family-dev runner already active: {raw.strip()}")
     if "train.py" in raw:
         errors.append(f"train.py process already active: {raw.strip()}")

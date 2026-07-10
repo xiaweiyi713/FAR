@@ -20,7 +20,7 @@ bash -n scripts/*.sh
 bash scripts/check_cloud_run_readiness.sh
 uv run ruff format --check .
 uv run ruff check .
-uv run mypy far bench baselines eval experiments tests scripts/package_smoke.py
+uv run mypy far tests scripts/package_smoke.py
 uv run pytest -q
 bash scripts/solo_diagnostic_check.sh
 uv run falsirag-validate-bench --output build/release/benchmark-validation.json

@@ -27,7 +27,7 @@ After both files are frozen, an adjudicator fills `adjudications.jsonl` and
 compiles. Check packet progress at every handoff:
 
 ```bash
-uv run python -m bench.build.annotate_packet status \
+uv run python -m far.bench.build.annotate_packet status \
   --packet-dir outputs/annotations/falsirag_packet_v1 \
   --data-dir bench
 ```
@@ -47,7 +47,7 @@ uv run falsirag-auto-annotate adjudication-label-studio-import \
   --output-dir outputs/annotations/label_studio_adjudicated \
   --adjudicator-id adjudicator_1
 
-uv run python -m bench.build.annotate_packet install-adjudication \
+uv run python -m far.bench.build.annotate_packet install-adjudication \
   --packet-dir outputs/annotations/falsirag_packet_v1 \
   --adjudication-file outputs/annotations/label_studio_adjudicated/adjudications.jsonl \
   --adjudicator-id adjudicator_1
@@ -56,7 +56,7 @@ uv run python -m bench.build.annotate_packet install-adjudication \
 Then compile:
 
 ```bash
-uv run python -m bench.build.annotate_packet compile \
+uv run python -m far.bench.build.annotate_packet compile \
   --data-dir bench \
   --packet-dir outputs/annotations/falsirag_packet_v1 \
   --output-dir outputs/annotations/falsirag_adjudicated_v1
@@ -103,7 +103,7 @@ uv run falsirag-build-blind-bundle audit \
 uv run falsirag-build-blind-bundle package \
   --bundle-dir outputs/handoff/falsirag_blind_test_v1 \
   --output-dir outputs/handoff/custodian_deepseek_handoff \
-  --config experiments/configs/deepseek.yaml \
+  --config far/experiments/configs/deepseek.yaml \
   --frozen-commit "$(git rev-parse HEAD)" \
   --overwrite
 ```

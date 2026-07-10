@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from experiments.jury_paper_readiness import audit
+from far.experiments.jury_paper_readiness import audit
 
 ROOT = Path(__file__).resolve().parents[1]
 

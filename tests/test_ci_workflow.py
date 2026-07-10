@@ -47,10 +47,7 @@ def test_ci_actions_are_pinned_and_public_gate_is_complete() -> None:
     assert action_refs
     assert all(FULL_SHA_ACTION.fullmatch(action) for action in action_refs)
     assert "ruff format --check" in public_commands
-    assert (
-        "mypy far bench baselines eval experiments tests scripts/package_smoke.py"
-        in public_commands
-    )
+    assert "mypy far tests scripts/package_smoke.py" in public_commands
     assert "falsirag-repository-maintenance --check" in public_commands
     assert "falsirag-longterm-status --check" in public_commands
     assert "falsirag-scan-secrets --json" in public_commands

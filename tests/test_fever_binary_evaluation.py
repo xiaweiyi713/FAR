@@ -3,7 +3,7 @@ from __future__ import annotations
 import shutil
 from pathlib import Path
 
-from experiments.evaluate_fever_binary import validate_source, verify_evaluation
+from far.experiments.evaluate_fever_binary import validate_source, verify_evaluation
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "bench/external/fever_pair_candidates_v1"

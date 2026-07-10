@@ -13,7 +13,7 @@ from copy import deepcopy
 from dataclasses import asdict, dataclass
 from typing import Any
 
-from eval.ramdocs import normalize_ramdocs_answer, score_ramdocs_answer
+from far.eval.ramdocs import normalize_ramdocs_answer, score_ramdocs_answer
 
 STAGES = ("retrieval", "detection", "action", "revision")
 ANSWER_METRICS = (

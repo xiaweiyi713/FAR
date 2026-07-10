@@ -11,6 +11,12 @@ from urllib.parse import unquote, urlsplit
 ROOT = Path(__file__).resolve().parents[1]
 LINK = re.compile(r"!?\[[^\]]*\]\(([^)]+)\)")
 SCHEMES = {"http", "https", "mailto", "data"}
+FROZEN_PATH_REDIRECTS = {
+    (
+        "docs/PLAN_LONGTERM_OPTIMIZATION.md",
+        "../experiments/configs",
+    ): "far/experiments/configs",
+}
 
 
 def _target(raw: str) -> str | None:
@@ -42,6 +48,10 @@ def find_broken_links(paths: list[Path], *, root: Path = ROOT) -> list[str]:
                     if target.startswith("/")
                     else markdown.parent / target
                 ).resolve()
+                source = markdown.resolve().relative_to(root.resolve()).as_posix()
+                redirect = FROZEN_PATH_REDIRECTS.get((source, target))
+                if not candidate.exists() and redirect is not None:
+                    candidate = (root / redirect).resolve()
                 if not candidate.exists():
                     errors.append(f"{markdown.relative_to(root)}:{line_number}: missing {target}")
     return errors

@@ -5,12 +5,12 @@ from pathlib import Path
 
 import pytest
 
-from bench.build.common import sha256_file, write_json, write_jsonl
-from experiments.evidence_2plus4 import _files, verify_jury_release
-from experiments.jury_rescore import _prediction_source
-from experiments.model_matrix import _fallback_rate, build_matrix
-from experiments.one_shot import prepare_intent
-from experiments.protocol_2plus4 import PROTOCOL_ACTIVE_SHA256
+from far.bench.build.common import sha256_file, write_json, write_jsonl
+from far.experiments.evidence_2plus4 import _files, verify_jury_release
+from far.experiments.jury_rescore import _prediction_source
+from far.experiments.model_matrix import _fallback_rate, build_matrix
+from far.experiments.one_shot import prepare_intent
+from far.experiments.protocol_2plus4 import PROTOCOL_ACTIVE_SHA256
 
 
 def _family_bundle(root: Path, family: str, gain: float = 0.1) -> Path:
@@ -274,7 +274,7 @@ def test_one_shot_intent_binds_clean_commit_and_inputs(
             return "a" * 40
         raise AssertionError(args)
 
-    monkeypatch.setattr("experiments.one_shot._git", fake_git)
+    monkeypatch.setattr("far.experiments.one_shot._git", fake_git)
     output = tmp_path / "intent.json"
     intent = prepare_intent(
         "ramdocs",

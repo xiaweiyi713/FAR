@@ -5,9 +5,9 @@ from pathlib import Path
 
 import pytest
 
-from bench.build.common import sha256_file, write_json, write_jsonl
-from bench.build.machine_consensus import build_machine_consensus
-from experiments.solo_readiness import audit as audit_solo_readiness
+from far.bench.build.common import sha256_file, write_json, write_jsonl
+from far.bench.build.machine_consensus import build_machine_consensus
+from far.experiments.solo_readiness import audit as audit_solo_readiness
 
 ROOT = Path(__file__).resolve().parents[1]
 

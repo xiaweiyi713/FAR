@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from bench.annotations import (
+from far.bench.annotations import (
     annotation_packet_status,
     build_annotation_packet,
     build_reviewer_handoff,
@@ -18,8 +18,8 @@ from bench.annotations import (
     install_review_file,
     validate_annotation_evidence,
 )
-from bench.build.audit_contamination import audit
-from bench.build.auto_annotate import (
+from far.bench.build.audit_contamination import audit
+from far.bench.build.auto_annotate import (
     build_review_draft,
     export_adjudication_label_studio,
     export_label_studio,
@@ -28,21 +28,21 @@ from bench.build.auto_annotate import (
     import_label_studio,
     summarize_preannotations,
 )
-from bench.build.build_blind_bundle import (
+from far.bench.build.build_blind_bundle import (
     audit_bundle,
     package_handoff,
 )
-from bench.build.build_blind_bundle import (
+from far.bench.build.build_blind_bundle import (
     build as build_blind_bundle,
 )
-from bench.build.extend_from_verabench import build
-from bench.build.import_fever_slice import import_slice
-from bench.build.machine_label_audit import audit_machine_labels
-from bench.build.validate_bench import validate
-from bench.build.weak_label import generate_weak_labels, weak_label_row
-from bench.schema import VALID_CONFLICT_TYPES, VALID_REVISION_ACTIONS
-from eval.run_eval import evaluate
-from experiments.run_far import run
+from far.bench.build.extend_from_verabench import build
+from far.bench.build.import_fever_slice import import_slice
+from far.bench.build.machine_label_audit import audit_machine_labels
+from far.bench.build.validate_bench import validate
+from far.bench.build.weak_label import generate_weak_labels, weak_label_row
+from far.bench.schema import VALID_CONFLICT_TYPES, VALID_REVISION_ACTIONS
+from far.eval.run_eval import evaluate
+from far.experiments.run_far import run
 
 ROOT = Path(__file__).resolve().parents[1]
 VERA_HOME = Path(os.environ["FAR_VERA_HOME"]).expanduser() if os.getenv("FAR_VERA_HOME") else None
@@ -117,7 +117,7 @@ def test_blind_handoff_package_is_gold_free_and_deterministic(tmp_path: Path) ->
     manifest = package_handoff(
         bundle_dir,
         output_dir,
-        config_paths=[ROOT / "experiments/configs/offline_smoke.yaml"],
+        config_paths=[ROOT / "far/experiments/configs/offline_smoke.yaml"],
         frozen_commit="abc123",
     )
     assert manifest["schema_version"] == "falsirag-blind-custodian-handoff-v1"
@@ -140,7 +140,7 @@ def test_blind_handoff_package_is_gold_free_and_deterministic(tmp_path: Path) ->
     second = package_handoff(
         bundle_dir,
         output_dir,
-        config_paths=[ROOT / "experiments/configs/offline_smoke.yaml"],
+        config_paths=[ROOT / "far/experiments/configs/offline_smoke.yaml"],
         frozen_commit="abc123",
         overwrite=True,
     )
@@ -1069,7 +1069,7 @@ def test_completed_annotations_compile_with_kappa_report(tmp_path: Path) -> None
 
     run_dir = tmp_path / "adjudicated-run"
     run(
-        ROOT / "experiments/configs/offline_smoke.yaml",
+        ROOT / "far/experiments/configs/offline_smoke.yaml",
         compiled_dir,
         run_dir,
         split="dev",

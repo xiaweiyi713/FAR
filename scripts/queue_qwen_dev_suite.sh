@@ -60,7 +60,7 @@ fi
 
 echo "starting complete Qwen dev suite at ${SUITE_ROOT}"
 CUDA_VISIBLE_DEVICES= falsirag-suite \
-  --config experiments/configs/qwen_open.yaml \
+  --config far/experiments/configs/qwen_open.yaml \
   --data-dir bench \
   --output-dir "${SUITE_ROOT}" \
   --split dev
