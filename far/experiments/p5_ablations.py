@@ -13,7 +13,6 @@ from urllib.parse import urlsplit
 
 from far.adapters.model_assets import resolve_huggingface_snapshot
 from far.bench.build.common import read_jsonl, sha256_file, write_json
-from far.bench.build.ramdocs import verify_ramdocs
 from far.eval.ramdocs import evaluate_ramdocs
 from far.eval.stats import paired_sample_cluster_bootstrap_comparison
 from far.experiments.run_ramdocs import run_method
@@ -36,7 +35,6 @@ INITIAL_ANSWERS_SHA256 = "5fbcea9b6b2a6cc1136e87d8bb7a2335feebe8b5e2f5b1f54afcd7
 MODEL_DIGEST = "6488c96fa5faab64bb65cbd30d4289e20e6130ef535a93ef9a49f42eda893ea7"
 DATA_FINGERPRINTS = {
     "manifest.json": "5cd9ff842789afd69fa8e64ff89c0f85eca2f8bc934aa4c694aeec92388074df",
-    "tasks.jsonl": "d1d816c5d2045e0b2b09067fbb2938936644d33170f3a3bfa40960d43e5d9ce5",
     "corpus.jsonl": "219269fedcdc21c9bd87b045a5afd1e7ce60c22ea21f4c1e8ded9c7658d61496",
     "splits/dev.jsonl": "412e65b77dec89da9358499c39a714876606958373f3ae0f284a5b2fb20d6a9f",
 }
@@ -88,19 +86,33 @@ def _input_audit(data_dir: Path, initial_answers: Path, config_path: Path) -> di
         if not path.is_file() or sha256_file(path) != expected:
             errors.append(f"P5 RAMDocs fingerprint mismatch: {relative}")
     try:
-        data_audit = verify_ramdocs(data_dir)
-    except (OSError, ValueError) as exc:
-        data_audit = {"valid": False, "errors": [str(exc)]}
-    if data_audit.get("valid") is not True:
-        errors.append("RAMDocs import verifier failed")
-        errors.extend(str(item) for item in data_audit.get("errors", []))
-    try:
+        manifest = _load(data_dir / "manifest.json")
+        manifest_files = manifest.get("files", {})
+        if manifest.get("schema_version") != "far-ramdocs-import-v1":
+            errors.append("unsupported RAMDocs manifest schema")
+        for relative in ("corpus.jsonl", "splits/dev.jsonl"):
+            if (
+                not isinstance(manifest_files, dict)
+                or manifest_files.get(relative) != (DATA_FINGERPRINTS[relative])
+            ):
+                errors.append(f"RAMDocs manifest fingerprint mismatch: {relative}")
+        dev_rows = read_jsonl(data_dir / "splits/dev.jsonl")
+        dev_ids_ordered = [str(row["id"]) for row in dev_rows]
+        if (
+            len(dev_rows) != 350
+            or len(set(dev_ids_ordered)) != 350
+            or any(row.get("split") != "dev" for row in dev_rows)
+        ):
+            errors.append("RAMDocs dev split must contain exactly 350 unique dev samples")
+        corpus_ids = {str(row["doc_id"]) for row in read_jsonl(data_dir / "corpus.jsonl")}
+        if any(not set(map(str, row["document_ids"])).issubset(corpus_ids) for row in dev_rows):
+            errors.append("RAMDocs dev sample references a missing corpus document")
         initial_rows = read_jsonl(initial_answers)
         initial_ids = {str(row["sample_id"]) for row in initial_rows}
-        dev_ids = {str(row["id"]) for row in read_jsonl(data_dir / "splits/dev.jsonl")}
+        dev_ids = set(dev_ids_ordered)
         if len(initial_rows) != 350 or initial_ids != dev_ids:
             errors.append("frozen initial answers do not cover the exact 350-item dev split")
-    except (OSError, KeyError, ValueError, json.JSONDecodeError) as exc:
+    except (OSError, KeyError, TypeError, ValueError, json.JSONDecodeError) as exc:
         errors.append(str(exc))
     return {
         "schema_version": "far-p5-input-audit-v1",
@@ -339,7 +351,7 @@ def _compute_result(
     for label, method in METHODS.items():
         evaluation_dir = evaluation_root / method
         report = evaluate_ramdocs(
-            data_dir / "tasks.jsonl",
+            data_dir / "splits/dev.jsonl",
             output_dir / "runs" / method / "predictions.jsonl",
             data_dir / "corpus.jsonl",
             evaluation_dir,

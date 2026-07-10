@@ -17,7 +17,7 @@ The fail-closed workflow in `far.experiments.p5_ablations` requires:
   `a5e63643acab84ae26fc190d42931ac95b0fa4f84f9bec4aa7c3a70b18c9f6cb`;
 - the frozen Round 1 initial answers at SHA-256
   `5fbcea9b6b2a6cc1136e87d8bb7a2335feebe8b5e2f5b1f54afcd78a7abbbc6b`;
-- the complete 350-item RAMDocs dev split and the exact manifest/tasks/corpus fingerprints;
+- the complete 350-item RAMDocs dev-label split and its corpus/manifest fingerprints;
 - Ollama `qwen3.5:9b` digest
   `6488c96fa5faab64bb65cbd30d4289e20e6130ef535a93ef9a49f42eda893ea7`;
 - the pinned local NLI snapshot
@@ -26,9 +26,9 @@ The fail-closed workflow in `far.experiments.p5_ablations` requires:
 
 ## Commands
 
-Preflight does not access RAMDocs test data. It checks the full fingerprints,
-local NLI snapshot, clean source identity, Ollama service, and immutable model
-digest:
+Preflight does not open the combined dev/test label file or the test-input file.
+It checks the frozen dev/corpus fingerprints, local NLI snapshot, clean source
+identity, Ollama service, and immutable model digest:
 
 ```bash
 uv run falsirag diag p5-ablations status
@@ -55,8 +55,10 @@ uv run falsirag diag p5-ablations finalize
 uv run falsirag diag p5-ablations verify
 ```
 
-The verifier independently rescans all 3×350 sample IDs, run identities,
-prediction fingerprints, RAMDocs scores, and both 2,000-resample comparisons.
+The scorer reads `splits/dev.jsonl` directly and never opens the combined
+dev/test task-label file. The verifier independently rescans all 3×350 sample
+IDs, run identities, prediction fingerprints, RAMDocs scores, and both
+2,000-resample comparisons.
 It rejects mixed commits, old implementations, the wrong model digest, partial
 runs, any test access, stale reports, or tampered scores.
 

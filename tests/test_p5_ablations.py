@@ -24,9 +24,7 @@ INITIAL_ANSWERS = ROOT / "diagnostics/ramdocs_v2/round1/initial_answers/predicti
 
 
 def _formal_runs(output_dir: Path) -> None:
-    tasks = {
-        str(row["id"]): row for row in read_jsonl(DATA_DIR / "tasks.jsonl") if row["split"] == "dev"
-    }
+    tasks = {str(row["id"]): row for row in read_jsonl(DATA_DIR / "splits/dev.jsonl")}
     sample_ids = sorted(tasks)
     for label, method in METHODS.items():
         rows = []
@@ -121,6 +119,16 @@ def test_p5_finalize_and_independent_verifier(tmp_path: Path) -> None:
     assert result["hypotheses"]["H5"]["verdict"] == "equivalent"
     assert result["hypotheses"]["H3"]["comparison"]["candidate_minus_baseline"] == 25 / 350
     assert result["hypotheses"]["H3"]["comparison"]["confidence"] == 0.90
+    assert all(evaluation["report_sha256"] for evaluation in result["evaluations"].values())
+    assert all(
+        json.loads(
+            (output / "evaluations" / evaluation["method"] / "report.json").read_text(
+                encoding="utf-8"
+            )
+        )["provenance"]["tasks_sha256"]
+        == DATA_FINGERPRINTS["splits/dev.jsonl"]
+        for evaluation in result["evaluations"].values()
+    )
     assert audit == {
         "schema_version": "far-p5-ramdocs-ablations-audit-v1",
         "valid": True,
