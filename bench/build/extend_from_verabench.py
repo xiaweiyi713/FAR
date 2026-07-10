@@ -1,4 +1,8 @@
-"""Build a balanced 300-item FalsiRAG candidate set from VeraBench evidence."""
+"""Build a candidate set from an optional author-internal VeraBench checkout.
+
+Pass ``--source-dir`` or set ``FAR_VERA_HOME``; public FAR runtime paths do not
+depend on this source checkout.
+"""
 
 from __future__ import annotations
 
@@ -11,11 +15,14 @@ from typing import Any
 
 from bench.build.common import read_jsonl, sha256_file, stable_rank, write_json, write_jsonl
 
-DEFAULT_SOURCE = Path(
-    os.getenv(
-        "VERARAG_BENCH_DIR",
-        str(Path(__file__).resolve().parents[3] / "VeraRAG/data/verabench"),
-    )
+_VERA_HOME = os.getenv("FAR_VERA_HOME")
+_VERA_BENCH_DIR = os.getenv("VERARAG_BENCH_DIR")
+DEFAULT_SOURCE = (
+    Path(_VERA_BENCH_DIR).expanduser()
+    if _VERA_BENCH_DIR
+    else Path(_VERA_HOME).expanduser() / "data/verabench"
+    if _VERA_HOME
+    else None
 )
 DEFAULT_OUTPUT = Path(__file__).resolve().parents[1]
 SEED = 1729
@@ -519,6 +526,8 @@ def main() -> None:
     parser.add_argument("--source-dir", type=Path, default=DEFAULT_SOURCE)
     parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT)
     args = parser.parse_args()
+    if args.source_dir is None:
+        parser.error("--source-dir is required unless FAR_VERA_HOME is set")
     manifest = build(args.source_dir, args.output_dir)
     print(f"built {manifest['counts']['samples']} candidate samples at {args.output_dir}")
 

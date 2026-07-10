@@ -11,7 +11,7 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 OUTPUT_ROOT="${OUTPUT_ROOT:-outputs/suites}"
-VERARAG_PATH="${VERARAG_PATH:-/Users/xuwenyao/VeraRAG}"
+VERARAG_PATH="${VERARAG_PATH:-${FAR_VERA_HOME:-${ROOT}/../VeraRAG}}"
 if [[ ! -d "${VERARAG_PATH}" && -d /mnt/d/FAR-workspace/VeraRAG ]]; then
   VERARAG_PATH=/mnt/d/FAR-workspace/VeraRAG
 fi

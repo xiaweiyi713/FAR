@@ -289,9 +289,10 @@ class BM25Retriever:
         return [replace(d, score=float(s)) for d, s in ranked]
 ```
 
-- 把 `VeraRetrieverAdapter` / `from src.*` 全部改成**可选**：`try/except ImportError` 且给出清晰提示
-  "真实 VeraRAG 后端为可选，未安装时回落 BM25Retriever"。`far` 核心 + BM25 后端必须能独立 `pip install` 跑通。
-- LLM 后端同理：默认给一个基于 `ollama`/`openai`（已在 experiment extra）的 `TextGenerator`，`src.utils.llm_client` 变可选。
+- `VeraRetrieverAdapter` / `from src.*` 保持**显式可选**并给出清晰提示。未指定后端时默认
+  `BM25Retriever`；但显式 `vera_*` 正式配置缺依赖时必须失败关闭，不能静默换后端改变实验含义。
+  `far` 核心 + BM25 后端必须能独立 `pip install` 跑通。
+- LLM 默认 Ollama 路径已直接使用 `ollama` 包，不依赖 `src.*`；其余旧六供应商路径仍作为可选 VeraRAG 适配层。
 - 删除测试硬编码绝对路径：`tests/test_benchmark.py` 的 `/Users/xuwenyao/VeraRAG` → 环境变量 `FAR_VERA_HOME` + `skipif`。
 - `bench/build/{import_fever_slice,extend_from_verabench}.py` 的 `../../../VeraRAG` → 可选 + 文档标注为"作者内部数据构建路径"。
 
@@ -374,7 +375,7 @@ print(result.revised_answer, result.to_dict()["conflicts"])
 | **P4** | 论文重写 MVP 版（C1 协议 + C2 地图 + C4 阴性），claim ladder 对齐 | 研究 | P3 | TMLR 稿 | ✅ |
 | P5 | `ablations.py` 三新臂；`minus_typed_revision_aggressive` + `flat_claims` 轻量重跑 | 研究 | P3 | H3/H5 结论 | 增强 |
 | P6 | 类型可映射性标注 + 回归（C3） | 研究 | P3 | `reports/type_mappability.md` | 增强 |
-| P7 | 切断 VeraRAG（BM25/LLM 自足后端）+ 删硬编码路径 + quickstart | 开源 | — | 开箱可跑 | 开源必做 |
+| **P7（完成）** | 切断默认 VeraRAG（自足 BM25 + 直连 Ollama）+ 删活跃代码硬编码路径 + quickstart + package smoke | 开源 | — | 开箱可跑 | 开源必做 |
 | P8 | README 产品化重构 + `docs/RESEARCH_STATUS.md` 下沉 | 开源 | P7 | 产品化 README | 开源必做 |
 | P9 | CLI 收敛（子命令树 + deprecated alias） | 开源 | P7 | 单主命令 | 开源建议 |
 | P10 | 命名空间收拢（`far.*`）+ 数据/代码分离（lfs/release） | 工程 | P9 | 消除 hack、轻 clone | 开源建议 |

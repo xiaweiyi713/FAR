@@ -1,4 +1,4 @@
-"""Retrieval protocol, offline implementation, and VeraRAG compatibility adapter."""
+"""Self-contained retrieval backends and the optional VeraRAG adapter."""
 
 from __future__ import annotations
 
@@ -7,6 +7,8 @@ import re
 from collections.abc import Iterable
 from dataclasses import replace
 from typing import Any, Protocol
+
+from rank_bm25 import BM25Okapi
 
 from ..models import EvidenceDocument
 from .model_assets import resolve_huggingface_snapshot
@@ -78,6 +80,85 @@ class InMemoryRetriever:
             tokens.add(block)
             tokens.update(block[index : index + 2] for index in range(max(0, len(block) - 1)))
         return {token for token in tokens if token}
+
+
+class BM25Retriever:
+    """Dependency-light BM25 retrieval with deterministic FAR result records.
+
+    This is FAR's default production-like lexical backend. It uses the declared
+    ``rank-bm25`` dependency and never imports VeraRAG. Explicit ``vera_*``
+    experiment configurations remain fail-closed rather than silently falling
+    back to this implementation.
+    """
+
+    _ENGLISH = re.compile(r"[A-Za-z0-9]+(?:[._%-][A-Za-z0-9]+)*")
+    _CJK = re.compile(r"[\u4e00-\u9fff]+")
+
+    def __init__(
+        self,
+        documents: Iterable[EvidenceDocument],
+        *,
+        k1: float = 1.5,
+        b: float = 0.75,
+        epsilon: float = 0.25,
+    ) -> None:
+        if not math.isfinite(k1) or k1 <= 0:
+            raise ValueError("k1 must be finite and positive")
+        if not math.isfinite(b) or not 0 <= b <= 1:
+            raise ValueError("b must be finite and in [0, 1]")
+        if not math.isfinite(epsilon) or epsilon < 0:
+            raise ValueError("epsilon must be finite and non-negative")
+        self.documents = tuple(documents)
+        evidence_ids = [document.evidence_id for document in self.documents]
+        if len(evidence_ids) != len(set(evidence_ids)):
+            raise ValueError("BM25 corpus evidence_id values must be unique")
+        tokenized = [
+            self._tokenize(f"{document.title} {document.text}") for document in self.documents
+        ]
+        self._token_sets = tuple(set(tokens) for tokens in tokenized)
+        safe_corpus = [
+            tokens or [f"__far_empty_document_{index}__"] for index, tokens in enumerate(tokenized)
+        ]
+        self._bm25 = BM25Okapi(safe_corpus, k1=k1, b=b, epsilon=epsilon) if safe_corpus else None
+
+    def retrieve(self, query: str, top_k: int = 5) -> list[EvidenceDocument]:
+        if not isinstance(top_k, int) or isinstance(top_k, bool) or top_k < 0:
+            raise ValueError("top_k must be a non-negative integer")
+        query_tokens = self._tokenize(query)
+        if not query_tokens or top_k == 0 or self._bm25 is None:
+            return []
+        query_set = set(query_tokens)
+        raw_scores = self._bm25.get_scores(query_tokens)
+        matched: list[tuple[float, EvidenceDocument]] = []
+        for document, document_tokens, raw_score in zip(
+            self.documents,
+            self._token_sets,
+            raw_scores,
+            strict=True,
+        ):
+            if not query_set & document_tokens:
+                continue
+            score = float(raw_score)
+            if not math.isfinite(score):
+                raise ValueError("rank-bm25 returned a non-finite score")
+            matched.append((score, document))
+        if not matched:
+            return []
+        score_floor = min(0.0, min(score for score, _ in matched))
+        ranked = sorted(matched, key=lambda pair: (-pair[0], pair[1].evidence_id))
+        return [
+            replace(document, score=max(0.0, score - score_floor))
+            for score, document in ranked[:top_k]
+        ]
+
+    @classmethod
+    def _tokenize(cls, text: str) -> list[str]:
+        lowered = text.casefold()
+        tokens = [item.casefold() for item in cls._ENGLISH.findall(lowered)]
+        for block in cls._CJK.findall(lowered):
+            tokens.append(block)
+            tokens.extend(block[index : index + 2] for index in range(max(0, len(block) - 1)))
+        return [token for token in tokens if token]
 
 
 class VeraRetrieverAdapter:

@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from copy import deepcopy
 from pathlib import Path
+from typing import Any, cast
 
 import pytest
 
@@ -42,9 +43,8 @@ def _prediction(sample_id: str, answer: str) -> dict[str, object]:
     }
 
 
-def _level(result: dict[str, object], name: str) -> dict[str, object]:
-    levels = result["levels"]
-    assert isinstance(levels, list)
+def _level(result: dict[str, object], name: str) -> dict[str, Any]:
+    levels = cast(list[dict[str, Any]], result["levels"])
     return next(level for level in levels if level["name"] == name)
 
 

@@ -10,6 +10,8 @@ import bench
 import experiments
 import far
 from bench.build.validate_bench import validate
+from far.adapters import BM25Retriever
+from far.models import EvidenceDocument
 
 EXPECTED_ENTRY_POINTS = {
     "falsirag-attribution-evidence",
@@ -36,6 +38,12 @@ def main() -> None:
     report = validate(bench_dir)
     installed_commands = {item.name for item in entry_points(group="console_scripts")}
     missing_commands = sorted(EXPECTED_ENTRY_POINTS - installed_commands)
+    bm25_results = BM25Retriever(
+        [
+            EvidenceDocument("bm25-relevant", "Audited revenue was 18 million."),
+            EvidenceDocument("bm25-noise", "Rain is expected tomorrow."),
+        ]
+    ).retrieve("audited revenue", top_k=1)
 
     checks = {
         "candidate_benchmark": bool(report.get("candidate_ready")),
@@ -43,6 +51,9 @@ def main() -> None:
         "offline_config": config.is_file(),
         "entry_points": not missing_commands,
         "far_import": Path(far.__file__).is_file(),
+        "self_contained_bm25": bool(
+            bm25_results and bm25_results[0].evidence_id == "bm25-relevant"
+        ),
     }
     errors = sorted(name for name, passed in checks.items() if passed is False)
     if checks["counter_evidence_recall"] != 0.91:

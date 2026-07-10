@@ -22,7 +22,7 @@ import yaml
 
 from bench.build.common import read_jsonl, sha256_file, write_json, write_jsonl
 from bench.schema import BLIND_TEST_ALLOWED_FIELDS
-from far.adapters import InMemoryRetriever, VeraLLMAdapter, VeraRetrieverAdapter
+from far.adapters import BM25Retriever, InMemoryRetriever, VeraLLMAdapter, VeraRetrieverAdapter
 from far.models import EvidenceDocument
 from far.protocols import TextGenerator
 
@@ -133,7 +133,12 @@ def build_retriever(config: dict[str, Any], documents: list[EvidenceDocument]) -
     retrieval = config.get("retrieval", {})
     if not isinstance(retrieval, dict):
         raise TypeError("retrieval configuration must be a mapping")
-    name = retrieval.get("backend", "lexical")
+    name = retrieval.get("backend", "bm25")
+    if name == "bm25":
+        return BM25Retriever(
+            documents,
+            **{key: float(retrieval[key]) for key in ("k1", "b", "epsilon") if key in retrieval},
+        )
     if name == "lexical":
         return InMemoryRetriever(documents)
     if name in VeraRetrieverAdapter.SUPPORTED_BACKENDS:

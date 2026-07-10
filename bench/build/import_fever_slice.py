@@ -1,4 +1,8 @@
-"""Import VeraRAG's fingerprinted FEVER pair candidates as a non-gold external slice."""
+"""Import an optional author-internal FEVER candidate source as a non-gold slice.
+
+Pass ``--source-dir`` or set ``FAR_VERA_HOME``; the tracked diagnostic slice can
+be evaluated without this source checkout.
+"""
 
 from __future__ import annotations
 
@@ -9,11 +13,14 @@ from pathlib import Path
 
 from bench.build.common import read_jsonl, sha256_file, write_json, write_jsonl
 
-DEFAULT_SOURCE = Path(
-    os.getenv(
-        "VERARAG_FEVER_DIR",
-        str(Path(__file__).resolve().parents[3] / "VeraRAG/data/external/fever_pair_candidates_v1"),
-    )
+_VERA_HOME = os.getenv("FAR_VERA_HOME")
+_VERA_FEVER_DIR = os.getenv("VERARAG_FEVER_DIR")
+DEFAULT_SOURCE = (
+    Path(_VERA_FEVER_DIR).expanduser()
+    if _VERA_FEVER_DIR
+    else Path(_VERA_HOME).expanduser() / "data/external/fever_pair_candidates_v1"
+    if _VERA_HOME
+    else None
 )
 DEFAULT_OUTPUT = Path(__file__).resolve().parents[1] / "external" / "fever_pair_candidates_v1"
 
@@ -55,6 +62,8 @@ def main() -> None:
     parser.add_argument("--source-dir", type=Path, default=DEFAULT_SOURCE)
     parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT)
     args = parser.parse_args()
+    if args.source_dir is None:
+        parser.error("--source-dir is required unless FAR_VERA_HOME is set")
     result = import_slice(args.source_dir, args.output_dir)
     print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
 

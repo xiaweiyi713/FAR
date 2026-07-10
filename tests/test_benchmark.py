@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 import zipfile
 from pathlib import Path
@@ -44,8 +45,9 @@ from eval.run_eval import evaluate
 from experiments.run_far import run
 
 ROOT = Path(__file__).resolve().parents[1]
-VERA_BENCH = Path("/Users/xuwenyao/VeraRAG/data/verabench")
-FEVER = Path("/Users/xuwenyao/VeraRAG/data/external/fever_pair_candidates_v1")
+VERA_HOME = Path(os.environ["FAR_VERA_HOME"]).expanduser() if os.getenv("FAR_VERA_HOME") else None
+VERA_BENCH = VERA_HOME / "data/verabench" if VERA_HOME else None
+FEVER = VERA_HOME / "data/external/fever_pair_candidates_v1" if VERA_HOME else None
 
 
 def test_human_annotation_protocol_mentions_only_valid_labels() -> None:
@@ -166,8 +168,12 @@ def test_blind_bundle_audit_rejects_technical_and_forbidden_gold_keys(tmp_path: 
         audit_bundle(unsafe_dir)
 
 
-@pytest.mark.skipif(not VERA_BENCH.exists(), reason="local VeraRAG fixture unavailable")
+@pytest.mark.skipif(
+    VERA_BENCH is None or not VERA_BENCH.exists(),
+    reason="set FAR_VERA_HOME to a local VeraRAG fixture",
+)
 def test_benchmark_build_is_reproducible(tmp_path: Path) -> None:
+    assert VERA_BENCH is not None
     first = build(VERA_BENCH, tmp_path / "first")
     second = build(VERA_BENCH, tmp_path / "second")
     assert first["fingerprints"] == second["fingerprints"]
@@ -1093,8 +1099,12 @@ def test_contamination_audit_reports_explicit_reference_overlap(tmp_path: Path) 
     assert report["exact_matches"]
 
 
-@pytest.mark.skipif(not FEVER.exists(), reason="local FEVER candidate fixture unavailable")
+@pytest.mark.skipif(
+    FEVER is None or not FEVER.exists(),
+    reason="set FAR_VERA_HOME to a local VeraRAG fixture",
+)
 def test_external_fever_slice_remains_non_gold(tmp_path: Path) -> None:
+    assert FEVER is not None
     manifest = import_slice(FEVER, tmp_path / "fever")
     assert manifest["counts"] == {"questions": 100, "documents": 200}
     assert manifest["publication_gold"] is False
