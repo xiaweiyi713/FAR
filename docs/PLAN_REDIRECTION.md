@@ -371,7 +371,7 @@ print(result.revised_answer, result.to_dict()["conflicts"])
 | **P0** | 预注册 `docs/PREREG_ORACLE_ATTRIBUTION.md`（RQ1–5/H1–5/oracle 四算子定义/判据），`git tag prereg-oracle-v1`；旧战线归档 | 研究 | — | 冻结预注册 | ✅ |
 | **P1** | `far/oracle.py` + 单测：实现 baseline + revision label-injection ceiling；验证 baseline=已知 EM、全体 ceiling=341/350、label-feasible ceiling=1.0 | 工程 | P0 | 评分对齐、标签碰撞审计与修订 ceiling | ✅ |
 | **P2（已选 B）** | 冻结零调用、capability-aware trace attribution；8 方法仅比较 retrieval/answer-change，检测/动作只在 FAR 两臂描述，不称 oracle gap | 工程 | P1 | `...TRACE_MAP.md` amendment | ✅ |
-| **P3** | `experiments/stage_trace_map.py`：8 方法观察性失效地图 + verifier + 指纹 | 工程 | P2 | `reports/stage_trace_map.{json,md}` | ✅ |
+| **P3（完成）** | `experiments/stage_trace_map.py`：8 方法观察性失效地图 + verifier + 指纹；T1 8/8，T2 +0.3914 [0.3554,0.4275] | 工程 | P2 | `reports/stage_trace_map.{json,md}` | ✅ |
 | **P4** | 论文重写 MVP 版（C1 协议 + C2 地图 + C4 阴性），claim ladder 对齐 | 研究 | P3 | TMLR 稿 | ✅ |
 | P5 | `ablations.py` 三新臂；`minus_typed_revision_aggressive` + `flat_claims` 轻量重跑 | 研究 | P3 | H3/H5 结论 | 增强 |
 | P6 | 类型可映射性标注 + 回归（C3） | 研究 | P3 | `reports/type_mappability.md` | 增强 |

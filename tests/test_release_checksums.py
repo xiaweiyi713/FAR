@@ -297,5 +297,7 @@ def test_source_archive_includes_reader_facing_reports(tmp_path: Path) -> None:
         "reports/solo_human_review_priority.csv",
         "reports/solo_paper_readiness.json",
         "reports/solo_paper_readiness.md",
+        "reports/stage_trace_map.json",
+        "reports/stage_trace_map.md",
         "reports/tmlr_result_integration_matrix.md",
     }

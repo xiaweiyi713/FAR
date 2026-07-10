@@ -426,6 +426,13 @@ def evidence_boundary_main() -> None:
     main()
 
 
+def stage_trace_map_main() -> None:
+    _prefer_far_repo()
+    from experiments.stage_trace_map import main
+
+    main()
+
+
 def _distribution_version() -> str:
     try:
         return version("falsification-augmented-retrieval")
@@ -603,6 +610,13 @@ def _build_parser() -> argparse.ArgumentParser:
         evaluate_fever_binary_main,
         "Evaluate or verify the FEVER binary diagnostic.",
         "diag fever-binary",
+    )
+    _add_leaf(
+        diag,
+        "trace-map",
+        stage_trace_map_main,
+        "Build or verify the capability-aware stage trace map.",
+        "diag trace-map",
     )
 
     jury = _add_group(commands, "jury", "Run the optional cross-family jury workflow.")

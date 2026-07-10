@@ -91,6 +91,11 @@ flowchart LR
 - 9 条 upstream gold/wrong 标签碰撞使全样本可达 revision ceiling 为 `341/350`；
 - retrieval/detection/action 在有效下游 replay 前失败关闭，避免循环论证。
 
+P2-B/P3 的零调用观察性 trace map 也已完成：8/8 方法中，检索到至少一篇 upstream correct document 后
+“答案文本已变但仍错”的数量都高于 retrieval miss；pooled 差为 `+0.3914`，sample-cluster bootstrap
+95% CI `[+0.3554, +0.4275]`。由于 6 个基线没有检测/动作 trace，这支持 post-retrieval answer-transformation
+failure，不证明跨方法 detection causal gap。见 [stage trace report](reports/stage_trace_map.md)。
+
 ## 安装选项
 
 环境要求：Python 3.10+。推荐使用 [uv](https://docs.astral.sh/uv/)：
@@ -124,6 +129,7 @@ export FAR_VERA_HOME=/absolute/path/to/VeraRAG
 ```bash
 falsirag run --help
 falsirag diag attribution --help
+falsirag diag trace-map verify
 falsirag bench validate --data-dir bench
 falsirag jury readiness --help
 falsirag ops repository-maintenance --check
@@ -185,6 +191,7 @@ RAMDocs Round 1 的 8 方法 × 350 条预测位于 `diagnostics/ramdocs_v2/roun
 - [预注册](docs/PREREG_ORACLE_ATTRIBUTION.md)
 - [标签碰撞 amendment](docs/PREREG_ORACLE_ATTRIBUTION_AMENDMENT_2026-07-10.md)
 - [完整研究状态](docs/RESEARCH_STATUS.md)
+- [8 方法 stage trace map](reports/stage_trace_map.md)
 
 ## 基准与发布边界
 
