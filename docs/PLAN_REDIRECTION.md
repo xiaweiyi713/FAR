@@ -343,7 +343,7 @@ print(result.revised_answer, result.to_dict()["conflicts"])
 | **P3（完成）** | `experiments/stage_trace_map.py`：8 方法观察性失效地图 + verifier + 指纹；T1 8/8，T2 +0.3914 [0.3554,0.4275] | 工程 | P2 | `reports/stage_trace_map.{json,md}` | ✅ |
 | **P4（完成）** | TMLR MVP 重写：capability-aware 协议 + 8 方法地图 + FAR 阴性/边界；标题、摘要、主表、附录和 claim ladder 对齐 | 研究 | P3 | 12 页可编译 TMLR 稿 | ✅ |
 | **P5（代码完成）** | 三新臂已实现、测试并通过 5 条离线端到端 smoke；RAMDocs 350 条正式重跑尚未执行 | 研究 | P3 | 实现与 amendment 已就绪；H3/H5 结论待跑 | 增强 |
-| **P6（协议冻结）** | 217 条冲突样本的双人标注 + 仲裁；可映射性与 typed delta 的回顾性描述关联 | 研究 | P3 | 协议已就绪；工具/人工标注待完成 | 增强 |
+| **P6（工具完成）** | 217 条空白包、机器预标/双人标注/仲裁、κ/描述关联与 verifier 已实现；真人标注未执行 | 研究 | P3 | `diagnostics/type_mappability_v1`；报告待人工输入 | 增强 |
 | **P7（完成）** | 切断默认 VeraRAG（自足 BM25 + 直连 Ollama）+ 删活跃代码硬编码路径 + quickstart + package smoke | 开源 | — | 开箱可跑 | 开源必做 |
 | **P8（完成）** | README 产品化重构 + `docs/RESEARCH_STATUS.md` 下沉 | 开源 | P7 | 产品化 README + 完整诚实性披露 | 开源必做 |
 | **P9（完成）** | `falsirag` 子命令树 + 全量 deprecated alias 迁移提示 | 开源 | P7 | 单主命令，旧自动化兼容 | 开源建议 |

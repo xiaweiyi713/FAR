@@ -48,6 +48,7 @@ _LEGACY_MIGRATIONS = {
     "falsirag-boundary": "falsirag diag boundary",
     "falsirag-boundary-evidence": "falsirag diag boundary-evidence",
     "falsirag-eval-fever-binary": "falsirag diag fever-binary",
+    "falsirag-type-mappability": "falsirag diag type-mappability",
     "falsirag-jury-annotate": "falsirag jury annotate",
     "falsirag-jury-consensus": "falsirag jury consensus",
     "falsirag-jury-adjudication": "falsirag jury adjudication",
@@ -433,6 +434,13 @@ def stage_trace_map_main() -> None:
     main()
 
 
+def type_mappability_main() -> None:
+    _prefer_far_repo()
+    from experiments.type_mappability import main
+
+    main()
+
+
 def _distribution_version() -> str:
     try:
         return version("falsification-augmented-retrieval")
@@ -617,6 +625,13 @@ def _build_parser() -> argparse.ArgumentParser:
         stage_trace_map_main,
         "Build or verify the capability-aware stage trace map.",
         "diag trace-map",
+    )
+    _add_leaf(
+        diag,
+        "type-mappability",
+        type_mappability_main,
+        "Prepare or analyze the P6 type-mappability study.",
+        "diag type-mappability",
     )
 
     jury = _add_group(commands, "jury", "Run the optional cross-family jury workflow.")

@@ -32,6 +32,7 @@ def test_group_help_lists_leaf_commands(capsys: pytest.CaptureFixture[str]) -> N
     assert "boundary-evidence" in output
     assert "fever-binary" in output
     assert "trace-map" in output
+    assert "type-mappability" in output
 
 
 def test_dispatch_forwards_arguments_and_restores_sys_argv(
