@@ -39,6 +39,10 @@ After uploading the exact archive, rebuild the manifest with the immutable relea
 installation into an empty directory:
 
 ```bash
+gh release create artifacts-v1 artifact-dist/far-diagnostics-v1.tar.gz \
+  --repo xiaweiyi713/FAR \
+  --title "FAR diagnostic artifacts v1" \
+  --notes "Frozen P0-P6 diagnostic payload; verify against far/data/diagnostics-v1.json."
 uv run falsirag ops diagnostic-data pack \
   --release-url https://github.com/xiaweiyi713/FAR/releases/download/artifacts-v1/far-diagnostics-v1.tar.gz
 uv run falsirag ops diagnostic-data install --target /tmp/far-diagnostics-v1
@@ -46,3 +50,10 @@ uv run falsirag ops diagnostic-data install --target /tmp/far-diagnostics-v1
 
 `install` checks the archive fingerprint, rejects links and unsafe members, verifies every file,
 and refuses to overwrite an existing target.
+
+The upload is an external repository mutation and is not performed by the normal build or test
+suite. A maintainer must authorize it explicitly. After the commands above succeed, compare
+`/tmp/far-diagnostics-v1` with the checked-out `diagnostics/`, commit the manifest containing the
+immutable URL, then remove `diagnostics/` in the same reviewed cutover. Do not delete local data
+merely because `gh release create` returned success; the independent download/install verifier is
+the release gate.
