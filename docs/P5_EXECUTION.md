@@ -35,7 +35,8 @@ uv run falsirag diag p5-ablations status
 ```
 
 The registered runner resumes each arm by checkpoint and then finalizes the
-results:
+results. It prints every sample start/skip/completion with elapsed time so a
+long local run remains auditable while each completed row is fsync'd:
 
 ```bash
 uv run falsirag diag p5-ablations run-all

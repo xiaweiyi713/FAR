@@ -325,7 +325,9 @@ def run_method(
     for row in rows:
         sample_id = str(row["id"])
         if sample_id in writer.completed_ids:
+            print(f"{method}: skip completed {sample_id}", flush=True)
             continue
+        print(f"{method}: start {sample_id}", flush=True)
         question = str(row["question"])
         initial_answer = str(initial_rows[sample_id]["answer"])
         sample_documents = documents[sample_id]
@@ -360,6 +362,10 @@ def run_method(
                 "method": method,
                 "metadata": metadata,
             }
+        )
+        print(
+            f"{method}: completed {sample_id} in {time.perf_counter() - started:.2f}s",
+            flush=True,
         )
     manifest = writer.finalize(expected_ids, partial=limit is not None)
     manifest.update(
