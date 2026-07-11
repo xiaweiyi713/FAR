@@ -504,6 +504,30 @@ def verify(
     }
 
 
+def _output_is_source_safe(output_dir: Path) -> bool:
+    """Accept external output roots or Git-ignored paths inside the checkout."""
+
+    try:
+        resolved_output = output_dir.resolve()
+        resolved_root = ROOT.resolve()
+        inside_checkout = resolved_output.is_relative_to(resolved_root)
+    except OSError:
+        return False
+    if not inside_checkout:
+        return True
+    try:
+        return (
+            subprocess.run(
+                ["git", "check-ignore", "-q", str(resolved_output)],
+                cwd=ROOT,
+                check=False,
+            ).returncode
+            == 0
+        )
+    except OSError:
+        return False
+
+
 def run_all(
     data_dir: Path,
     initial_answers: Path,
@@ -515,19 +539,11 @@ def run_all(
     audit = status(data_dir, initial_answers, config_path, output_dir, check_runtime=True)
     if audit["ready_to_run"] is not True:
         raise ValueError(f"P5 preflight is not ready: {audit}")
-    try:
-        ignored = (
-            subprocess.run(
-                ["git", "check-ignore", "-q", str(output_dir)],
-                cwd=ROOT,
-                check=False,
-            ).returncode
-            == 0
+    if not _output_is_source_safe(output_dir):
+        raise ValueError(
+            "P5 output directory must be outside the checkout or Git-ignored "
+            "to preserve clean run identities"
         )
-    except OSError:
-        ignored = False
-    if not ignored:
-        raise ValueError("P5 output directory must be Git-ignored to preserve clean run identities")
     for method in METHODS.values():
         run_method(
             config_path,

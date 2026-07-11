@@ -3035,5 +3035,20 @@ evidence bundle verified successfully, releasing the GPU.
   mixed-identity, stale, or tampered releases.
 - Synthetic 350-item formal-bundle tests cover positive contrast orientation,
   equivalence and non-equivalence verdicts, and report-tamper rejection. The
-  formal model rerun remains pending until the exact local runtime is installed
+  formal model rerun remains pending until an authorized exact runtime is ready
   and the execution-gate commit is clean.
+
+## 2026-07-11 — P5 moved to remote-only model execution
+
+- The formal 3×350 P5 run is prohibited on the developer Mac. Local Ollama was
+  stopped and removed before any formal prediction call; the incomplete model
+  cache was deleted. Local work is limited to source checks and the zero-model
+  artifact verifier.
+- Added dedicated `windows-gpu` preparation, offline/runtime preflight, systemd
+  units, guarded starter, read-only monitor, checkpoint-preserving stopper, and
+  verified artifact-return scripts. Every remote mutation or model start is
+  default-deny and requires a command-line execute flag plus a named environment
+  authorization variable.
+- The remote runner accepts a D:-backed output root outside the Git checkout;
+  in-checkout outputs must still be Git-ignored. This preserves one clean source
+  identity across all three resumable arms without storing model assets locally.

@@ -20,33 +20,73 @@ The fail-closed workflow in `far.experiments.p5_ablations` requires:
 - the complete 350-item RAMDocs dev-label split and its corpus/manifest fingerprints;
 - Ollama `qwen3.5:9b` digest
   `6488c96fa5faab64bb65cbd30d4289e20e6130ef535a93ef9a49f42eda893ea7`;
-- the pinned local NLI snapshot
+- the pinned NLI snapshot on the execution host
   `cross-encoder/nli-distilroberta-base@b14d131f9d32668a5e6a982729b57ff6ed5dfcbd`;
 - one clean post-preregistration Git commit shared by all three runs.
 
-## Commands
+## Execution placement
 
-Preflight does not open the combined dev/test label file or the test-input file.
-It checks the frozen dev/corpus fingerprints, local NLI snapshot, clean source
-identity, Ollama service, and immutable model digest:
+The formal model run belongs on the existing `windows-gpu` WSL host, not on a
+developer laptop. The local checkout performs source checks and the returned
+artifact verifier only; it must not start Ollama or call a model.
+
+The remote workflow is default-deny:
+
+- preparation is dry-run unless both `--execute` and `FAR_P5_PREP_ALLOWED=1`
+  are present;
+- model/service start is dry-run unless both `--execute` and
+  `FAR_P5_TRAINING_ALLOWED=1` are present;
+- artifact return is dry-run unless both `--execute` and
+  `FAR_P5_FETCH_ALLOWED=1` are present;
+- the starter never pulls a model. It fails unless the remote tag already
+  resolves to the frozen digest.
+
+## Remote commands
+
+After the reviewed source commit exists on `origin/main`, inspect and then
+prepare the clean remote worktree and install its dedicated systemd units:
 
 ```bash
-uv run falsirag diag p5-ablations status
+scripts/prepare_windows_p5_ablations.sh
+FAR_P5_PREP_ALLOWED=1 scripts/prepare_windows_p5_ablations.sh --execute
 ```
 
-The registered runner resumes each arm by checkpoint and then finalizes the
-results. It prints every sample start/skip/completion with elapsed time so a
-long local run remains auditable while each completed row is fsync'd:
+Run the read-only offline preflight, inspect the planned actions, and start only
+inside an authorized remote-GPU window:
 
 ```bash
-uv run falsirag diag p5-ablations run-all
+scripts/start_windows_p5_ablations.sh
+FAR_P5_TRAINING_ALLOWED=1 scripts/start_windows_p5_ablations.sh --execute
+scripts/check_windows_p5_ablations.sh
 ```
+
+The starter brings up remote Ollama, reruns preflight with the immutable model
+digest, and only then starts `far-p5-ablations.service`. The registered runner
+resumes each arm by fsync'd checkpoint and prints every sample
+start/skip/completion with elapsed time. The remote output root is outside the
+Git checkout, so checkpoint writes cannot dirty later run identities.
 
 The exact arms are `far`, `far_minus_typed_revision_aggressive`, and
 `far_flat_claims`. They must all contain the same implementation SHA, source
 commit, configuration, initial-answer SHA, and Ollama runtime identity.
-`outputs/p5_ramdocs_v1` is intentionally ignored so the first arm does not make
-the source dirty before the other two identities are recorded.
+
+Stopping is also dry-run by default and never deletes checkpoints:
+
+```bash
+scripts/stop_windows_p5_ablations.sh
+scripts/stop_windows_p5_ablations.sh --execute --stop-ollama
+```
+
+## Zero-model local verification
+
+After all three remote manifests are complete, copy the bundle into the
+Git-ignored local output root and independently verify it. This path makes no
+model calls and does not require a local Ollama installation:
+
+```bash
+scripts/fetch_windows_p5_ablations.sh
+FAR_P5_FETCH_ALLOWED=1 scripts/fetch_windows_p5_ablations.sh --execute
+```
 
 After a completed or transferred run, finalization and independent verification
 can be repeated without model calls:

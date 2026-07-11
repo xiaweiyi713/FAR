@@ -61,6 +61,8 @@ jobs:
         run: uv run --locked mypy far tests scripts/package_smoke.py
       - name: Check Markdown local links
         run: uv run --locked python scripts/check_markdown_links.py
+      - name: Check shell syntax
+        run: bash -n scripts/*.sh
       - name: Audit repository maintenance invariants
         run: uv run --locked falsirag-repository-maintenance --check
       - name: Audit long-term roadmap status

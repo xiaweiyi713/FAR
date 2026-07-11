@@ -256,7 +256,7 @@
       "details": {
         "diagnostics_mib": 41.263,
         "outputs_tracks_only_gitkeep": true,
-        "tracked_files": 637
+        "tracked_files": 649
       },
       "errors": [],
       "gate": "repository-maintenance audit",

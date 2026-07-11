@@ -11,6 +11,7 @@ from far.experiments.p5_ablations import (
     METHODS,
     MODEL_DIGEST,
     PREREG_COMMIT,
+    _output_is_source_safe,
     finalize,
     status,
     verify,
@@ -89,6 +90,12 @@ def test_p5_status_freezes_inputs_without_runtime_probe(tmp_path: Path) -> None:
     assert audit["runtime_ready"] is None
     assert audit["ready_to_finalize"] is False
     assert audit["test_accessed"] is False
+
+
+def test_p5_output_safety_accepts_external_or_ignored_paths(tmp_path: Path) -> None:
+    assert _output_is_source_safe(tmp_path / "remote-output") is True
+    assert _output_is_source_safe(ROOT / "outputs/p5_ramdocs_v1") is True
+    assert _output_is_source_safe(ROOT / "docs/p5-unignored-output") is False
 
 
 def test_p5_finalize_and_independent_verifier(tmp_path: Path) -> None:
