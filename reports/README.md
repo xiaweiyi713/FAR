@@ -17,6 +17,10 @@ This directory contains durable, versioned reports derived from tracked project 
 - [TMLR result-integration matrix](tmlr_result_integration_matrix.md): the WS4
   writing checklist that maps verified WS2/WS3 outcome combinations to the
   A/B/C paper lines without changing frozen facts, gates, or evidence status.
+- [Registered P5 RAMDocs ablations](p5_ramdocs_ablations.md) and
+  [machine-readable JSON](p5_ramdocs_ablations.json): the verified 3×350
+  upstream-labelled dev enhancement. H3 remains uncertain and H5 meets the
+  registered equivalence rule; neither is human-gold or test evidence.
 - [Single-author machine-audited paper readiness](solo_paper_readiness.md) and
   [machine-readable JSON](solo_paper_readiness.json): the explicitly relaxed
   paper gate. It permits only the narrow typed-control mechanism claim and

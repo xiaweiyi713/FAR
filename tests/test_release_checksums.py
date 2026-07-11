@@ -287,6 +287,8 @@ def test_source_archive_includes_reader_facing_reports(tmp_path: Path) -> None:
         "reports/longterm_roadmap_status.json",
         "reports/longterm_roadmap_status.md",
         "reports/mechanism_attribution.md",
+        "reports/p5_ramdocs_ablations.json",
+        "reports/p5_ramdocs_ablations.md",
         "reports/power_retrospective.md",
         "reports/project_status_snapshot.json",
         "reports/project_status_snapshot.md",

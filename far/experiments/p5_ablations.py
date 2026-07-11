@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import argparse
+import copy
 import json
+import math
 import socket
 import subprocess
 import tempfile
@@ -51,6 +53,7 @@ EQUIVALENCE_BOUNDS = (-0.02, 0.02)
 BOOTSTRAP_RESAMPLES = 2000
 BOOTSTRAP_CONFIDENCE = 0.90
 BOOTSTRAP_SEED = 1729
+FLOAT_AUDIT_ABS_TOLERANCE = 1e-12
 
 
 def _load(path: Path) -> dict[str, Any]:
@@ -58,6 +61,29 @@ def _load(path: Path) -> dict[str, Any]:
     if not isinstance(value, dict):
         raise ValueError(f"expected JSON object: {path}")
     return value
+
+
+def _json_audit_equal(observed: Any, expected: Any) -> bool:
+    """Compare JSON values while tolerating platform-level float summation drift."""
+
+    if isinstance(observed, float) and isinstance(expected, float):
+        return math.isclose(
+            observed,
+            expected,
+            rel_tol=0.0,
+            abs_tol=FLOAT_AUDIT_ABS_TOLERANCE,
+        )
+    if type(observed) is not type(expected):
+        return False
+    if isinstance(observed, dict):
+        return observed.keys() == expected.keys() and all(
+            _json_audit_equal(observed[key], expected[key]) for key in observed
+        )
+    if isinstance(observed, list):
+        return len(observed) == len(expected) and all(
+            _json_audit_equal(left, right) for left, right in zip(observed, expected, strict=True)
+        )
+    return bool(observed == expected)
 
 
 def _git_ancestor(commit: str) -> bool:
@@ -475,14 +501,35 @@ def verify(
             expected = _compute_result(
                 data_dir, initial_answers, config_path, output_dir, evaluation_root
             )
-            if observed != expected:
+            expected_for_audit = copy.deepcopy(expected)
+            for label, method in METHODS.items():
+                tracked_report = output_dir / "evaluations" / method / "report.json"
+                tracked_scores = output_dir / "evaluations" / method / "scores.jsonl"
+                recomputed_report = evaluation_root / method / "report.json"
+                recomputed_scores = evaluation_root / method / "scores.jsonl"
+                observed_evaluation = observed["evaluations"][label]
+                if not tracked_report.is_file() or observed_evaluation.get(
+                    "report_sha256"
+                ) != sha256_file(tracked_report):
+                    errors.append(f"P5 evaluation report fingerprint mismatch: {method}")
+                else:
+                    expected_for_audit["evaluations"][label]["report_sha256"] = observed_evaluation[
+                        "report_sha256"
+                    ]
+                    if not _json_audit_equal(_load(tracked_report), _load(recomputed_report)):
+                        errors.append(
+                            f"P5 evaluation differs from recomputation: {method}/report.json"
+                        )
+                if not tracked_scores.is_file() or observed_evaluation.get(
+                    "scores_sha256"
+                ) != sha256_file(tracked_scores):
+                    errors.append(f"P5 evaluation scores fingerprint mismatch: {method}")
+                elif tracked_scores.read_bytes() != recomputed_scores.read_bytes():
+                    errors.append(
+                        f"P5 evaluation differs from recomputation: {method}/scores.jsonl"
+                    )
+            if not _json_audit_equal(observed, expected_for_audit):
                 errors.append("P5 JSON report differs from independent recomputation")
-            for method in METHODS.values():
-                for name in ("report.json", "scores.jsonl"):
-                    tracked = output_dir / "evaluations" / method / name
-                    recomputed = evaluation_root / method / name
-                    if not tracked.is_file() or tracked.read_bytes() != recomputed.read_bytes():
-                        errors.append(f"P5 evaluation differs from recomputation: {method}/{name}")
         if not report_markdown.is_file() or report_markdown.read_text(
             encoding="utf-8"
         ) != _markdown(expected):

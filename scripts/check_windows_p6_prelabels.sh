@@ -23,6 +23,6 @@ ls -l "${packet}/completed/machine_prelabels.jsonl" \
 /usr/lib/wsl/lib/nvidia-smi --query-gpu=memory.used,utilization.gpu,temperature.gpu,pstate \
   --format=csv,noheader,nounits 2>/dev/null || true
 tail -n30 /mnt/d/FAR-outputs/type_mappability_v1.log 2>/dev/null || true
-grep -Ein 'traceback|exception|out of memory|cuda error|ValueError|500' \
+grep -Ein 'traceback|exception|out of memory|cuda error|ValueError|HTTP[^0-9]*500|status[^0-9]*500' \
   /mnt/d/FAR-outputs/type_mappability_v1.log 2>/dev/null | tail -n20 || true
 REMOTE

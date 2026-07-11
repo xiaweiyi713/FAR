@@ -163,3 +163,56 @@ def test_p5_finalize_and_independent_verifier(tmp_path: Path) -> None:
         )["valid"]
         is False
     )
+
+
+def test_p5_verifier_tolerates_only_platform_level_aggregate_float_drift(
+    tmp_path: Path,
+) -> None:
+    output = tmp_path / "p5"
+    report_json = tmp_path / "p5.json"
+    report_markdown = tmp_path / "p5.md"
+    _formal_runs(output)
+    finalize(DATA_DIR, INITIAL_ANSWERS, CONFIG, output, report_json, report_markdown)
+
+    report = json.loads(report_json.read_text(encoding="utf-8"))
+    for label, method in METHODS.items():
+        evaluation_path = output / "evaluations" / method / "report.json"
+        evaluation = json.loads(evaluation_path.read_text(encoding="utf-8"))
+        evaluation["metrics"]["gold_answer_coverage"] += 5e-13
+        write_json(evaluation_path, evaluation)
+        report["evaluations"][label]["metrics"]["gold_answer_coverage"] += 5e-13
+        report["evaluations"][label]["report_sha256"] = sha256_file(evaluation_path)
+    write_json(report_json, report)
+
+    assert (
+        verify(
+            DATA_DIR,
+            INITIAL_ANSWERS,
+            CONFIG,
+            output,
+            report_json,
+            report_markdown,
+        )["valid"]
+        is True
+    )
+
+    method = METHODS["full"]
+    evaluation_path = output / "evaluations" / method / "report.json"
+    evaluation = json.loads(evaluation_path.read_text(encoding="utf-8"))
+    evaluation["metrics"]["gold_answer_coverage"] += 1e-6
+    write_json(evaluation_path, evaluation)
+    report = json.loads(report_json.read_text(encoding="utf-8"))
+    report["evaluations"]["full"]["metrics"]["gold_answer_coverage"] += 1e-6
+    report["evaluations"]["full"]["report_sha256"] = sha256_file(evaluation_path)
+    write_json(report_json, report)
+
+    audit = verify(
+        DATA_DIR,
+        INITIAL_ANSWERS,
+        CONFIG,
+        output,
+        report_json,
+        report_markdown,
+    )
+    assert audit["valid"] is False
+    assert any("far/report.json" in error for error in audit["errors"])

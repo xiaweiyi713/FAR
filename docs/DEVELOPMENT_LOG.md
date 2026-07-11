@@ -3077,3 +3077,17 @@ evidence bundle verified successfully, releasing the GPU.
   responses within 180 seconds before attempting the digest/runtime preflight.
   A timeout stops the dedicated Ollama unit and never starts the experiment
   runner.
+
+## 2026-07-11 — P5 cross-platform verifier repair
+
+- The registered remote P5 run completed all three 350-item arms with zero run
+  errors. Exact copied `scores.jsonl` files matched local recomputation, while
+  three aggregate report fields differed by at most `4e-16` between x86 WSL
+  and ARM macOS floating-point summation.
+- The independent verifier now keeps prediction, score, identity, manifest,
+  and score-file checks exact, verifies the copied report fingerprints, and
+  permits only `1e-12` absolute drift for JSON float leaves in aggregate
+  reports. A regression test accepts platform-level drift and rejects a
+  `1e-6` aggregate change.
+- P5 and P6 status log filters now match explicit HTTP/status 500 errors instead
+  of treating the legitimate sample identifier `RAM0500` as an error line.

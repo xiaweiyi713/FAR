@@ -35,6 +35,6 @@ done
 echo "log_tail:"
 tail -n30 /mnt/d/FAR-outputs/p5_ramdocs_v1.log 2>/dev/null || true
 echo "errors:"
-grep -Ein 'traceback|exception|out of memory|cuda error|run failed|ValueError|500' \
+grep -Ein 'traceback|exception|out of memory|cuda error|run failed|ValueError|HTTP[^0-9]*500|status[^0-9]*500' \
   /mnt/d/FAR-outputs/p5_ramdocs_v1.log 2>/dev/null | tail -n20 || true
 REMOTE
