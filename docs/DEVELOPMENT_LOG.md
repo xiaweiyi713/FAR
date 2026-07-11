@@ -3066,3 +3066,14 @@ evidence bundle verified successfully, releasing the GPU.
 - The two independent human reviewers and third adjudicator remain external
   human work. Even after completion, chronology fixes the result as
   retrospective and non-confirmatory for H4.
+
+## 2026-07-11 — Remote Ollama cold-start gate repair
+
+- The first authorized P5 start reached the remote Ollama unit but the runtime
+  identity request raced the API listener during cold start. The immutable
+  runtime gate failed closed, stopped Ollama, and wrote no P5 output or model
+  prediction.
+- P5 and P6 starters now require three consecutive successful `/api/tags`
+  responses within 180 seconds before attempting the digest/runtime preflight.
+  A timeout stops the dedicated Ollama unit and never starts the experiment
+  runner.

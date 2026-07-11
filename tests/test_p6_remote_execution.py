@@ -54,3 +54,6 @@ def test_p6_systemd_units_bind_remote_packet_and_prelabel_runner() -> None:
     assert "Wants=far-ollama-p6.service" in runner
     assert "WorkingDirectory=/mnt/d/FAR-workspace/FAR-longterm" in ollama
     assert "source scripts/windows_gpu_env.sh; exec ollama serve" in ollama
+    starter = (ROOT / "scripts/start_windows_p6_prelabels.sh").read_text(encoding="utf-8")
+    assert "stable >= 3" in starter
+    assert "did not become stable within 180 seconds" in starter

@@ -26,6 +26,27 @@ if [[ "${execute}" != "1" ]]; then
 fi
 ssh -o BatchMode=yes -o ConnectTimeout=15 "${remote}" \
   "systemctl --user start far-ollama-p6.service"
+if ! ssh -o BatchMode=yes -o ConnectTimeout=15 "${remote}" 'bash -s' <<'REMOTE'
+set -euo pipefail
+deadline=$((SECONDS + 180))
+stable=0
+while (( SECONDS < deadline )); do
+  if curl -fsS --max-time 5 http://127.0.0.1:11434/api/tags >/dev/null; then
+    stable=$((stable + 1))
+    (( stable >= 3 )) && exit 0
+  else
+    stable=0
+  fi
+  sleep 2
+done
+echo "P6 Ollama API did not become stable within 180 seconds" >&2
+exit 1
+REMOTE
+then
+  ssh -o BatchMode=yes -o ConnectTimeout=15 "${remote}" \
+    "systemctl --user stop far-ollama-p6.service" || true
+  exit 1
+fi
 if ! FAR_P6_REQUIRE_OLLAMA=1 \
   "${script_dir}/preflight_windows_p6_prelabels.sh" "${remote}"; then
   ssh -o BatchMode=yes -o ConnectTimeout=15 "${remote}" \
