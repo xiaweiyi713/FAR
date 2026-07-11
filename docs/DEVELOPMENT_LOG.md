@@ -3024,7 +3024,7 @@ evidence bundle verified successfully, releasing the GPU.
 
 - Added a fail-closed `falsirag diag p5-ablations` workflow for the registered
   3×350 RAMDocs development rerun. Preflight freezes the amendment, tag ancestry,
-  configuration, initial answers, benchmark files, local NLI snapshot, clean
+  configuration, initial answers, benchmark files, pinned NLI snapshot, clean
   source commit, and exact Ollama model digest.
 - The three arms are checkpoint-resumable and must share one source commit,
   implementation fingerprint, configuration, initial-answer bundle, and LLM
@@ -3052,3 +3052,17 @@ evidence bundle verified successfully, releasing the GPU.
 - The remote runner accepts a D:-backed output root outside the Git checkout;
   in-checkout outputs must still be Git-ignored. This preserves one clean source
   identity across all three resumable arms without storing model assets locally.
+
+## 2026-07-11 — P6 remote-only prelabel provenance and handoff
+
+- Added a dedicated default-deny Windows-GPU path for preparing, preflighting,
+  running, monitoring, stopping, and returning the 217 P6 machine prelabels.
+  The local machine performs no model calls; remote start requires the exact
+  frozen Qwen digest and refuses overlap with P5 or earlier GPU workloads.
+- Fixed the machine-prelabel importer so a native remote bundle cannot silently
+  lose prompt/raw-response provenance. It now verifies the raw response hash,
+  prompt hash, and parsed-response equality before preserving all three fields
+  in the installed diagnostic packet.
+- The two independent human reviewers and third adjudicator remain external
+  human work. Even after completion, chronology fixes the result as
+  retrospective and non-confirmatory for H4.

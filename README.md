@@ -194,6 +194,7 @@ RAMDocs Round 1 的 8 方法 × 350 条预测位于 `diagnostics/ramdocs_v2/roun
 - [预注册](docs/PREREG_ORACLE_ATTRIBUTION.md)
 - [标签碰撞 amendment](docs/PREREG_ORACLE_ATTRIBUTION_AMENDMENT_2026-07-10.md)
 - [P5 注册消融运行手册](docs/P5_EXECUTION.md)
+- [P6 类型可映射性执行与人工交接](docs/P6_EXECUTION.md)
 - [完整研究状态](docs/RESEARCH_STATUS.md)
 - [8 方法 stage trace map](reports/stage_trace_map.md)
 

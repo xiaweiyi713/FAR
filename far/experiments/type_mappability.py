@@ -612,16 +612,50 @@ def install_machine_prelabels(
     if _completed_path(packet_dir, "adjudicator").exists():
         raise ValueError("machine prelabels cannot be installed after adjudication")
     rows = _source_annotations(source_path, items)
+    source_by_id = {str(row.get("sample_id", "")): row for row in read_jsonl(source_path)}
     identity = _validate_machine_identity(json.loads(identity_path.read_text(encoding="utf-8")))
     identity_sha = _stable_sha(identity)
-    installed = [
-        {
-            **row,
-            "role": "machine_prelabel",
-            "machine_identity_sha256": identity_sha,
+    installed: list[dict[str, Any]] = []
+    for row in rows:
+        sample_id = str(row["sample_id"])
+        source = source_by_id[sample_id]
+        provenance: dict[str, str] = {}
+        provenance_fields = {
+            name
+            for name in ("raw_response", "raw_response_sha256", "prompt_sha256")
+            if source.get(name) is not None
         }
-        for row in rows
-    ]
+        if provenance_fields and provenance_fields != {
+            "raw_response",
+            "raw_response_sha256",
+            "prompt_sha256",
+        }:
+            raise ValueError(f"{sample_id}: machine source provenance must be all-or-none")
+        if source.get("raw_response") is not None:
+            response = str(source["raw_response"])
+            response_sha = hashlib.sha256(response.encode("utf-8")).hexdigest()
+            prompt_sha = hashlib.sha256(
+                _prelabel_prompt(items[sample_id]).encode("utf-8")
+            ).hexdigest()
+            if source.get("raw_response_sha256") != response_sha:
+                raise ValueError(f"{sample_id}: machine source response fingerprint mismatch")
+            if source.get("prompt_sha256") != prompt_sha:
+                raise ValueError(f"{sample_id}: machine source prompt fingerprint mismatch")
+            if _parse_machine_response(response, sample_id=sample_id) != row["annotation"]:
+                raise ValueError(f"{sample_id}: machine source response and annotation differ")
+            provenance = {
+                "raw_response": response,
+                "raw_response_sha256": response_sha,
+                "prompt_sha256": prompt_sha,
+            }
+        installed.append(
+            {
+                **row,
+                "role": "machine_prelabel",
+                "machine_identity_sha256": identity_sha,
+                **provenance,
+            }
+        )
     write_jsonl(target, installed)
     write_json(target_identity, identity)
     result = {

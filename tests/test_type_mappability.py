@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
 
@@ -11,6 +12,7 @@ from far.experiments.type_mappability import (
     HUMAN_ROLES,
     MAPPABILITY_LABELS,
     _association,
+    _prelabel_prompt,
     analyze,
     install_human_annotations,
     install_machine_prelabels,
@@ -190,6 +192,47 @@ def test_adjudication_requires_reviewers_and_machine_prelabels(tmp_path: Path) -
             role="adjudicator",
             annotator_id="adjudicator-c",
         )
+
+
+def test_machine_install_preserves_and_checks_raw_response_provenance(tmp_path: Path) -> None:
+    packet = tmp_path / "packet"
+    prepare_packet(packet)
+    machine = _completed_source(packet, tmp_path / "machine.jsonl")
+    rows = read_jsonl(machine)
+    items = {str(row["sample_id"]): row for row in read_jsonl(packet / "items.jsonl")}
+    for row in rows:
+        sample_id = str(row["sample_id"])
+        response = json.dumps(row["annotation"], sort_keys=True)
+        row["raw_response"] = response
+        row["raw_response_sha256"] = hashlib.sha256(response.encode("utf-8")).hexdigest()
+        row["prompt_sha256"] = hashlib.sha256(
+            _prelabel_prompt(items[sample_id]).encode("utf-8")
+        ).hexdigest()
+    write_jsonl(machine, rows)
+    identity = tmp_path / "machine_identity.json"
+    write_json(
+        identity,
+        {
+            "model": "synthetic-test-model",
+            "model_digest": "3" * 64,
+            "config_sha256": "1" * 64,
+            "prompt_template_sha256": "2" * 64,
+        },
+    )
+
+    install_machine_prelabels(packet, machine, identity)
+
+    installed = read_jsonl(packet / "completed/machine_prelabels.jsonl")
+    assert len(installed) == 217
+    assert all(row.get("raw_response") for row in installed)
+    assert packet_status(packet)["machine_prelabels"]["complete"] is True
+
+    second_packet = tmp_path / "tampered-packet"
+    prepare_packet(second_packet)
+    rows[0]["raw_response_sha256"] = "0" * 64
+    write_jsonl(machine, rows)
+    with pytest.raises(ValueError, match="response fingerprint mismatch"):
+        install_machine_prelabels(second_packet, machine, identity)
 
 
 def test_installed_annotation_change_is_detected(tmp_path: Path) -> None:
