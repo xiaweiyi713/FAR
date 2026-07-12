@@ -3091,3 +3091,17 @@ evidence bundle verified successfully, releasing the GPU.
   `1e-6` aggregate change.
 - P5 and P6 status log filters now match explicit HTTP/status 500 errors instead
   of treating the legitimate sample identifier `RAM0500` as an error line.
+
+## 2026-07-12 — P6 bounded schema-repair gate
+
+- The first authorized P6 response selected `clean` without satisfying the
+  frozen one-type/no-missing-concept invariant. The runner failed closed before
+  writing a completed row; its dedicated Ollama service was stopped.
+- Machine prelabeling now makes at most three schema-correction attempts per
+  item. Every attempt preserves the raw response, response SHA-256, actual
+  prompt SHA-256, validity flag, and validation error in the installed row.
+  Checkpoint writes are fsync'd, and resume revalidates the complete attempt
+  chain before skipping an item.
+- The P6 runner unit no longer auto-restarts after an exhausted retry budget,
+  preventing an unbounded model-call loop. Its read-only monitor also handles a
+  newly created zero-byte checkpoint without emitting a JSON traceback.

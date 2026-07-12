@@ -6,6 +6,7 @@ import argparse
 import hashlib
 import json
 import math
+import os
 import random
 import re
 import shutil
@@ -43,6 +44,11 @@ TYPE_NAMES = (
 )
 HUMAN_ROLES = ("reviewer_a", "reviewer_b", "adjudicator")
 DATASET_ORDER = ("wikicontradict", "rag_conflicts")
+MACHINE_PRELABEL_MAX_ATTEMPTS = 3
+MACHINE_PRELABEL_RETRY_INSTRUCTION = (
+    "The previous JSON did not satisfy the frozen annotation schema. Correct only the schema "
+    "violation described below and return exactly one JSON object with no markdown."
+)
 
 DATASETS: dict[str, dict[str, Any]] = {
     "wikicontradict": {
@@ -619,7 +625,7 @@ def install_machine_prelabels(
     for row in rows:
         sample_id = str(row["sample_id"])
         source = source_by_id[sample_id]
-        provenance: dict[str, str] = {}
+        provenance: dict[str, Any] = {}
         provenance_fields = {
             name
             for name in ("raw_response", "raw_response_sha256", "prompt_sha256")
@@ -632,22 +638,14 @@ def install_machine_prelabels(
         }:
             raise ValueError(f"{sample_id}: machine source provenance must be all-or-none")
         if source.get("raw_response") is not None:
-            response = str(source["raw_response"])
-            response_sha = hashlib.sha256(response.encode("utf-8")).hexdigest()
-            prompt_sha = hashlib.sha256(
-                _prelabel_prompt(items[sample_id]).encode("utf-8")
-            ).hexdigest()
-            if source.get("raw_response_sha256") != response_sha:
-                raise ValueError(f"{sample_id}: machine source response fingerprint mismatch")
-            if source.get("prompt_sha256") != prompt_sha:
-                raise ValueError(f"{sample_id}: machine source prompt fingerprint mismatch")
-            if _parse_machine_response(response, sample_id=sample_id) != row["annotation"]:
-                raise ValueError(f"{sample_id}: machine source response and annotation differ")
+            attempts = _validate_machine_attempts(source, items[sample_id], sample_id=sample_id)
             provenance = {
-                "raw_response": response,
-                "raw_response_sha256": response_sha,
-                "prompt_sha256": prompt_sha,
+                "raw_response": source["raw_response"],
+                "raw_response_sha256": source["raw_response_sha256"],
+                "prompt_sha256": source["prompt_sha256"],
             }
+            if source.get("attempts") is not None:
+                provenance["attempts"] = attempts
         installed.append(
             {
                 **row,
@@ -704,15 +702,7 @@ def _load_machine(
         ):
             raise ValueError(f"{sample_id}: machine prelabel provenance is invalid")
         if row.get("raw_response") is not None:
-            response = str(row["raw_response"])
-            response_sha = hashlib.sha256(response.encode("utf-8")).hexdigest()
-            if row.get("raw_response_sha256") != response_sha:
-                raise ValueError(f"{sample_id}: machine raw response fingerprint mismatch")
-            prompt_sha = hashlib.sha256(
-                _prelabel_prompt(items[sample_id]).encode("utf-8")
-            ).hexdigest()
-            if row.get("prompt_sha256") != prompt_sha:
-                raise ValueError(f"{sample_id}: machine prompt fingerprint mismatch")
+            _validate_machine_attempts(row, items[sample_id], sample_id=sample_id)
         by_id[sample_id] = validate_annotation(row.get("annotation"), sample_id=sample_id)
     if set(by_id) != set(items):
         raise ValueError("machine prelabels are incomplete")
@@ -751,6 +741,85 @@ def _prelabel_prompt(item: dict[str, Any]) -> str:
     )
 
 
+def _prelabel_retry_prompt(
+    item: dict[str, Any],
+    *,
+    previous_response: str,
+    validation_error: str,
+) -> str:
+    return (
+        f"{_prelabel_prompt(item)}\n\n"
+        f"{MACHINE_PRELABEL_RETRY_INSTRUCTION}\n"
+        f"Validation error: {validation_error}\n"
+        f"Previous response: {previous_response}"
+    )
+
+
+def _validate_machine_attempts(
+    row: dict[str, Any],
+    item: dict[str, Any],
+    *,
+    sample_id: str,
+) -> list[dict[str, Any]]:
+    attempts = row.get("attempts")
+    if attempts is None:
+        response = str(row.get("raw_response", ""))
+        response_sha = hashlib.sha256(response.encode("utf-8")).hexdigest()
+        prompt_sha = hashlib.sha256(_prelabel_prompt(item).encode("utf-8")).hexdigest()
+        if row.get("raw_response_sha256") != response_sha:
+            raise ValueError(f"{sample_id}: machine response fingerprint mismatch")
+        if row.get("prompt_sha256") != prompt_sha:
+            raise ValueError(f"{sample_id}: machine prompt fingerprint mismatch")
+        if _parse_machine_response(response, sample_id=sample_id) != row.get("annotation"):
+            raise ValueError(f"{sample_id}: machine response and annotation differ")
+        return []
+    if not isinstance(attempts, list) or not 1 <= len(attempts) <= MACHINE_PRELABEL_MAX_ATTEMPTS:
+        raise ValueError(f"{sample_id}: machine attempt provenance is invalid")
+    prompt = _prelabel_prompt(item)
+    parsed: dict[str, Any] | None = None
+    for index, attempt in enumerate(attempts, start=1):
+        if not isinstance(attempt, dict) or attempt.get("attempt") != index:
+            raise ValueError(f"{sample_id}: machine attempt order is invalid")
+        response = str(attempt.get("raw_response", ""))
+        response_sha = hashlib.sha256(response.encode("utf-8")).hexdigest()
+        prompt_sha = hashlib.sha256(prompt.encode("utf-8")).hexdigest()
+        if attempt.get("raw_response_sha256") != response_sha:
+            raise ValueError(f"{sample_id}: machine attempt response fingerprint mismatch")
+        if attempt.get("prompt_sha256") != prompt_sha:
+            raise ValueError(f"{sample_id}: machine attempt prompt fingerprint mismatch")
+        try:
+            parsed = _parse_machine_response(response, sample_id=sample_id)
+        except ValueError as exc:
+            error = str(exc)
+            if (
+                attempt.get("valid") is not False
+                or attempt.get("validation_error") != error
+                or index == len(attempts)
+            ):
+                raise ValueError(f"{sample_id}: invalid machine attempt provenance") from exc
+            prompt = _prelabel_retry_prompt(
+                item,
+                previous_response=response,
+                validation_error=error,
+            )
+        else:
+            if (
+                attempt.get("valid") is not True
+                or attempt.get("validation_error") is not None
+                or index != len(attempts)
+            ):
+                raise ValueError(f"{sample_id}: valid machine attempt provenance is invalid")
+    final = attempts[-1]
+    if (
+        parsed != row.get("annotation")
+        or row.get("raw_response") != final.get("raw_response")
+        or row.get("raw_response_sha256") != final.get("raw_response_sha256")
+        or row.get("prompt_sha256") != final.get("prompt_sha256")
+    ):
+        raise ValueError(f"{sample_id}: final machine attempt differs from installed annotation")
+    return attempts
+
+
 def prelabel_packet(packet_dir: Path, config_path: Path) -> dict[str, Any]:
     _, items = _annotation_items(packet_dir)
     target = _completed_path(packet_dir, "machine_prelabels")
@@ -774,6 +843,8 @@ def prelabel_packet(packet_dir: Path, config_path: Path) -> dict[str, Any]:
         "system_prompt": "Classify ontology mappability from only the supplied text.",
         "temperature": 0.0,
         "max_tokens": 500,
+        "max_attempts": MACHINE_PRELABEL_MAX_ATTEMPTS,
+        "retry_instruction": MACHINE_PRELABEL_RETRY_INSTRUCTION,
     }
     identity = {
         "model": model,
@@ -798,14 +869,7 @@ def prelabel_packet(packet_dir: Path, config_path: Path) -> dict[str, Any]:
         if row.get("context_sha256") != items[sample_id]["context_sha256"]:
             raise ValueError(f"{sample_id}: machine checkpoint context changed")
         validate_annotation(row.get("annotation"), sample_id=sample_id)
-        response = str(row.get("raw_response", ""))
-        if row.get("raw_response_sha256") != hashlib.sha256(response.encode("utf-8")).hexdigest():
-            raise ValueError(f"{sample_id}: machine checkpoint response changed")
-        if (
-            row.get("prompt_sha256")
-            != hashlib.sha256(_prelabel_prompt(items[sample_id]).encode("utf-8")).hexdigest()
-        ):
-            raise ValueError(f"{sample_id}: machine checkpoint prompt changed")
+        _validate_machine_attempts(row, items[sample_id], sample_id=sample_id)
         completed[sample_id] = row
     checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
     try:
@@ -815,24 +879,63 @@ def prelabel_packet(packet_dir: Path, config_path: Path) -> dict[str, Any]:
                     continue
                 item = items[sample_id]
                 prompt = _prelabel_prompt(item)
-                response = generator.complete(
-                    prompt,
-                    system_prompt=str(prompt_template["system_prompt"]),
-                    temperature=0.0,
-                    max_tokens=500,
-                ).strip()
-                annotation = _parse_machine_response(response, sample_id=sample_id)
+                attempts: list[dict[str, Any]] = []
+                annotation: dict[str, Any] | None = None
+                for attempt_number in range(1, MACHINE_PRELABEL_MAX_ATTEMPTS + 1):
+                    print(f"machine_prelabel: start {sample_id} attempt={attempt_number}")
+                    response = generator.complete(
+                        prompt,
+                        system_prompt=str(prompt_template["system_prompt"]),
+                        temperature=0.0,
+                        max_tokens=500,
+                    ).strip()
+                    attempt = {
+                        "attempt": attempt_number,
+                        "prompt_sha256": hashlib.sha256(prompt.encode("utf-8")).hexdigest(),
+                        "raw_response": response,
+                        "raw_response_sha256": hashlib.sha256(response.encode("utf-8")).hexdigest(),
+                    }
+                    try:
+                        annotation = _parse_machine_response(response, sample_id=sample_id)
+                    except ValueError as exc:
+                        error = str(exc)
+                        attempt.update({"valid": False, "validation_error": error})
+                        attempts.append(attempt)
+                        print(
+                            f"machine_prelabel: invalid {sample_id} "
+                            f"attempt={attempt_number}: {error}"
+                        )
+                        if attempt_number == MACHINE_PRELABEL_MAX_ATTEMPTS:
+                            raise ValueError(
+                                f"{sample_id}: machine prelabel invalid after "
+                                f"{MACHINE_PRELABEL_MAX_ATTEMPTS} attempts"
+                            ) from exc
+                        prompt = _prelabel_retry_prompt(
+                            item,
+                            previous_response=response,
+                            validation_error=error,
+                        )
+                    else:
+                        attempt.update({"valid": True, "validation_error": None})
+                        attempts.append(attempt)
+                        break
+                if annotation is None:
+                    raise ValueError(f"{sample_id}: machine prelabel produced no annotation")
+                final_attempt = attempts[-1]
                 row = {
                     "sample_id": sample_id,
                     "context_sha256": item["context_sha256"],
                     "annotation": annotation,
-                    "raw_response": response,
-                    "raw_response_sha256": hashlib.sha256(response.encode("utf-8")).hexdigest(),
-                    "prompt_sha256": hashlib.sha256(prompt.encode("utf-8")).hexdigest(),
+                    "raw_response": final_attempt["raw_response"],
+                    "raw_response_sha256": final_attempt["raw_response_sha256"],
+                    "prompt_sha256": final_attempt["prompt_sha256"],
+                    "attempts": attempts,
                 }
                 handle.write(json.dumps(row, ensure_ascii=False, sort_keys=True) + "\n")
                 handle.flush()
+                os.fsync(handle.fileno())
                 completed[sample_id] = row
+                print(f"machine_prelabel: completed {sample_id} attempts={len(attempts)}")
     finally:
         release_generator(generator)
     if set(completed) != set(items):
@@ -848,6 +951,7 @@ def prelabel_packet(packet_dir: Path, config_path: Path) -> dict[str, Any]:
             "raw_response": completed[sample_id]["raw_response"],
             "raw_response_sha256": completed[sample_id]["raw_response_sha256"],
             "prompt_sha256": completed[sample_id]["prompt_sha256"],
+            "attempts": completed[sample_id].get("attempts", []),
         }
         for sample_id in sorted(completed)
     ]

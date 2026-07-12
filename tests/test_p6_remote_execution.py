@@ -52,6 +52,7 @@ def test_p6_systemd_units_bind_remote_packet_and_prelabel_runner() -> None:
     assert "python -m far.experiments.type_mappability prelabel" in runner
     assert "--packet-dir /mnt/d/FAR-outputs/type_mappability_v1" in runner
     assert "Wants=far-ollama-p6.service" in runner
+    assert "Restart=no" in runner
     assert "WorkingDirectory=/mnt/d/FAR-workspace/FAR-longterm" in ollama
     assert "source scripts/windows_gpu_env.sh; exec ollama serve" in ollama
     starter = (ROOT / "scripts/start_windows_p6_prelabels.sh").read_text(encoding="utf-8")

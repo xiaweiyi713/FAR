@@ -310,9 +310,125 @@ def test_machine_prelabel_is_resumable_provenanced_and_released_once(
     assert generator.releases == 1
     assert (packet / "machine_prelabel_checkpoint.jsonl").is_file()
     assert (packet / "machine_prelabel_work_identity.json").is_file()
+    rows = read_jsonl(packet / "machine_prelabel_checkpoint.jsonl")
+    assert all(len(row["attempts"]) == 1 and row["attempts"][0]["valid"] for row in rows)
     status = packet_status(packet)
     assert status["machine_prelabels"]["complete"] is True
     assert status["ready_to_analyze"] is False
+
+
+def test_machine_prelabel_retries_invalid_schema_and_preserves_attempts(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    packet = tmp_path / "packet"
+    prepare_packet(packet)
+    config = tmp_path / "config.yaml"
+    config.write_text(
+        "llm:\n  enabled: true\n  provider: ollama\n  model: test-model\n",
+        encoding="utf-8",
+    )
+
+    class RetryGenerator:
+        def __init__(self) -> None:
+            self.calls = 0
+            self.releases = 0
+
+        def complete(self, prompt: str, **kwargs: object) -> str:
+            del prompt, kwargs
+            self.calls += 1
+            if self.calls == 1:
+                return json.dumps(
+                    {
+                        "mappability": "clean",
+                        "mapped_types": [],
+                        "missing_concept": "",
+                        "rationale": "invalid first attempt",
+                    }
+                )
+            return json.dumps(_annotation("clean", self.calls))
+
+        def release(self) -> None:
+            self.releases += 1
+
+    generator = RetryGenerator()
+    monkeypatch.setattr(
+        "far.experiments.type_mappability.build_generator",
+        lambda value: generator,
+    )
+    monkeypatch.setattr(
+        "far.experiments.type_mappability._llm_runtime_identity",
+        lambda value: {"ollama_model": {"digest": "sha256:" + "4" * 64}},
+    )
+
+    result = prelabel_packet(packet, config)
+
+    assert result["samples"] == 217
+    assert generator.calls == 218
+    assert generator.releases == 1
+    rows = read_jsonl(packet / "completed/machine_prelabels.jsonl")
+    attempts = rows[0]["attempts"]
+    assert [attempt["valid"] for attempt in attempts] == [False, True]
+    assert attempts[0]["validation_error"].endswith(
+        "clean requires one type and no missing concept"
+    )
+    assert (
+        attempts[0]["raw_response_sha256"]
+        == hashlib.sha256(attempts[0]["raw_response"].encode("utf-8")).hexdigest()
+    )
+    assert rows[0]["raw_response"] == attempts[-1]["raw_response"]
+    assert packet_status(packet)["machine_prelabels"]["complete"] is True
+
+
+def test_machine_prelabel_exhausts_bounded_retry_budget_and_releases_generator(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    packet = tmp_path / "packet"
+    prepare_packet(packet)
+    config = tmp_path / "config.yaml"
+    config.write_text(
+        "llm:\n  enabled: true\n  provider: ollama\n  model: test-model\n",
+        encoding="utf-8",
+    )
+
+    class InvalidGenerator:
+        def __init__(self) -> None:
+            self.calls = 0
+            self.releases = 0
+
+        def complete(self, prompt: str, **kwargs: object) -> str:
+            del prompt, kwargs
+            self.calls += 1
+            return json.dumps(
+                {
+                    "mappability": "clean",
+                    "mapped_types": [],
+                    "missing_concept": "",
+                    "rationale": "always invalid",
+                }
+            )
+
+        def release(self) -> None:
+            self.releases += 1
+
+    generator = InvalidGenerator()
+    monkeypatch.setattr(
+        "far.experiments.type_mappability.build_generator",
+        lambda value: generator,
+    )
+    monkeypatch.setattr(
+        "far.experiments.type_mappability._llm_runtime_identity",
+        lambda value: {"ollama_model": {"digest": "sha256:" + "4" * 64}},
+    )
+
+    with pytest.raises(ValueError, match="invalid after 3 attempts"):
+        prelabel_packet(packet, config)
+
+    assert generator.calls == 3
+    assert generator.releases == 1
+    assert (packet / "machine_prelabel_checkpoint.jsonl").read_bytes() == b""
+    assert not (packet / "completed/machine_prelabels.jsonl").exists()
 
 
 def test_complete_packet_analysis_and_verifier_recompute_everything(tmp_path: Path) -> None:

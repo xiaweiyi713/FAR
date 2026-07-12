@@ -11,7 +11,7 @@ echo "time=$(date -Is)"
 systemctl --user show far-p6-prelabels.service far-ollama-p6.service \
   -p ActiveState -p SubState -p MainPID -p Result -p NRestarts --no-pager 2>/dev/null || true
 checkpoint="${packet}/machine_prelabel_checkpoint.jsonl"
-if [[ -f "${checkpoint}" ]]; then
+if [[ -s "${checkpoint}" ]]; then
   printf 'checkpoint='; wc -l < "${checkpoint}"
   tail -n1 "${checkpoint}" | python3 -c 'import json,sys; print("last="+str(json.load(sys.stdin).get("sample_id")))'
 else
