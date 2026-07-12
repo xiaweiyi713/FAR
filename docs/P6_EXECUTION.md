@@ -84,9 +84,20 @@ and the remote attempt-log SHA-256 is
 The remote runner exited successfully, Ollama was stopped, and the local
 zero-model installer independently accepted all rows and attempt chains.
 
-Installing new diagnostic files changes the diagnostic tree. Before any P10-B
-release, rebuild and verify the artifact manifest/archive rather than claiming
-the earlier 333-file archive contains P6 prelabels.
+The returned machine packet is part of the immutable
+[`artifacts-v1`](https://github.com/xiaweiyi713/FAR/releases/tag/artifacts-v1)
+release: 336 files with tree SHA-256
+`8f620af737f3b04f5b3813b06c7183743a3ae14f7c8fd869f43a83b9a821dbff`.
+In a fresh checkout, install that packet before coordinating human work:
+
+```bash
+uv run --locked falsirag ops diagnostic-data install
+uv run --locked falsirag ops diagnostic-data verify
+```
+
+`diagnostics/` is now an ignored local install target, not a Git-tracked
+directory. The preservation steps below are therefore mandatory for future
+human returns.
 
 ## Human-only remainder
 
@@ -107,8 +118,28 @@ falsirag diag type-mappability export-reviewer \
 Each archive has an exact allowlist: `items.jsonl`, one blank role template,
 reviewer instructions, and a fingerprint manifest. It excludes the analysis
 index, scores, machine labels, the peer template, completed files, and the
-source packet manifest. Return and install the two completed JSONL files with
-distinct non-empty annotator IDs.
+source packet manifest. The deterministic archives generated from
+`artifacts-v1` and checked on 2026-07-12 are:
+
+| Role | Local handoff | SHA-256 |
+|---|---|---|
+| reviewer A | `outputs/p6-reviewer-a.zip` | `40f9940c1756676fb138181621eeb2586d1be4e6b709dda05307fb576cdec443` |
+| reviewer B | `outputs/p6-reviewer-b.zip` | `84863511b085de4700983ca29e3e2ca1538ed1519281f52b2283e998a69d0dee` |
+
+Verify each ZIP immediately before sending it. Give each archive to a distinct
+person and never send both archives to the same reviewer. Return only the
+completed role JSONL files, retain the original returned bytes outside the
+repository, and install them with distinct non-empty self-attested IDs:
+
+```bash
+shasum -a 256 outputs/p6-reviewer-a.zip outputs/p6-reviewer-b.zip
+uv run --locked falsirag diag type-mappability install \
+  --packet-dir diagnostics/type_mappability_v1 \
+  --role reviewer_a --annotator-id <id-a> --input <completed-a.jsonl>
+uv run --locked falsirag diag type-mappability install \
+  --packet-dir diagnostics/type_mappability_v1 \
+  --role reviewer_b --annotator-id <id-b> --input <completed-b.jsonl>
+```
 
 Only after both reviewer files are frozen may the third distinct adjudicator
 see their labels and the sanitized machine annotations:
@@ -139,3 +170,25 @@ uv run falsirag diag type-mappability verify \
 Even after successful adjudication, report the result as retrospective,
 `confirmatory_h4:false`, `publication_gold:false`, and
 `human_identity_verified:false`.
+
+## Preserve completed human evidence after P10-B
+
+Reviewer and adjudicator installs modify only the ignored local diagnostic
+tree. After every accepted return, keep the original returned file in an
+external backup and record its SHA-256. After all three roles and the report
+verifier pass, build a new candidate archive without overwriting the immutable
+v1 manifest:
+
+```bash
+uv run --locked falsirag ops diagnostic-data pack \
+  --source diagnostics \
+  --archive artifact-dist/far-diagnostics-v2.tar.gz \
+  --manifest artifact-dist/diagnostics-v2.candidate.json
+```
+
+Do not mutate the `artifacts-v1` release or point the repository at this local
+candidate. Publishing `artifacts-v2`, independently downloading it into an
+empty directory, comparing the complete tree, and switching the packaged
+manifest require a separately reviewed and authorized release cutover. Until
+that succeeds, preserve the installed diagnostic tree and all three original
+human return files.

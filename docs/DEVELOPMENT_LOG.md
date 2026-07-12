@@ -3196,3 +3196,17 @@ evidence bundle verified successfully, releasing the GPU.
   `91eb3205fe127271bc5f4882025243d9974a711e311ef074fcbde09aa86e7cf7` to
   `09cd929fe7a5e0b822914b9009edd7494e3d58da6c5da5256e573c2d9664a6d2`
   after the link-only edit. The normal fingerprint verifier remains active.
+
+## 2026-07-12 — P6 human handoff aligned with the P10-B release model
+
+- Re-audited the installed P6 packet after the diagnostic cutover. It remains
+  provenance-valid with 217/217 machine prelabels, while both human reviewers
+  and the adjudicator are correctly absent and `ready_to_analyze=false`.
+- Regenerated and inspected the deterministic role-isolated reviewer ZIPs.
+  Their exact SHAs are now recorded in `docs/P6_EXECUTION.md`; each contains
+  only visible items, one blank role template, instructions, and its handoff
+  manifest, with no machine labels, scores, strata, or peer template.
+- Corrected stale pre-P10-B instructions: completed human returns now land in
+  the ignored diagnostic install target, so the coordinator must retain the
+  original return bytes and build a separate v2 candidate archive. The
+  immutable `artifacts-v1` asset and v1 manifest must not be overwritten.

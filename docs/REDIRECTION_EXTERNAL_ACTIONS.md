@@ -1,10 +1,10 @@
-# Redirection external action sequence
+# Redirection external-action ledger
 
-This is the remaining authorized-action sequence for
-[`PLAN_REDIRECTION.md`](PLAN_REDIRECTION.md). All engineering and zero-model
-gates are already local. These steps mutate GitHub, the remote GPU host, or
-human evidence and therefore must not be inferred from an ordinary build/test
-request.
+This ledger records the external actions for
+[`PLAN_REDIRECTION.md`](PLAN_REDIRECTION.md), including completed mutations and
+the remaining human-only work. External steps mutate GitHub, the remote GPU
+host, or human evidence and therefore must not be inferred from an ordinary
+build/test request.
 
 ## Invariants
 
@@ -15,12 +15,14 @@ request.
   GPU, immutable Qwen digest, frozen inputs, and dedicated output root.
 - P5/P6 use development evidence only. They never authorize held-out/test use.
 - P6 remains retrospective and cannot confirm H4 even after human completion.
-- Do not publish or delete diagnostics until the current diagnostic tree has
-  been repacked and independently installed from its release URL.
+- `artifacts-v1` is immutable. Future accepted P6 human results must be
+  preserved in a new versioned archive and independently read back before the
+  packaged manifest is switched.
 
-## 1. Publish the reviewed source commit
+## 1. Publish the reviewed source commit (complete)
 
-Requires explicit GitHub push authorization:
+The reviewed source and subsequent P10-B/CI repairs are on `origin/main`.
+Future source pushes still require explicit GitHub push authorization:
 
 ```bash
 git status --short
@@ -30,9 +32,11 @@ test "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)"
 
 Do not prepare the remote host if local `HEAD` and `origin/main` differ.
 
-## 2. Run P5 first
+## 2. P5 registered remote ablations (complete)
 
-Preparation and model execution are separately authorized:
+The three registered 350-row runs completed, were returned, and passed the
+independent verifier. The commands below remain the historical runbook;
+re-running them would require new authorization:
 
 ```bash
 scripts/prepare_windows_p5_ablations.sh
@@ -54,9 +58,11 @@ FAR_P5_FETCH_ALLOWED=1 scripts/fetch_windows_p5_ablations.sh --execute
 The fetch command ends with the independent zero-model verifier. H3/H5 remain
 unset until it returns `valid:true` from the complete remote bundle.
 
-## 3. Run P6 machine prelabels second
+## 3. P6 machine prelabels (complete)
 
-Confirm the P5 runner and P5 Ollama service are inactive, then:
+The authorized run completed 217 rows in 221 attempts, returned the native
+provenance bundle, and stopped its dedicated model service. The commands below
+are retained as the historical runbook and are not authorization to rerun it:
 
 ```bash
 scripts/prepare_windows_p6_prelabels.sh
@@ -74,11 +80,10 @@ scripts/stop_windows_p6_prelabels.sh --execute --stop-ollama
 FAR_P6_FETCH_ALLOWED=1 scripts/fetch_windows_p6_prelabels.sh --execute
 ```
 
-The installer preserves and checks every native prompt/raw-response hash. It
-changes the tracked diagnostic tree, so commit and audit that returned evidence
-before any artifact release.
+The installer preserves and checks every native prompt/raw-response hash. The
+accepted result is present in the published `artifacts-v1` diagnostic release.
 
-## 4. Complete P6 human work
+## 4. Complete P6 human work (remaining)
 
 This cannot be automated or substituted with more models:
 
