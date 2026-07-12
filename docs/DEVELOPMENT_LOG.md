@@ -3150,3 +3150,17 @@ evidence bundle verified successfully, releasing the GPU.
   annotations but excludes machine raw responses and score/stratum metadata.
   It uses the preregistered `gold_annotation` field, which the installer now
   accepts while retaining compatibility with the original packet template.
+
+## 2026-07-12 — P0–P10 redirection completion audit
+
+- Repaired the stale opening sentence in `docs/COMPLETION_AUDIT.md` and added a
+  requirement-by-requirement P0–P10 table tied to the adopted redirection plan.
+  The audit distinguishes complete implementation, registered observational
+  scope, machine-only evidence, human-only work, and external mutations.
+- Re-ran the preregistration-tag check, P1 oracle tests, P3 trace-map verifier,
+  P5 independent verifier, offline BM25 quickstart, narrowed paper-readiness
+  gate, P6 packet status, and P10-A diagnostic-data verifier without model
+  calls. All completed phases passed their named evidence checks.
+- The audit deliberately leaves P6 human review/adjudication and P10-B release
+  publication/cutover open. It forbids closing either with synthetic identities,
+  machine labels, an unverified upload, or deletion before independent return.

@@ -1,9 +1,36 @@
 # Project Completion Audit
 
 This file separates implemented research infrastructure from evidence that can
-only exist after real annotation and far.experiments. It is the acceptance checklist
-for `PROJECT_PROPOSAL.md`; generated or diagnostic values must not be used to
-close an empirical gate.
+only exist after real annotation and formal experiments. It is the acceptance
+checklist for `PROJECT_PROPOSAL.md`; generated or diagnostic values must not be
+used to close an empirical gate.
+
+## Redirection plan audit (P0--P10)
+
+This table audits the adopted execution order in
+[`PLAN_REDIRECTION.md`](PLAN_REDIRECTION.md). "Complete" means the named local
+artifact and its relevant verifier exist; it does not silently upgrade dev,
+machine, or retrospective evidence to human gold or held-out confirmation.
+
+| Phase | Required outcome | Authoritative evidence | Audit state | Remaining boundary |
+|---|---|---|---|---|
+| P0 | Freeze RQ1--5, H1--5, oracle semantics, and acceptance rules before analysis | `docs/PREREG_ORACLE_ATTRIBUTION.md`; Git tag `prereg-oracle-v1` at `72a6926cfe1dda0fc26db0ab227cd3b75ba14e90` | Complete | The tag fixes chronology; later amendments must remain explicit |
+| P1 | Reproduce the frozen FAR baseline and compute the revision label-injection ceiling without leakage | `far/oracle.py`; `tests/test_oracle.py`; amendment `PREREG_ORACLE_ATTRIBUTION_AMENDMENT_2026-07-10.md` | Complete | Full-set ceiling is `341/350`, not `1.0`, because nine upstream gold/wrong phrase sets collide; the 341 label-feasible rows remain `1.0` |
+| P2 | Choose a faithful oracle route instead of metadata-only pseudo-interventions | Capability amendment selects P2-B; `far/experiments/stage_trace_map.py` does not impute absent detector/action traces | Complete as the registered B branch | This is observational trace attribution, not a causal R/D/A oracle ladder |
+| P3 | Produce and independently verify the eight-method stage-wise failure map | `reports/stage_trace_map.{json,md}`; `tests/test_stage_trace_map.py`; `falsirag diag trace-map verify` | Complete | T1 is `8/8`; T2 is `+0.3914` with 95% CI `[+0.3554,+0.4275]`; no human gold/test claim |
+| P4 | Rewrite the TMLR MVP around the capability-aware mechanism result and claim ladder | `paper/main.tex`; `reports/tmlr_result_integration_matrix.md`; solo-paper readiness gate | Complete for the machine-audited TMLR draft | Human author review and any venue submission remain external actions |
+| P5 | Run the registered clean 3x350 RAMDocs dev ablations and freeze H3/H5 verdicts | `reports/p5_ramdocs_ablations.{json,md}`; `far/experiments/p5_ablations.py` independent verifier | Complete | H3 is `uncertain`; H5 is `equivalent`; neither is human-gold or held-out evidence |
+| P6 | Measure type mappability with frozen machine prelabels, two blind human reviewers, and third-person adjudication | `diagnostics/type_mappability_v1/completed/machine_*`; `docs/P6_EXECUTION.md`; `falsirag diag type-mappability status`; deterministic reviewer/adjudicator handoff builders | Machine stage complete; human stage pending | Machine rows are 217/217 and provenance-valid, but `ready_to_analyze=false` until two real reviewers and a distinct adjudicator finish; H4 remains retrospective/non-confirmatory |
+| P7 | Remove VeraRAG from the default runtime path and provide self-contained BM25/Ollama interfaces | `far/adapters/retrieval.py`; `examples/bm25_quickstart.py`; adapter and package-smoke tests | Complete | Explicit `vera_*` backends remain optional and fail closed when unavailable |
+| P8 | Reframe README/product positioning and move detailed research caveats into durable status docs | `README.md`; `docs/RESEARCH_STATUS.md` | Complete | Claim boundaries must be refreshed when new human or release evidence arrives |
+| P9 | Converge on the grouped `falsirag` command tree while retaining migration aliases | `far/cli.py`; `tests/test_cli.py`; deprecated alias warnings | Complete | Compatibility aliases remain intentionally transitional |
+| P10-A | Consolidate the `far.*` namespace and separate installable code from diagnostic payloads | package smoke; `far/data/diagnostics-v1.json`; `falsirag ops diagnostic-data verify/install` | Complete | Current local archive contains 336 files and verifies after an empty-directory install |
+| P10-B | Publish the exact diagnostic archive, download/verify it independently, then remove `diagnostics/` from the main tree | Candidate `artifact-dist/far-diagnostics-v1.tar.gz`, SHA-256 `5e3f28dcd81d2af3170f740611b9f59b8bbe1ee6e869379d5794730db4ecf96e`; manifest still has `published:false` and `release_url:null` | Pending explicit external authorization | Creating the GitHub release and deleting tracked diagnostics are external/destructive mutations and must not be inferred from ordinary push permission; history rewrite/LFS remains a separate decision |
+
+The redirection plan is therefore **implementation-complete except for two
+irreducible boundaries**: real P6 human work and the separately authorized
+P10-B release cutover. Neither may be replaced with model labels, synthetic
+identities, an unverified upload, or deletion before independent download.
 
 | Proposal obligation | Current evidence | State | Evidence required to close |
 |---|---|---|---|
