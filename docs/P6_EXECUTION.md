@@ -91,9 +91,37 @@ the earlier 333-file archive contains P6 prelabels.
 ## Human-only remainder
 
 Machine prelabels are complete, hidden from reviewers, and are not gold. Two distinct
-people must independently complete all 217 rows using the reviewer templates;
-only after both files are frozen may a third distinct adjudicator see their
-labels and the machine prelabels. Use the packet commands printed in
+people must independently complete all 217 rows. Because the tracked packet now
+contains machine prelabels, never distribute the repository or packet directory
+itself. Generate the two role-isolated, deterministic ZIPs instead:
+
+```bash
+falsirag diag type-mappability export-reviewer \
+  --packet-dir diagnostics/type_mappability_v1 \
+  --role reviewer_a --output-dir outputs/p6-reviewer-a
+falsirag diag type-mappability export-reviewer \
+  --packet-dir diagnostics/type_mappability_v1 \
+  --role reviewer_b --output-dir outputs/p6-reviewer-b
+```
+
+Each archive has an exact allowlist: `items.jsonl`, one blank role template,
+reviewer instructions, and a fingerprint manifest. It excludes the analysis
+index, scores, machine labels, the peer template, completed files, and the
+source packet manifest. Return and install the two completed JSONL files with
+distinct non-empty annotator IDs.
+
+Only after both reviewer files are frozen may the third distinct adjudicator
+see their labels and the sanitized machine annotations:
+
+```bash
+falsirag diag type-mappability export-adjudicator \
+  --packet-dir diagnostics/type_mappability_v1 \
+  --output-dir outputs/p6-adjudicator
+```
+
+The adjudicator worksheet excludes machine raw responses, analysis strata, and
+scores. The adjudicator fills `gold_annotation`; the installer normalizes it to
+the frozen installed annotation schema. Use the packet commands printed in
 `diagnostics/type_mappability_v1/INSTRUCTIONS.md` to install each completed
 file, then run:
 

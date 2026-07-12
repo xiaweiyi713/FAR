@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import zipfile
 from pathlib import Path
 
 import pytest
@@ -15,6 +16,8 @@ from far.experiments.type_mappability import (
     _association,
     _prelabel_prompt,
     analyze,
+    build_adjudicator_handoff,
+    build_reviewer_handoff,
     install_human_annotations,
     install_machine_prelabels,
     packet_status,
@@ -72,10 +75,9 @@ def _completed_source(
     return output_path
 
 
-def _install_complete_synthetic_packet(packet_dir: Path, tmp_path: Path) -> None:
+def _install_synthetic_reviewers_and_machine(packet_dir: Path, tmp_path: Path) -> None:
     reviewer_a = _completed_source(packet_dir, tmp_path / "reviewer_a.jsonl")
     reviewer_b = _completed_source(packet_dir, tmp_path / "reviewer_b.jsonl", offset=1)
-    adjudicator = _completed_source(packet_dir, tmp_path / "adjudicator.jsonl")
     machine = _completed_source(packet_dir, tmp_path / "machine.jsonl", offset=2)
     install_human_annotations(
         packet_dir,
@@ -100,6 +102,11 @@ def _install_complete_synthetic_packet(packet_dir: Path, tmp_path: Path) -> None
         },
     )
     install_machine_prelabels(packet_dir, machine, identity)
+
+
+def _install_complete_synthetic_packet(packet_dir: Path, tmp_path: Path) -> None:
+    _install_synthetic_reviewers_and_machine(packet_dir, tmp_path)
+    adjudicator = _completed_source(packet_dir, tmp_path / "adjudicator.jsonl")
     install_human_annotations(
         packet_dir,
         adjudicator,
@@ -138,6 +145,88 @@ def test_committed_blank_packet_is_valid_and_fail_closed() -> None:
     assert status["samples"] == 217
     assert status["input_audit"]["valid"] is True
     assert status["ready_to_analyze"] is False
+
+
+def test_reviewer_handoff_is_role_isolated_blind_and_deterministic(tmp_path: Path) -> None:
+    packet = ROOT / "diagnostics" / "type_mappability_v1"
+    output = tmp_path / "reviewer_a_handoff"
+
+    result = build_reviewer_handoff(packet, output, role="reviewer_a")
+
+    assert result["schema_version"] == "far-type-mappability-reviewer-handoff-v1"
+    assert result["samples"] == 217
+    assert result["safety"] == {
+        "single_reviewer_only": True,
+        "blank_template_only": True,
+        "analysis_index_included": False,
+        "machine_prelabels_included": False,
+        "other_reviewer_files_included": False,
+        "scores_included": False,
+        "packet_manifest_included": False,
+    }
+    assert all(row["annotation"] is None for row in read_jsonl(output / "reviewer_a.jsonl"))
+    assert all(
+        "analysis_strata" not in row and "boundary_score" not in row
+        for row in read_jsonl(output / "items.jsonl")
+    )
+    archive_path = tmp_path / "reviewer_a_handoff.zip"
+    with zipfile.ZipFile(archive_path) as archive:
+        assert set(archive.namelist()) == {
+            "REVIEWER_INSTRUCTIONS.md",
+            "handoff_manifest.json",
+            "items.jsonl",
+            "reviewer_a.jsonl",
+        }
+    first_sha = result["archive_sha256"]
+    second = build_reviewer_handoff(packet, output, role="reviewer_a", overwrite=True)
+    assert second["archive_sha256"] == first_sha
+
+    unsafe = tmp_path / "unsafe_handoff"
+    unsafe.mkdir()
+    (unsafe / "unrelated.txt").write_text("owner unknown", encoding="utf-8")
+    with pytest.raises(ValueError, match="without ownership"):
+        build_reviewer_handoff(packet, unsafe, role="reviewer_a", overwrite=True)
+
+
+def test_adjudicator_handoff_requires_frozen_inputs_and_installs_gold_annotation(
+    tmp_path: Path,
+) -> None:
+    packet = tmp_path / "packet"
+    prepare_packet(packet)
+    with pytest.raises(ValueError, match="both frozen reviewer"):
+        build_adjudicator_handoff(packet, tmp_path / "too_early")
+    _install_synthetic_reviewers_and_machine(packet, tmp_path)
+
+    output = tmp_path / "adjudicator_handoff"
+    result = build_adjudicator_handoff(packet, output)
+
+    assert result["schema_version"] == "far-type-mappability-adjudicator-handoff-v1"
+    assert result["reviewer_ids"] == ["reviewer-a", "reviewer-b"]
+    assert result["safety"]["reviewers_frozen"] is True
+    assert result["safety"]["machine_raw_responses_included"] is False
+    rows = read_jsonl(output / "adjudicator.jsonl")
+    assert len(rows) == 217
+    assert all(row["gold_annotation"] is None for row in rows)
+    assert all(set(row["machine_prelabel"]) == set(_annotation("clean", 0)) for row in rows)
+    assert "raw_response" not in json.dumps(rows)
+    with zipfile.ZipFile(tmp_path / "adjudicator_handoff.zip") as archive:
+        assert set(archive.namelist()) == {
+            "ADJUDICATOR_INSTRUCTIONS.md",
+            "adjudicator.jsonl",
+            "handoff_manifest.json",
+            "items.jsonl",
+        }
+
+    for row in rows:
+        row["gold_annotation"] = row["reviewer_a"]["annotation"]
+    write_jsonl(output / "adjudicator.jsonl", rows)
+    install_human_annotations(
+        packet,
+        output / "adjudicator.jsonl",
+        role="adjudicator",
+        annotator_id="adjudicator-c",
+    )
+    assert packet_status(packet)["ready_to_analyze"] is True
 
 
 def test_annotation_schema_enforces_the_three_frozen_meanings() -> None:

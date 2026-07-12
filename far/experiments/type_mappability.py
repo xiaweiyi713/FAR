@@ -1,4 +1,4 @@
-"""Prepare and analyze the retrospective P6 type-mappability study."""
+"""Prepare, hand off, and analyze the retrospective P6 type-mappability study."""
 
 from __future__ import annotations
 
@@ -10,6 +10,7 @@ import os
 import random
 import re
 import shutil
+import zipfile
 from collections import defaultdict
 from pathlib import Path
 from statistics import mean
@@ -45,6 +46,7 @@ TYPE_NAMES = (
 HUMAN_ROLES = ("reviewer_a", "reviewer_b", "adjudicator")
 DATASET_ORDER = ("wikicontradict", "rag_conflicts")
 MACHINE_PRELABEL_MAX_ATTEMPTS = 3
+REVIEWER_ROLES = ("reviewer_a", "reviewer_b")
 MACHINE_PRELABEL_RETRY_INSTRUCTION = (
     "The previous JSON did not satisfy the frozen annotation schema. Correct only the schema "
     "violation described below and return exactly one JSON object with no markdown."
@@ -420,6 +422,8 @@ def validate_annotation(value: Any, *, sample_id: str) -> dict[str, Any]:
 def _source_annotations(
     source_path: Path,
     items: dict[str, dict[str, Any]],
+    *,
+    annotation_fields: tuple[str, ...] = ("annotation",),
 ) -> list[dict[str, Any]]:
     rows = read_jsonl(source_path)
     by_id: dict[str, dict[str, Any]] = {}
@@ -431,7 +435,13 @@ def _source_annotations(
             raise ValueError(f"annotation source contains unknown sample {sample_id}")
         if row.get("context_sha256") not in {None, items[sample_id]["context_sha256"]}:
             raise ValueError(f"{sample_id}: annotation context fingerprint differs")
-        by_id[sample_id] = validate_annotation(row.get("annotation"), sample_id=sample_id)
+        populated = [field for field in annotation_fields if row.get(field) is not None]
+        if len(populated) != 1:
+            raise ValueError(
+                f"{sample_id}: annotation source must populate exactly one of "
+                f"{sorted(annotation_fields)}"
+            )
+        by_id[sample_id] = validate_annotation(row[populated[0]], sample_id=sample_id)
     if set(by_id) != set(items):
         missing = sorted(set(items) - set(by_id))
         raise ValueError(f"annotation source is incomplete; missing {len(missing)} samples")
@@ -484,7 +494,10 @@ def install_human_annotations(
             existing_ids.update(str(row.get("annotator_id", "")) for row in existing_rows)
     if annotator_id in existing_ids:
         raise ValueError("reviewer and adjudicator IDs must be distinct")
-    rows = _source_annotations(source_path, items)
+    annotation_fields = (
+        ("gold_annotation", "annotation") if role == "adjudicator" else ("annotation",)
+    )
+    rows = _source_annotations(source_path, items, annotation_fields=annotation_fields)
     installed = [{**row, "role": role, "annotator_id": annotator_id} for row in rows]
     write_jsonl(target, installed)
     result: dict[str, Any] = {
@@ -750,6 +763,235 @@ def _load_machine(
     if set(by_id) != set(items):
         raise ValueError("machine prelabels are incomplete")
     return identity, by_id
+
+
+def _prepare_handoff_output(
+    output_dir: Path,
+    *,
+    schema_version: str,
+    overwrite: bool,
+) -> Path:
+    archive_path = output_dir.parent / f"{output_dir.name}.zip"
+    if output_dir.exists() and any(output_dir.iterdir()):
+        if not overwrite:
+            raise FileExistsError(f"{output_dir} exists; pass overwrite=True to replace it")
+        manifest_path = output_dir / "handoff_manifest.json"
+        try:
+            observed = json.loads(manifest_path.read_text(encoding="utf-8"))
+        except (FileNotFoundError, json.JSONDecodeError) as exc:
+            raise ValueError("refusing to overwrite a handoff directory without ownership") from exc
+        if observed.get("schema_version") != schema_version:
+            raise ValueError("refusing to overwrite an incompatible handoff directory")
+    if archive_path.exists():
+        if not overwrite:
+            raise FileExistsError(f"{archive_path} exists; pass overwrite=True to replace it")
+        try:
+            with zipfile.ZipFile(archive_path) as archive:
+                observed = json.loads(archive.read("handoff_manifest.json"))
+        except (KeyError, OSError, ValueError, zipfile.BadZipFile) as exc:
+            raise ValueError("refusing to overwrite a handoff archive without ownership") from exc
+        if observed.get("schema_version") != schema_version:
+            raise ValueError("refusing to overwrite an incompatible handoff archive")
+    if output_dir.exists():
+        if any(output_dir.iterdir()):
+            shutil.rmtree(output_dir)
+        else:
+            output_dir.rmdir()
+    if archive_path.exists():
+        archive_path.unlink()
+    output_dir.mkdir(parents=True)
+    return archive_path
+
+
+def _write_handoff_archive(
+    output_dir: Path,
+    archive_path: Path,
+    *,
+    copied_files: list[str],
+    result: dict[str, Any],
+) -> dict[str, Any]:
+    manifest_path = output_dir / "handoff_manifest.json"
+    result["files"] = {
+        relative: sha256_file(output_dir / relative) for relative in sorted(copied_files)
+    }
+    result["archive_file"] = archive_path.name
+    result["archive_sha256"] = ""
+    write_json(manifest_path, result)
+    archive_files = sorted([*copied_files, "handoff_manifest.json"])
+    with zipfile.ZipFile(archive_path, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+        for relative in archive_files:
+            info = zipfile.ZipInfo(relative, date_time=(2026, 1, 1, 0, 0, 0))
+            info.compress_type = zipfile.ZIP_DEFLATED
+            info.create_system = 3
+            info.external_attr = 0o100644 << 16
+            archive.writestr(info, (output_dir / relative).read_bytes())
+    result["archive_sha256"] = sha256_file(archive_path)
+    write_json(manifest_path, result)
+    return result
+
+
+def build_reviewer_handoff(
+    packet_dir: Path,
+    output_dir: Path,
+    *,
+    role: str,
+    overwrite: bool = False,
+) -> dict[str, Any]:
+    """Build a deterministic packet that cannot expose machine or peer labels."""
+
+    if role not in REVIEWER_ROLES:
+        raise ValueError(f"reviewer handoff role must be one of {REVIEWER_ROLES}")
+    _, items = _annotation_items(packet_dir)
+    template_path = packet_dir / "templates" / f"{role}.jsonl"
+    template_rows = read_jsonl(template_path)
+    template_by_id = {str(row.get("sample_id", "")): row for row in template_rows}
+    if len(template_rows) != len(items) or set(template_by_id) != set(items):
+        raise ValueError("reviewer handoff template sample set is invalid")
+    for sample_id, row in template_by_id.items():
+        if (
+            set(row) != {"sample_id", "context_sha256", "annotation"}
+            or row.get("context_sha256") != items[sample_id]["context_sha256"]
+            or row.get("annotation") is not None
+        ):
+            raise ValueError(f"{sample_id}: reviewer handoff template is not blank and frozen")
+
+    schema_version = "far-type-mappability-reviewer-handoff-v1"
+    archive_path = _prepare_handoff_output(
+        output_dir,
+        schema_version=schema_version,
+        overwrite=overwrite,
+    )
+    shutil.copy2(packet_dir / "items.jsonl", output_dir / "items.jsonl")
+    template_name = f"{role}.jsonl"
+    shutil.copy2(template_path, output_dir / template_name)
+    type_lines = "\n".join(f"- `{name}`: {_TYPE_GUIDE[name]}" for name in TYPE_NAMES)
+    instructions = (
+        f"# P6 blind reviewer handoff: {role}\n\n"
+        "Work independently using only the files in this ZIP. Do not inspect the FAR "
+        "repository, machine prelabels, analysis metadata, scores, or another reviewer's "
+        "work. Do not search the web.\n\n"
+        f"## Frozen types\n\n{type_lines}\n\n"
+        f"Fill the `annotation` object for all 217 rows in `{template_name}` by matching "
+        "`sample_id` to `items.jsonl`. `clean` requires exactly one mapped type and an "
+        "empty missing concept; `partial` requires mapped types plus a non-empty missing "
+        "concept; `unmappable` requires no mapped types and a non-empty missing concept. "
+        "Every row requires a text-grounded rationale. Do not modify sample or context "
+        "fingerprints. Return only the completed JSONL file to the study owner.\n"
+    )
+    (output_dir / "REVIEWER_INSTRUCTIONS.md").write_text(instructions, encoding="utf-8")
+    result = {
+        "schema_version": schema_version,
+        "role": role,
+        "samples": len(items),
+        "protocol_sha256": PROTOCOL_SHA256,
+        "source_packet_sha256": sha256_file(packet_dir / "packet_manifest.json"),
+        "source_items_sha256": sha256_file(packet_dir / "items.jsonl"),
+        "source_template_sha256": sha256_file(template_path),
+        "safety": {
+            "single_reviewer_only": True,
+            "blank_template_only": True,
+            "analysis_index_included": False,
+            "machine_prelabels_included": False,
+            "other_reviewer_files_included": False,
+            "scores_included": False,
+            "packet_manifest_included": False,
+        },
+    }
+    return _write_handoff_archive(
+        output_dir,
+        archive_path,
+        copied_files=["items.jsonl", template_name, "REVIEWER_INSTRUCTIONS.md"],
+        result=result,
+    )
+
+
+def build_adjudicator_handoff(
+    packet_dir: Path,
+    output_dir: Path,
+    *,
+    overwrite: bool = False,
+) -> dict[str, Any]:
+    """Build the post-review worksheet with frozen human and machine inputs."""
+
+    _, items = _annotation_items(packet_dir)
+    if _completed_path(packet_dir, "adjudicator").exists():
+        raise FileExistsError("adjudicator annotations are already installed")
+    if any(not _completed_path(packet_dir, role).is_file() for role in REVIEWER_ROLES):
+        raise ValueError("adjudicator handoff requires both frozen reviewer files")
+    if not _completed_path(packet_dir, "machine_prelabels").is_file():
+        raise ValueError("adjudicator handoff requires frozen machine prelabels")
+    reviewer_a_id, reviewer_a = _load_installed(packet_dir, items, "reviewer_a")
+    reviewer_b_id, reviewer_b = _load_installed(packet_dir, items, "reviewer_b")
+    machine_identity, machine = _load_machine(packet_dir, items)
+    if reviewer_a_id == reviewer_b_id:
+        raise ValueError("adjudicator handoff requires two distinct frozen reviewers")
+
+    schema_version = "far-type-mappability-adjudicator-handoff-v1"
+    archive_path = _prepare_handoff_output(
+        output_dir,
+        schema_version=schema_version,
+        overwrite=overwrite,
+    )
+    shutil.copy2(packet_dir / "items.jsonl", output_dir / "items.jsonl")
+    worksheet = [
+        {
+            "sample_id": sample_id,
+            "context_sha256": items[sample_id]["context_sha256"],
+            "reviewer_a": {
+                "annotator_id": reviewer_a_id,
+                "annotation": reviewer_a[sample_id],
+            },
+            "reviewer_b": {
+                "annotator_id": reviewer_b_id,
+                "annotation": reviewer_b[sample_id],
+            },
+            "machine_prelabel": machine[sample_id],
+            "gold_annotation": None,
+        }
+        for sample_id in sorted(items)
+    ]
+    write_jsonl(output_dir / "adjudicator.jsonl", worksheet)
+    instructions = (
+        "# P6 adjudicator handoff\n\n"
+        "This packet was generated only after two distinct reviewer files and the machine "
+        "prelabels were frozen. For each row, compare both independent human annotations "
+        "with the visible context in `items.jsonl`. The machine prelabel is a non-gold review "
+        "aid and must not automatically break ties. Fill exactly one `gold_annotation` using "
+        "the frozen clean/partial/unmappable schema. Do not modify reviewer, machine, sample, "
+        "or context fields. Return only the completed `adjudicator.jsonl` to the study owner.\n"
+    )
+    (output_dir / "ADJUDICATOR_INSTRUCTIONS.md").write_text(instructions, encoding="utf-8")
+    result = {
+        "schema_version": schema_version,
+        "samples": len(items),
+        "protocol_sha256": PROTOCOL_SHA256,
+        "source_packet_sha256": sha256_file(packet_dir / "packet_manifest.json"),
+        "source_items_sha256": sha256_file(packet_dir / "items.jsonl"),
+        "reviewer_ids": [reviewer_a_id, reviewer_b_id],
+        "source_reviewer_sha256": {
+            role: sha256_file(_completed_path(packet_dir, role)) for role in REVIEWER_ROLES
+        },
+        "source_machine_sha256": sha256_file(_completed_path(packet_dir, "machine_prelabels")),
+        "source_machine_identity_sha256": sha256_file(
+            packet_dir / "completed" / "machine_identity.json"
+        ),
+        "machine_identity": machine_identity,
+        "safety": {
+            "reviewers_frozen": True,
+            "reviewer_ids_distinct": True,
+            "machine_prelabels_included": True,
+            "machine_raw_responses_included": False,
+            "analysis_index_included": False,
+            "scores_included": False,
+            "gold_annotations_blank": True,
+        },
+    }
+    return _write_handoff_archive(
+        output_dir,
+        archive_path,
+        copied_files=["items.jsonl", "adjudicator.jsonl", "ADJUDICATOR_INSTRUCTIONS.md"],
+        result=result,
+    )
 
 
 _JSON_FENCE = re.compile(r"^```(?:json)?\s*|\s*```$", re.I)
@@ -1565,6 +1807,15 @@ def main() -> None:
     install_machine_parser.add_argument("--packet-dir", type=Path, required=True)
     install_machine_parser.add_argument("--input", type=Path, required=True)
     install_machine_parser.add_argument("--identity", type=Path, required=True)
+    reviewer_handoff_parser = subparsers.add_parser("export-reviewer")
+    reviewer_handoff_parser.add_argument("--packet-dir", type=Path, required=True)
+    reviewer_handoff_parser.add_argument("--output-dir", type=Path, required=True)
+    reviewer_handoff_parser.add_argument("--role", choices=REVIEWER_ROLES, required=True)
+    reviewer_handoff_parser.add_argument("--overwrite", action="store_true")
+    adjudicator_handoff_parser = subparsers.add_parser("export-adjudicator")
+    adjudicator_handoff_parser.add_argument("--packet-dir", type=Path, required=True)
+    adjudicator_handoff_parser.add_argument("--output-dir", type=Path, required=True)
+    adjudicator_handoff_parser.add_argument("--overwrite", action="store_true")
     prelabel_parser = subparsers.add_parser("prelabel")
     prelabel_parser.add_argument("--packet-dir", type=Path, required=True)
     prelabel_parser.add_argument(
@@ -1592,6 +1843,19 @@ def main() -> None:
         )
     elif args.command == "install-machine":
         result = install_machine_prelabels(args.packet_dir, args.input, args.identity)
+    elif args.command == "export-reviewer":
+        result = build_reviewer_handoff(
+            args.packet_dir,
+            args.output_dir,
+            role=args.role,
+            overwrite=args.overwrite,
+        )
+    elif args.command == "export-adjudicator":
+        result = build_adjudicator_handoff(
+            args.packet_dir,
+            args.output_dir,
+            overwrite=args.overwrite,
+        )
     elif args.command == "prelabel":
         result = prelabel_packet(args.packet_dir, args.config)
     elif args.command == "analyze":

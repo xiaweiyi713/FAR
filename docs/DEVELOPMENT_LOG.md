@@ -3135,3 +3135,18 @@ evidence bundle verified successfully, releasing the GPU.
 - P6 remains `ready_to_analyze=false`: two distinct human reviewers and a
   third distinct adjudicator are irreducible external work and were not
   synthesized from machine labels.
+
+## 2026-07-12 — P6 blinded human handoff hardening
+
+- Once machine prelabels became tracked, the earlier prose-only instruction to
+  distribute `items.jsonl` and one template was no longer sufficient to prevent
+  an accidental full-repository handoff. Added deterministic, role-specific
+  reviewer ZIP generation with an exact four-file allowlist and source hashes.
+- Reviewer archives exclude the analysis index, FAR scores, machine prelabels,
+  peer templates, completed files, and the packet manifest. Overwrite is
+  refused unless both the directory and ZIP prove compatible ownership.
+- Added a post-review adjudicator export that fails until two distinct reviewer
+  installs and machine prelabels are frozen. Its worksheet exposes sanitized
+  annotations but excludes machine raw responses and score/stratum metadata.
+  It uses the preregistered `gold_annotation` field, which the installer now
+  accepts while retaining compatibility with the original packet template.

@@ -630,7 +630,7 @@ def _build_parser() -> argparse.ArgumentParser:
         diag,
         "type-mappability",
         type_mappability_main,
-        "Prepare or analyze the P6 type-mappability study.",
+        "Prepare, hand off, or analyze the P6 type-mappability study.",
         "diag type-mappability",
     )
     _add_leaf(
