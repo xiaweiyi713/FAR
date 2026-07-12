@@ -16,7 +16,7 @@ This report does not complete the strict AAAI submission path. The benchmark rem
 
 FAR has the highest counter-evidence recall in the 60-sample Qwen dev suite: 0.983 with a bootstrap interval of [0.950, 1.000]. The closest transparent baseline is the CounterRefine-style reproduction at 0.883. This supports the mechanism-level claim that falsification-guided retrieval is finding the planted counter-evidence in this controlled setting.
 
-![Counter-evidence recall by method](../diagnostics/solo_v1/experiments/artifacts/counter_evidence_recall.png)
+![Counter-evidence recall by method](https://raw.githubusercontent.com/xiaweiyi713/FAR/artifacts-v1/diagnostics/solo_v1/experiments/artifacts/counter_evidence_recall.png)
 
 The comparison is diagnostic rather than publication-final: it uses construction-derived labels on the dev split and should be rerun on adjudicated gold before any main-paper table is filled.
 
@@ -52,7 +52,7 @@ The mixed ablations matter. Removing refutation or boundary queries does not hur
 
 Only FAR shows non-zero revision accuracy among the seven method-level diagnostic runs, and the category breakdown is uneven. The chart is useful mostly because it keeps the limitation visible: FAR is not yet a high-recall automatic correction system.
 
-![Typed conflict revision accuracy by category](../diagnostics/solo_v1/experiments/artifacts/typed_conflict_breakdown.png)
+![Typed conflict revision accuracy by category](https://raw.githubusercontent.com/xiaweiyi713/FAR/artifacts-v1/diagnostics/solo_v1/experiments/artifacts/typed_conflict_breakdown.png)
 
 The current best interpretation is mechanism evidence, not deployment readiness. FAR can expose a typed revision trace and sometimes make the right typed correction, but the next empirical bottleneck is improving revision reliability after conflict detection.
 
@@ -60,7 +60,7 @@ The current best interpretation is mechanism evidence, not deployment readiness.
 
 The diagnostic release includes a concrete before/after trace. This is important because FAR's novelty claim depends on typed control being observable across retrieval and revision, not hidden in an end-to-end answer score.
 
-![Example revision trace](../diagnostics/solo_v1/experiments/artifacts/revision_trace_case.png)
+![Example revision trace](https://raw.githubusercontent.com/xiaweiyi713/FAR/artifacts-v1/diagnostics/solo_v1/experiments/artifacts/revision_trace_case.png)
 
 The example should be used as a qualitative audit case only. It is not a substitute for adjudicated aggregate metrics.
 

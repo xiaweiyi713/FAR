@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
@@ -103,6 +104,26 @@ def audit(
     )
     diagnostics_under_threshold = _bytes_to_mib(diagnostics_bytes) <= diagnostics_threshold_mib
     largest_under_threshold = _bytes_to_mib(largest.bytes) <= single_file_threshold_mib
+    diagnostic_manifest_path = root / "far/data/diagnostics-v1.json"
+    try:
+        diagnostic_manifest = json.loads(diagnostic_manifest_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        diagnostic_manifest = {}
+    archive = diagnostic_manifest.get("archive", {})
+    diagnostic_release_published = archive.get("published") is True
+    diagnostic_release_url = archive.get("release_url")
+    diagnostic_release_sha256 = archive.get("sha256")
+    diagnostics_ignored = _gitignore_has(root, "/diagnostics/") and _path_is_ignored(
+        root, "diagnostics/transient-check.tmp"
+    )
+    diagnostic_cutover_valid = (
+        diagnostic_release_published
+        and isinstance(diagnostic_release_url, str)
+        and diagnostic_release_url.startswith("https://github.com/")
+        and bool(re.fullmatch(r"[0-9a-f]{64}", str(diagnostic_release_sha256)))
+        and not diagnostics
+        and diagnostics_ignored
+    )
     valid = all(
         [
             diagnostics_under_threshold,
@@ -111,6 +132,7 @@ def audit(
             not output_tracked,
             outputs_ignored,
             outputs_has_only_gitkeep,
+            diagnostic_cutover_valid,
         ]
     )
     errors: list[str] = []
@@ -126,6 +148,8 @@ def audit(
         errors.append("outputs/ transient files are not ignored")
     if not outputs_has_only_gitkeep:
         errors.append("outputs/ should track only outputs/.gitkeep")
+    if not diagnostic_cutover_valid:
+        errors.append("published diagnostic release cutover is incomplete")
     return {
         "schema_version": SCHEMA_VERSION,
         "valid": valid,
@@ -146,6 +170,14 @@ def audit(
             "mib": _bytes_to_mib(diagnostics_bytes),
             "under_threshold": diagnostics_under_threshold,
         },
+        "diagnostic_release": {
+            "published": diagnostic_release_published,
+            "release_url": diagnostic_release_url,
+            "archive_sha256": diagnostic_release_sha256,
+            "tracked_files_removed": not diagnostics,
+            "local_install_target_ignored": diagnostics_ignored,
+            "cutover_valid": diagnostic_cutover_valid,
+        },
         "largest_tracked_file": {
             "path": largest.path,
             "bytes": largest.bytes,
@@ -165,6 +197,7 @@ def audit(
 
 def render_markdown(report: dict[str, Any]) -> str:
     diagnostics = report["diagnostics"]
+    release = report["diagnostic_release"]
     tracked = report["tracked_files"]
     largest = report["largest_tracked_file"]
     ignored = report["ignored_outputs"]
@@ -181,6 +214,10 @@ def render_markdown(report: dict[str, Any]) -> str:
 - `diagnostics/` 跟踪体积: 约 {diagnostics["mib"]} MiB
   (阈值 {report["thresholds"]["diagnostics_mib"]} MiB;
   under_threshold=`{diagnostics_under_threshold}`).
+- 诊断 release: published=`{str(release["published"]).lower()}`;
+  tracked_files_removed=`{str(release["tracked_files_removed"]).lower()}`;
+  local_install_target_ignored=`{str(release["local_install_target_ignored"]).lower()}`;
+  cutover_valid=`{str(release["cutover_valid"]).lower()}`.
 - 全仓跟踪文件: {tracked["count"]} 个, 约 {tracked["mib"]} MiB.
 - 最大跟踪文件: `{largest["path"]}`, 约 {largest["mib"]} MiB
   (阈值 {report["thresholds"]["single_file_mib"]} MiB;

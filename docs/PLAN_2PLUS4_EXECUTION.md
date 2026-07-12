@@ -157,9 +157,9 @@ systemctl --user disable --now far-ramdocs-round2.service far-ollama-2plus4.serv
 
 ## G-A 结果与停止规则
 
-正式证据包位于 [`diagnostics/ramdocs_v1/dev`](../diagnostics/ramdocs_v1/dev)，
+正式证据包位于 [`diagnostics/ramdocs_v1/dev`](https://github.com/xiaweiyi713/FAR/tree/artifacts-v1/diagnostics/ramdocs_v1/dev)，
 可复现错误分析位于
-[`diagnostics/ramdocs_v1/error_analysis`](../diagnostics/ramdocs_v1/error_analysis)。
+[`diagnostics/ramdocs_v1/error_analysis`](https://github.com/xiaweiyi713/FAR/tree/artifacts-v1/diagnostics/ramdocs_v1/error_analysis)。
 
 - FAR 与最强基线 `multi_query_rag` 的 strict exact match 均为 109/350
   （0.3114）。

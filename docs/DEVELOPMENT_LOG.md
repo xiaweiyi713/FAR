@@ -3164,3 +3164,35 @@ evidence bundle verified successfully, releasing the GPU.
 - The audit deliberately leaves P6 human review/adjudication and P10-B release
   publication/cutover open. It forbids closing either with synthetic identities,
   machine labels, an unverified upload, or deletion before independent return.
+
+## 2026-07-12 — P10-B diagnostic release cutover
+
+- With explicit P10-B authorization, published the exact 5,639,635-byte
+  `far-diagnostics-v1.tar.gz` as GitHub release `artifacts-v1`, pointing at the
+  pre-cutover source commit. The asset SHA-256 is
+  `5e3f28dcd81d2af3170f740611b9f59b8bbe1ee6e869379d5794730db4ecf96e`.
+- Rebuilt the manifest with the immutable asset URL, then forced an independent
+  GitHub download through the installer into an empty temporary directory. All
+  336 files, 43,883,739 bytes, and tree SHA-256
+  `8f620af737f3b04f5b3813b06c7183743a3ae14f7c8fd869f43a83b9a821dbff`
+  matched the source tree before deletion was allowed.
+- Removed all 336 diagnostic files from the Git index and made `diagnostics/`
+  an ignored, verified local install target. CI now installs the published
+  release before tests, preserving existing evidence paths without keeping the
+  41.9 MiB payload in fresh checkouts.
+- Repository maintenance now fails unless the manifest is published, the
+  release URL and archive SHA are valid, no diagnostic files remain tracked,
+  and the local install target is ignored. Public report images use immutable
+  `artifacts-v1` URLs. No Git-history rewrite or LFS migration was performed.
+
+## 2026-07-12: deviation — replace removed diagnostic links with immutable tag URLs
+
+- P10-B removed the current-tree diagnostic payload exactly as registered, so
+  five relative evidence links in the frozen long-term roadmap would no longer
+  resolve for a fresh GitHub reader. Replaced only those link targets with the
+  immutable pre-cutover `artifacts-v1` tag; F1–F10 text, values, gates,
+  workstreams, decisions, and claim levels are unchanged.
+- Updated `ROADMAP_ACTIVE_SHA256` from
+  `91eb3205fe127271bc5f4882025243d9974a711e311ef074fcbde09aa86e7cf7` to
+  `09cd929fe7a5e0b822914b9009edd7494e3d58da6c5da5256e573c2d9664a6d2`
+  after the link-only edit. The normal fingerprint verifier remains active.

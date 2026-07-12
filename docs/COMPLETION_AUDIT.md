@@ -25,12 +25,12 @@ machine, or retrospective evidence to human gold or held-out confirmation.
 | P8 | Reframe README/product positioning and move detailed research caveats into durable status docs | `README.md`; `docs/RESEARCH_STATUS.md` | Complete | Claim boundaries must be refreshed when new human or release evidence arrives |
 | P9 | Converge on the grouped `falsirag` command tree while retaining migration aliases | `far/cli.py`; `tests/test_cli.py`; deprecated alias warnings | Complete | Compatibility aliases remain intentionally transitional |
 | P10-A | Consolidate the `far.*` namespace and separate installable code from diagnostic payloads | package smoke; `far/data/diagnostics-v1.json`; `falsirag ops diagnostic-data verify/install` | Complete | Current local archive contains 336 files and verifies after an empty-directory install |
-| P10-B | Publish the exact diagnostic archive, download/verify it independently, then remove `diagnostics/` from the main tree | Candidate `artifact-dist/far-diagnostics-v1.tar.gz`, SHA-256 `5e3f28dcd81d2af3170f740611b9f59b8bbe1ee6e869379d5794730db4ecf96e`; manifest still has `published:false` and `release_url:null` | Pending explicit external authorization | Creating the GitHub release and deleting tracked diagnostics are external/destructive mutations and must not be inferred from ordinary push permission; history rewrite/LFS remains a separate decision |
+| P10-B | Publish the exact diagnostic archive, download/verify it independently, then remove `diagnostics/` from the main tree | [`artifacts-v1`](https://github.com/xiaweiyi713/FAR/releases/tag/artifacts-v1), SHA-256 `5e3f28dcd81d2af3170f740611b9f59b8bbe1ee6e869379d5794730db4ecf96e`; manifest `published:true`; independent 336-file readback tree `8f620af737f3b04f5b3813b06c7183743a3ae14f7c8fd869f43a83b9a821dbff`; CI installer | Complete | Current-tree payload removed; immutable tag retains the source snapshot. Git-history rewrite/LFS was not authorized and remains out of scope |
 
-The redirection plan is therefore **implementation-complete except for two
-irreducible boundaries**: real P6 human work and the separately authorized
-P10-B release cutover. Neither may be replaced with model labels, synthetic
-identities, an unverified upload, or deletion before independent download.
+The redirection plan is therefore **implementation-complete except for the
+irreducible P6 human stage**. It may not be replaced with model labels or
+synthetic identities. P10-B completed only after the authorized upload and
+independent download/install comparison; no Git-history rewrite was performed.
 
 | Proposal obligation | Current evidence | State | Evidence required to close |
 |---|---|---|---|

@@ -82,7 +82,7 @@ flowchart LR
 | `bench/` | 仓库内基准数据与外部数据导入，不再是 Python 包 |
 | `far/eval/` | 指标、置信区间与配对检验 |
 | `far/experiments/` | 统一运行器、8 方法 RAMDocs harness、消融和 verifier |
-| `diagnostics/` | 冻结预测、分数、报告与指纹证据 |
+| `diagnostics/` | 从 GitHub Release 安装的、被 Git 忽略的冻结预测/分数/指纹证据 |
 | `paper/` | TMLR 主线正文与边界附录 |
 
 当前活动路线是 [研究重定位执行计划](docs/PLAN_REDIRECTION.md)。P0/P1 已完成：
@@ -179,6 +179,7 @@ wheel 与 sdist 的隔离安装 smoke 会验证：包内基准、离线配置、
 无需调用模型即可复核主要公开证据：
 
 ```bash
+uv run falsirag ops diagnostic-data install
 uv run falsirag-solo-release verify diagnostics/solo_v1
 uv run falsirag-project-status --verify
 uv run falsirag-solo-paper-readiness
@@ -186,6 +187,9 @@ uv run falsirag-eval-fever-binary verify \
   --data-dir bench/external/fever_pair_candidates_v1 \
   diagnostics/fever_binary_v1
 ```
+
+`diagnostics/` 不再由 Git 跟踪。安装器从 `artifacts-v1` release 下载 5.6 MiB
+确定性归档，先核对归档 SHA-256，再核对 336 个文件和整树指纹，并拒绝覆盖已有目录。
 
 这些命令成功只证明相应 machine-audited 诊断包完整、主张边界一致；不代表严格投稿、人类 IAA 或外部盲测就绪。
 

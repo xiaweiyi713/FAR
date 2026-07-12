@@ -131,16 +131,21 @@ def test_single_author_report_keeps_claim_boundaries_and_source_links() -> None:
         assert phrase in text
 
 
-def test_single_author_report_image_links_resolve_to_tracked_files() -> None:
+def test_single_author_report_image_links_use_the_immutable_artifact_tag() -> None:
     text = REPORT.read_text(encoding="utf-8")
     image_targets = re.findall(r"!\[[^\]]+\]\(([^)]+)\)", text)
 
     assert image_targets == [
-        "../diagnostics/solo_v1/experiments/artifacts/counter_evidence_recall.png",
-        "../diagnostics/solo_v1/experiments/artifacts/typed_conflict_breakdown.png",
-        "../diagnostics/solo_v1/experiments/artifacts/revision_trace_case.png",
+        (
+            "https://raw.githubusercontent.com/xiaweiyi713/FAR/artifacts-v1/diagnostics/"
+            "solo_v1/experiments/artifacts/counter_evidence_recall.png"
+        ),
+        (
+            "https://raw.githubusercontent.com/xiaweiyi713/FAR/artifacts-v1/diagnostics/"
+            "solo_v1/experiments/artifacts/typed_conflict_breakdown.png"
+        ),
+        (
+            "https://raw.githubusercontent.com/xiaweiyi713/FAR/artifacts-v1/diagnostics/"
+            "solo_v1/experiments/artifacts/revision_trace_case.png"
+        ),
     ]
-    for target in image_targets:
-        resolved = (REPORT.parent / target).resolve()
-        assert resolved.is_file()
-        assert ROOT in resolved.parents

@@ -9,6 +9,7 @@ __pycache__/
 /build/
 /dist/
 /artifact-dist/
+/diagnostics/
 outputs/*
 !outputs/.gitkeep
 /output/

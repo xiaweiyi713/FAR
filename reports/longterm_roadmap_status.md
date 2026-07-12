@@ -7,7 +7,7 @@
 ## 路线指纹
 
 - 路线文件: `docs/PLAN_LONGTERM_OPTIMIZATION.md`
-- 活动 SHA-256: `91eb3205fe127271bc5f4882025243d9974a711e311ef074fcbde09aa86e7cf7`
+- 活动 SHA-256: `09cd929fe7a5e0b822914b9009edd7494e3d58da6c5da5256e573c2d9664a6d2`
 - F1-F10 行存在: `true`
 
 ## 工作流状态

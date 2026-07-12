@@ -2,8 +2,8 @@
   "archive": {
     "bytes": 5639635,
     "filename": "far-diagnostics-v1.tar.gz",
-    "published": false,
-    "release_url": null,
+    "published": true,
+    "release_url": "https://github.com/xiaweiyi713/FAR/releases/download/artifacts-v1/far-diagnostics-v1.tar.gz",
     "sha256": "5e3f28dcd81d2af3170f740611b9f59b8bbe1ee6e869379d5794730db4ecf96e"
   },
   "artifact_id": "far-diagnostics-v1",

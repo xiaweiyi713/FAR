@@ -1,10 +1,14 @@
 # FAR 仓库维护基线 (可重算)
 
 - 审计 schema: `far-repository-maintenance-audit-v1`; valid=`true`.
-- `diagnostics/` 跟踪体积: 约 41.851 MiB
+- `diagnostics/` 跟踪体积: 约 0.0 MiB
   (阈值 200.0 MiB;
   under_threshold=`true`).
-- 全仓跟踪文件: 665 个, 约 53.231 MiB.
+- 诊断 release: published=`true`;
+  tracked_files_removed=`true`;
+  local_install_target_ignored=`true`;
+  cutover_valid=`true`.
+- 全仓跟踪文件: 329 个, 约 11.387 MiB.
 - 最大跟踪文件: `bench/external/ramdocs_v1/corpus.jsonl`, 约 2.553 MiB
   (阈值 50.0 MiB;
   under_threshold=`true`).

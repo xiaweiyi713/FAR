@@ -27,7 +27,16 @@ custody, trusted scoring, and final acceptance, use
 FAR declares Python 3.10+ support in `pyproject.toml`. The checked-in
 `.python-version` pins the local development environment to Python 3.12, but
 the static type/lint contract targets Python 3.10 so the artifact does not
-silently drift beyond the proposal's compatibility claim. Use:
+silently drift beyond the proposal's compatibility claim. A fresh checkout
+does not track the 41.9 MiB diagnostic tree; install the immutable release
+before running evidence-dependent tests or verifiers:
+
+```bash
+uv run falsirag ops diagnostic-data install
+```
+
+The installer verifies the archive SHA-256 and all 336 files before moving the
+tree into the ignored `diagnostics/` directory. Then use:
 
 ```bash
 uv run ruff check .
@@ -38,7 +47,8 @@ uv run python -m pytest
 before publishing or replacing paper numbers.
 
 The same public-dependency contract runs in `.github/workflows/ci.yml` on
-Python 3.10--3.13. Its diagnostic job additionally runs lint, type checking,
+Python 3.10--3.13. CI installs the same verified release before tests. Its
+diagnostic job additionally runs lint, type checking,
 benchmark validation, the redacting secret scan, and
 `scripts/solo_diagnostic_check.sh`. It needs neither API secrets nor a sibling
 VeraRAG checkout; integration tests requiring that optional package are skipped

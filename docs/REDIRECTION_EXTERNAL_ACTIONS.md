@@ -92,21 +92,28 @@ This cannot be automated or substituted with more models:
 
 Low agreement is a result, not permission to remove rows or change the ontology.
 
-## 5. Perform P10-B last
+## 5. P10-B completion record
 
-P10-B requires separate GitHub release authorization. First rebuild the
-diagnostic archive after all accepted returned evidence is committed:
+P10-B received separate authorization and completed on 2026-07-12. The exact
+archive was published as
+[`artifacts-v1`](https://github.com/xiaweiyi713/FAR/releases/tag/artifacts-v1):
+
+- bytes: `5,639,635`;
+- SHA-256: `5e3f28dcd81d2af3170f740611b9f59b8bbe1ee6e869379d5794730db4ecf96e`;
+- files: `336`;
+- tree SHA-256: `8f620af737f3b04f5b3813b06c7183743a3ae14f7c8fd869f43a83b9a821dbff`.
+
+The asset was downloaded from GitHub through the installer into an empty
+directory and compared against the complete source tree before tracked
+`diagnostics/` removal. Fresh checkouts and CI now install the ignored local
+tree from the immutable manifest:
 
 ```bash
-uv run falsirag ops diagnostic-data pack
-uv run falsirag ops diagnostic-data verify
+uv run falsirag ops diagnostic-data install
 ```
 
-Then follow [`ARTIFACT_STORAGE.md`](ARTIFACT_STORAGE.md) to upload the exact
-archive, regenerate the manifest with its immutable URL, download it into an
-empty directory, and verify every file. Only that successful round trip permits
-a reviewed follow-up commit removing `diagnostics/` from the main tree. It does
-not authorize a Git-history rewrite.
+This authorization did not include a Git-history rewrite or LFS migration;
+historical blobs remain reachable from older commits and the immutable tag.
 
 ## Authorization boundaries
 

@@ -99,7 +99,7 @@ Mistral、Gemma、Llama 三家族的 typed/untyped 正式臂均完成 60/60：
 - 家族 bootstrap 95% CI `[+0.0528, +0.0735]`。
 
 预先计算的显著性功效只有 `0.414`，所以结论固定为 `directional_reproduction`，不是确认性跨模型泛化。
-证据见 [WS2 报告](../diagnostics/family_dev_v1/family_dev_report.md)与
+证据见 [WS2 报告](https://github.com/xiaweiyi713/FAR/blob/artifacts-v1/diagnostics/family_dev_v1/family_dev_report.md)与
 [功效报告](../reports/power_retrospective.md)。
 
 ### RAMDocs 2+4 路线与停止规则
@@ -121,7 +121,7 @@ Round 2 只改变 FAR 最终答案合并层：
 
 因此 Phase B、陪审团、作者盲态仲裁、jury rescoring、三系统家族矩阵和 held-out test 均未运行。
 协议见 [PLAN_2PLUS4.md](PLAN_2PLUS4.md)，证据包见
-[diagnostics/ramdocs_v2](../diagnostics/ramdocs_v2)。
+[diagnostics/ramdocs_v2](https://github.com/xiaweiyi713/FAR/tree/artifacts-v1/diagnostics/ramdocs_v2)。
 
 ### FEVER 外部迁移诊断
 

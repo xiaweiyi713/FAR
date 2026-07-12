@@ -1,8 +1,0 @@
-{
-  "installed_identity_sha256": "d309b88de917ae892c79c6c1e6b64455998721ac9eeabcbe8d5d934f6695ae24",
-  "installed_sha256": "59f930d5ef0311fed8c9e4f65fe72f85dc6e68516975eea89015e6896a340e2f",
-  "samples": 217,
-  "schema_version": "far-type-mappability-machine-install-v1",
-  "source_identity_sha256": "d309b88de917ae892c79c6c1e6b64455998721ac9eeabcbe8d5d934f6695ae24",
-  "source_sha256": "59f930d5ef0311fed8c9e4f65fe72f85dc6e68516975eea89015e6896a340e2f"
-}

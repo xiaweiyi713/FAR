@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 
 from far.artifacts import install, pack, verify
+from far.experiments.repository_maintenance import audit as audit_repository_maintenance
 from far.paths import repository_root
 
 ROOT = repository_root()
@@ -61,3 +62,21 @@ def test_namespace_and_packaged_benchmark_snapshots_are_consolidated() -> None:
 
     manifest = json.loads((packaged / "manifest.json").read_text(encoding="utf-8"))
     assert manifest["counts"]["samples"] == 300
+
+
+def test_published_diagnostic_cutover_is_complete_and_ignored() -> None:
+    manifest = json.loads((ROOT / "far/data/diagnostics-v1.json").read_text(encoding="utf-8"))
+    assert manifest["archive"] == {
+        "bytes": 5639635,
+        "filename": "far-diagnostics-v1.tar.gz",
+        "published": True,
+        "release_url": (
+            "https://github.com/xiaweiyi713/FAR/releases/download/"
+            "artifacts-v1/far-diagnostics-v1.tar.gz"
+        ),
+        "sha256": "5e3f28dcd81d2af3170f740611b9f59b8bbe1ee6e869379d5794730db4ecf96e",
+    }
+    release = audit_repository_maintenance(ROOT)["diagnostic_release"]
+    assert release["cutover_valid"] is True
+    assert release["tracked_files_removed"] is True
+    assert release["local_install_target_ignored"] is True

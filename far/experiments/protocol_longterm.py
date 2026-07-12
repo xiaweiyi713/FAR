@@ -7,7 +7,7 @@ from far.paths import repository_root
 
 ROOT = repository_root()
 ROADMAP_PATH = ROOT / "docs" / "PLAN_LONGTERM_OPTIMIZATION.md"
-ROADMAP_ACTIVE_SHA256 = "91eb3205fe127271bc5f4882025243d9974a711e311ef074fcbde09aa86e7cf7"
+ROADMAP_ACTIVE_SHA256 = "09cd929fe7a5e0b822914b9009edd7494e3d58da6c5da5256e573c2d9664a6d2"
 FROZEN_FACT_IDS = tuple(f"F{index}" for index in range(1, 11))
 
 

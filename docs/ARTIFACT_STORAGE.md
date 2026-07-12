@@ -9,51 +9,40 @@ with a whole-tree SHA-256 of
 ## Current cutover state
 
 - Wheels and source distributions exclude `diagnostics/` and `bench/external/`.
-- The deterministic upload candidate is `artifact-dist/far-diagnostics-v1.tar.gz`: 5,639,635 bytes,
+- The published deterministic archive is `far-diagnostics-v1.tar.gz`: 5,639,635 bytes,
   SHA-256 `5e3f28dcd81d2af3170f740611b9f59b8bbe1ee6e869379d5794730db4ecf96e`.
-- The archive has **not** been published. Its manifest therefore has `published: false` and no
-  release URL.
-- Until a release upload succeeds and is downloaded back through the verifier, `diagnostics/`
-  remains tracked. This avoids deleting the only available copy or advertising a broken URL.
+- The archive is published at the immutable
+  [`artifacts-v1` release](https://github.com/xiaweiyi713/FAR/releases/tag/artifacts-v1),
+  and the manifest records `published: true` plus the exact asset URL.
+- The release asset was downloaded independently, installed into an empty directory, and matched
+  against all 336 checked-out source files before the tracked tree was removed.
+- `diagnostics/` is now an ignored local install target. A fresh checkout retrieves it with
+  `falsirag ops diagnostic-data install`; CI performs the same verified installation before tests.
 
-This is a two-phase migration. Phase A (implemented here) separates installable code from large
-research payloads and freezes a reproducible release. Phase B requires an authorized external
-upload; only then may a follow-up commit remove `diagnostics/` from the main tree. Existing blobs
-remain in old Git history unless maintainers separately approve a history rewrite or LFS migration.
+The two-phase migration is complete. Phase A separated installable code from research payloads;
+Phase B published, independently read back, and removed the tracked current-tree copy. Existing
+blobs remain in old Git history because no history rewrite or LFS migration was authorized.
 
 ## Commands
 
-Rebuild the deterministic archive and manifest:
-
-```bash
-uv run falsirag ops diagnostic-data pack
-```
-
-Verify the checked-out payload:
+Verify or install the published release:
 
 ```bash
 uv run falsirag ops diagnostic-data verify
+uv run falsirag ops diagnostic-data install
 ```
 
-After uploading the exact archive, rebuild the manifest with the immutable release URL and verify
-installation into an empty directory:
+Maintainer-only reproduction of the published archive from an already installed tree:
 
 ```bash
-gh release create artifacts-v1 artifact-dist/far-diagnostics-v1.tar.gz \
-  --repo xiaweiyi713/FAR \
-  --title "FAR diagnostic artifacts v1" \
-  --notes "Frozen P0-P6 diagnostic payload; verify against far/data/diagnostics-v1.json."
 uv run falsirag ops diagnostic-data pack \
   --release-url https://github.com/xiaweiyi713/FAR/releases/download/artifacts-v1/far-diagnostics-v1.tar.gz
-uv run falsirag ops diagnostic-data install --target /tmp/far-diagnostics-v1
 ```
 
 `install` checks the archive fingerprint, rejects links and unsafe members, verifies every file,
 and refuses to overwrite an existing target.
 
-The upload is an external repository mutation and is not performed by the normal build or test
-suite. A maintainer must authorize it explicitly. After the commands above succeed, compare
-`/tmp/far-diagnostics-v1` with the checked-out `diagnostics/`, commit the manifest containing the
-immutable URL, then remove `diagnostics/` in the same reviewed cutover. Do not delete local data
-merely because `gh release create` returned success; the independent download/install verifier is
-the release gate.
+The installer is the release gate: it downloads through the manifest URL, checks the archive
+fingerprint, rejects links/unsafe members, recomputes the complete inventory, and only then moves
+the verified tree into place. Future accepted P6 human results require a new versioned artifact;
+they must not mutate the immutable `artifacts-v1` release.

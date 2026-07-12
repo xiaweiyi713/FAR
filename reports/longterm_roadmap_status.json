@@ -15,7 +15,7 @@
     "next_training_step": "no required roadmap work remains; optional next steps are commit/push, release packaging, and human author review before external submission"
   },
   "roadmap": {
-    "active_sha256": "91eb3205fe127271bc5f4882025243d9974a711e311ef074fcbde09aa86e7cf7",
+    "active_sha256": "09cd929fe7a5e0b822914b9009edd7494e3d58da6c5da5256e573c2d9664a6d2",
     "frozen_fact_ids": [
       "F1",
       "F2",
@@ -254,9 +254,9 @@
     },
     "WS6": {
       "details": {
-        "diagnostics_mib": 41.851,
+        "diagnostics_mib": 0.0,
         "outputs_tracks_only_gitkeep": true,
-        "tracked_files": 665
+        "tracked_files": 329
       },
       "errors": [],
       "gate": "repository-maintenance audit",

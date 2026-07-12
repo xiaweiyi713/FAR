@@ -33,6 +33,8 @@ jobs:
           enable-cache: true
       - name: Install public test dependencies
         run: uv sync --locked --extra dev --extra eval
+      - name: Install verified diagnostic artifacts
+        run: uv run --locked falsirag ops diagnostic-data install
       - name: Run tests
         run: uv run --locked pytest
 
@@ -53,6 +55,8 @@ jobs:
           enable-cache: true
       - name: Install public validation dependencies
         run: uv sync --locked --extra dev --extra eval
+      - name: Install verified diagnostic artifacts
+        run: uv run --locked falsirag ops diagnostic-data install
       - name: Check formatting and lint
         run: |
           uv run --locked ruff format --check .

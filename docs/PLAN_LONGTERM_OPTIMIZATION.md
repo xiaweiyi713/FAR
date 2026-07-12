@@ -38,13 +38,13 @@
 |---|---|---|
 | F1 | Qwen3.5 9B、60 条 dev、机器审计标签上：typed − untyped 答案正确率 **+0.078**、冲突 F1 **+0.420**、修订准确率 **+0.217**；确认层（35 条）与争议层（25 条）方向一致 | [reports/solo_paper_readiness.md](../reports/solo_paper_readiness.md) |
 | F2 | 负消融：去掉反驳查询或边界查询**不降低**答案正确率；去掉 typed revision **提高**答案正确率并消除修订行为 | 同上（论文强制披露项） |
-| F3 | RAMDocs dev Round 1：FAR 与最强基线 multi_query_rag 均为 0.3114，配对差 0，CI [-0.0286, 0.0314]，McNemar p=1.0，G-A 失败 | [diagnostics/ramdocs_v1](../diagnostics/ramdocs_v1) |
-| F4 | Round 2（只改最终答案合并层）：FAR 0.3086 vs 冻结基线 0.3114，配对差 -0.0029，CI [-0.0314, 0.0286]，McNemar p=1.0，第二次 G-A 失败 → **停止规则激活，2+4 降级为适用边界分析** | [diagnostics/ramdocs_v2](../diagnostics/ramdocs_v2) |
-| F5 | Round 2 错误分析：both_correct 93 / far_only 15 / baseline_only 16 / **both_incorrect 226**；gold coverage FAR 0.7467、基线 0.7457；unsupported sentences **0.9971 / 0.9933**；ambiguity_misinformation 类 166 条中 133 条双错 | [diagnostics/ramdocs_v2/round2/error_analysis](../diagnostics/ramdocs_v2/round2/error_analysis) |
-| F6 | FEVER 二分类迁移诊断：准确率 0.72、召回偏低，`publication_ready_main_result=false` | [diagnostics/fever_binary_v1](../diagnostics/fever_binary_v1) |
+| F3 | RAMDocs dev Round 1：FAR 与最强基线 multi_query_rag 均为 0.3114，配对差 0，CI [-0.0286, 0.0314]，McNemar p=1.0，G-A 失败 | [diagnostics/ramdocs_v1](https://github.com/xiaweiyi713/FAR/tree/artifacts-v1/diagnostics/ramdocs_v1) |
+| F4 | Round 2（只改最终答案合并层）：FAR 0.3086 vs 冻结基线 0.3114，配对差 -0.0029，CI [-0.0314, 0.0286]，McNemar p=1.0，第二次 G-A 失败 → **停止规则激活，2+4 降级为适用边界分析** | [diagnostics/ramdocs_v2](https://github.com/xiaweiyi713/FAR/tree/artifacts-v1/diagnostics/ramdocs_v2) |
+| F5 | Round 2 错误分析：both_correct 93 / far_only 15 / baseline_only 16 / **both_incorrect 226**；gold coverage FAR 0.7467、基线 0.7457；unsupported sentences **0.9971 / 0.9933**；ambiguity_misinformation 类 166 条中 133 条双错 | [diagnostics/ramdocs_v2/round2/error_analysis](https://github.com/xiaweiyi713/FAR/tree/artifacts-v1/diagnostics/ramdocs_v2/round2/error_analysis) |
+| F6 | FEVER 二分类迁移诊断：准确率 0.72、召回偏低，`publication_ready_main_result=false` | [diagnostics/fever_binary_v1](https://github.com/xiaweiyi713/FAR/tree/artifacts-v1/diagnostics/fever_binary_v1) |
 | F7 | FalsiRAG-Bench：300 条五类均衡候选，counter-evidence recall 0.91；机器审计确认 178 / 争议 122；split 为 dev 60 / train 182 / test_inputs 58，**held-out 从未评测** | [bench/](../bench)、[reports/project_status_snapshot.md](../reports/project_status_snapshot.md) |
 | F8 | 严格 AAAI 档 8 项阻塞（human_annotation、external_blind_returns 等）在单作者零预算下不可满足 | [reports/project_status_snapshot.md](../reports/project_status_snapshot.md) |
-| F9 | 三家族本地模型已完成 Phase 0 smoke 并冻结 digest：`mistral:7b-instruct`、`gemma2:9b`、`llama3.1:8b`；记录含 `benchmark_data_accessed:false` | [diagnostics/model_smoke_2plus4](../diagnostics/model_smoke_2plus4) |
+| F9 | 三家族本地模型已完成 Phase 0 smoke 并冻结 digest：`mistral:7b-instruct`、`gemma2:9b`、`llama3.1:8b`；记录含 `benchmark_data_accessed:false` | [diagnostics/model_smoke_2plus4](https://github.com/xiaweiyi713/FAR/tree/artifacts-v1/diagnostics/model_smoke_2plus4) |
 | F10 | 家族配置已存在 `mistral_open.yaml`、`gemma_open.yaml`（llama 尚无 open 配置）；正式栈（vera_hybrid 检索 + NLI）配置齐备 | [experiments/configs/](../experiments/configs) |
 
 从 F1–F5 可以读出本企划的核心判断：**RAMDocs 上两方法 64.6% 共同失败、逐句支持率≈0、gold coverage 只有 0.75，瓶颈在冲突层上游；typed conflict control 从未获得被检验的机会**。这既是失败的解释假设，也是可以被 WS1 证伪的命题。
