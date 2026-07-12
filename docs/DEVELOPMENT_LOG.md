@@ -3204,9 +3204,28 @@ evidence bundle verified successfully, releasing the GPU.
   and the adjudicator are correctly absent and `ready_to_analyze=false`.
 - Regenerated and inspected the deterministic role-isolated reviewer ZIPs.
   Their exact SHAs are now recorded in `docs/P6_EXECUTION.md`; each contains
-  only visible items, one blank role template, instructions, and its handoff
-  manifest, with no machine labels, scores, strata, or peer template.
+  only visible items, one blank role template, instructions, an offline form,
+  and its handoff manifest, with no machine labels, scores, strata, or peer
+  template.
 - Corrected stale pre-P10-B instructions: completed human returns now land in
   the ignored diagnostic install target, so the coordinator must retain the
   original return bytes and build a separate v2 candidate archive. The
   immutable `artifacts-v1` asset and v1 manifest must not be overwritten.
+
+## 2026-07-12 — P6 dependency-free offline reviewer form
+
+- Added a self-contained `REVIEWER_FORM.html` to each role-isolated P6 ZIP.
+  The form embeds only that archive's already-visible items and blank role
+  template, uses a restrictive CSP, has no external scripts or requests, and
+  contains no machine prelabels, peer labels, FAR scores, or analysis strata.
+- The UI renders question, initial/reference answers, and closed-set evidence;
+  enforces the frozen clean/partial/unmappable rules; saves role- and packet-
+  fingerprinted local drafts; imports/exports 217-row JSONL backups; and does
+  not enable the completed export until every row is schema-valid.
+- Real-browser checks covered form rendering, one valid annotation, next-item
+  navigation, refresh recovery, and a 217-row draft download. Chrome also
+  rendered the unpacked form directly through `file://`, matching the intended
+  no-server reviewer workflow. A temporary 217-row completed import enabled the
+  protected export, and the exported JSONL passed the real atomic installer in
+  a temporary packet copy. The role ZIPs remain deterministic and their new
+  exact SHAs are recorded in `docs/P6_EXECUTION.md`.

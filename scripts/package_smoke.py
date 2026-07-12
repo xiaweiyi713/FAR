@@ -11,6 +11,7 @@ import far
 from far.adapters import BM25Retriever
 from far.artifacts import DEFAULT_MANIFEST
 from far.bench.build.validate_bench import validate
+from far.experiments.type_mappability import REVIEWER_FORM_TEMPLATE
 from far.models import EvidenceDocument
 from far.paths import benchmark_data_dir, experiment_config_dir
 
@@ -52,6 +53,7 @@ def main() -> None:
         "counter_evidence_recall": report.get("counter_evidence_retrieval", {}).get("recall"),
         "diagnostic_manifest": DEFAULT_MANIFEST.is_file(),
         "offline_config": config.is_file(),
+        "offline_reviewer_form": REVIEWER_FORM_TEMPLATE.is_file(),
         "entry_points": not missing_commands,
         "far_import": Path(far.__file__).is_file(),
         "generic_namespaces_absent": all(

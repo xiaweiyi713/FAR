@@ -119,7 +119,7 @@ far = ["data/*.json"]
   "data/*.md",
   "data/splits/*.jsonl",
 ]
-"far.experiments" = ["configs/*.yaml"]
+"far.experiments" = ["configs/*.yaml", "templates/*.html"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

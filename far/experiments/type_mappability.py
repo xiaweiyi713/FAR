@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import base64
 import hashlib
 import json
 import math
@@ -47,6 +48,7 @@ HUMAN_ROLES = ("reviewer_a", "reviewer_b", "adjudicator")
 DATASET_ORDER = ("wikicontradict", "rag_conflicts")
 MACHINE_PRELABEL_MAX_ATTEMPTS = 3
 REVIEWER_ROLES = ("reviewer_a", "reviewer_b")
+REVIEWER_FORM_TEMPLATE = Path(__file__).with_name("templates") / "p6_reviewer_form.html"
 MACHINE_PRELABEL_RETRY_INSTRUCTION = (
     "The previous JSON did not satisfy the frozen annotation schema. Correct only the schema "
     "violation described below and return exactly one JSON object with no markdown."
@@ -830,6 +832,37 @@ def _write_handoff_archive(
     return result
 
 
+def _build_reviewer_form(
+    *,
+    items_path: Path,
+    template_path: Path,
+    role: str,
+    source_packet_sha256: str,
+) -> str:
+    """Render a dependency-free offline editor containing only reviewer-visible data."""
+
+    template = REVIEWER_FORM_TEMPLATE.read_text(encoding="utf-8")
+    replacements = {
+        "__ROLE_JSON__": json.dumps(role),
+        "__STORAGE_KEY_JSON__": json.dumps(
+            f"far-p6:{source_packet_sha256}:{role}:reviewer-form-v1"
+        ),
+        "__OUTPUT_FILENAME_JSON__": json.dumps(f"{role}.jsonl"),
+        "__ITEMS_BASE64_JSON__": json.dumps(
+            base64.b64encode(items_path.read_bytes()).decode("ascii")
+        ),
+        "__TEMPLATE_BASE64_JSON__": json.dumps(
+            base64.b64encode(template_path.read_bytes()).decode("ascii")
+        ),
+        "__TYPE_GUIDE_JSON__": json.dumps(_TYPE_GUIDE, sort_keys=True),
+    }
+    for placeholder, value in replacements.items():
+        template = template.replace(placeholder, value)
+    if re.search(r"__[A-Z][A-Z0-9_]+__", template):
+        raise ValueError("reviewer form template contains an unresolved placeholder")
+    return template
+
+
 def build_reviewer_handoff(
     packet_dir: Path,
     output_dir: Path,
@@ -864,6 +897,16 @@ def build_reviewer_handoff(
     shutil.copy2(packet_dir / "items.jsonl", output_dir / "items.jsonl")
     template_name = f"{role}.jsonl"
     shutil.copy2(template_path, output_dir / template_name)
+    source_packet_sha256 = sha256_file(packet_dir / "packet_manifest.json")
+    (output_dir / "REVIEWER_FORM.html").write_text(
+        _build_reviewer_form(
+            items_path=packet_dir / "items.jsonl",
+            template_path=template_path,
+            role=role,
+            source_packet_sha256=source_packet_sha256,
+        ),
+        encoding="utf-8",
+    )
     type_lines = "\n".join(f"- `{name}`: {_TYPE_GUIDE[name]}" for name in TYPE_NAMES)
     instructions = (
         f"# P6 blind reviewer handoff: {role}\n\n"
@@ -871,12 +914,17 @@ def build_reviewer_handoff(
         "repository, machine prelabels, analysis metadata, scores, or another reviewer's "
         "work. Do not search the web.\n\n"
         f"## Frozen types\n\n{type_lines}\n\n"
-        f"Fill the `annotation` object for all 217 rows in `{template_name}` by matching "
+        "For the lowest-error workflow, open `REVIEWER_FORM.html` in a modern browser. "
+        "It runs entirely offline, keeps a local draft when the browser permits, imports or "
+        "exports JSONL backups, and enables the completed export only after all rows satisfy "
+        "the frozen schema. Alternatively, fill the `annotation` object for all 217 rows in "
+        f"`{template_name}` by matching "
         "`sample_id` to `items.jsonl`. `clean` requires exactly one mapped type and an "
         "empty missing concept; `partial` requires mapped types plus a non-empty missing "
         "concept; `unmappable` requires no mapped types and a non-empty missing concept. "
         "Every row requires a text-grounded rationale. Do not modify sample or context "
-        "fingerprints. Return only the completed JSONL file to the study owner.\n"
+        "fingerprints. Return only the completed JSONL file to the study owner. The HTML is "
+        "a convenience editor over the same frozen files, not an additional evidence source.\n"
     )
     (output_dir / "REVIEWER_INSTRUCTIONS.md").write_text(instructions, encoding="utf-8")
     result = {
@@ -884,7 +932,7 @@ def build_reviewer_handoff(
         "role": role,
         "samples": len(items),
         "protocol_sha256": PROTOCOL_SHA256,
-        "source_packet_sha256": sha256_file(packet_dir / "packet_manifest.json"),
+        "source_packet_sha256": source_packet_sha256,
         "source_items_sha256": sha256_file(packet_dir / "items.jsonl"),
         "source_template_sha256": sha256_file(template_path),
         "safety": {
@@ -895,12 +943,19 @@ def build_reviewer_handoff(
             "other_reviewer_files_included": False,
             "scores_included": False,
             "packet_manifest_included": False,
+            "offline_form_included": True,
+            "offline_form_has_external_dependencies": False,
         },
     }
     return _write_handoff_archive(
         output_dir,
         archive_path,
-        copied_files=["items.jsonl", template_name, "REVIEWER_INSTRUCTIONS.md"],
+        copied_files=[
+            "items.jsonl",
+            template_name,
+            "REVIEWER_INSTRUCTIONS.md",
+            "REVIEWER_FORM.html",
+        ],
         result=result,
     )
 

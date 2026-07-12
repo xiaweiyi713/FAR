@@ -163,16 +163,29 @@ def test_reviewer_handoff_is_role_isolated_blind_and_deterministic(tmp_path: Pat
         "other_reviewer_files_included": False,
         "scores_included": False,
         "packet_manifest_included": False,
+        "offline_form_included": True,
+        "offline_form_has_external_dependencies": False,
     }
     assert all(row["annotation"] is None for row in read_jsonl(output / "reviewer_a.jsonl"))
     assert all(
         "analysis_strata" not in row and "boundary_score" not in row
         for row in read_jsonl(output / "items.jsonl")
     )
+    form = (output / "REVIEWER_FORM.html").read_text(encoding="utf-8")
+    assert "Content-Security-Policy" in form
+    assert "reviewer_a.jsonl" in form
+    assert "reviewer_b" not in form
+    assert "machine_prelabel" not in form
+    assert "boundary_score" not in form
+    assert "analysis_strata" not in form
+    assert "<script src=" not in form
+    assert "fetch(" not in form
+    assert "__ITEMS_BASE64_JSON__" not in form
     archive_path = tmp_path / "reviewer_a_handoff.zip"
     with zipfile.ZipFile(archive_path) as archive:
         assert set(archive.namelist()) == {
             "REVIEWER_INSTRUCTIONS.md",
+            "REVIEWER_FORM.html",
             "handoff_manifest.json",
             "items.jsonl",
             "reviewer_a.jsonl",

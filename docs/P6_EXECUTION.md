@@ -115,21 +115,31 @@ falsirag diag type-mappability export-reviewer \
   --role reviewer_b --output-dir outputs/p6-reviewer-b
 ```
 
-Each archive has an exact allowlist: `items.jsonl`, one blank role template,
-reviewer instructions, and a fingerprint manifest. It excludes the analysis
-index, scores, machine labels, the peer template, completed files, and the
-source packet manifest. The deterministic archives generated from
+Each archive has an exact five-file allowlist: `items.jsonl`, one blank role
+template, reviewer instructions, a self-contained `REVIEWER_FORM.html`, and a
+fingerprint manifest. The form has no external dependencies or network calls;
+it embeds only the same visible items and blank role template, validates the
+frozen schema, saves a browser-local draft when available, imports/exports
+JSONL backups, and keeps the completed export disabled until all 217 rows are
+valid. The archive excludes the analysis index, scores, machine labels, the
+peer template, completed files, and the source packet manifest. The
+deterministic archives generated from
 `artifacts-v1` and checked on 2026-07-12 are:
 
 | Role | Local handoff | SHA-256 |
 |---|---|---|
-| reviewer A | `outputs/p6-reviewer-a.zip` | `40f9940c1756676fb138181621eeb2586d1be4e6b709dda05307fb576cdec443` |
-| reviewer B | `outputs/p6-reviewer-b.zip` | `84863511b085de4700983ca29e3e2ca1538ed1519281f52b2283e998a69d0dee` |
+| reviewer A | `outputs/p6-reviewer-a.zip` | `d0b396c478688b8b218b430a7598ecc46eed9e37b2e7143381a4d11ad8c9cb57` |
+| reviewer B | `outputs/p6-reviewer-b.zip` | `043739a6bfa21c82badc54f5e7659c753f3ddfc729c40b52e97576a025f9f8c2` |
 
 Verify each ZIP immediately before sending it. Give each archive to a distinct
 person and never send both archives to the same reviewer. Return only the
 completed role JSONL files, retain the original returned bytes outside the
 repository, and install them with distinct non-empty self-attested IDs:
+
+The reviewer should unzip their one archive and open `REVIEWER_FORM.html` in a
+modern browser. They should export draft JSONL backups regularly and return
+only the enabled completed JSONL export. Directly editing the included blank
+role template remains supported, but the offline form is the lower-error path.
 
 ```bash
 shasum -a 256 outputs/p6-reviewer-a.zip outputs/p6-reviewer-b.zip
