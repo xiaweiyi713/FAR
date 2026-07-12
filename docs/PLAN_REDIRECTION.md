@@ -348,7 +348,7 @@ print(result.revised_answer, result.to_dict()["conflicts"])
 | **P3（完成）** | `experiments/stage_trace_map.py`：8 方法观察性失效地图 + verifier + 指纹；T1 8/8，T2 +0.3914 [0.3554,0.4275] | 工程 | P2 | `reports/stage_trace_map.{json,md}` | ✅ |
 | **P4（完成）** | TMLR MVP 重写：capability-aware 协议 + 8 方法地图 + FAR 阴性/边界；标题、摘要、主表、附录和 claim ladder 对齐 | 研究 | P3 | 12 页可编译 TMLR 稿 | ✅ |
 | **P5（完成）** | 注册的远端 3×350 dev 消融完成并通过零模型独立 verifier：full EM `0.3057`，激进度匹配去类型修订 EM `0.3086`，flat-claim EM `0.3057`；H3 `uncertain`，H5 `equivalent` | 研究 | P3 | `reports/p5_ramdocs_ablations.{json,md}`；上游 dev 标签、非人类金标、非 test | 增强 |
-| **P6（远端预标门禁完成）** | 217 条空白包、default-deny 远端机器预标/回传、双人标注/仲裁、κ/描述关联与 verifier 已实现；机器预标与真人标注尚未执行 | 研究 | P3 | `diagnostics/type_mappability_v1`；远端预标待授权，报告待人工输入 | 增强 |
+| **P6（机器预标完成）** | 217 条空白包、default-deny 远端机器预标/回传、双人标注/仲裁、κ/描述关联与 verifier 已实现；217/217 机器预标已安装，真人标注尚未执行 | 研究 | P3 | `diagnostics/type_mappability_v1`；报告待两位复核者与第三位仲裁者输入 | 增强 |
 | **P7（完成）** | 切断默认 VeraRAG（自足 BM25 + 直连 Ollama）+ 删活跃代码硬编码路径 + quickstart + package smoke | 开源 | — | 开箱可跑 | 开源必做 |
 | **P8（完成）** | README 产品化重构 + `docs/RESEARCH_STATUS.md` 下沉 | 开源 | P7 | 产品化 README + 完整诚实性披露 | 开源必做 |
 | **P9（完成）** | `falsirag` 子命令树 + 全量 deprecated alias 迁移提示 | 开源 | P7 | 单主命令，旧自动化兼容 | 开源建议 |

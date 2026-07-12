@@ -3117,3 +3117,21 @@ evidence bundle verified successfully, releasing the GPU.
   sequence, sample context, runtime work identity, actual prompt, raw response,
   validity, and validation error, so an exhausted run leaves inspectable
   evidence even when no completed checkpoint row exists.
+
+## 2026-07-12 — P6 machine prelabels completed and returned
+
+- After waiting for an unrelated `animal_id.train` job to release the shared
+  GPU, the exact `949bb13` source commit was transferred through a verified
+  incremental Git bundle. Offline and runtime gates passed before P6 started.
+- The structured-output run completed 217/217 rows in 221 attempts. Four
+  invalid JSON/schema attempts were corrected within the three-attempt ceiling;
+  the runner exited successfully and its Ollama service was stopped.
+- The remote manifest binds machine-prelabel SHA-256
+  `59f930d5ef0311fed8c9e4f65fe72f85dc6e68516975eea89015e6896a340e2f`
+  and attempt-log SHA-256
+  `2fd371e1f5f2e57f72e669681498dff0bf791629f9516f52f6e9a377d2da8b38`.
+  The zero-model local installer independently verified all 217 contexts,
+  annotations, raw responses, prompt hashes, and bounded attempt chains.
+- P6 remains `ready_to_analyze=false`: two distinct human reviewers and a
+  third distinct adjudicator are irreducible external work and were not
+  synthesized from machine labels.

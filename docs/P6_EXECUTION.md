@@ -45,6 +45,10 @@ scripts/check_windows_p6_prelabels.sh
 Every completed response is appended to an external D:-backed checkpoint. The
 final bundle binds the immutable model digest, configuration and prompt-template
 fingerprints, per-item prompt hash, raw response hash, and parsed annotation.
+Schema-invalid responses receive at most three attempts. Each attempt is
+fsync'd to a separate fingerprinted audit log before the runner continues, and
+Ollama receives the frozen conditional annotation schema through its structured
+output field.
 
 Stopping never removes checkpoints:
 
@@ -68,13 +72,25 @@ source carries native raw responses, it additionally requires the raw response
 to parse to the installed annotation and verifies both response and prompt
 fingerprints before preserving them. No local model call occurs.
 
+The authorized run at source commit `949bb1353d12d97d9541bae310c5b3c57b9e5901`
+completed on 2026-07-12. It installed 217/217 rows from 221 total attempts; four
+schema/JSON failures were corrected within the bounded retry gate. The frozen
+machine-prelabel SHA-256 is
+`59f930d5ef0311fed8c9e4f65fe72f85dc6e68516975eea89015e6896a340e2f`,
+the identity SHA-256 is
+`d309b88de917ae892c79c6c1e6b64455998721ac9eeabcbe8d5d934f6695ae24`,
+and the remote attempt-log SHA-256 is
+`2fd371e1f5f2e57f72e669681498dff0bf791629f9516f52f6e9a377d2da8b38`.
+The remote runner exited successfully, Ollama was stopped, and the local
+zero-model installer independently accepted all rows and attempt chains.
+
 Installing new diagnostic files changes the diagnostic tree. Before any P10-B
 release, rebuild and verify the artifact manifest/archive rather than claiming
 the earlier 333-file archive contains P6 prelabels.
 
 ## Human-only remainder
 
-Machine prelabels are hidden from reviewers and are not gold. Two distinct
+Machine prelabels are complete, hidden from reviewers, and are not gold. Two distinct
 people must independently complete all 217 rows using the reviewer templates;
 only after both files are frozen may a third distinct adjudicator see their
 labels and the machine prelabels. Use the packet commands printed in

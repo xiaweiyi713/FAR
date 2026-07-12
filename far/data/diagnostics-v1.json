@@ -1,10 +1,10 @@
 {
   "archive": {
-    "bytes": 5557784,
+    "bytes": 5639635,
     "filename": "far-diagnostics-v1.tar.gz",
     "published": false,
     "release_url": null,
-    "sha256": "ad2b99d59de170d8bfa375e85d8f2a816a63dcafb1bf12c415a19f14af35693d"
+    "sha256": "5e3f28dcd81d2af3170f740611b9f59b8bbe1ee6e869379d5794730db4ecf96e"
   },
   "artifact_id": "far-diagnostics-v1",
   "bundles": {
@@ -54,12 +54,12 @@
       "tree_sha256": "83e003469cbed4f541cf9f0707d8e0fac28ceb2ef5f31e52ff32bab0c3723cbd"
     },
     "type_mappability_v1": {
-      "bytes": 1204094,
-      "files": 7,
-      "tree_sha256": "b898ba6655f66cc870e758becaa85c5e4f45d96c83cc674bbaacb96bd756aa30"
+      "bytes": 1820613,
+      "files": 10,
+      "tree_sha256": "0eb9ef5d387d5a146d8fd2d86b8183c9764c63c927d581423b90e644ffbc911e"
     }
   },
-  "file_count": 333,
+  "file_count": 336,
   "files": [
     {
       "bytes": 2960,
@@ -1702,6 +1702,21 @@
       "sha256": "b09dab55ae21d2e6912f283ec5cecfbb7bde9d15b98090ce7a0afccc1ba180b7"
     },
     {
+      "bytes": 297,
+      "path": "type_mappability_v1/completed/machine_identity.json",
+      "sha256": "d309b88de917ae892c79c6c1e6b64455998721ac9eeabcbe8d5d934f6695ae24"
+    },
+    {
+      "bytes": 456,
+      "path": "type_mappability_v1/completed/machine_install.json",
+      "sha256": "3fb7625e1c8ac0eb5fdc589b31748dc2f55cda2a32e92522e96122732e188a38"
+    },
+    {
+      "bytes": 615766,
+      "path": "type_mappability_v1/completed/machine_prelabels.jsonl",
+      "sha256": "59f930d5ef0311fed8c9e4f65fe72f85dc6e68516975eea89015e6896a340e2f"
+    },
+    {
       "bytes": 1065125,
       "path": "type_mappability_v1/items.jsonl",
       "sha256": "c6df52c63f7d94619b130826a2c06d438384a57322ffab64b3842406366d4567"
@@ -1729,6 +1744,6 @@
   ],
   "schema_version": "far-diagnostic-artifacts-v1",
   "source_directory": "diagnostics",
-  "total_bytes": 43267220,
-  "tree_sha256": "9cc3b45e6c1696e545495414bb22970954a43e4d6cf31f9576861d12710b9548"
+  "total_bytes": 43883739,
+  "tree_sha256": "8f620af737f3b04f5b3813b06c7183743a3ae14f7c8fd869f43a83b9a821dbff"
 }

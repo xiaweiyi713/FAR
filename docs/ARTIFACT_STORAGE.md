@@ -2,15 +2,15 @@
 
 FAR keeps executable code in the `far.*` namespace and treats generated diagnostic runs as a
 separate release payload. The frozen inventory is
-[`far/data/diagnostics-v1.json`](../far/data/diagnostics-v1.json): 333 files, 43,267,220 bytes,
+[`far/data/diagnostics-v1.json`](../far/data/diagnostics-v1.json): 336 files, 43,883,739 bytes,
 with a whole-tree SHA-256 of
-`9cc3b45e6c1696e545495414bb22970954a43e4d6cf31f9576861d12710b9548`.
+`8f620af737f3b04f5b3813b06c7183743a3ae14f7c8fd869f43a83b9a821dbff`.
 
 ## Current cutover state
 
 - Wheels and source distributions exclude `diagnostics/` and `bench/external/`.
-- The deterministic upload candidate is `artifact-dist/far-diagnostics-v1.tar.gz`: 5,557,784 bytes,
-  SHA-256 `ad2b99d59de170d8bfa375e85d8f2a816a63dcafb1bf12c415a19f14af35693d`.
+- The deterministic upload candidate is `artifact-dist/far-diagnostics-v1.tar.gz`: 5,639,635 bytes,
+  SHA-256 `5e3f28dcd81d2af3170f740611b9f59b8bbe1ee6e869379d5794730db4ecf96e`.
 - The archive has **not** been published. Its manifest therefore has `published: false` and no
   release URL.
 - Until a release upload succeeds and is downloaded back through the verifier, `diagnostics/`

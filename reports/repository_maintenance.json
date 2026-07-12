@@ -1,9 +1,9 @@
 {
   "claim_scope": "engineering hygiene only; does not alter F1-F10 or experimental gates",
   "diagnostics": {
-    "bytes": 43267220,
-    "mib": 41.263,
-    "tracked_files": 333,
+    "bytes": 43883739,
+    "mib": 41.851,
+    "tracked_files": 336,
     "under_threshold": true
   },
   "errors": [],
@@ -29,9 +29,9 @@
     "single_file_mib": 50.0
   },
   "tracked_files": {
-    "bytes": 55174594,
-    "count": 662,
-    "mib": 52.619
+    "bytes": 55793691,
+    "count": 665,
+    "mib": 53.209
   },
   "valid": true
 }
