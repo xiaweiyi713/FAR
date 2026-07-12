@@ -49,6 +49,7 @@ DATASET_ORDER = ("wikicontradict", "rag_conflicts")
 MACHINE_PRELABEL_MAX_ATTEMPTS = 3
 REVIEWER_ROLES = ("reviewer_a", "reviewer_b")
 REVIEWER_FORM_TEMPLATE = Path(__file__).with_name("templates") / "p6_reviewer_form.html"
+ADJUDICATOR_FORM_TEMPLATE = Path(__file__).with_name("templates") / "p6_adjudicator_form.html"
 MACHINE_PRELABEL_RETRY_INSTRUCTION = (
     "The previous JSON did not satisfy the frozen annotation schema. Correct only the schema "
     "violation described below and return exactly one JSON object with no markdown."
@@ -863,6 +864,38 @@ def _build_reviewer_form(
     return template
 
 
+def _build_adjudicator_form(
+    *,
+    items_path: Path,
+    worksheet_path: Path,
+    source_packet_sha256: str,
+    source_reviewer_sha256: dict[str, str],
+) -> str:
+    """Render an offline editor bound to the frozen dual-review worksheet."""
+
+    template = ADJUDICATOR_FORM_TEMPLATE.read_text(encoding="utf-8")
+    reviewer_fingerprint = hashlib.sha256(
+        json.dumps(source_reviewer_sha256, sort_keys=True).encode("utf-8")
+    ).hexdigest()
+    replacements = {
+        "__STORAGE_KEY_JSON__": json.dumps(
+            f"far-p6:{source_packet_sha256}:{reviewer_fingerprint}:adjudicator-form-v1"
+        ),
+        "__ITEMS_BASE64_JSON__": json.dumps(
+            base64.b64encode(items_path.read_bytes()).decode("ascii")
+        ),
+        "__WORKSHEET_BASE64_JSON__": json.dumps(
+            base64.b64encode(worksheet_path.read_bytes()).decode("ascii")
+        ),
+        "__TYPE_GUIDE_JSON__": json.dumps(_TYPE_GUIDE, sort_keys=True),
+    }
+    for placeholder, value in replacements.items():
+        template = template.replace(placeholder, value)
+    if re.search(r"__[A-Z][A-Z0-9_]+__", template):
+        raise ValueError("adjudicator form template contains an unresolved placeholder")
+    return template
+
+
 def build_reviewer_handoff(
     packet_dir: Path,
     output_dir: Path,
@@ -1005,7 +1038,21 @@ def build_adjudicator_handoff(
         }
         for sample_id in sorted(items)
     ]
-    write_jsonl(output_dir / "adjudicator.jsonl", worksheet)
+    worksheet_path = output_dir / "adjudicator.jsonl"
+    write_jsonl(worksheet_path, worksheet)
+    source_packet_sha256 = sha256_file(packet_dir / "packet_manifest.json")
+    source_reviewer_sha256 = {
+        role: sha256_file(_completed_path(packet_dir, role)) for role in REVIEWER_ROLES
+    }
+    (output_dir / "ADJUDICATOR_FORM.html").write_text(
+        _build_adjudicator_form(
+            items_path=packet_dir / "items.jsonl",
+            worksheet_path=worksheet_path,
+            source_packet_sha256=source_packet_sha256,
+            source_reviewer_sha256=source_reviewer_sha256,
+        ),
+        encoding="utf-8",
+    )
     instructions = (
         "# P6 adjudicator handoff\n\n"
         "This packet was generated only after two distinct reviewer files and the machine "
@@ -1013,19 +1060,20 @@ def build_adjudicator_handoff(
         "with the visible context in `items.jsonl`. The machine prelabel is a non-gold review "
         "aid and must not automatically break ties. Fill exactly one `gold_annotation` using "
         "the frozen clean/partial/unmappable schema. Do not modify reviewer, machine, sample, "
-        "or context fields. Return only the completed `adjudicator.jsonl` to the study owner.\n"
+        "or context fields. For the lowest-error workflow, open `ADJUDICATOR_FORM.html` in "
+        "a modern browser; it runs offline, binds drafts to the frozen reviewer fingerprints, "
+        "and enables completed export only after all 217 gold annotations are valid. Return "
+        "only the completed `adjudicator.jsonl` to the study owner.\n"
     )
     (output_dir / "ADJUDICATOR_INSTRUCTIONS.md").write_text(instructions, encoding="utf-8")
     result = {
         "schema_version": schema_version,
         "samples": len(items),
         "protocol_sha256": PROTOCOL_SHA256,
-        "source_packet_sha256": sha256_file(packet_dir / "packet_manifest.json"),
+        "source_packet_sha256": source_packet_sha256,
         "source_items_sha256": sha256_file(packet_dir / "items.jsonl"),
         "reviewer_ids": [reviewer_a_id, reviewer_b_id],
-        "source_reviewer_sha256": {
-            role: sha256_file(_completed_path(packet_dir, role)) for role in REVIEWER_ROLES
-        },
+        "source_reviewer_sha256": source_reviewer_sha256,
         "source_machine_sha256": sha256_file(_completed_path(packet_dir, "machine_prelabels")),
         "source_machine_identity_sha256": sha256_file(
             packet_dir / "completed" / "machine_identity.json"
@@ -1039,12 +1087,19 @@ def build_adjudicator_handoff(
             "analysis_index_included": False,
             "scores_included": False,
             "gold_annotations_blank": True,
+            "offline_form_included": True,
+            "offline_form_has_external_dependencies": False,
         },
     }
     return _write_handoff_archive(
         output_dir,
         archive_path,
-        copied_files=["items.jsonl", "adjudicator.jsonl", "ADJUDICATOR_INSTRUCTIONS.md"],
+        copied_files=[
+            "items.jsonl",
+            "adjudicator.jsonl",
+            "ADJUDICATOR_INSTRUCTIONS.md",
+            "ADJUDICATOR_FORM.html",
+        ],
         result=result,
     )
 

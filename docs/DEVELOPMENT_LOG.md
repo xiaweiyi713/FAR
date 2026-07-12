@@ -3229,3 +3229,24 @@ evidence bundle verified successfully, releasing the GPU.
   protected export, and the exported JSONL passed the real atomic installer in
   a temporary packet copy. The role ZIPs remain deterministic and their new
   exact SHAs are recorded in `docs/P6_EXECUTION.md`.
+
+## 2026-07-12 — P6 offline third-person adjudication form
+
+- Added a self-contained `ADJUDICATOR_FORM.html` to the post-review handoff.
+  It is generated only after two distinct reviewer installs and the sanitized
+  machine prelabels are frozen. It displays the visible evidence and all three
+  annotations, marks the machine suggestion as non-gold, and allows copying a
+  source only as an editable draft rather than an automatic decision.
+- Adjudicator local storage and imports are bound to the packet plus both exact
+  reviewer-file fingerprints. Any change to sample/context, reviewer identity
+  or annotation, or sanitized machine input is rejected; model raw responses,
+  FAR scores, and analysis strata remain excluded.
+- Real-browser testing caught and corrected a JavaScript field-order check that
+  initially rejected otherwise valid four-field annotations in both offline
+  forms. The corrected reviewer ZIPs were regenerated and their exact hashes
+  replaced the superseded values in `docs/P6_EXECUTION.md`.
+- A temporary 217-row synthetic dual-review packet exercised browser adoption,
+  manual rationale editing, refresh recovery, completed import/export, atomic
+  adjudicator installation, full P6 analysis, and independent report
+  verification. The temporary report verified successfully and was deleted;
+  no synthetic human result entered the real diagnostic packet.

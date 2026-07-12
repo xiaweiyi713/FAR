@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import base64
 import hashlib
 import json
+import re
 import zipfile
 from pathlib import Path
 
@@ -217,18 +219,39 @@ def test_adjudicator_handoff_requires_frozen_inputs_and_installs_gold_annotation
     assert result["reviewer_ids"] == ["reviewer-a", "reviewer-b"]
     assert result["safety"]["reviewers_frozen"] is True
     assert result["safety"]["machine_raw_responses_included"] is False
+    assert result["safety"]["offline_form_included"] is True
     rows = read_jsonl(output / "adjudicator.jsonl")
     assert len(rows) == 217
     assert all(row["gold_annotation"] is None for row in rows)
     assert all(set(row["machine_prelabel"]) == set(_annotation("clean", 0)) for row in rows)
     assert "raw_response" not in json.dumps(rows)
+    form = (output / "ADJUDICATOR_FORM.html").read_text(encoding="utf-8")
+    assert "Content-Security-Policy" in form
+    encoded_worksheet = re.search(r'const WORKSHEET_B64 = "([A-Za-z0-9+/=]+)";', form)
+    assert encoded_worksheet is not None
+    form_rows = [
+        json.loads(line)
+        for line in base64.b64decode(encoded_worksheet.group(1)).decode("utf-8").splitlines()
+    ]
+    assert len(form_rows) == 217
+    assert form_rows[0]["reviewer_a"]["annotator_id"] == "reviewer-a"
+    assert form_rows[0]["reviewer_b"]["annotator_id"] == "reviewer-b"
+    assert "raw_response" not in form
+    assert "boundary_score" not in form
+    assert "analysis_strata" not in form
+    assert "<script src=" not in form
+    assert "fetch(" not in form
     with zipfile.ZipFile(tmp_path / "adjudicator_handoff.zip") as archive:
         assert set(archive.namelist()) == {
+            "ADJUDICATOR_FORM.html",
             "ADJUDICATOR_INSTRUCTIONS.md",
             "adjudicator.jsonl",
             "handoff_manifest.json",
             "items.jsonl",
         }
+    first_sha = result["archive_sha256"]
+    second = build_adjudicator_handoff(packet, output, overwrite=True)
+    assert second["archive_sha256"] == first_sha
 
     for row in rows:
         row["gold_annotation"] = row["reviewer_a"]["annotation"]

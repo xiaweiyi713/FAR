@@ -215,7 +215,7 @@
       if (!annotation) return "Choose one mappability label.";
       if (typeof annotation !== "object" || Array.isArray(annotation)) return "Annotation must be an object.";
       const keys = Object.keys(annotation).sort().join(",");
-      if (keys !== "mapped_types,mappability,missing_concept,rationale") return "Annotation must contain exactly the four frozen fields.";
+      if (keys !== "mappability,mapped_types,missing_concept,rationale") return "Annotation must contain exactly the four frozen fields.";
       if (!["clean", "partial", "unmappable"].includes(annotation.mappability)) return "Unknown mappability label.";
       if (!Array.isArray(annotation.mapped_types)) return "mapped_types must be a list.";
       if (new Set(annotation.mapped_types).size !== annotation.mapped_types.length) return "mapped_types must not contain duplicates.";

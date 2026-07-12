@@ -128,8 +128,8 @@ deterministic archives generated from
 
 | Role | Local handoff | SHA-256 |
 |---|---|---|
-| reviewer A | `outputs/p6-reviewer-a.zip` | `d0b396c478688b8b218b430a7598ecc46eed9e37b2e7143381a4d11ad8c9cb57` |
-| reviewer B | `outputs/p6-reviewer-b.zip` | `043739a6bfa21c82badc54f5e7659c753f3ddfc729c40b52e97576a025f9f8c2` |
+| reviewer A | `outputs/p6-reviewer-a.zip` | `90e720a3f55c83e792abc09322051eafcd596f9c1bc61c918b159355d539da94` |
+| reviewer B | `outputs/p6-reviewer-b.zip` | `28d940a3e0aa75f464521823b0014f677052be4c1fb2c2ea880aacaf29bbf382` |
 
 Verify each ZIP immediately before sending it. Give each archive to a distinct
 person and never send both archives to the same reviewer. Return only the
@@ -160,9 +160,20 @@ falsirag diag type-mappability export-adjudicator \
   --output-dir outputs/p6-adjudicator
 ```
 
-The adjudicator worksheet excludes machine raw responses, analysis strata, and
+The deterministic adjudicator archive is generated only after the two real
+reviewer files are frozen. It has an exact five-file allowlist: visible
+`items.jsonl`, the frozen dual-review/sanitized-machine worksheet,
+`ADJUDICATOR_INSTRUCTIONS.md`, a self-contained
+`ADJUDICATOR_FORM.html`, and its fingerprint manifest. The form binds local
+drafts and imports to the exact reviewer-file fingerprints, rejects changes to
+context/reviewer/machine inputs, labels the machine suggestion as non-gold, and
+enables completed export only after all 217 gold annotations are valid.
+
+The adjudicator packet excludes machine raw responses, analysis strata, and
 scores. The adjudicator fills `gold_annotation`; the installer normalizes it to
-the frozen installed annotation schema. Use the packet commands printed in
+the frozen installed annotation schema. The third person should unzip the
+archive, open `ADJUDICATOR_FORM.html`, export draft backups regularly, and
+return only the completed `adjudicator.jsonl`. Use the packet commands printed in
 `diagnostics/type_mappability_v1/INSTRUCTIONS.md` to install each completed
 file, then run:
 

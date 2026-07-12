@@ -8,7 +8,7 @@
   tracked_files_removed=`true`;
   local_install_target_ignored=`true`;
   cutover_valid=`true`.
-- 全仓跟踪文件: 330 个, 约 11.414 MiB.
+- 全仓跟踪文件: 331 个, 约 11.438 MiB.
 - 最大跟踪文件: `bench/external/ramdocs_v1/corpus.jsonl`, 约 2.553 MiB
   (阈值 50.0 MiB;
   under_threshold=`true`).

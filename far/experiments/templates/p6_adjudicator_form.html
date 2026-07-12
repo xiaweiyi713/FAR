@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>P6 adjudicator form</title>
+  <style>
+    :root { color-scheme: light; --ink:#17211b; --muted:#5c6c61; --line:#d8e0da; --paper:#fbfcf9; --panel:#fff; --accent:#166534; --accent-soft:#dcfce7; --warning:#9a3412; --warning-soft:#ffedd5; --human:#e8f1ff; --machine:#f1ecff; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--paper); color:var(--ink); font:15px/1.5 ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+    button,input,textarea { font:inherit; }
+    button,input[type="number"],input[type="text"],textarea { border:1px solid var(--line); border-radius:8px; background:#fff; color:var(--ink); }
+    button { padding:8px 12px; cursor:pointer; }
+    button:hover { border-color:var(--accent); }
+    button.primary { background:var(--accent); border-color:var(--accent); color:#fff; }
+    button:disabled { cursor:not-allowed; opacity:.45; }
+    header { position:sticky; top:0; z-index:5; display:flex; gap:18px; align-items:center; justify-content:space-between; padding:14px 22px; border-bottom:1px solid var(--line); background:rgba(251,252,249,.97); }
+    header h1 { margin:0; font-size:19px; }
+    .header-meta { display:flex; gap:14px; align-items:center; color:var(--muted); }
+    .progress-track { width:160px; height:8px; overflow:hidden; border-radius:999px; background:#e6ebe7; }
+    .progress-bar { height:100%; width:0; background:var(--accent); transition:width .15s ease; }
+    main { display:grid; grid-template-columns:minmax(0,1.25fr) minmax(350px,.75fr); gap:18px; max-width:1480px; margin:0 auto; padding:20px; }
+    section,aside { min-width:0; }
+    .card { margin-bottom:16px; padding:18px; border:1px solid var(--line); border-radius:12px; background:var(--panel); box-shadow:0 2px 7px rgba(23,33,27,.04); }
+    .eyebrow { margin:0 0 5px; color:var(--accent); font-size:12px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
+    h2,h3 { margin:0 0 10px; line-height:1.25; } h2 { font-size:21px; } h3 { font-size:16px; } p { margin:0 0 10px; }
+    .muted { color:var(--muted); }
+    .answer-grid,.source-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .source-grid { grid-template-columns:1fr 1fr 1fr; }
+    .answer-box { padding:12px; border-radius:9px; background:#f3f6f3; white-space:pre-wrap; }
+    .evidence { margin-top:10px; padding:12px; border-left:3px solid #86a68f; background:#f7f9f7; }
+    .evidence strong { display:block; margin-bottom:4px; }
+    .source { padding:12px; border:1px solid var(--line); border-radius:10px; overflow-wrap:anywhere; }
+    .source.human { background:var(--human); } .source.machine { background:var(--machine); }
+    .source pre { margin:8px 0; white-space:pre-wrap; font:12px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace; }
+    .agreement { display:inline-block; padding:3px 8px; border-radius:999px; background:#eef3ef; color:var(--muted); font-size:12px; }
+    aside { position:sticky; top:84px; align-self:start; max-height:calc(100vh - 104px); overflow:auto; }
+    fieldset { margin:0 0 16px; padding:0; border:0; } legend,label.block { display:block; margin-bottom:7px; font-weight:700; }
+    .choice-row,.type-grid { display:grid; gap:8px; } .choice-row { grid-template-columns:repeat(3,1fr); } .type-grid { grid-template-columns:1fr 1fr; }
+    .choice,.type-choice { display:flex; gap:7px; align-items:flex-start; padding:8px; border:1px solid var(--line); border-radius:8px; }
+    .choice input,.type-choice input { margin-top:3px; }
+    input[type="text"],textarea { width:100%; padding:9px 10px; } textarea { min-height:96px; resize:vertical; }
+    .validation { min-height:42px; padding:9px 11px; border-radius:8px; background:var(--warning-soft); color:var(--warning); }
+    .validation.ok { background:var(--accent-soft); color:var(--accent); }
+    .toolbar,.nav { display:flex; flex-wrap:wrap; gap:8px; align-items:center; } .nav { justify-content:space-between; margin-bottom:14px; }
+    .jump { display:flex; gap:6px; align-items:center; } .jump input { width:76px; padding:7px; }
+    .file-label { display:inline-block; padding:8px 12px; border:1px solid var(--line); border-radius:8px; background:#fff; cursor:pointer; } .file-label input { display:none; }
+    .notice { padding:10px 12px; border-radius:8px; background:#eef3ef; color:var(--muted); }
+    .footer-note { margin-top:12px; font-size:13px; color:var(--muted); } code { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; }
+    @media (max-width:1050px) { .source-grid { grid-template-columns:1fr; } }
+    @media (max-width:900px) { header { align-items:flex-start; } .header-meta { flex-direction:column; align-items:flex-end; gap:5px; } main { grid-template-columns:1fr; } aside { position:static; max-height:none; } }
+  </style>
+</head>
+<body>
+  <header>
+    <div><p class="eyebrow">FAR P6 · third-person adjudication</p><h1>P6 adjudicator · frozen dual review</h1></div>
+    <div class="header-meta"><span id="progress-text">0 / 217 valid</span><div class="progress-track" aria-label="adjudication progress"><div class="progress-bar" id="progress-bar"></div></div><span id="storage-status">Local draft storage pending</span></div>
+  </header>
+  <main>
+    <section aria-label="visible adjudication context">
+      <div class="nav"><button id="previous" type="button">← Previous</button><div class="jump"><label for="jump-index">Item</label><input id="jump-index" type="number" min="1" max="217" value="1"><span id="sample-id"></span></div><button id="next" type="button">Next →</button></div>
+      <div class="card"><p class="eyebrow" id="dataset"></p><h2 id="question"></h2><div class="answer-grid"><div><h3>Initial answer</h3><div class="answer-box" id="initial-answer"></div></div><div><h3>Reference answers</h3><div class="answer-box" id="reference-answers"></div></div></div></div>
+      <div class="card"><h3>Closed-set evidence</h3><p class="muted">Adjudicate only from this visible context. Do not search the web.</p><div id="evidence-list"></div></div>
+      <div class="card"><div style="display:flex;justify-content:space-between;gap:10px;align-items:center"><h3>Frozen inputs</h3><span class="agreement" id="human-agreement"></span></div><p class="muted">Machine output is a non-gold aid and must not automatically break ties.</p><div class="source-grid" id="source-grid"></div></div>
+    </section>
+    <aside class="card" aria-label="gold annotation editor">
+      <p class="eyebrow">Gold annotation · frozen schema</p>
+      <fieldset><legend>Mappability</legend><div class="choice-row"><label class="choice"><input type="radio" name="mappability" value="clean"> clean</label><label class="choice"><input type="radio" name="mappability" value="partial"> partial</label><label class="choice"><input type="radio" name="mappability" value="unmappable"> unmappable</label></div></fieldset>
+      <fieldset><legend>Mapped types</legend><div class="type-grid" id="type-grid"></div></fieldset>
+      <label class="block" for="missing-concept">Missing concept</label><input id="missing-concept" type="text" autocomplete="off" placeholder="Required for partial/unmappable; empty for clean">
+      <label class="block" for="rationale" style="margin-top:14px">Text-grounded rationale</label><textarea id="rationale" placeholder="Required for every item"></textarea>
+      <div id="validation" class="validation" role="status">Choose a gold mappability label to begin.</div>
+      <div class="toolbar" style="margin-top:12px"><button id="save-draft" type="button">Save draft</button><button id="save-next" class="primary" type="button">Validate, save & next</button></div>
+      <hr style="border:0;border-top:1px solid var(--line);margin:18px 0">
+      <h3>Backup and return</h3><p class="notice">Progress stays in this browser when available. Export a draft regularly. Return only the completed adjudicator JSONL.</p>
+      <div class="toolbar" style="margin-top:12px"><button id="export-draft" type="button">Export draft JSONL</button><button id="export-complete" class="primary" type="button" disabled>Export completed JSONL</button><label class="file-label">Import JSONL<input id="import-file" type="file" accept=".jsonl,application/json"></label><button id="clear-progress" type="button">Clear local progress</button></div>
+      <p class="footer-note">Offline form. No network requests, model raw responses, scores, or analysis strata are present.</p>
+    </aside>
+  </main>
+  <script>
+    "use strict";
+    const STORAGE_KEY = __STORAGE_KEY_JSON__;
+    const ITEMS_B64 = __ITEMS_BASE64_JSON__;
+    const WORKSHEET_B64 = __WORKSHEET_BASE64_JSON__;
+    const TYPE_GUIDE = __TYPE_GUIDE_JSON__;
+    const element = id => document.getElementById(id);
+    function decodeBase64(value) { const bytes=Uint8Array.from(atob(value),c=>c.charCodeAt(0)); return new TextDecoder().decode(bytes); }
+    function parseJsonl(text) { return text.split(/\r?\n/).filter(line=>line.trim()).map(line=>JSON.parse(line)); }
+    function stable(value) { if (Array.isArray(value)) return `[${value.map(stable).join(",")}]`; if (value && typeof value === "object") return `{${Object.keys(value).sort().map(key=>`${JSON.stringify(key)}:${stable(value[key])}`).join(",")}}`; return JSON.stringify(value); }
+    function frozenSignature(row) { return stable({sample_id:row.sample_id,context_sha256:row.context_sha256,reviewer_a:row.reviewer_a,reviewer_b:row.reviewer_b,machine_prelabel:row.machine_prelabel}); }
+    const items=parseJsonl(decodeBase64(ITEMS_B64)); const itemById=new Map(items.map(item=>[item.sample_id,item]));
+    const frozenRows=parseJsonl(decodeBase64(WORKSHEET_B64)); let rows=frozenRows.map(row=>({...row,gold_annotation:null})); let index=0;
+    const typeGrid=element("type-grid");
+    Object.entries(TYPE_GUIDE).forEach(([name,guide])=>{ const label=document.createElement("label"); label.className="type-choice"; label.title=guide; label.innerHTML=`<input type="checkbox" name="mapped-type" value="${name}"><span><code>${name}</code><br><small>${guide}</small></span>`; typeGrid.appendChild(label); });
+    function validate(annotation) {
+      if (!annotation) return "Choose one gold mappability label.";
+      if (typeof annotation!=="object"||Array.isArray(annotation)) return "Annotation must be an object.";
+      if (Object.keys(annotation).sort().join(",")!=="mappability,mapped_types,missing_concept,rationale") return "Annotation must contain exactly the four frozen fields.";
+      if (!["clean","partial","unmappable"].includes(annotation.mappability)) return "Unknown mappability label.";
+      if (!Array.isArray(annotation.mapped_types)) return "mapped_types must be a list.";
+      if (new Set(annotation.mapped_types).size!==annotation.mapped_types.length) return "mapped_types must not contain duplicates.";
+      if (annotation.mapped_types.some(name=>!Object.hasOwn(TYPE_GUIDE,name))) return "mapped_types contains an unknown frozen type.";
+      if (typeof annotation.missing_concept!=="string"||typeof annotation.rationale!=="string") return "missing_concept and rationale must be text.";
+      if (!annotation.rationale.trim()) return "Every item requires a text-grounded rationale.";
+      if (annotation.mappability==="clean"&&(annotation.mapped_types.length!==1||annotation.missing_concept.trim())) return "clean requires exactly one type and an empty missing concept.";
+      if (annotation.mappability==="partial"&&(!annotation.mapped_types.length||!annotation.missing_concept.trim())) return "partial requires mapped types and a non-empty missing concept.";
+      if (annotation.mappability==="unmappable"&&(annotation.mapped_types.length||!annotation.missing_concept.trim())) return "unmappable requires no types and a non-empty missing concept.";
+      return "";
+    }
+    function annotationFromEditor() { const selected=document.querySelector('input[name="mappability"]:checked'); if (!selected) return null; return {mappability:selected.value,mapped_types:[...document.querySelectorAll('input[name="mapped-type"]:checked')].map(node=>node.value),missing_concept:element("missing-concept").value.trim(),rationale:element("rationale").value.trim()}; }
+    function validCount(){ return rows.filter(row=>!validate(row.gold_annotation)).length; }
+    function setValidation(message){ const node=element("validation"); node.textContent=message||"Gold annotation is schema-valid."; node.classList.toggle("ok",!message); }
+    function persist(){ try { localStorage.setItem(STORAGE_KEY,JSON.stringify(rows)); element("storage-status").textContent="Draft saved locally"; } catch(_error){ element("storage-status").textContent="Local storage unavailable; export drafts"; } }
+    function restore(){ try { const saved=JSON.parse(localStorage.getItem(STORAGE_KEY)||"null"); if(!Array.isArray(saved)||saved.length!==frozenRows.length)return; const byId=new Map(saved.map(row=>[row.sample_id,row])); rows=frozenRows.map(frozen=>{ const candidate=byId.get(frozen.sample_id); if(!candidate||frozenSignature(candidate)!==frozenSignature(frozen))return frozen; return {...frozen,gold_annotation:candidate.gold_annotation||null}; }); element("storage-status").textContent="Draft restored locally"; } catch(_error){ element("storage-status").textContent="Stored draft was invalid; blank worksheet loaded"; } }
+    function updateProgress(){ const count=validCount(); element("progress-text").textContent=`${count} / ${rows.length} valid`; element("progress-bar").style.width=`${100*count/rows.length}%`; element("export-complete").disabled=count!==rows.length; }
+    function annotationCard(title,annotation,className,buttonLabel){ const card=document.createElement("article"); card.className=`source ${className}`; const heading=document.createElement("strong"); heading.textContent=title; const body=document.createElement("pre"); body.textContent=JSON.stringify(annotation,null,2); const button=document.createElement("button"); button.type="button"; button.textContent=buttonLabel; button.addEventListener("click",()=>{ rows[index]={...rows[index],gold_annotation:structuredClone(annotation)}; render(); persist(); }); card.append(heading,body,button); return card; }
+    function render(){
+      const row=rows[index],item=itemById.get(row.sample_id); if(!item)throw new Error(`Missing visible item ${row.sample_id}`);
+      element("jump-index").value=String(index+1); element("sample-id").textContent=row.sample_id; element("dataset").textContent=item.dataset; element("question").textContent=item.question; element("initial-answer").textContent=item.initial_answer; element("reference-answers").textContent=item.reference_answers.join("\n");
+      const evidenceList=element("evidence-list"); evidenceList.replaceChildren(); item.evidence.forEach(evidence=>{ const card=document.createElement("article"); card.className="evidence"; const title=document.createElement("strong"); title.textContent=`${evidence.evidence_id} · ${evidence.title||"Untitled"}`; const body=document.createElement("div"); body.textContent=evidence.text; card.append(title,body); evidenceList.appendChild(card); });
+      const sourceGrid=element("source-grid"); sourceGrid.replaceChildren(annotationCard(`Reviewer A · ${row.reviewer_a.annotator_id}`,row.reviewer_a.annotation,"human","Use reviewer A"),annotationCard(`Reviewer B · ${row.reviewer_b.annotator_id}`,row.reviewer_b.annotation,"human","Use reviewer B"),annotationCard("Machine prelabel · non-gold",row.machine_prelabel,"machine","Use machine draft"));
+      element("human-agreement").textContent=stable(row.reviewer_a.annotation)===stable(row.reviewer_b.annotation)?"Human reviewers agree":"Human reviewers differ";
+      document.querySelectorAll('input[name="mappability"]').forEach(node=>{node.checked=Boolean(row.gold_annotation&&row.gold_annotation.mappability===node.value);});
+      document.querySelectorAll('input[name="mapped-type"]').forEach(node=>{node.checked=Boolean(Array.isArray(row.gold_annotation?.mapped_types)&&row.gold_annotation.mapped_types.includes(node.value));});
+      element("missing-concept").value=row.gold_annotation?.missing_concept||""; element("rationale").value=row.gold_annotation?.rationale||""; element("previous").disabled=index===0; element("next").disabled=index===rows.length-1; element("save-next").textContent=index===rows.length-1?"Validate & save":"Validate, save & next"; setValidation(validate(row.gold_annotation)); updateProgress(); window.scrollTo({top:0,behavior:"instant"});
+    }
+    function capture({requireValid=false}={}){ const annotation=annotationFromEditor(); rows[index]={...rows[index],gold_annotation:annotation}; const error=validate(annotation); setValidation(error); persist(); updateProgress(); return !requireValid||!error; }
+    function move(nextIndex){ capture(); index=Math.max(0,Math.min(rows.length-1,nextIndex)); render(); }
+    function download(filename,completeOnly){ capture(); if(completeOnly&&validCount()!==rows.length){setValidation(`Cannot export completed JSONL: ${rows.length-validCount()} rows remain invalid.`);return;} const text=rows.map(row=>JSON.stringify(row)).join("\n")+"\n"; const url=URL.createObjectURL(new Blob([text],{type:"application/x-ndjson"})); const anchor=document.createElement("a"); anchor.href=url; anchor.download=filename; anchor.click(); setTimeout(()=>URL.revokeObjectURL(url),1000); }
+    element("previous").addEventListener("click",()=>move(index-1)); element("next").addEventListener("click",()=>move(index+1)); element("jump-index").addEventListener("change",event=>move(Number(event.target.value)-1)); element("save-draft").addEventListener("click",()=>capture()); element("save-next").addEventListener("click",()=>{if(capture({requireValid:true})&&index<rows.length-1){index+=1;render();}}); element("export-draft").addEventListener("click",()=>download("adjudicator.draft.jsonl",false)); element("export-complete").addEventListener("click",()=>download("adjudicator.jsonl",true));
+    element("import-file").addEventListener("change",async event=>{ const file=event.target.files[0]; if(!file)return; try { const imported=parseJsonl(await file.text()),byId=new Map(imported.map(row=>[row.sample_id,row])); if(imported.length!==frozenRows.length||byId.size!==frozenRows.length)throw new Error("row count/sample IDs differ"); rows=frozenRows.map(frozen=>{const candidate=byId.get(frozen.sample_id);if(!candidate||frozenSignature(candidate)!==frozenSignature(frozen))throw new Error(`${frozen.sample_id}: frozen inputs differ`);return {...frozen,gold_annotation:candidate.gold_annotation||null};}); persist();render(); } catch(error){setValidation(`Import rejected: ${error.message}`);} finally {event.target.value="";} });
+    element("clear-progress").addEventListener("click",()=>{if(!confirm("Clear all locally saved adjudications? Export a draft first if needed."))return;rows=frozenRows.map(row=>({...row,gold_annotation:null}));try{localStorage.removeItem(STORAGE_KEY);}catch(_error){}index=0;render();}); document.addEventListener("input",()=>setValidation(validate(annotationFromEditor()))); document.addEventListener("keydown",event=>{if((event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==="s"){event.preventDefault();capture();}});
+    restore(); render();
+  </script>
+</body>
+</html>
