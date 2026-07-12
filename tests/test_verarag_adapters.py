@@ -84,6 +84,33 @@ def test_ollama_adapter_disables_thinking_for_publication_run(
     assert calls[-1] == {"model": "qwen3.5:9b", "prompt": "", "keep_alive": 0}
 
 
+def test_ollama_adapter_forwards_json_schema_format(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    fake_module = ModuleType("ollama")
+    calls: list[dict[str, object]] = []
+
+    class FakeOllamaClient:
+        def __init__(self, host: str) -> None:
+            del host
+
+        def generate(self, **kwargs: object) -> dict[str, object]:
+            calls.append(kwargs)
+            return {"response": '{"ok": true}'}
+
+    fake_module.Client = FakeOllamaClient  # type: ignore[attr-defined]
+    monkeypatch.setitem(sys.modules, "ollama", fake_module)
+    adapter = VeraLLMAdapter(provider="ollama", model="qwen3.5:9b")
+    schema = {
+        "type": "object",
+        "properties": {"ok": {"type": "boolean"}},
+        "required": ["ok"],
+    }
+
+    assert adapter.complete("json please", response_format=schema) == '{"ok": true}'
+    assert calls[0]["format"] == schema
+
+
 def test_ollama_adapter_rejects_thinking_without_final_response(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

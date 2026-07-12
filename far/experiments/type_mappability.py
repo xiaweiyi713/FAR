@@ -49,6 +49,49 @@ MACHINE_PRELABEL_RETRY_INSTRUCTION = (
     "The previous JSON did not satisfy the frozen annotation schema. Correct only the schema "
     "violation described below and return exactly one JSON object with no markdown."
 )
+_MAPPED_TYPES_SCHEMA = {
+    "type": "array",
+    "items": {"type": "string", "enum": list(TYPE_NAMES)},
+    "uniqueItems": True,
+}
+MACHINE_PRELABEL_RESPONSE_SCHEMA: dict[str, Any] = {
+    "type": "object",
+    "oneOf": [
+        {
+            "type": "object",
+            "properties": {
+                "mappability": {"const": "clean"},
+                "mapped_types": {**_MAPPED_TYPES_SCHEMA, "minItems": 1, "maxItems": 1},
+                "missing_concept": {"const": ""},
+                "rationale": {"type": "string", "minLength": 1},
+            },
+            "required": ["mappability", "mapped_types", "missing_concept", "rationale"],
+            "additionalProperties": False,
+        },
+        {
+            "type": "object",
+            "properties": {
+                "mappability": {"const": "partial"},
+                "mapped_types": {**_MAPPED_TYPES_SCHEMA, "minItems": 1},
+                "missing_concept": {"type": "string", "minLength": 1},
+                "rationale": {"type": "string", "minLength": 1},
+            },
+            "required": ["mappability", "mapped_types", "missing_concept", "rationale"],
+            "additionalProperties": False,
+        },
+        {
+            "type": "object",
+            "properties": {
+                "mappability": {"const": "unmappable"},
+                "mapped_types": {**_MAPPED_TYPES_SCHEMA, "maxItems": 0},
+                "missing_concept": {"type": "string", "minLength": 1},
+                "rationale": {"type": "string", "minLength": 1},
+            },
+            "required": ["mappability", "mapped_types", "missing_concept", "rationale"],
+            "additionalProperties": False,
+        },
+    ],
+}
 
 DATASETS: dict[str, dict[str, Any]] = {
     "wikicontradict": {
@@ -820,6 +863,60 @@ def _validate_machine_attempts(
     return attempts
 
 
+def _validate_machine_attempt_log(
+    rows: list[dict[str, Any]],
+    items: dict[str, dict[str, Any]],
+    *,
+    work_identity_sha256: str,
+) -> None:
+    previous: dict[str, Any] | None = None
+    for sequence, row in enumerate(rows, start=1):
+        if not isinstance(row, dict) or row.get("sequence") != sequence:
+            raise ValueError("machine prelabel attempt log sequence is invalid")
+        sample_id = str(row.get("sample_id", ""))
+        if sample_id not in items:
+            raise ValueError("machine prelabel attempt log has an invalid sample ID")
+        if (
+            row.get("context_sha256") != items[sample_id]["context_sha256"]
+            or row.get("work_identity_sha256") != work_identity_sha256
+        ):
+            raise ValueError(f"{sample_id}: machine attempt log provenance is invalid")
+        attempt_number = row.get("attempt")
+        if not isinstance(attempt_number, int) or not (
+            1 <= attempt_number <= MACHINE_PRELABEL_MAX_ATTEMPTS
+        ):
+            raise ValueError(f"{sample_id}: machine attempt log attempt number is invalid")
+        if attempt_number == 1:
+            prompt = _prelabel_prompt(items[sample_id])
+        else:
+            if (
+                previous is None
+                or previous.get("sample_id") != sample_id
+                or previous.get("attempt") != attempt_number - 1
+                or previous.get("valid") is not False
+            ):
+                raise ValueError(f"{sample_id}: machine attempt log retry chain is invalid")
+            prompt = _prelabel_retry_prompt(
+                items[sample_id],
+                previous_response=str(previous.get("raw_response", "")),
+                validation_error=str(previous.get("validation_error", "")),
+            )
+        response = str(row.get("raw_response", ""))
+        if row.get("prompt_sha256") != hashlib.sha256(prompt.encode("utf-8")).hexdigest():
+            raise ValueError(f"{sample_id}: machine attempt log prompt fingerprint mismatch")
+        if row.get("raw_response_sha256") != hashlib.sha256(response.encode("utf-8")).hexdigest():
+            raise ValueError(f"{sample_id}: machine attempt log response fingerprint mismatch")
+        try:
+            _parse_machine_response(response, sample_id=sample_id)
+        except ValueError as exc:
+            if row.get("valid") is not False or row.get("validation_error") != str(exc):
+                raise ValueError(f"{sample_id}: invalid machine attempt log result") from exc
+        else:
+            if row.get("valid") is not True or row.get("validation_error") is not None:
+                raise ValueError(f"{sample_id}: valid machine attempt log result is invalid")
+        previous = row
+
+
 def prelabel_packet(packet_dir: Path, config_path: Path) -> dict[str, Any]:
     _, items = _annotation_items(packet_dir)
     target = _completed_path(packet_dir, "machine_prelabels")
@@ -829,9 +926,6 @@ def prelabel_packet(packet_dir: Path, config_path: Path) -> dict[str, Any]:
     if _completed_path(packet_dir, "adjudicator").exists():
         raise ValueError("machine prelabels cannot be generated after adjudication")
     config = load_config(config_path)
-    generator = build_generator(config)
-    if generator is None:
-        raise ValueError("machine prelabeling requires an enabled text generator")
     runtime = _llm_runtime_identity(config)
     model = str(config.get("llm", {}).get("model", ""))
     digest = str(runtime.get("ollama_model", {}).get("digest", ""))
@@ -845,6 +939,7 @@ def prelabel_packet(packet_dir: Path, config_path: Path) -> dict[str, Any]:
         "max_tokens": 500,
         "max_attempts": MACHINE_PRELABEL_MAX_ATTEMPTS,
         "retry_instruction": MACHINE_PRELABEL_RETRY_INSTRUCTION,
+        "response_schema": MACHINE_PRELABEL_RESPONSE_SCHEMA,
     }
     identity = {
         "model": model,
@@ -859,6 +954,14 @@ def prelabel_packet(packet_dir: Path, config_path: Path) -> dict[str, Any]:
             raise ValueError("machine prelabel checkpoint belongs to a different runtime")
     else:
         write_json(work_identity_path, identity)
+    identity_sha = _stable_sha(identity)
+    attempt_log_path = packet_dir / "machine_prelabel_attempt_log.jsonl"
+    attempt_log_rows = read_jsonl(attempt_log_path) if attempt_log_path.is_file() else []
+    _validate_machine_attempt_log(
+        attempt_log_rows,
+        items,
+        work_identity_sha256=identity_sha,
+    )
     checkpoint_path = packet_dir / "machine_prelabel_checkpoint.jsonl"
     checkpoint_rows = read_jsonl(checkpoint_path) if checkpoint_path.is_file() else []
     completed: dict[str, dict[str, Any]] = {}
@@ -871,9 +974,16 @@ def prelabel_packet(packet_dir: Path, config_path: Path) -> dict[str, Any]:
         validate_annotation(row.get("annotation"), sample_id=sample_id)
         _validate_machine_attempts(row, items[sample_id], sample_id=sample_id)
         completed[sample_id] = row
-    checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
+    generator = build_generator(config)
+    if generator is None:
+        raise ValueError("machine prelabeling requires an enabled text generator")
     try:
-        with checkpoint_path.open("a", encoding="utf-8") as handle:
+        checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
+        with (
+            checkpoint_path.open("a", encoding="utf-8") as handle,
+            attempt_log_path.open("a", encoding="utf-8") as attempt_log_handle,
+        ):
+            attempt_sequence = len(attempt_log_rows)
             for sample_id in sorted(items):
                 if sample_id in completed:
                     continue
@@ -888,6 +998,7 @@ def prelabel_packet(packet_dir: Path, config_path: Path) -> dict[str, Any]:
                         system_prompt=str(prompt_template["system_prompt"]),
                         temperature=0.0,
                         max_tokens=500,
+                        response_format=MACHINE_PRELABEL_RESPONSE_SCHEMA,
                     ).strip()
                     attempt = {
                         "attempt": attempt_number,
@@ -901,6 +1012,19 @@ def prelabel_packet(packet_dir: Path, config_path: Path) -> dict[str, Any]:
                         error = str(exc)
                         attempt.update({"valid": False, "validation_error": error})
                         attempts.append(attempt)
+                        attempt_sequence += 1
+                        attempt_log_row = {
+                            "sequence": attempt_sequence,
+                            "sample_id": sample_id,
+                            "context_sha256": item["context_sha256"],
+                            "work_identity_sha256": identity_sha,
+                            **attempt,
+                        }
+                        attempt_log_handle.write(
+                            json.dumps(attempt_log_row, ensure_ascii=False, sort_keys=True) + "\n"
+                        )
+                        attempt_log_handle.flush()
+                        os.fsync(attempt_log_handle.fileno())
                         print(
                             f"machine_prelabel: invalid {sample_id} "
                             f"attempt={attempt_number}: {error}"
@@ -918,6 +1042,19 @@ def prelabel_packet(packet_dir: Path, config_path: Path) -> dict[str, Any]:
                     else:
                         attempt.update({"valid": True, "validation_error": None})
                         attempts.append(attempt)
+                        attempt_sequence += 1
+                        attempt_log_row = {
+                            "sequence": attempt_sequence,
+                            "sample_id": sample_id,
+                            "context_sha256": item["context_sha256"],
+                            "work_identity_sha256": identity_sha,
+                            **attempt,
+                        }
+                        attempt_log_handle.write(
+                            json.dumps(attempt_log_row, ensure_ascii=False, sort_keys=True) + "\n"
+                        )
+                        attempt_log_handle.flush()
+                        os.fsync(attempt_log_handle.fileno())
                         break
                 if annotation is None:
                     raise ValueError(f"{sample_id}: machine prelabel produced no annotation")
@@ -940,7 +1077,6 @@ def prelabel_packet(packet_dir: Path, config_path: Path) -> dict[str, Any]:
         release_generator(generator)
     if set(completed) != set(items):
         raise ValueError("machine prelabeling did not complete all samples")
-    identity_sha = _stable_sha(identity)
     installed = [
         {
             "sample_id": sample_id,
@@ -964,6 +1100,8 @@ def prelabel_packet(packet_dir: Path, config_path: Path) -> dict[str, Any]:
         "identity_sha256": sha256_file(target_identity),
         "installed_sha256": sha256_file(target),
         "installed_identity_sha256": sha256_file(target_identity),
+        "attempts": attempt_sequence,
+        "attempt_log_sha256": sha256_file(attempt_log_path),
     }
     write_json(packet_dir / "completed" / "machine_install.json", result)
     return result

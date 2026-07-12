@@ -41,7 +41,7 @@ class _OllamaGenerateClient:
         system_prompt: str | None = None,
         temperature: float = 0.0,
         max_tokens: int = 1000,
-        response_format: str | None = None,
+        response_format: str | dict[str, Any] | None = None,
     ) -> str:
         kwargs: dict[str, Any] = {
             "model": self.model,
@@ -57,8 +57,8 @@ class _OllamaGenerateClient:
             kwargs["think"] = self.think
         if self.keep_alive is not None:
             kwargs["keep_alive"] = self.keep_alive
-        if response_format == "json":
-            kwargs["format"] = "json"
+        if response_format == "json" or isinstance(response_format, dict):
+            kwargs["format"] = response_format
         response = self.client.generate(**kwargs)
         text = self._response_field(response, "response")
         if isinstance(text, str) and text.strip():
@@ -132,7 +132,7 @@ class VeraLLMAdapter:
         system_prompt: str | None = None,
         temperature: float = 0.0,
         max_tokens: int = 1000,
-        response_format: str | None = None,
+        response_format: str | dict[str, Any] | None = None,
     ) -> str:
         return str(
             self.client.generate(

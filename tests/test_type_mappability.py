@@ -10,6 +10,7 @@ from far.bench.build.common import read_jsonl, write_json, write_jsonl
 from far.experiments.type_mappability import (
     DATASET_ORDER,
     HUMAN_ROLES,
+    MACHINE_PRELABEL_RESPONSE_SCHEMA,
     MAPPABILITY_LABELS,
     _association,
     _prelabel_prompt,
@@ -284,10 +285,12 @@ def test_machine_prelabel_is_resumable_provenanced_and_released_once(
         def __init__(self) -> None:
             self.calls = 0
             self.releases = 0
+            self.response_formats: list[object] = []
 
         def complete(self, prompt: str, **kwargs: object) -> str:
-            del prompt, kwargs
+            del prompt
             self.calls += 1
+            self.response_formats.append(kwargs.get("response_format"))
             return json.dumps(_annotation("clean", self.calls))
 
         def release(self) -> None:
@@ -308,6 +311,7 @@ def test_machine_prelabel_is_resumable_provenanced_and_released_once(
     assert result["samples"] == 217
     assert generator.calls == 217
     assert generator.releases == 1
+    assert generator.response_formats == [MACHINE_PRELABEL_RESPONSE_SCHEMA] * 217
     assert (packet / "machine_prelabel_checkpoint.jsonl").is_file()
     assert (packet / "machine_prelabel_work_identity.json").is_file()
     rows = read_jsonl(packet / "machine_prelabel_checkpoint.jsonl")
@@ -377,6 +381,13 @@ def test_machine_prelabel_retries_invalid_schema_and_preserves_attempts(
         == hashlib.sha256(attempts[0]["raw_response"].encode("utf-8")).hexdigest()
     )
     assert rows[0]["raw_response"] == attempts[-1]["raw_response"]
+    attempt_log = read_jsonl(packet / "machine_prelabel_attempt_log.jsonl")
+    assert [row["valid"] for row in attempt_log[:2]] == [False, True]
+    assert [row["sequence"] for row in attempt_log] == list(range(1, len(attempt_log) + 1))
+    assert (
+        result["attempt_log_sha256"]
+        == hashlib.sha256((packet / "machine_prelabel_attempt_log.jsonl").read_bytes()).hexdigest()
+    )
     assert packet_status(packet)["machine_prelabels"]["complete"] is True
 
 
@@ -428,7 +439,18 @@ def test_machine_prelabel_exhausts_bounded_retry_budget_and_releases_generator(
     assert generator.calls == 3
     assert generator.releases == 1
     assert (packet / "machine_prelabel_checkpoint.jsonl").read_bytes() == b""
+    attempt_log = read_jsonl(packet / "machine_prelabel_attempt_log.jsonl")
+    assert len(attempt_log) == 3
+    assert [row["attempt"] for row in attempt_log] == [1, 2, 3]
+    assert all(row["valid"] is False and row["raw_response"] for row in attempt_log)
     assert not (packet / "completed/machine_prelabels.jsonl").exists()
+
+    attempt_log[0]["raw_response_sha256"] = "0" * 64
+    write_jsonl(packet / "machine_prelabel_attempt_log.jsonl", attempt_log)
+    with pytest.raises(ValueError, match="attempt log response fingerprint mismatch"):
+        prelabel_packet(packet, config)
+    assert generator.calls == 3
+    assert generator.releases == 1
 
 
 def test_complete_packet_analysis_and_verifier_recompute_everything(tmp_path: Path) -> None:

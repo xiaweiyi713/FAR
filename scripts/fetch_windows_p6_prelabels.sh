@@ -31,13 +31,24 @@ packet="$1"
 for file in machine_prelabels.jsonl machine_identity.json machine_install.json; do
   [[ -f "${packet}/completed/${file}" ]] || { echo "missing completed/${file}" >&2; exit 1; }
 done
-python3 - "${packet}/completed/machine_install.json" <<'PY'
+[[ -f "${packet}/machine_prelabel_attempt_log.jsonl" ]] || {
+  echo "missing machine_prelabel_attempt_log.jsonl" >&2
+  exit 1
+}
+python3 - \
+  "${packet}/completed/machine_install.json" \
+  "${packet}/machine_prelabel_attempt_log.jsonl" <<'PY'
+import hashlib
 import json
 import sys
 
 m=json.load(open(sys.argv[1], encoding="utf-8"))
 if m.get("schema_version") != "far-type-mappability-machine-prelabel-v1" or m.get("samples") != 217:
     raise SystemExit("remote P6 machine manifest is incomplete")
+observed = hashlib.sha256(open(sys.argv[2], "rb").read()).hexdigest()
+attempts = sum(1 for line in open(sys.argv[2], encoding="utf-8") if line.strip())
+if m.get("attempt_log_sha256") != observed or m.get("attempts") != attempts:
+    raise SystemExit("remote P6 attempt log differs from its manifest")
 PY
 REMOTE
 mkdir -p "${local_copy}"

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Protocol
+from typing import Any, Protocol
 
 
 class TextGenerator(Protocol):
@@ -13,5 +13,5 @@ class TextGenerator(Protocol):
         system_prompt: str | None = None,
         temperature: float = 0.0,
         max_tokens: int = 1000,
-        response_format: str | None = None,
+        response_format: str | dict[str, Any] | None = None,
     ) -> str: ...

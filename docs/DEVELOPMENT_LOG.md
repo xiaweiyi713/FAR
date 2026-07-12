@@ -3105,3 +3105,15 @@ evidence bundle verified successfully, releasing the GPU.
 - The P6 runner unit no longer auto-restarts after an exhausted retry budget,
   preventing an unbounded model-call loop. Its read-only monitor also handles a
   newly created zero-byte checkpoint without emitting a JSON traceback.
+
+## 2026-07-12 — P6 structured-output and failed-attempt provenance
+
+- Text-only schema correction still repeated the same invalid `clean` shape on
+  all three bounded attempts. P6 now sends the frozen conditional annotation
+  schema through Ollama's native structured-output `format` field while keeping
+  the same ontology, labels, prompt semantics, and three-attempt ceiling.
+- Every response attempt is appended to a separate fingerprinted JSONL audit
+  log and fsync'd before success or failure handling continues. The log binds
+  sequence, sample context, runtime work identity, actual prompt, raw response,
+  validity, and validation error, so an exhausted run leaves inspectable
+  evidence even when no completed checkpoint row exists.
