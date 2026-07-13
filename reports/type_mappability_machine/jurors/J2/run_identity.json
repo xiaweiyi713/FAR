@@ -1,0 +1,40 @@
+{
+  "config_sha256": "227699e6c4eed364c527d83f3e958a4ec95a170938a56c242c5c82e58cdcde9f",
+  "implementation_sha256": "cfce8e79efa4df2d11eb72442722094041fb112c52245ebb0fb1d5e8ec677f0d",
+  "juror_id": "J2",
+  "llm_runtime": {
+    "enabled": true,
+    "model": "glm4:9b",
+    "ollama_model": {
+      "details": {
+        "context_length": 131072,
+        "embedding_length": 4096,
+        "families": [
+          "chatglm"
+        ],
+        "family": "chatglm",
+        "format": "gguf",
+        "parameter_size": "9.4B",
+        "parent_model": "",
+        "quantization_level": "Q4_0"
+      },
+      "digest": "5b699761eca535dc55047ad9d2dbf54e3b8697709419ef78a70503ed4bfbcf44",
+      "model": "glm4:9b",
+      "modified_at": "2026-07-04T12:26:00.0857584+08:00",
+      "size": 5455326235
+    },
+    "provider": "ollama"
+  },
+  "model": "glm4:9b",
+  "model_family": "glm",
+  "prompt_template_sha256": "3c253bb4298788f717b9259df9058b7a434e0c3adc87cb8113404df84ebcf54a",
+  "protocol_sha256": "e4213bc2c6ebd29e24ca423b2207b8891ab416293347c23c385720780f343a22",
+  "provider": "ollama",
+  "schema_version": "far-p6m-juror-identity-v1",
+  "source_packet_manifest_sha256": "925c77de47b13285953fc3e564197309a07125a0a8b088e6ec0737b8b56c24d9",
+  "source_revision": {
+    "git_commit": "fcbf46c861fb7d3001b1c20e96c96b8403697185",
+    "git_dirty": false
+  },
+  "study_profile": "machine_ontology_stability_audit"
+}

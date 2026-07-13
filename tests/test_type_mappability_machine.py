@@ -29,6 +29,7 @@ from far.experiments.type_mappability_machine import (
 
 ROOT = Path(__file__).resolve().parents[1]
 PACKET = ROOT / "diagnostics" / "type_mappability_v1"
+TRACKED_REPORT = ROOT / "reports" / "type_mappability_machine"
 
 
 def _annotation(label: str, mapped_type: str) -> dict[str, object]:
@@ -268,10 +269,18 @@ def test_p6m_report_verifies_and_tampering_fails_closed(tmp_path: Path) -> None:
     assert "mapped-type one-vs-rest kappas" in report
     assert "稳定投票与 pair sensitivity" in report
     assert "typed-minus-untyped delta (sample bootstrap)" in report
+    assert "共识层比例与 delta 只描述这个选择后的子集" in report
+    assert "不能据此报告总体可映射率" in report
     report_path.write_text(report_path.read_text() + "tampered\n")
     audit = verify_report(PACKET, jurors, report_dir)
     assert audit["valid"] is False
     assert any("differs from deterministic recomputation" in error for error in audit["errors"])
+
+
+def test_tracked_p6m_report_verifies_from_public_juror_evidence() -> None:
+    jurors = [TRACKED_REPORT / "jurors" / juror_id for juror_id in sorted(JUROR_SPECS)]
+    audit = verify_report(PACKET, jurors, TRACKED_REPORT)
+    assert audit["valid"] is True, audit["errors"]
 
 
 def test_p6m_rejects_reused_juror_identity(tmp_path: Path) -> None:

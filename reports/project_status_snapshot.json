@@ -117,9 +117,32 @@
       "strict_independent_human_profile_ready": false,
       "study_profile": "cross_family_jury_external_validation_paper"
     },
+    "p6m_machine_ontology_stability": {
+      "can_replace_human_p6": false,
+      "confirmatory_h4": false,
+      "consensus_coverage": 0.06912442396313365,
+      "consensus_samples": 15,
+      "dispositions": {
+        "contested": 202,
+        "majority": 14,
+        "unanimous": 1
+      },
+      "errors": [],
+      "human_annotation_replaced": false,
+      "human_iaa_computed": false,
+      "human_identity_verified": false,
+      "publication_gold": false,
+      "report": "reports/type_mappability_machine/type_mappability_machine.md",
+      "retrospective": true,
+      "samples": 217,
+      "schema_version": "far-p6m-report-audit-v1",
+      "study_profile": "machine_ontology_stability_audit",
+      "test_accessed": false,
+      "valid": true
+    },
     "reader_reports": {
       "files": {
-        "reports/README.md": "00767e05f61f9073033417a92ef508def7f42a21544525704cad3339b684e5dc",
+        "reports/README.md": "9eb254733f59e1e288d37c48cebf263e8529fe7c956859d69aaa9b5ec58c2d3f",
         "reports/single_author_diagnostic_report.md": "9f8d088ee1c848c0340c74974ec5c7d8f0682cbcc75bb0aab70fbf8938467a21",
         "reports/solo_human_review_priority.csv": "bb036eb51e27d4b654978dd2bd0a2330422c58bf7bc2e6769fced165242a5dee",
         "reports/solo_paper_readiness.json": "96cf0d2b0053469432d4a87c863e3c1d6ecce2528ea2df7d9aa000a1609ccc6d",

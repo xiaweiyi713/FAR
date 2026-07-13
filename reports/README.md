@@ -21,6 +21,13 @@ This directory contains durable, versioned reports derived from tracked project 
   [machine-readable JSON](p5_ramdocs_ablations.json): the verified 3×350
   upstream-labelled dev enhancement. H3 remains uncertain and H5 meets the
   registered equivalence rule; neither is human-gold or test evidence.
+- [P6-M cross-family machine ontology-stability audit](type_mappability_machine/type_mappability_machine.md)
+  and [machine-readable JSON](type_mappability_machine/type_mappability_machine.json):
+  all three jurors completed, but only 15/217 samples reached stable machine
+  consensus and 202 were contested. This is negative model-panel sensitivity
+  evidence, not human mappability, IAA, gold, or completion of P6. The tracked
+  [juror inputs](type_mappability_machine/jurors/) preserve the minimal raw
+  response and identity evidence required for fresh-clone verification.
 - [Single-author machine-audited paper readiness](solo_paper_readiness.md) and
   [machine-readable JSON](solo_paper_readiness.json): the explicitly relaxed
   paper gate. It permits only the narrow typed-control mechanism claim and

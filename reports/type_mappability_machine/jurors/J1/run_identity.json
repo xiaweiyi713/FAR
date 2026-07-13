@@ -1,0 +1,40 @@
+{
+  "config_sha256": "8f771facfc39900f21f0112b9bb58058cabff7b59e514decfa8c37f2801701a1",
+  "implementation_sha256": "cfce8e79efa4df2d11eb72442722094041fb112c52245ebb0fb1d5e8ec677f0d",
+  "juror_id": "J1",
+  "llm_runtime": {
+    "enabled": true,
+    "model": "mistral:7b-instruct",
+    "ollama_model": {
+      "details": {
+        "context_length": 32768,
+        "embedding_length": 4096,
+        "families": [
+          "llama"
+        ],
+        "family": "llama",
+        "format": "gguf",
+        "parameter_size": "7.2B",
+        "parent_model": "",
+        "quantization_level": "Q4_K_M"
+      },
+      "digest": "6577803aa9a036369e481d648a2baebb381ebc6e897f2bb9a766a2aa7bfbc1cf",
+      "model": "mistral:7b-instruct",
+      "modified_at": "2026-07-06T10:18:19.1733372+08:00",
+      "size": 4372824384
+    },
+    "provider": "ollama"
+  },
+  "model": "mistral:7b-instruct",
+  "model_family": "mistral",
+  "prompt_template_sha256": "3c253bb4298788f717b9259df9058b7a434e0c3adc87cb8113404df84ebcf54a",
+  "protocol_sha256": "e4213bc2c6ebd29e24ca423b2207b8891ab416293347c23c385720780f343a22",
+  "provider": "ollama",
+  "schema_version": "far-p6m-juror-identity-v1",
+  "source_packet_manifest_sha256": "925c77de47b13285953fc3e564197309a07125a0a8b088e6ec0737b8b56c24d9",
+  "source_revision": {
+    "git_commit": "fcbf46c861fb7d3001b1c20e96c96b8403697185",
+    "git_dirty": false
+  },
+  "study_profile": "machine_ontology_stability_audit"
+}

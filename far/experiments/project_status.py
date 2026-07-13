@@ -21,6 +21,9 @@ from far.experiments.evaluate_fever_binary import verify_evaluation as verify_fe
 from far.experiments.jury_paper_readiness import audit as audit_jury_paper_readiness
 from far.experiments.solo_paper_readiness import audit as audit_solo_paper_readiness
 from far.experiments.submission_readiness import audit as audit_submission_readiness
+from far.experiments.type_mappability_machine import (
+    verify_report as verify_type_mappability_machine_report,
+)
 from far.paths import repository_root
 
 SNAPSHOT_SCHEMA_VERSION = "far-project-status-snapshot-v3"
@@ -93,6 +96,22 @@ def build_status_snapshot(root: Path) -> dict[str, Any]:
     )
     priority = _priority_table(root, root / "reports/solo_human_review_priority.csv")
     reports = _reader_reports(root)
+    p6m_root = root / "reports/type_mappability_machine"
+    p6m_audit = verify_type_mappability_machine_report(
+        root / "diagnostics/type_mappability_v1",
+        [p6m_root / "jurors" / juror_id for juror_id in ("J1", "J2", "J3")],
+        p6m_root,
+    )
+    p6m_result = _json(p6m_root / "type_mappability_machine.json")
+    p6m = {
+        **p6m_audit,
+        "report": "reports/type_mappability_machine/type_mappability_machine.md",
+        "samples": p6m_result.get("samples"),
+        "consensus_samples": p6m_result.get("consensus_samples"),
+        "consensus_coverage": p6m_result.get("consensus_coverage"),
+        "dispositions": p6m_result.get("dispositions"),
+        "can_replace_human_p6": False,
+    }
     solo_paper = audit_solo_paper_readiness(root)
     jury_paper = audit_jury_paper_readiness(
         root / "bench/external/ramdocs_v1",
@@ -173,6 +192,7 @@ def build_status_snapshot(root: Path) -> dict[str, Any]:
             "fever_binary": fever_binary,
             "review_priority": priority,
             "reader_reports": reports,
+            "p6m_machine_ontology_stability": p6m,
             "solo_paper_readiness": solo_paper,
             "jury_paper_readiness": jury_paper,
         },
@@ -201,6 +221,7 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
     fever = evidence["fever_binary"]
     priority = evidence["review_priority"]
     reports = evidence["reader_reports"]
+    p6m = evidence["p6m_machine_ontology_stability"]
     benchmark_status = (
         f"valid=`{str(benchmark['valid']).lower()}`, "
         f"samples={benchmark['samples']}, "
@@ -216,6 +237,11 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
         f"dispositions={', '.join(priority['dispositions'])}"
     )
     reports_status = f"valid=`{str(reports['valid']).lower()}`"
+    p6m_status = (
+        f"valid=`{str(p6m['valid']).lower()}`, consensus="
+        f"{p6m['consensus_samples']}/{p6m['samples']}, "
+        f"contested={p6m['dispositions']['contested']}, human substitute=`false`"
+    )
     blockers = "\n".join(f"- `{blocker}`" for blocker in strict["blockers"])
     external_blockers = "\n".join(f"- `{blocker}`" for blocker in strict["external_blockers"])
     return f"""# FAR Project Status Snapshot
@@ -241,6 +267,7 @@ ledger for the project proposal, not a submission waiver.
 | FEVER binary transfer diagnostic | {fever_status} |
 | Review-priority table | {priority_status} |
 | Reader-facing reports | {reports_status} |
+| P6-M machine ontology stability | {p6m_status} |
 
 ## Strict submission blockers
 
@@ -259,7 +286,8 @@ The completed local track may be described as a public single-author,
 machine-audited diagnostic; it must not be described as human gold. The 2+4
 track replaces the unavailable human gate only for its explicitly named profile;
 it remains LLM jury + author adjudication, not human IAA or externally held
-blind-test evidence.
+blind-test evidence. The separate P6-M audit reached consensus on only 15/217
+samples and explicitly cannot replace human P6.
 """
 
 

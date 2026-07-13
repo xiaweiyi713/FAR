@@ -9,11 +9,11 @@ build/test request.
 ## Invariants
 
 - Do not install, download, or run Ollama/model weights on the developer Mac.
-- `windows-gpu` is the only model-execution host for P5 and P6.
-- P5 and P6 are sequential; never run both model services concurrently.
+- `windows-gpu` is the only model-execution host for P5, P6, and P6-M.
+- P5, P6, and P6-M are sequential; never run their model services concurrently.
 - Every remote starter is default-deny and checks a clean exact commit, idle
-  GPU, immutable Qwen digest, frozen inputs, and dedicated output root.
-- P5/P6 use development evidence only. They never authorize held-out/test use.
+  GPU, immutable model digest, frozen inputs, and dedicated output root.
+- P5/P6/P6-M use development evidence only. They never authorize held-out/test use.
 - P6 remains retrospective and cannot confirm H4 even after human completion.
 - `artifacts-v1` is immutable. Future accepted P6 human results must be
   preserved in a new versioned archive and independently read back before the
@@ -83,7 +83,20 @@ FAR_P6_FETCH_ALLOWED=1 scripts/fetch_windows_p6_prelabels.sh --execute
 The installer preserves and checks every native prompt/raw-response hash. The
 accepted result is present in the published `artifacts-v1` diagnostic release.
 
-## 4. Complete P6 human work (remaining)
+## 4. P6-M machine-only stability audit (complete)
+
+The separately authorized non-human substitute audit completed three distinct
+remote families, two views per item, and 1,302 accepted rows with zero failed
+attempts. Returned raw outputs and the deterministic report verify. Consensus
+covered only 15/217 samples and 202 remained contested, so P6-M did not provide
+a broad human substitute and did not modify any P6 reviewer/adjudicator slot.
+Both dedicated remote services are inactive. Re-running P6-M would require new
+authorization and a new explicit protocol decision.
+The minimal 1.7 MiB juror evidence tree is tracked with the report so a fresh
+clone can rerun prompt/raw-response and identity verification after installing
+the published diagnostic packet; no model weights or caches are included.
+
+## 5. Complete P6 human work (remaining)
 
 This cannot be automated or substituted with more models:
 
@@ -97,7 +110,7 @@ This cannot be automated or substituted with more models:
 
 Low agreement is a result, not permission to remove rows or change the ontology.
 
-## 5. P10-B completion record
+## 6. P10-B completion record
 
 P10-B received separate authorization and completed on 2026-07-12. The exact
 archive was published as
@@ -130,6 +143,7 @@ The following are deliberately separate approvals:
 - fetch P5 artifacts;
 - start P6 model execution;
 - fetch/install P6 artifacts;
+- start/fetch P6-M machine-only audit artifacts;
 - publish the diagnostic GitHub release and remove tracked diagnostics;
 - supply real reviewer/adjudicator work.
 

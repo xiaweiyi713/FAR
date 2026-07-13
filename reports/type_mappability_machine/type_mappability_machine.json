@@ -1,0 +1,452 @@
+{
+  "association": {
+    "confirmatory_p_value": null,
+    "estimable": false,
+    "interpretation": "retrospective_descriptive_association",
+    "not_estimable_reason": "one_or_more_frozen_strata_have_no_machine_consensus",
+    "ols_intercept": null,
+    "ols_r_squared": null,
+    "ols_slope": null,
+    "spearman_rho": null,
+    "units": 6
+  },
+  "bootstrap_resamples": 2000,
+  "bootstrap_seed": 1729,
+  "by_dataset": {
+    "rag_conflicts": {
+      "broad_mappability_rate": 1.0,
+      "counts": {
+        "clean": 2,
+        "partial": 1,
+        "unmappable": 0
+      },
+      "delta_by_mappability": {
+        "clean": {
+          "estimate": -0.4583333333333333,
+          "lower": -0.9166666666666666,
+          "method": "sample-percentile-bootstrap-v1",
+          "resamples": 2000,
+          "samples": 2,
+          "seed": 1729,
+          "upper": 0.0
+        },
+        "partial": {
+          "estimate": 0.0,
+          "lower": 0.0,
+          "method": "sample-percentile-bootstrap-v1",
+          "resamples": 2000,
+          "samples": 1,
+          "seed": 1729,
+          "upper": 0.0
+        },
+        "unmappable": {
+          "estimate": null,
+          "lower": null,
+          "samples": 0,
+          "upper": null
+        }
+      },
+      "mapped_type_counts": {
+        "causal": 0,
+        "counter_evidence": 0,
+        "definition": 0,
+        "entity": 0,
+        "numerical": 1,
+        "source_reliability": 0,
+        "temporal": 2
+      },
+      "proportions": {
+        "clean": 0.6666666666666666,
+        "partial": 0.3333333333333333,
+        "unmappable": 0.0
+      },
+      "samples": 3,
+      "strict_mappability_rate": 0.6666666666666666,
+      "weighted_mappability": 0.8333333333333334
+    },
+    "wikicontradict": {
+      "broad_mappability_rate": 1.0,
+      "counts": {
+        "clean": 2,
+        "partial": 10,
+        "unmappable": 0
+      },
+      "delta_by_mappability": {
+        "clean": {
+          "estimate": 0.0,
+          "lower": 0.0,
+          "method": "sample-percentile-bootstrap-v1",
+          "resamples": 2000,
+          "samples": 2,
+          "seed": 1729,
+          "upper": 0.0
+        },
+        "partial": {
+          "estimate": 0.0,
+          "lower": 0.0,
+          "method": "sample-percentile-bootstrap-v1",
+          "resamples": 2000,
+          "samples": 10,
+          "seed": 1729,
+          "upper": 0.0
+        },
+        "unmappable": {
+          "estimate": null,
+          "lower": null,
+          "samples": 0,
+          "upper": null
+        }
+      },
+      "mapped_type_counts": {
+        "causal": 0,
+        "counter_evidence": 0,
+        "definition": 0,
+        "entity": 2,
+        "numerical": 3,
+        "source_reliability": 0,
+        "temporal": 7
+      },
+      "proportions": {
+        "clean": 0.16666666666666666,
+        "partial": 0.8333333333333334,
+        "unmappable": 0.0
+      },
+      "samples": 12,
+      "strict_mappability_rate": 0.16666666666666666,
+      "weighted_mappability": 0.5833333333333334
+    }
+  },
+  "causal_analysis": false,
+  "combined_consensus": {
+    "broad_mappability_rate": 1.0,
+    "counts": {
+      "clean": 4,
+      "partial": 11,
+      "unmappable": 0
+    },
+    "delta_by_mappability": {
+      "clean": {
+        "estimate": -0.22916666666666666,
+        "lower": -0.6875,
+        "method": "sample-percentile-bootstrap-v1",
+        "resamples": 2000,
+        "samples": 4,
+        "seed": 1729,
+        "upper": 0.0
+      },
+      "partial": {
+        "estimate": 0.0,
+        "lower": 0.0,
+        "method": "sample-percentile-bootstrap-v1",
+        "resamples": 2000,
+        "samples": 11,
+        "seed": 1729,
+        "upper": 0.0
+      },
+      "unmappable": {
+        "estimate": null,
+        "lower": null,
+        "samples": 0,
+        "upper": null
+      }
+    },
+    "mapped_type_counts": {
+      "causal": 0,
+      "counter_evidence": 0,
+      "definition": 0,
+      "entity": 2,
+      "numerical": 4,
+      "source_reliability": 0,
+      "temporal": 9
+    },
+    "proportions": {
+      "clean": 0.26666666666666666,
+      "partial": 0.7333333333333333,
+      "unmappable": 0.0
+    },
+    "samples": 15,
+    "strict_mappability_rate": 0.26666666666666666,
+    "weighted_mappability": 0.6333333333333333
+  },
+  "confirmatory_h4": false,
+  "consensus_coverage": 0.06912442396313365,
+  "consensus_rows_sha256": "d69e339728989ae4e169b87fb403bacd3541ace0db2e5a160d0941aea630adf7",
+  "consensus_samples": 15,
+  "dataset_counts": {
+    "rag_conflicts": 67,
+    "wikicontradict": 150
+  },
+  "dispositions": {
+    "contested": 202,
+    "majority": 14,
+    "unanimous": 1
+  },
+  "external_label_strata": [
+    {
+      "consensus_coverage": 0.2,
+      "consensus_samples": 1,
+      "external_label_role": "convergent_evidence_not_gold",
+      "mappability_counts": {
+        "clean": 1,
+        "partial": 0,
+        "unmappable": 0
+      },
+      "mean_delta": 0.0,
+      "stratum": "rag_conflicts:{\"upstream_conflict_type\": \"Conflict due to misinformation\"}",
+      "total_samples": 5,
+      "weighted_mappability": 1.0
+    },
+    {
+      "consensus_coverage": 0.03225806451612903,
+      "consensus_samples": 2,
+      "external_label_role": "convergent_evidence_not_gold",
+      "mappability_counts": {
+        "clean": 1,
+        "partial": 1,
+        "unmappable": 0
+      },
+      "mean_delta": -0.4583333333333333,
+      "stratum": "rag_conflicts:{\"upstream_conflict_type\": \"Conflict due to outdated information\"}",
+      "total_samples": 62,
+      "weighted_mappability": 0.75
+    },
+    {
+      "consensus_coverage": 0.06944444444444445,
+      "consensus_samples": 5,
+      "external_label_role": "convergent_evidence_not_gold",
+      "mappability_counts": {
+        "clean": 0,
+        "partial": 5,
+        "unmappable": 0
+      },
+      "mean_delta": 0.0,
+      "stratum": "wikicontradict:{\"reasoning\": \"Explicit\", \"source_relation\": \"Different\"}",
+      "total_samples": 72,
+      "weighted_mappability": 0.5
+    },
+    {
+      "consensus_coverage": 0.0,
+      "consensus_samples": 0,
+      "external_label_role": "convergent_evidence_not_gold",
+      "mappability_counts": {
+        "clean": 0,
+        "partial": 0,
+        "unmappable": 0
+      },
+      "mean_delta": null,
+      "stratum": "wikicontradict:{\"reasoning\": \"Explicit\", \"source_relation\": \"Same\"}",
+      "total_samples": 24,
+      "weighted_mappability": null
+    },
+    {
+      "consensus_coverage": 0.07317073170731707,
+      "consensus_samples": 3,
+      "external_label_role": "convergent_evidence_not_gold",
+      "mappability_counts": {
+        "clean": 0,
+        "partial": 3,
+        "unmappable": 0
+      },
+      "mean_delta": 0.0,
+      "stratum": "wikicontradict:{\"reasoning\": \"Implicit (reasoning required)\", \"source_relation\": \"Different\"}",
+      "total_samples": 41,
+      "weighted_mappability": 0.5
+    },
+    {
+      "consensus_coverage": 0.3076923076923077,
+      "consensus_samples": 4,
+      "external_label_role": "convergent_evidence_not_gold",
+      "mappability_counts": {
+        "clean": 2,
+        "partial": 2,
+        "unmappable": 0
+      },
+      "mean_delta": 0.0,
+      "stratum": "wikicontradict:{\"reasoning\": \"Implicit (reasoning required)\", \"source_relation\": \"Same\"}",
+      "total_samples": 13,
+      "weighted_mappability": 0.75
+    }
+  ],
+  "human_annotation_replaced": false,
+  "human_iaa_computed": false,
+  "human_identity_verified": false,
+  "juror_stability": {
+    "J1": {
+      "rate": 0.2304147465437788,
+      "stable": 50,
+      "unstable": 167
+    },
+    "J2": {
+      "rate": 0.4055299539170507,
+      "stable": 88,
+      "unstable": 129
+    },
+    "J3": {
+      "rate": 0.11059907834101383,
+      "stable": 24,
+      "unstable": 193
+    }
+  },
+  "jurors": [
+    {
+      "annotation_sha256": "3f785ca2793295e9e31e27f9c881fe377a9e2eb24d555218f61816d6bc133b04",
+      "config_sha256": "8f771facfc39900f21f0112b9bb58058cabff7b59e514decfa8c37f2801701a1",
+      "failed_attempt_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "failed_attempts": 0,
+      "juror_id": "J1",
+      "model": "mistral:7b-instruct",
+      "model_family": "mistral",
+      "provider": "ollama",
+      "run_identity_sha256": "b0e0136d371d4efb15352490655a9ab52702d4ae768bdefe00979a4c980f7c8e",
+      "transport_normalized_responses": 25
+    },
+    {
+      "annotation_sha256": "b40d6f450ed87463a3368262a6584b14d999ead133412276f386e4b85d09e2ad",
+      "config_sha256": "227699e6c4eed364c527d83f3e958a4ec95a170938a56c242c5c82e58cdcde9f",
+      "failed_attempt_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "failed_attempts": 0,
+      "juror_id": "J2",
+      "model": "glm4:9b",
+      "model_family": "glm",
+      "provider": "ollama",
+      "run_identity_sha256": "39423b5d1af2bbb70d8f007d02939954b87c473cff76a78bb319ba8e5df78b38",
+      "transport_normalized_responses": 2
+    },
+    {
+      "annotation_sha256": "34f36b3d4fda0f7106aba7a4a037cfa78b77119d30da5ddb0187069e12a892ef",
+      "config_sha256": "13b664fd207d52dde4102ad062558d4bd3648945696d768d19c1f6aaa2998842",
+      "failed_attempt_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "failed_attempts": 0,
+      "juror_id": "J3",
+      "model": "llama3.1:8b",
+      "model_family": "meta",
+      "provider": "ollama",
+      "run_identity_sha256": "3edec6921449bac13fa22ed5aa17265b5e7b30ce0417a17aa3e6724f4564cda8",
+      "transport_normalized_responses": 0
+    }
+  ],
+  "machine_consensus_only": true,
+  "pair_sensitivity": {
+    "J1__J2": {
+      "both_stable": 19,
+      "same_decision": 11,
+      "same_decision_rate": 0.5789473684210527
+    },
+    "J1__J3": {
+      "both_stable": 3,
+      "same_decision": 2,
+      "same_decision_rate": 0.6666666666666666
+    },
+    "J2__J3": {
+      "both_stable": 11,
+      "same_decision": 4,
+      "same_decision_rate": 0.36363636363636365
+    }
+  },
+  "protocol_sha256": "e4213bc2c6ebd29e24ca423b2207b8891ab416293347c23c385720780f343a22",
+  "publication_gold": false,
+  "qwen_prelabels_used": false,
+  "retrospective": true,
+  "samples": 217,
+  "schema_version": "far-p6m-result-v1",
+  "source_packet_manifest_sha256": "925c77de47b13285953fc3e564197309a07125a0a8b088e6ec0737b8b56c24d9",
+  "stable_vote_count_distribution": {
+    "0": 87,
+    "1": 99,
+    "2": 30,
+    "3": 1
+  },
+  "study_profile": "machine_ontology_stability_audit",
+  "test_accessed": false,
+  "view_agreement": {
+    "view_a": {
+      "mappability_fleiss_kappa": 0.166608960282822,
+      "mappability_pairwise_cohen_kappa": {
+        "J1__J2": 0.2260879462761316,
+        "J1__J3": 0.14575779550398837,
+        "J2__J3": 0.27841297316995395
+      },
+      "mapped_type_pairwise_kappas": {
+        "J1__J2": {
+          "causal": -0.01244167962674664,
+          "counter_evidence": 0.0,
+          "definition": 0.1811320754716976,
+          "entity": 0.28441216792026386,
+          "numerical": 0.43852419741255366,
+          "source_reliability": 0.0,
+          "temporal": 0.2296070013210041
+        },
+        "J1__J3": {
+          "causal": 0.0,
+          "counter_evidence": -0.008520526723471724,
+          "definition": 0.026905829596412474,
+          "entity": 0.3524387734101669,
+          "numerical": 0.4997438524590165,
+          "source_reliability": 0.0,
+          "temporal": 0.2995598407042548
+        },
+        "J2__J3": {
+          "causal": 0.0,
+          "counter_evidence": 0.0,
+          "definition": 0.22823565795577538,
+          "entity": 0.2545112646005859,
+          "numerical": 0.5261068096088941,
+          "source_reliability": 1.0,
+          "temporal": 0.3727297518407416
+        }
+      },
+      "mapped_type_pairwise_macro_kappa": {
+        "J1__J2": 0.16017625178553893,
+        "J1__J3": 0.16716110992091127,
+        "J2__J3": 0.34022621200085673
+      }
+    },
+    "view_b": {
+      "mappability_fleiss_kappa": -0.04082094775412747,
+      "mappability_pairwise_cohen_kappa": {
+        "J1__J2": 0.042914479777708986,
+        "J1__J3": 0.04189760450915952,
+        "J2__J3": 0.002298850574712904
+      },
+      "mapped_type_pairwise_kappas": {
+        "J1__J2": {
+          "causal": 0.2109090909090898,
+          "counter_evidence": 0.0,
+          "definition": 0.38332807072939656,
+          "entity": 0.3834271839644572,
+          "numerical": 0.6655631029168332,
+          "source_reliability": -0.008130081300813378,
+          "temporal": 0.31457999542229353
+        },
+        "J1__J3": {
+          "causal": 0.0,
+          "counter_evidence": 0.02340234023402298,
+          "definition": 0.11654825576754231,
+          "entity": 0.21201382508640676,
+          "numerical": 0.704692030057393,
+          "source_reliability": -0.024024024024025103,
+          "temporal": 0.2951196323878941
+        },
+        "J2__J3": {
+          "causal": 0.0,
+          "counter_evidence": 0.0,
+          "definition": 0.11247443762781198,
+          "entity": 0.40075940628236095,
+          "numerical": 0.7287160895111888,
+          "source_reliability": -0.007428040854227817,
+          "temporal": 0.360413466727552
+        }
+      },
+      "mapped_type_pairwise_macro_kappa": {
+        "J1__J2": 0.27852533752017955,
+        "J1__J3": 0.1896788656441763,
+        "J2__J3": 0.2278479084706694
+      }
+    }
+  },
+  "vote_entropy_summary": {
+    "defined_samples": 130,
+    "mean": 0.12307692307692308,
+    "per_sample_file": "consensus_rows.jsonl"
+  }
+}

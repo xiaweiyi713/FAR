@@ -3350,3 +3350,22 @@ evidence bundle verified successfully, releasing the GPU.
   report now exposes mapped-type one-vs-rest and macro kappas, stable-pair
   sensitivity, stable-vote counts, entropy location/summary, and the registered
   typed-minus-untyped bootstrap intervals without changing any estimator.
+
+## 2026-07-13 — complete P6-M formal run and freeze the negative result
+
+- The post-smoke formal run completed J1/J2/J3 at 434/434 rows each with zero
+  failed attempts. All models were already installed on `windows-gpu`; the Mac
+  remained model-free. The P6-M and Ollama services stopped after J3.
+- Returned juror directories passed complete prompt/raw-response, annotation,
+  run/model identity, context and file-fingerprint revalidation. The report was
+  deterministically rebuilt and verified with `valid=true`, `errors=[]`.
+- Dual-view stability was 50/217, 88/217 and 24/217. Only 15/217 samples reached
+  stable machine consensus (1 unanimous, 14 majority), while 202 were contested;
+  one frozen stratum had no consensus, so the association was not estimable.
+- This is a negative machine-panel sensitivity result. It cannot be extrapolated
+  to population mappability, cannot replace human P6, and does not provide human
+  IAA, gold labels, H4 confirmation, causal mediation or test evidence.
+- Because ignored `outputs/` would make the verifier local-machine-only, copied
+  the 1.7 MiB, secret-scanned minimal juror inputs into the tracked report tree
+  and changed the fetch workflow to verify that public copy. No weights, model
+  caches, credentials or private paths are included.

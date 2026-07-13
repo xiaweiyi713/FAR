@@ -62,9 +62,14 @@ uv run --locked falsirag diag type-mappability-machine analyze \
   --juror-dir "${local_root}/J2" \
   --juror-dir "${local_root}/J3" \
   --output-dir "${report_dir}"
+evidence_dir="${report_dir}/jurors"
+mkdir -p "${evidence_dir}"
+for juror in J1 J2 J3; do
+  rsync -a --delete "${local_root}/${juror}/" "${evidence_dir}/${juror}/"
+done
 uv run --locked falsirag diag type-mappability-machine verify \
   --packet-dir "${packet_dir}" \
-  --juror-dir "${local_root}/J1" \
-  --juror-dir "${local_root}/J2" \
-  --juror-dir "${local_root}/J3" \
+  --juror-dir "${evidence_dir}/J1" \
+  --juror-dir "${evidence_dir}/J2" \
+  --juror-dir "${evidence_dir}/J3" \
   --report-dir "${report_dir}"

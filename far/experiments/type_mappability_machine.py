@@ -1166,9 +1166,19 @@ def report_text(result: dict[str, Any]) -> str:
             "## 描述性 association",
             "",
             f"- Estimable: `{str(result['association']['estimable']).lower()}`",
+            f"- Not-estimable reason: `{result['association']['not_estimable_reason'] or 'n/a'}`",
             f"- Spearman rho: `{_fmt(result['association']['spearman_rho'])}`",
             f"- OLS slope: `{_fmt(result['association']['ols_slope'])}`",
             f"- R²: `{_fmt(result['association']['ols_r_squared'])}`",
+            "",
+            "## 解释边界",
+            "",
+            f"- 只有 `{result['consensus_samples']}/{result['samples']}` 条样本形成机器共识；"
+            "共识层比例与 delta 只描述这个选择后的子集，不能外推到全部 217 条。",
+            "- 双视图不稳定和 contested 都是冻结协议要求保留的结果，不是删样本、追加模型"
+            "或事后改写 prompt 的理由。",
+            "- 该面板没有提供可替代人工 P6 的广覆盖证据，也不能据此报告总体可映射率、"
+            "human IAA、gold label 或 H4 confirmation。",
             "",
             "所有 contested 样本原样保留；没有第四模型仲裁，也没有把机器结果标成人工证据。",
             "",

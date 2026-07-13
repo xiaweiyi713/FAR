@@ -302,4 +302,9 @@ def test_source_archive_includes_reader_facing_reports(tmp_path: Path) -> None:
         "reports/stage_trace_map.json",
         "reports/stage_trace_map.md",
         "reports/tmlr_result_integration_matrix.md",
+        "reports/type_mappability_machine",
+        "reports/type_mappability_machine/consensus_rows.jsonl",
+        "reports/type_mappability_machine/manifest.json",
+        "reports/type_mappability_machine/type_mappability_machine.json",
+        "reports/type_mappability_machine/type_mappability_machine.md",
     }

@@ -33,6 +33,12 @@ def test_project_status_keeps_dual_track_claim_boundary() -> None:
     assert snapshot["evidence"]["review_priority"]["rows"] == 122
     assert snapshot["evidence"]["review_priority"]["dispositions"] == ["machine_disputed"]
     assert snapshot["evidence"]["review_priority"]["publication_gold"] is False
+    p6m = snapshot["evidence"]["p6m_machine_ontology_stability"]
+    assert p6m["valid"] is True
+    assert p6m["consensus_samples"] == 15
+    assert p6m["samples"] == 217
+    assert p6m["dispositions"] == {"contested": 202, "majority": 14, "unanimous": 1}
+    assert p6m["can_replace_human_p6"] is False
     assert "human_annotation" in snapshot["strict_aaai_submission"]["blockers"]
     assert "trusted_test_scoring" in snapshot["strict_aaai_submission"]["blockers"]
 
@@ -46,6 +52,8 @@ def test_project_status_is_portable_and_reader_facing() -> None:
     assert STATUS_MD.read_text(encoding="utf-8") == markdown
     assert "must not be described as human gold" in markdown
     assert "submission/evidence.template.json" in markdown
+    assert "consensus=15/217" in markdown
+    assert "cannot replace human P6" in markdown
 
 
 def test_project_status_verifier_accepts_tracked_snapshots() -> None:

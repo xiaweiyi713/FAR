@@ -1,9 +1,21 @@
 # FAR 当前运行状态
 
-状态时间：2026-07-09 22:05 CST
-适用范围：长期路线 WS1--WS6；今晚不再使用 GPU。
+状态时间：2026-07-13 11:47 CST
+适用范围：长期路线 WS1--WS6、重定位 P0--P10 与 P6-M；当前无 GPU 任务。
 
 ## 当前结论
+
+- P6-M 三家族双视图正式运行已完成：J1/J2/J3 均为 `434/434`，失败尝试 `0`；
+  本地确定性 verifier 返回 `valid=true`、`errors=[]`。
+- 机器面板稳定性低：J1/J2/J3 分别为 `50/217`、`88/217`、`24/217`；只有
+  `15/217`（`0.0691`）形成共识，202 条 contested。该结果不能替代人工 P6，不能报告
+  总体可映射率、human IAA/gold 或 H4 confirmation。
+- `far-p6m.service` 与 `far-ollama-2plus4.service` 均为 inactive，远端无 P6-M Python、
+  Ollama 或 llama-server 进程；本机从未下载或运行模型。
+- 原 P6 仍为 217/217 机器预标完成、真人 reviewer/adjudicator 缺失、
+  `ready_to_analyze=false`。没有模型结果写入人工槽位。
+
+## 既有 WS1--WS6 结论（2026-07-09 冻结）
 
 - WS1--WS6 均已有本地可复算证据，长期路线账本返回 `valid=true` 且
   `goal_complete=true`。后续不再需要 GPU；剩余动作是可选的 commit/push、release

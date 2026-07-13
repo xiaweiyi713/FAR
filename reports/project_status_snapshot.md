@@ -21,6 +21,7 @@ ledger for the project proposal, not a submission waiver.
 | FEVER binary transfer diagnostic | valid=`true`, publication_ready_main_result=`false` |
 | Review-priority table | valid=`true`, rows=122, dispositions=machine_disputed |
 | Reader-facing reports | valid=`true` |
+| P6-M machine ontology stability | valid=`true`, consensus=15/217, contested=202, human substitute=`false` |
 
 ## Strict submission blockers
 
@@ -52,4 +53,5 @@ The completed local track may be described as a public single-author,
 machine-audited diagnostic; it must not be described as human gold. The 2+4
 track replaces the unavailable human gate only for its explicitly named profile;
 it remains LLM jury + author adjudication, not human IAA or externally held
-blind-test evidence.
+blind-test evidence. The separate P6-M audit reached consensus on only 15/217
+samples and explicitly cannot replace human P6.
