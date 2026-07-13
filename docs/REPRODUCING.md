@@ -33,6 +33,14 @@ both tracked readiness reports, the active TMLR PDF, and `SOURCE.lock`. It does
 not read submission evidence or claim human review, adjudication, IAA, external
 blindness, or publication gold.
 
+The same command also creates
+`build/solo-paper-release/far-solo-paper-release.tar.gz`, repacks it a second
+time and requires byte identity, then verifies the archive without reading its
+original worktree artifact paths. The sidecars `bundle-build.json` and
+`bundle-audit.json` record the archive SHA-256 and independent result. See
+[`SOLO_PAPER_RELEASE.md`](SOLO_PAPER_RELEASE.md) for the exact layout, transfer
+verification command, and claim boundaries.
+
 For the role-by-role path from completed annotation through external blind
 custody, trusted scoring, and final acceptance, use
 `docs/EXTERNAL_ACTION_PACKET.md`.
@@ -143,7 +151,8 @@ uv run falsirag release checksums \
 The package smoke script installs the wheel and sdist separately with `uv` in
 isolated environments and runs `scripts/package_smoke.py` with Python isolated
 mode. It validates imports, console entry points, the packaged offline config,
-and the full packaged benchmark including its frozen 0.91 counter-evidence
+the installed portable-paper-bundle verifier, and the full packaged benchmark
+including its frozen 0.91 counter-evidence
 recall, so a green source checkout cannot hide a broken distribution.
 
 The checksum manifest always requires the source distribution, wheel, and

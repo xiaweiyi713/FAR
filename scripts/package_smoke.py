@@ -56,6 +56,8 @@ def main() -> None:
         "offline_config": config.is_file(),
         "offline_reviewer_form": REVIEWER_FORM_TEMPLATE.is_file(),
         "offline_adjudicator_form": ADJUDICATOR_FORM_TEMPLATE.is_file(),
+        "portable_paper_bundle_verifier": find_spec("far.experiments.solo_paper_bundle")
+        is not None,
         "entry_points": not missing_commands,
         "far_import": Path(far.__file__).is_file(),
         "generic_namespaces_absent": all(

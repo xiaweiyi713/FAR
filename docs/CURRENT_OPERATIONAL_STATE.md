@@ -22,6 +22,9 @@
 - 活动 TMLR 路线现有独立的 `scripts/solo_paper_release_check.sh`：在 clean commit 上用
   `solo-paper` profile 强制绑定 wheel、sdist、SBOM、两个审计报告、两份 readiness 报告、
   TMLR PDF 与 `SOURCE.lock`。它不读取真人/投稿 evidence，也不冒充严格 AAAI release gate。
+- 该门现会把九项产物打成确定性 `far-solo-paper-release.tar.gz`，二次打包必须 byte-identical；
+  `falsirag release solo-paper-bundle verify` 只读归档即可独立拒绝内容篡改、额外/危险成员、
+  source-lock 漂移以及任何真人或严格投稿主张升级。
 
 ## 既有 WS1--WS6 结论（2026-07-09 冻结）
 

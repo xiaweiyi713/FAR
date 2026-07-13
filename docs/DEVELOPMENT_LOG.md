@@ -3418,3 +3418,20 @@ evidence bundle verified successfully, releasing the GPU.
   external blindness, publication gold, or strict AAAI readiness.
 - Migrated repository-owned CI and release scripts to the unified `falsirag`
   command tree so routine validation no longer emits deprecated-alias warnings.
+
+## 2026-07-13 — make the no-human paper release portable and independently verifiable
+
+- Audited the new `solo-paper` gate and found that its nine valid artifacts and
+  checksum manifest remained spread across ignored worktree directories. A
+  recipient could not move or verify them as one release object.
+- Added `falsirag release solo-paper-bundle pack|verify`. Packing requires the
+  clean-commit nine-role checksum profile, uses normalized tar/gzip metadata,
+  embeds an interpretation-boundary README and both manifests, and carries no
+  strict submission or human evidence.
+- The archive-only verifier rejects unsafe, duplicate, missing, extra, or
+  oversized members; double-manifest hash/size disagreement; source-lock/style
+  drift; non-empty secret scans; unsafe P5/P6-M changes; and upgrades to strict
+  readiness, human review/adjudication/IAA, external blindness, or publication
+  gold.
+- The end-to-end release script now packs twice and requires byte identity,
+  retains a SHA-256 build sidecar, and writes a separate archive-only audit.

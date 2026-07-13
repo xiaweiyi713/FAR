@@ -43,4 +43,20 @@ uv run falsirag release checksums \
   --artifact tmlr_source_lock=paper/build/tmlr/SOURCE.lock \
   --output "${release_dir}/release-checksums.json" --check --json
 
+bundle_archive="${release_dir}/far-solo-paper-release.tar.gz"
+repro_archive="${release_dir}/far-solo-paper-release.repro.tar.gz"
+uv run falsirag release solo-paper-bundle pack \
+  --checksum-manifest "${release_dir}/release-checksums.json" \
+  --archive "${bundle_archive}" > "${release_dir}/bundle-build.json"
+uv run falsirag release solo-paper-bundle pack \
+  --checksum-manifest "${release_dir}/release-checksums.json" \
+  --archive "${repro_archive}" > /dev/null
+if ! cmp -s "${bundle_archive}" "${repro_archive}"; then
+  echo "solo-paper portable archive is not deterministic" >&2
+  exit 1
+fi
+rm -f -- "${repro_archive}"
+uv run falsirag release solo-paper-bundle verify \
+  --archive "${bundle_archive}" > "${release_dir}/bundle-audit.json"
+
 echo "FAR solo TMLR paper release checks passed."

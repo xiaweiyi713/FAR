@@ -171,6 +171,11 @@ bash scripts/check_release_packages.sh
 bash scripts/solo_paper_release_check.sh
 ```
 
+最后一个命令还会生成可搬运且可独立复核的
+`build/solo-paper-release/far-solo-paper-release.tar.gz`，并通过二次打包逐字节比较证明确定性。
+归档布局、transfer 后验证和严格非真人边界见
+[Portable No-Human TMLR Release](docs/SOLO_PAPER_RELEASE.md)。
+
 wheel 与 sdist 的隔离安装 smoke 会验证：包内基准、离线配置、命令入口，以及自足 BM25 确实可用。
 生成的诊断运行不会进入安装包；其逐文件指纹、确定性归档流程和发布状态见
 [制品存储说明](docs/ARTIFACT_STORAGE.md)。

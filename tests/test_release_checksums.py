@@ -270,6 +270,22 @@ def test_solo_paper_release_check_fingerprints_active_tmlr_artifacts() -> None:
     ).read_text(encoding="utf-8")
     assert "submission/evidence" not in script
     assert "submission-readiness" not in script
+    assert "falsirag release solo-paper-bundle pack" in script
+    assert "falsirag release solo-paper-bundle verify" in script
+    assert "far-solo-paper-release.tar.gz" in script
+    assert 'bundle-build.json"' in script
+    assert 'bundle-audit.json"' in script
+    assert "cmp -s" in script
+
+
+def test_completed_roadmap_does_not_require_unavailable_human_review() -> None:
+    root = Path(__file__).resolve().parents[1]
+    report = json.loads((root / "reports/longterm_roadmap_status.json").read_text(encoding="utf-8"))
+    next_step = report["progress"]["next_training_step"]
+
+    assert "portable solo-paper release" in next_step
+    assert "archive-only independent audit" in next_step
+    assert "human author review" not in next_step
 
 
 def test_release_checksums_reject_modified_artifact(tmp_path: Path) -> None:
@@ -352,6 +368,8 @@ def test_source_archive_includes_reader_facing_reports(tmp_path: Path) -> None:
         }
 
     assert ".github/workflows/ci.yml" in members
+    assert "docs/SOLO_PAPER_RELEASE.md" in members
+    assert "far/experiments/solo_paper_bundle.py" in members
     assert "scripts/check_release_packages.sh" in members
     assert "scripts/package_smoke.py" in members
     assert "scripts/solo_paper_release_check.sh" in members

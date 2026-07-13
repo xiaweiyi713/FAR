@@ -176,6 +176,12 @@ def generate_release_checksums_main() -> None:
     main()
 
 
+def solo_paper_bundle_main() -> None:
+    from far.experiments.solo_paper_bundle import main
+
+    main()
+
+
 def scan_secrets_main() -> None:
     _warn_legacy_alias()
     from far.experiments.scan_secrets import main
@@ -734,6 +740,13 @@ def _build_parser() -> argparse.ArgumentParser:
         generate_release_checksums_main,
         "Generate release checksums.",
         "release checksums",
+    )
+    _add_leaf(
+        release,
+        "solo-paper-bundle",
+        solo_paper_bundle_main,
+        "Pack or verify the portable no-human TMLR release.",
+        "release solo-paper-bundle",
     )
     _add_leaf(
         release,

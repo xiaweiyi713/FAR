@@ -34,6 +34,11 @@ def test_group_help_lists_leaf_commands(capsys: pytest.CaptureFixture[str]) -> N
     assert "trace-map" in output
     assert "type-mappability" in output
 
+    with pytest.raises(SystemExit) as release_exit:
+        cli.main(["release", "--help"])
+    assert release_exit.value.code == 0
+    assert "solo-paper-bundle" in capsys.readouterr().out
+
 
 def test_dispatch_forwards_arguments_and_restores_sys_argv(
     monkeypatch: pytest.MonkeyPatch,

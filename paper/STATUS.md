@@ -123,6 +123,13 @@ profile containing the PDF and its source lock. It intentionally consumes no
 strict submission evidence and cannot be used to claim human review or AAAI
 readiness.
 
+That command now also emits a deterministic portable
+`far-solo-paper-release.tar.gz`. It requires a byte-identical second pack and
+then runs an archive-only verifier over the embedded nine-artifact checksums,
+TMLR source lock, P5/P6-M boundaries, package fingerprints, and claim flags. The
+archive is a transferable machine-audited paper release, not human validation
+or submission itself.
+
 The main text now contains a dedicated mechanism-interpretation section. It
 frames retrieval, type mapping, detection, action selection, and revision as an
 opportunity chain rather than a monotone pipeline; explains why the local Qwen

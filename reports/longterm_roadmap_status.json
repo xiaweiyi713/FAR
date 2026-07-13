@@ -12,7 +12,7 @@
     ],
     "goal_complete": true,
     "incomplete_workstreams": [],
-    "next_training_step": "no required roadmap work remains; optional next steps are commit/push, release packaging, and human author review before external submission"
+    "next_training_step": "no required roadmap work remains; optional next steps are commit/push and portable solo-paper release packaging with archive-only independent audit; external submission remains an author-owned action"
   },
   "roadmap": {
     "active_sha256": "09cd929fe7a5e0b822914b9009edd7494e3d58da6c5da5256e573c2d9664a6d2",
@@ -116,7 +116,7 @@
         {
           "exists": true,
           "path": "docs/CURRENT_OPERATIONAL_STATE.md",
-          "sha256": "83572e41eab9e20a467d8ac19f51bba725aa99f158ec8a0260ce0856c5d988cc"
+          "sha256": "c2762a2dc4ad524b016f38c97b34008870997bf5f83ed92c3a85801188a0243c"
         },
         {
           "exists": true,
@@ -199,7 +199,7 @@
         {
           "exists": true,
           "path": "paper/STATUS.md",
-          "sha256": "414d0703b39f410f4145c071c558784c478cb7cae20f2b6176e7a279f91cc06a"
+          "sha256": "ed6713283764ba8fb16fda65f72b4b0811f7060c4ea0a63b3b4df61447922552"
         },
         {
           "exists": true,
@@ -256,7 +256,7 @@
       "details": {
         "diagnostics_mib": 0.0,
         "outputs_tracks_only_gitkeep": true,
-        "tracked_files": 357
+        "tracked_files": 360
       },
       "errors": [],
       "gate": "repository-maintenance audit",
