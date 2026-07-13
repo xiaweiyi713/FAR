@@ -30,6 +30,7 @@ EXPECTED_ENTRY_POINTS = {
     "falsirag-run",
     "falsirag-scan-secrets",
     "falsirag-solo-paper-readiness",
+    "falsirag-type-mappability-machine",
     "falsirag-validate-bench",
     "falsirag-verify-2plus4-smoke",
 }

@@ -3250,3 +3250,17 @@ evidence bundle verified successfully, releasing the GPU.
   adjudicator installation, full P6 analysis, and independent report
   verification. The temporary report verified successfully and was deleted;
   no synthetic human result entered the real diagnostic packet.
+
+## 2026-07-13 — deviation: add a machine-only P6-M stability audit
+
+- No real reviewers or adjudicator were available, so the frozen human P6 remains
+  unexecuted and its fail-closed `ready_to_analyze=false` gate is unchanged.
+- Registered a separate P6-M profile before any new model run. It uses three
+  cross-family remote jurors, two prompt/evidence-order views per item, stable-vote
+  majority, and an explicit contested layer without synthetic adjudication.
+- P6-M is an exploratory machine ontology-stability audit only. It cannot report
+  human mappability, human IAA, human gold, publication-grade gold, or confirm H4.
+  Existing Qwen prelabels are excluded from voting and retained only as a possible
+  post-freeze comparison signal.
+- The local Mac remains model-free. GLM and Llama execution is restricted to the
+  authorized remote GPU host and must wait when that host is occupied.

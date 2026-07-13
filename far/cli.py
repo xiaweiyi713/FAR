@@ -40,6 +40,7 @@ _LEGACY_MIGRATIONS = {
     "falsirag-boundary-evidence": "falsirag diag boundary-evidence",
     "falsirag-eval-fever-binary": "falsirag diag fever-binary",
     "falsirag-type-mappability": "falsirag diag type-mappability",
+    "falsirag-type-mappability-machine": "falsirag diag type-mappability-machine",
     "falsirag-jury-annotate": "falsirag jury annotate",
     "falsirag-jury-consensus": "falsirag jury consensus",
     "falsirag-jury-adjudication": "falsirag jury adjudication",
@@ -427,6 +428,13 @@ def type_mappability_main() -> None:
     main()
 
 
+def type_mappability_machine_main() -> None:
+    _warn_legacy_alias()
+    from far.experiments.type_mappability_machine import main
+
+    main()
+
+
 def p5_ablations_main() -> None:
     _warn_legacy_alias()
     from far.experiments.p5_ablations import main
@@ -632,6 +640,13 @@ def _build_parser() -> argparse.ArgumentParser:
         type_mappability_main,
         "Prepare, hand off, or analyze the P6 type-mappability study.",
         "diag type-mappability",
+    )
+    _add_leaf(
+        diag,
+        "type-mappability-machine",
+        type_mappability_machine_main,
+        "Run or verify the machine-only P6-M ontology-stability audit.",
+        "diag type-mappability-machine",
     )
     _add_leaf(
         diag,
