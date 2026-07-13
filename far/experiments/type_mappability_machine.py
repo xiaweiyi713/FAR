@@ -47,7 +47,7 @@ from far.paths import repository_root
 
 ROOT = repository_root()
 PROTOCOL_PATH = ROOT / "docs" / "PREREG_TYPE_MAPPABILITY_MACHINE_2026-07-13.md"
-PROTOCOL_SHA256 = "63488c9cdd83f6da4aa110ca8ee836c793b12ddbffd01011961053c9c08b400e"
+PROTOCOL_SHA256 = "e4213bc2c6ebd29e24ca423b2207b8891ab416293347c23c385720780f343a22"
 PROFILE = "machine_ontology_stability_audit"
 VIEW_IDS = ("view_a", "view_b")
 P6M_MAX_ATTEMPTS = 5
@@ -194,7 +194,9 @@ def _retry_prompt(base_prompt: str, previous: str, error: str) -> str:
     )
 
 
-def _parse_p6m_response(response: str, *, sample_id: str) -> dict[str, Any]:
+def _parse_p6m_response_with_meta(
+    response: str, *, sample_id: str
+) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     stripped = response.strip()
     decoder = json.JSONDecoder()
     for index, character in enumerate(stripped):
@@ -205,8 +207,25 @@ def _parse_p6m_response(response: str, *, sample_id: str) -> dict[str, Any]:
         except json.JSONDecodeError:
             continue
         if isinstance(value, dict):
-            return validate_annotation(value, sample_id=sample_id)
+            normalizations: list[dict[str, Any]] = []
+            raw_types = value.get("mapped_types")
+            if isinstance(raw_types, list) and all(isinstance(item, str) for item in raw_types):
+                deduplicated = list(dict.fromkeys(raw_types))
+                if len(deduplicated) != len(raw_types):
+                    value = {**value, "mapped_types": deduplicated}
+                    normalizations.append(
+                        {
+                            "kind": "deduplicate_identical_mapped_types",
+                            "removed": len(raw_types) - len(deduplicated),
+                        }
+                    )
+            return validate_annotation(value, sample_id=sample_id), normalizations
     raise ValueError(f"{sample_id}: P6-M response does not contain a valid JSON object")
+
+
+def _parse_p6m_response(response: str, *, sample_id: str) -> dict[str, Any]:
+    annotation, _ = _parse_p6m_response_with_meta(response, sample_id=sample_id)
+    return annotation
 
 
 def _validate_failure_log(
@@ -301,7 +320,9 @@ def _attempts_valid(
         ):
             raise ValueError(f"{item['sample_id']}:{view_id}: response fingerprint mismatch")
         try:
-            candidate = _parse_p6m_response(response, sample_id=str(item["sample_id"]))
+            candidate, normalizations = _parse_p6m_response_with_meta(
+                response, sample_id=str(item["sample_id"])
+            )
         except ValueError as exc:
             if attempt.get("valid") is not False or attempt.get("validation_error") != str(exc):
                 raise ValueError(f"{item['sample_id']}:{view_id}: invalid failure record") from exc
@@ -311,6 +332,10 @@ def _attempts_valid(
                 ) from exc
             prompt = _retry_prompt(base_prompt, response, str(exc))
         else:
+            if attempt.get("transport_normalizations", []) != normalizations:
+                raise ValueError(
+                    f"{item['sample_id']}:{view_id}: transport normalization record changed"
+                )
             if attempt.get("valid") is not True or attempt.get("validation_error") is not None:
                 raise ValueError(f"{item['sample_id']}:{view_id}: invalid success record")
             if index != len(attempts):
@@ -446,9 +471,17 @@ def annotate_juror(
                             ).hexdigest(),
                         }
                         try:
-                            annotation = _parse_p6m_response(response, sample_id=sample_id)
+                            annotation, normalizations = _parse_p6m_response_with_meta(
+                                response, sample_id=sample_id
+                            )
                         except ValueError as exc:
-                            attempt.update({"valid": False, "validation_error": str(exc)})
+                            attempt.update(
+                                {
+                                    "valid": False,
+                                    "validation_error": str(exc),
+                                    "transport_normalizations": [],
+                                }
+                            )
                             attempts.append(attempt)
                             failure_sequence += 1
                             failure_row = {
@@ -478,7 +511,13 @@ def annotate_juror(
                                 ) from exc
                             prompt = _retry_prompt(base_prompt, response, str(exc))
                         else:
-                            attempt.update({"valid": True, "validation_error": None})
+                            attempt.update(
+                                {
+                                    "valid": True,
+                                    "validation_error": None,
+                                    "transport_normalizations": normalizations,
+                                }
+                            )
                             attempts.append(attempt)
                             break
                     if annotation is None:
@@ -504,6 +543,9 @@ def annotate_juror(
         release_generator(generator)
     expected_keys = {(sample_id, view_id) for sample_id in items for view_id in VIEW_IDS}
     complete = set(completed) == expected_keys
+    transport_normalized_responses = sum(
+        bool(row["attempts"][-1].get("transport_normalizations")) for row in completed.values()
+    )
     manifest = {
         "schema_version": "far-p6m-juror-manifest-v1",
         "study_profile": PROFILE,
@@ -526,6 +568,7 @@ def annotate_juror(
         "failed_attempt_file": failures_path.name,
         "failed_attempts": failure_sequence,
         "failed_attempt_sha256": sha256_file(failures_path),
+        "transport_normalized_responses": transport_normalized_responses,
         "run_identity_sha256": sha256_file(identity_path),
         "qwen_prelabels_used": False,
         "human_annotator": False,
@@ -565,6 +608,8 @@ def _load_juror(
         or len(str(manifest.get("config_sha256", ""))) != 64
         or not isinstance(manifest.get("failed_attempts"), int)
         or int(manifest.get("failed_attempts", -1)) < 0
+        or not isinstance(manifest.get("transport_normalized_responses"), int)
+        or int(manifest.get("transport_normalized_responses", -1)) < 0
         or manifest.get("qwen_prelabels_used") is not False
         or manifest.get("human_annotator") is not False
         or manifest.get("human_annotation_replaced") is not False
@@ -628,6 +673,7 @@ def _load_juror(
         model_family=spec["family"],
     )
     rows: dict[str, dict[str, dict[str, Any]]] = defaultdict(dict)
+    transport_normalized_responses = 0
     for row in read_jsonl(annotations_path):
         sample_id = str(row.get("sample_id", ""))
         view_id = str(row.get("view_id", ""))
@@ -645,9 +691,14 @@ def _load_juror(
         parsed = _attempts_valid(row.get("attempts"), items[sample_id], view_id)
         if parsed != row.get("annotation"):
             raise ValueError(f"{sample_id}:{view_id}: P6-M annotation/raw mismatch")
+        transport_normalized_responses += bool(
+            row.get("attempts", [{}])[-1].get("transport_normalizations")
+        )
         rows[sample_id][view_id] = parsed
     if set(rows) != set(items) or any(set(views) != set(VIEW_IDS) for views in rows.values()):
         raise ValueError(f"{directory}: P6-M annotations are incomplete")
+    if transport_normalized_responses != manifest.get("transport_normalized_responses"):
+        raise ValueError(f"{directory}: P6-M transport normalization count mismatch")
     return manifest, dict(rows)
 
 
@@ -963,6 +1014,7 @@ def compute_result(
                 "annotation_sha256": manifest["annotation_sha256"],
                 "failed_attempts": manifest["failed_attempts"],
                 "failed_attempt_sha256": manifest["failed_attempt_sha256"],
+                "transport_normalized_responses": manifest["transport_normalized_responses"],
             }
             for manifest in manifests
         ],

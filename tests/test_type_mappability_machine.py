@@ -18,6 +18,7 @@ from far.experiments.type_mappability_machine import (
     PROTOCOL_SHA256,
     VIEW_IDS,
     _parse_p6m_response,
+    _parse_p6m_response_with_meta,
     _prompt,
     _source,
     analyze,
@@ -144,6 +145,7 @@ def _write_juror(
             "failed_attempt_file": failures_path.name,
             "failed_attempts": 0,
             "failed_attempt_sha256": sha256_file(failures_path),
+            "transport_normalized_responses": 0,
             "run_identity_sha256": sha256_file(identity_path),
             "qwen_prelabels_used": False,
             "human_annotator": False,
@@ -188,9 +190,22 @@ def test_p6m_parser_extracts_one_object_but_keeps_schema_fail_closed() -> None:
     annotation = _annotation("clean", "temporal")
     response = f"Preface\n```json\n{json.dumps(annotation)}\n```\nTrailing prose"
     assert _parse_p6m_response(response, sample_id="sample") == annotation
-    with pytest.raises(ValueError, match="mapped_types must be unique"):
+    assert (
         _parse_p6m_response(
             json.dumps({**annotation, "mapped_types": ["temporal", "temporal"]}),
+            sample_id="sample",
+        )
+        == annotation
+    )
+    normalized, events = _parse_p6m_response_with_meta(
+        json.dumps({**annotation, "mapped_types": ["temporal", "temporal"]}),
+        sample_id="sample",
+    )
+    assert normalized == annotation
+    assert events == [{"kind": "deduplicate_identical_mapped_types", "removed": 1}]
+    with pytest.raises(ValueError, match="clean requires one type"):
+        _parse_p6m_response(
+            json.dumps({**annotation, "mapped_types": ["temporal", "entity"]}),
             sample_id="sample",
         )
     mapped_schemas = [
@@ -293,6 +308,7 @@ def test_p6m_annotation_runner_writes_two_views_without_a_real_model(
     assert manifest["complete"] is False
     assert manifest["rows"] == 2
     assert manifest["failed_attempts"] == 0
+    assert manifest["transport_normalized_responses"] == 0
     assert len(generator.prompts) == 2
     assert generator.prompts[0] != generator.prompts[1]
     assert all(call["response_format"] == P6M_RESPONSE_SCHEMA for call in generator.calls)

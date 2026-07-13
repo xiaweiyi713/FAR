@@ -3318,3 +3318,15 @@ evidence bundle verified successfully, releasing the GPU.
   validator is unchanged.
 - Required the same six-sample/12-view smoke to be rerun from an empty directory
   before formal execution.
+
+## 2026-07-13 — deviation: normalize identical mapped-type duplicates
+
+- The bounded conditional schema reached 10/12 smoke views. All five failures on
+  `GCON0012/view_a` were complete JSON whose mapped-types list repeated only the
+  identical `entity` value five or six times.
+- Added one transport normalization consistent with the preregistered set-valued
+  field: remove exact duplicate type strings while preserving the first occurrence,
+  the full raw response, and an explicit per-attempt/manifest normalization record.
+- No distinct types are merged or selected and the unchanged frozen validator runs
+  after normalization; all other schema and semantic violations remain errors.
+- Discarded the 10-row smoke and required another empty-directory 12-view smoke.
