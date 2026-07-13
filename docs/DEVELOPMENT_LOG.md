@@ -3290,3 +3290,19 @@ evidence bundle verified successfully, releasing the GPU.
 - Added parser, retry, terminal-failure provenance, resume, and tamper regression
   tests. No label was inferred from malformed text and no research threshold,
   aggregation rule, score, sample, or claim boundary changed.
+
+## 2026-07-13 — deviation: simplify P6-M generation schema after transport smoke failure
+
+- The restart again stopped at 11/434 J1 rows. The new failure log showed five
+  Mistral responses repeating the `entity` enum inside `mapped_types` until the
+  1200-token cap truncated the JSON. This identified an Ollama constrained-decoder
+  interaction with the full conditional/unique-items schema.
+- Archived this second partial run in full. J2/J3 still had zero rows and no
+  consensus/report existed.
+- Replaced only the generation-time schema with a four-field structural schema and
+  a seven-item cap. The unchanged frozen validator remains authoritative, so the
+  accepted annotation set is identical and duplicate/conditional violations still
+  fail closed.
+- Added a required six-sample/12-view transport smoke that must cross the former
+  failure point before another zero-based formal restart. Smoke labels are excluded
+  from all analysis.

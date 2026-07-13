@@ -11,6 +11,7 @@ from far.bench.build.common import sha256_file, write_json, write_jsonl
 from far.experiments.type_mappability_machine import (
     JUROR_SPECS,
     P6M_MAX_ATTEMPTS,
+    P6M_RESPONSE_SCHEMA,
     PROFILE,
     PROMPT_TEMPLATE_SHA256,
     PROTOCOL_PATH,
@@ -192,6 +193,8 @@ def test_p6m_parser_extracts_one_object_but_keeps_schema_fail_closed() -> None:
             json.dumps({**annotation, "mapped_types": ["temporal", "temporal"]}),
             sample_id="sample",
         )
+    assert P6M_RESPONSE_SCHEMA["properties"]["mapped_types"]["maxItems"] == 7
+    assert "uniqueItems" not in P6M_RESPONSE_SCHEMA["properties"]["mapped_types"]
 
 
 def test_p6m_consensus_preserves_majority_and_contested_layers(tmp_path: Path) -> None:
@@ -244,10 +247,12 @@ def test_p6m_annotation_runner_writes_two_views_without_a_real_model(
     class FakeGenerator:
         def __init__(self) -> None:
             self.prompts: list[str] = []
+            self.calls: list[dict[str, object]] = []
             self.released = False
 
-        def complete(self, prompt: str, **_: object) -> str:
+        def complete(self, prompt: str, **kwargs: object) -> str:
             self.prompts.append(prompt)
+            self.calls.append(kwargs)
             return json.dumps(_annotation("clean", "temporal"), sort_keys=True)
 
         def release(self) -> None:
@@ -255,7 +260,7 @@ def test_p6m_annotation_runner_writes_two_views_without_a_real_model(
 
     generator = FakeGenerator()
     config_path = tmp_path / "config.yaml"
-    config_path.write_text("llm:\n  max_tokens: 900\n")
+    config_path.write_text("llm:\n  max_tokens: 1200\n")
     runtime = {
         "enabled": True,
         "provider": "ollama",
@@ -287,6 +292,8 @@ def test_p6m_annotation_runner_writes_two_views_without_a_real_model(
     assert manifest["failed_attempts"] == 0
     assert len(generator.prompts) == 2
     assert generator.prompts[0] != generator.prompts[1]
+    assert all(call["response_format"] == P6M_RESPONSE_SCHEMA for call in generator.calls)
+    assert all(call["max_tokens"] == 1200 for call in generator.calls)
     assert generator.released is True
 
     unowned = tmp_path / "unowned"

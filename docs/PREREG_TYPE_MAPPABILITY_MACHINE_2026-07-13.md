@@ -133,3 +133,17 @@ typed−untyped score 无关。该 11 行失败运行整体归档且不进入正
   不复用。
 
 该偏离依据纯格式失败而非任何标注分布或研究效果作出，所有主张边界保持不变。
+
+### 2026-07-13 结构化解码烟囱偏离
+
+上述重启在同一 `GCON0012/view_b` 再次终止。新增的 append-only failure log 证明，
+Mistral/Ollama 在完整 conditional schema 的 `mapped_types` 数组中重复生成 `entity`，
+直至 1200-token 上限截断；五次响应均无完整 JSON，J2/J3 仍未启动。第二次 11 行运行也
+整体归档且不进入正式结果。
+
+因此把**生成时** schema 简化为：固定四字段、`mappability` 枚举、`mapped_types` 最多
+7 个冻结类型、字符串 `missing_concept/rationale`、无额外字段；移除 constrained decoder
+中的 `oneOf/uniqueItems/conditional minItems`。生成后仍调用原始 frozen validator，重复类型、
+条件不一致、空 rationale 等全部拒绝；该变化不放宽可接受 annotation 集合。prompt 同时明确
+“每个类型最多一次”。先用冻结顺序的前 6 个样本（12 视图）做 transport smoke，只有完整越过
+原失败点才从 0 启动正式 217×2 运行；smoke 输出不参与统计。

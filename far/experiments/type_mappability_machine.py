@@ -46,7 +46,7 @@ from far.paths import repository_root
 
 ROOT = repository_root()
 PROTOCOL_PATH = ROOT / "docs" / "PREREG_TYPE_MAPPABILITY_MACHINE_2026-07-13.md"
-PROTOCOL_SHA256 = "bc93cb9c6c1c8db60a49dea0fefdf0dc2ffa32336c6d96810321d536c0b2bfb3"
+PROTOCOL_SHA256 = "cc81ad6b8422499bd5d2a4bb966f2a11d48d790b8476cbae6134efcdb4e4327b"
 PROFILE = "machine_ontology_stability_audit"
 VIEW_IDS = ("view_a", "view_b")
 P6M_MAX_ATTEMPTS = 5
@@ -58,6 +58,21 @@ JUROR_SPECS = {
     },
     "J2": {"family": "glm", "provider": "ollama", "model": "glm4:9b"},
     "J3": {"family": "meta", "provider": "ollama", "model": "llama3.1:8b"},
+}
+P6M_RESPONSE_SCHEMA: dict[str, Any] = {
+    "type": "object",
+    "properties": {
+        "mappability": {"type": "string", "enum": list(MAPPABILITY_LABELS)},
+        "mapped_types": {
+            "type": "array",
+            "items": {"type": "string", "enum": list(TYPE_NAMES)},
+            "maxItems": len(TYPE_NAMES),
+        },
+        "missing_concept": {"type": "string"},
+        "rationale": {"type": "string"},
+    },
+    "required": ["mappability", "mapped_types", "missing_concept", "rationale"],
+    "additionalProperties": False,
 }
 _TYPE_GUIDE = {
     "temporal": "time, date, version, or validity-period conflict for the same fact slot",
@@ -135,6 +150,7 @@ def _prompt(item: dict[str, Any], view_id: str) -> str:
     return (
         f"{task}\n\nFrozen type guide:\n{type_guide}\n\n"
         "Required JSON fields: mappability, mapped_types, missing_concept, rationale.\n"
+        "List each mapped type at most once and never emit more than seven mapped types.\n"
         "Keep missing_concept to a short phrase and rationale to at most two concise sentences.\n"
         "For insufficient evidence use unmappable with no mapped types and "
         "missing_concept=insufficient_visible_evidence. counter_evidence is not a generic "
@@ -172,7 +188,8 @@ PROMPT_TEMPLATE_SHA256 = _stable_sha(
     {
         "prompts": {view_id: _prompt(_PROMPT_FINGERPRINT_ITEM, view_id) for view_id in VIEW_IDS},
         "system_prompts": _SYSTEM_PROMPTS,
-        "response_schema": MACHINE_PRELABEL_RESPONSE_SCHEMA,
+        "generation_response_schema": P6M_RESPONSE_SCHEMA,
+        "validation_response_schema": MACHINE_PRELABEL_RESPONSE_SCHEMA,
         "view_rule": "sha256_order_then_reverse",
         "retry": _RETRY,
         "max_attempts": P6M_MAX_ATTEMPTS,
@@ -428,7 +445,7 @@ def annotate_juror(
                             system_prompt=_SYSTEM_PROMPTS[view_id],
                             temperature=0.0,
                             max_tokens=int(config.get("llm", {}).get("max_tokens", 1200)),
-                            response_format=MACHINE_PRELABEL_RESPONSE_SCHEMA,
+                            response_format=P6M_RESPONSE_SCHEMA,
                         ).strip()
                         attempt = {
                             "attempt": attempt_number,
