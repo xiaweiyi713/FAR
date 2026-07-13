@@ -3330,3 +3330,16 @@ evidence bundle verified successfully, releasing the GPU.
 - No distinct types are merged or selected and the unchanged frozen validator runs
   after normalization; all other schema and semantic violations remain errors.
 - Discarded the 10-row smoke and required another empty-directory 12-view smoke.
+
+## 2026-07-13 — repair: apply the preregistered mapped-type ordering rule
+
+- During the formal three-juror collection, a read-only J1 quality check found
+  that `_decision()` compared `mapped_types` in emitted list order even though
+  the frozen protocol requires comparison after sorting. This could falsely
+  classify two identical type sets with different output order as disagreement.
+- Corrected only the downstream decision canonicalization and added a regression
+  test for reversed type order. The change does not alter prompts, model calls,
+  accepted annotations, raw responses, checkpoints, or any frozen threshold, so
+  already collected juror rows remain valid and do not require model reruns.
+- The correction was made before any three-juror consensus report was generated.
+  Final analysis and its deterministic verifier both use the corrected rule.

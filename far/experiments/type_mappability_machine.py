@@ -703,7 +703,9 @@ def _load_juror(
 
 
 def _decision(annotation: dict[str, Any]) -> tuple[str, tuple[str, ...]]:
-    return str(annotation["mappability"]), tuple(str(value) for value in annotation["mapped_types"])
+    return str(annotation["mappability"]), tuple(
+        sorted(str(value) for value in annotation["mapped_types"])
+    )
 
 
 def _decision_text(annotation: dict[str, Any]) -> str:

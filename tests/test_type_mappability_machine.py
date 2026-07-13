@@ -215,6 +215,18 @@ def test_p6m_parser_extracts_one_object_but_keeps_schema_fail_closed() -> None:
     assert all(schema["uniqueItems"] is True for schema in mapped_schemas)
 
 
+def test_p6m_decision_normalizes_mapped_type_order() -> None:
+    left = {
+        "mappability": "partial",
+        "mapped_types": ["definition", "entity"],
+    }
+    right = {
+        "mappability": "partial",
+        "mapped_types": ["entity", "definition"],
+    }
+    assert p6m._decision(left) == p6m._decision(right)
+
+
 def test_p6m_consensus_preserves_majority_and_contested_layers(tmp_path: Path) -> None:
     jurors, majority_id, contested_id = _jurors(tmp_path)
     result, rows = compute_result(PACKET, jurors)
