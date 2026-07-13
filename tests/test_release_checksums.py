@@ -8,7 +8,10 @@ from pathlib import Path
 import pytest
 
 from far.experiments.generate_release_checksums import (
+    BASE_RELEASE_ARTIFACT_ROLES,
     FINAL_RELEASE_ARTIFACT_ROLES,
+    RELEASE_PROFILES,
+    SOLO_PAPER_RELEASE_ARTIFACT_ROLES,
     build_checksum_manifest,
     validate_checksum_manifest,
     write_checksum_manifest,
@@ -59,6 +62,7 @@ def test_release_checksums_cover_package_and_sbom(tmp_path: Path) -> None:
         "cyclonedx_sbom",
     }
     assert manifest["source_revision"] == {"git_commit": None, "git_dirty": None}
+    assert manifest["release_profile"] == "base"
 
 
 def test_release_checksums_cover_extra_release_artifacts(tmp_path: Path) -> None:
@@ -134,6 +138,52 @@ def test_final_release_validation_accepts_complete_submission_set(tmp_path: Path
     assert audit.artifact_count == 9
 
 
+def test_solo_paper_release_profile_requires_active_tmlr_artifacts(tmp_path: Path) -> None:
+    root, sbom = _release_tree(tmp_path)
+    extras: list[tuple[str, Path]] = []
+    for role in sorted(SOLO_PAPER_RELEASE_ARTIFACT_ROLES - BASE_RELEASE_ARTIFACT_ROLES):
+        artifact = root / "release" / f"{role}.artifact"
+        artifact.parent.mkdir(parents=True, exist_ok=True)
+        artifact.write_bytes(role.encode())
+        extras.append((role, artifact))
+    manifest = build_checksum_manifest(
+        project_root=root,
+        sbom_path=sbom,
+        extra_artifacts=extras,
+        release_profile="solo-paper",
+    )
+    output = write_checksum_manifest(manifest, root / "build/solo-paper-checksums.json")
+
+    audit = validate_checksum_manifest(
+        output,
+        project_root=root,
+        required_roles=SOLO_PAPER_RELEASE_ARTIFACT_ROLES,
+        required_profile="solo-paper",
+    )
+
+    assert audit.valid is True
+    assert audit.artifact_count == 9
+    assert RELEASE_PROFILES["solo-paper"] == SOLO_PAPER_RELEASE_ARTIFACT_ROLES
+    assert "submission_evidence_snapshot" not in SOLO_PAPER_RELEASE_ARTIFACT_ROLES
+    assert "aaai_reproducibility_checklist_pdf" not in SOLO_PAPER_RELEASE_ARTIFACT_ROLES
+
+
+def test_release_profile_mismatch_fails_closed(tmp_path: Path) -> None:
+    root, sbom = _release_tree(tmp_path)
+    manifest = build_checksum_manifest(project_root=root, sbom_path=sbom)
+    output = write_checksum_manifest(manifest, root / "build/release-checksums.json")
+
+    audit = validate_checksum_manifest(
+        output,
+        project_root=root,
+        required_profile="solo-paper",
+    )
+
+    assert audit.valid is False
+    assert "release profile mismatch: 'base' != 'solo-paper'" in audit.errors
+    assert "missing required artifact role: tmlr_paper_pdf" in audit.errors
+
+
 def test_submission_release_gate_binds_exact_audited_evidence(tmp_path: Path) -> None:
     root, sbom = _release_tree(tmp_path)
     config = {
@@ -156,6 +206,7 @@ def test_submission_release_gate_binds_exact_audited_evidence(tmp_path: Path) ->
         project_root=root,
         sbom_path=sbom,
         extra_artifacts=extras,
+        release_profile="strict-submission",
     )
     write_checksum_manifest(manifest, root / config["release_checksums"])
     dev_suites = Gate(
@@ -185,10 +236,10 @@ def test_release_check_fingerprints_generated_audit_and_pdf_artifacts() -> None:
         "aaai_reproducibility_checklist_pdf",
     ):
         assert f"--artifact {role}=" in script
-    checksum_offset = script.index("uv run falsirag-release-checksums")
-    readiness_offset = script.index("uv run falsirag-submission-readiness")
+    checksum_offset = script.index("uv run falsirag release checksums")
+    readiness_offset = script.index("uv run falsirag release submission-readiness")
     solo_offset = script.index("bash scripts/solo_diagnostic_check.sh")
-    validate_offset = script.index("uv run falsirag-validate-bench")
+    validate_offset = script.index("uv run falsirag bench validate")
     build_offset = script.index("uv build")
     smoke_offset = script.index("bash scripts/check_release_packages.sh")
     assert solo_offset < validate_offset
@@ -196,6 +247,29 @@ def test_release_check_fingerprints_generated_audit_and_pdf_artifacts() -> None:
     assert checksum_offset < readiness_offset
     assert "submission_readiness_snapshot" not in script
     assert 'EVIDENCE_PATH="${FAR_SUBMISSION_EVIDENCE:-' in script
+    assert "--profile strict-submission" in script
+
+
+def test_solo_paper_release_check_fingerprints_active_tmlr_artifacts() -> None:
+    script = (
+        Path(__file__).resolve().parents[1] / "scripts/solo_paper_release_check.sh"
+    ).read_text(encoding="utf-8")
+    for role in (
+        "benchmark_validation_report",
+        "secret_scan_report",
+        "solo_paper_readiness_json",
+        "solo_paper_readiness_markdown",
+        "tmlr_paper_pdf",
+        "tmlr_source_lock",
+    ):
+        assert f"--artifact {role}=" in script
+    assert "--profile solo-paper" in script
+    assert "bash scripts/build_tmlr_paper.sh" in script
+    assert "falsirag release solo-paper-readiness" in (
+        Path(__file__).resolve().parents[1] / "scripts/solo_diagnostic_check.sh"
+    ).read_text(encoding="utf-8")
+    assert "submission/evidence" not in script
+    assert "submission-readiness" not in script
 
 
 def test_release_checksums_reject_modified_artifact(tmp_path: Path) -> None:
@@ -280,6 +354,7 @@ def test_source_archive_includes_reader_facing_reports(tmp_path: Path) -> None:
     assert ".github/workflows/ci.yml" in members
     assert "scripts/check_release_packages.sh" in members
     assert "scripts/package_smoke.py" in members
+    assert "scripts/solo_paper_release_check.sh" in members
     assert report_members == {
         "reports/README.md",
         "reports/boundary_benchmark_selection.md",

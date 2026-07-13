@@ -7,12 +7,12 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "${ROOT}"
 
-uv run falsirag-solo-release verify diagnostics/solo_v1
-uv run falsirag-eval-fever-binary verify \
+uv run falsirag release solo verify diagnostics/solo_v1
+uv run falsirag diag fever-binary verify \
   --data-dir bench/external/fever_pair_candidates_v1 \
   diagnostics/fever_binary_v1
-uv run falsirag-project-status --verify
-uv run falsirag-solo-paper-readiness > /dev/null
+uv run falsirag ops project-status --verify
+uv run falsirag release solo-paper-readiness > /dev/null
 
 uv run pytest -q \
   tests/test_diagnostic_release.py \

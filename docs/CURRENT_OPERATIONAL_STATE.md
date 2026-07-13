@@ -19,6 +19,9 @@
 - TMLR 主文和附录已纳入 P5 注册消融及 P6-M 阴性稳定性结果；paper-readiness 会同时校验
   H3 `uncertain`、H5 scoped `equivalent`、P6-M 15/217 共识/202 contested 与全部非真人边界。
   当前 14 页构建无 overfull box 或未解析引用；此更新没有调用模型或 GPU。
+- 活动 TMLR 路线现有独立的 `scripts/solo_paper_release_check.sh`：在 clean commit 上用
+  `solo-paper` profile 强制绑定 wheel、sdist、SBOM、两个审计报告、两份 readiness 报告、
+  TMLR PDF 与 `SOURCE.lock`。它不读取真人/投稿 evidence，也不冒充严格 AAAI release gate。
 
 ## 既有 WS1--WS6 结论（2026-07-09 冻结）
 

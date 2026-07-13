@@ -3403,3 +3403,18 @@ evidence bundle verified successfully, releasing the GPU.
 - Rebuilt the active TMLR PDF without model calls. The 14-page output has no
   overfull boxes or unresolved references; rendered page inspection found no
   clipping, overlap, unreadable table, or broken section transition.
+
+## 2026-07-13 — add a dedicated no-human TMLR release profile
+
+- Identified a release-path mismatch: the accepted paper is now TMLR, while the
+  only full release script remained tied to the inactive strict-human/AAAI
+  submission profile.
+- Added a distinct `solo-paper` checksum profile and
+  `scripts/solo_paper_release_check.sh`. The clean-commit gate binds nine
+  artifacts: wheel, sdist, SBOM, benchmark and secret-scan reports, JSON and
+  Markdown solo-paper readiness, the active TMLR PDF, and its `SOURCE.lock`.
+- Kept strict submission roles separate. The new path reads no human or
+  submission evidence and cannot satisfy human review, adjudication, IAA,
+  external blindness, publication gold, or strict AAAI readiness.
+- Migrated repository-owned CI and release scripts to the unified `falsirag`
+  command tree so routine validation no longer emits deprecated-alias warnings.

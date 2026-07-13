@@ -145,7 +145,7 @@ falsirag release solo verify diagnostics/solo_v1
 运行离线、类别均衡的小规模诊断：
 
 ```bash
-uv run falsirag-suite \
+uv run falsirag suite \
   --config far/experiments/configs/offline_smoke.yaml \
   --output-dir outputs/smoke_suite \
   --limit 10 \
@@ -160,14 +160,15 @@ uv run falsirag-suite \
 公开检查：
 
 ```bash
-uv run falsirag-validate-bench
-uv run falsirag-scan-secrets --json
+uv run falsirag bench validate
+uv run falsirag release scan-secrets --json
 uv run ruff check .
 uv run ruff format --check .
 uv run mypy far tests scripts/package_smoke.py
 uv run pytest
 uv build
 bash scripts/check_release_packages.sh
+bash scripts/solo_paper_release_check.sh
 ```
 
 wheel 与 sdist 的隔离安装 smoke 会验证：包内基准、离线配置、命令入口，以及自足 BM25 确实可用。
@@ -180,10 +181,10 @@ wheel 与 sdist 的隔离安装 smoke 会验证：包内基准、离线配置、
 
 ```bash
 uv run falsirag ops diagnostic-data install
-uv run falsirag-solo-release verify diagnostics/solo_v1
-uv run falsirag-project-status --verify
-uv run falsirag-solo-paper-readiness
-uv run falsirag-eval-fever-binary verify \
+uv run falsirag release solo verify diagnostics/solo_v1
+uv run falsirag ops project-status --verify
+uv run falsirag release solo-paper-readiness
+uv run falsirag diag fever-binary verify \
   --data-dir bench/external/fever_pair_candidates_v1 \
   diagnostics/fever_binary_v1
 ```

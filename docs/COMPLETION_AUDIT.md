@@ -66,13 +66,15 @@ comparison; no Git-history rewrite was performed.
 | Tables and figures | Artifact builder; the two diagnostic tables and three figures are tracked with source report fingerprints in `diagnostics/solo_v1/experiments/artifacts/` | Diagnostic artifacts complete; final inputs pending | Build submission figures only from validated, publication-ready test reports |
 | AAAI-27 paper and supplement | Official template, populated tracked diagnostic tables, narrowed claims, filled checklist; relaxed paper gate fingerprints the exact main source | Machine-audited paper profile complete; strict profile incomplete | Strict path still needs adjudicated test/multi-model evidence and independent policy review |
 | Reproducible package | Lockfile, wheel/sdist, isolated install smoke checks for both distributions, CycloneDX SBOM, release checksums, redacting secret scanner, `scripts/release_check.sh`; final readiness requires all nine fingerprinted package/audit/evidence/paper artifacts rather than accepting the three-artifact package minimum, then audits that exact evidence without a circular readiness-report checksum; source archives whitelist only submission templates and exclude ignored real evidence/attestation JSON | Implemented | Run `FAR_SUBMISSION_EVIDENCE=submission/evidence.json bash scripts/release_check.sh` on the submission commit after final evidence is frozen |
+| Accepted no-human TMLR release | `scripts/solo_paper_release_check.sh`; checksum profile `solo-paper`; active PDF plus `SOURCE.lock`, both readiness reports, audit reports, SBOM, wheel, and sdist | Implemented as a separate nine-artifact fail-closed path | Requires a clean commit and a visually inspected PDF; it never consumes human/submission evidence and cannot satisfy the strict AAAI profile |
 | Submission acceptance gate | `falsirag-submission-readiness`, evidence/attestation templates, and `docs/EXTERNAL_ACTION_PACKET.md`; formal identities bind clean Git revision and result validator recomputes signatures | Implemented, currently fail-closed | Supply all real human, three-model, blind-return, trusted-scoring, release, and paper-review artifacts; require `ready:true` |
 
 ## Completion rules
 
 The user-authorized relaxed profile is complete when
-`falsirag-solo-paper-readiness` reports `ready:true`, the complete release gate
-passes, and the paper retains every required limitation. Strict AAAI completion
+`falsirag release solo-paper-readiness` reports `ready:true`, the dedicated
+`scripts/solo_paper_release_check.sh` gate passes, and the paper retains every
+required limitation. Strict AAAI completion
 still requires every strict row above to be closed by its named evidence. The
 2+4 profile is a separate, preregistered single-author evidence tier: it is complete
 only if its active G-A branch and every subsequently authorized G-K/G-S/release/

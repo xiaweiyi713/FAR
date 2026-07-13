@@ -23,9 +23,9 @@ uv run ruff check .
 uv run mypy far tests scripts/package_smoke.py
 uv run pytest -q
 bash scripts/solo_diagnostic_check.sh
-uv run falsirag-validate-bench --output build/release/benchmark-validation.json
-uv run falsirag-scan-secrets --json > build/release/secret-scan.json
-uv run falsirag-generate-sbom \
+uv run falsirag bench validate --output build/release/benchmark-validation.json
+uv run falsirag release scan-secrets --json > build/release/secret-scan.json
+uv run falsirag release sbom \
   --output build/sbom/far-sbom.cdx.json --check --json
 uv build
 bash scripts/check_release_packages.sh
@@ -41,7 +41,8 @@ bash scripts/check_release_packages.sh
     -output-directory=build/release aaai27/ReproducibilityChecklist.tex
 )
 
-uv run falsirag-release-checksums \
+uv run falsirag release checksums \
+  --profile strict-submission \
   --sbom build/sbom/far-sbom.cdx.json \
   --artifact benchmark_validation_report=build/release/benchmark-validation.json \
   --artifact secret_scan_report=build/release/secret-scan.json \
@@ -52,12 +53,12 @@ uv run falsirag-release-checksums \
   --output build/release-checksums.json --check --json
 
 if [[ "${EVIDENCE_PATH}" == *.template.json ]]; then
-  uv run falsirag-submission-readiness \
+  uv run falsirag release submission-readiness \
     --evidence "${EVIDENCE_PATH}" \
     --output build/release/submission-readiness-current.json \
     --allow-incomplete > /dev/null
 else
-  uv run falsirag-submission-readiness \
+  uv run falsirag release submission-readiness \
     --evidence "${EVIDENCE_PATH}" \
     --output build/release/submission-readiness-current.json > /dev/null
 fi

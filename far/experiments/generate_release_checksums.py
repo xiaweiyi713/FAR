@@ -27,6 +27,21 @@ FINAL_RELEASE_ARTIFACT_ROLES = BASE_RELEASE_ARTIFACT_ROLES | frozenset(
         "aaai_reproducibility_checklist_pdf",
     }
 )
+SOLO_PAPER_RELEASE_ARTIFACT_ROLES = BASE_RELEASE_ARTIFACT_ROLES | frozenset(
+    {
+        "benchmark_validation_report",
+        "secret_scan_report",
+        "solo_paper_readiness_json",
+        "solo_paper_readiness_markdown",
+        "tmlr_paper_pdf",
+        "tmlr_source_lock",
+    }
+)
+RELEASE_PROFILES = {
+    "base": BASE_RELEASE_ARTIFACT_ROLES,
+    "solo-paper": SOLO_PAPER_RELEASE_ARTIFACT_ROLES,
+    "strict-submission": FINAL_RELEASE_ARTIFACT_ROLES,
+}
 
 
 @dataclass(frozen=True)
@@ -97,7 +112,10 @@ def build_checksum_manifest(
     dist_dir: str | Path = DEFAULT_DIST_DIR,
     sbom_path: str | Path = DEFAULT_SBOM,
     extra_artifacts: Iterable[tuple[str, str | Path]] = (),
+    release_profile: str = "base",
 ) -> dict[str, Any]:
+    if release_profile not in RELEASE_PROFILES:
+        raise ValueError(f"unknown release profile: {release_profile}")
     root = Path(project_root)
     project = build_sbom(root)["metadata"]["component"]
     name = str(project["name"])
@@ -120,6 +138,7 @@ def build_checksum_manifest(
     artifacts.extend(_entry(Path(path), role=role, root=root) for role, path in extra_artifacts)
     return {
         "schema_version": "far-release-checksums-v1",
+        "release_profile": release_profile,
         "project": {"name": name, "version": version},
         "source_revision": _git_revision(root),
         "generator": "far.experiments.generate_release_checksums",
@@ -142,6 +161,7 @@ def validate_checksum_manifest(
     *,
     project_root: str | Path = ".",
     required_roles: Iterable[str] = BASE_RELEASE_ARTIFACT_ROLES,
+    required_profile: str | None = None,
 ) -> ChecksumAudit:
     path = Path(manifest_path)
     try:
@@ -156,6 +176,10 @@ def validate_checksum_manifest(
     root = Path(project_root).resolve()
     if manifest.get("schema_version") != "far-release-checksums-v1":
         errors.append("unsupported release checksum schema")
+    if required_profile is not None and manifest.get("release_profile") != required_profile:
+        errors.append(
+            f"release profile mismatch: {manifest.get('release_profile')!r} != {required_profile!r}"
+        )
     recorded_revision = manifest.get("source_revision")
     current_revision = _git_revision(root)
     if not isinstance(recorded_revision, dict):
@@ -202,6 +226,12 @@ def validate_checksum_manifest(
         if item.get("sha256") != _sha256(artifact_path):
             errors.append(f"artifact sha256 mismatch: {relative}")
     required = set(required_roles)
+    if required_profile is not None:
+        profile_roles = RELEASE_PROFILES.get(required_profile)
+        if profile_roles is None:
+            errors.append(f"unknown required release profile: {required_profile}")
+        else:
+            required.update(profile_roles)
     for role in sorted(required - roles):
         errors.append(f"missing required artifact role: {role}")
     return ChecksumAudit(not errors, tuple(errors), str(path), len(artifacts))
@@ -230,17 +260,39 @@ def main(argv: list[str] | None = None) -> None:
     )
     parser.add_argument("--check", action="store_true")
     parser.add_argument("--json", action="store_true")
+    parser.add_argument(
+        "--profile",
+        choices=sorted(RELEASE_PROFILES),
+        default="base",
+        help="validate the artifact roles required by this release profile",
+    )
     args = parser.parse_args(argv)
     manifest = build_checksum_manifest(
         project_root=args.project_root,
         dist_dir=args.dist_dir,
         sbom_path=args.sbom,
         extra_artifacts=args.artifact,
+        release_profile=args.profile,
     )
     path = write_checksum_manifest(manifest, args.output)
-    audit = validate_checksum_manifest(path, project_root=args.project_root)
+    audit = validate_checksum_manifest(
+        path,
+        project_root=args.project_root,
+        required_roles=RELEASE_PROFILES[args.profile],
+        required_profile=args.profile,
+    )
     if args.json:
-        print(json.dumps(audit.to_dict(), indent=2, sort_keys=True))
+        print(
+            json.dumps(
+                {
+                    **audit.to_dict(),
+                    "profile": args.profile,
+                    "required_roles": sorted(RELEASE_PROFILES[args.profile]),
+                },
+                indent=2,
+                sort_keys=True,
+            )
+        )
     elif audit.valid:
         print(f"Release checksums validated: {audit.artifact_count} artifacts.")
     else:

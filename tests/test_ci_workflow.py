@@ -48,10 +48,10 @@ def test_ci_actions_are_pinned_and_public_gate_is_complete() -> None:
     assert all(FULL_SHA_ACTION.fullmatch(action) for action in action_refs)
     assert "ruff format --check" in public_commands
     assert "mypy far tests scripts/package_smoke.py" in public_commands
-    assert "falsirag-repository-maintenance --check" in public_commands
-    assert "falsirag-longterm-status --check" in public_commands
-    assert "falsirag-scan-secrets --json" in public_commands
-    assert "falsirag-validate-bench --data-dir bench" in public_commands
+    assert "falsirag ops repository-maintenance --check" in public_commands
+    assert "falsirag ops longterm-status --check" in public_commands
+    assert "falsirag release scan-secrets --json" in public_commands
+    assert "falsirag bench validate --data-dir bench" in public_commands
     assert "bash scripts/solo_diagnostic_check.sh" in public_commands
     assert "uv build" in public_commands
     assert "bash scripts/check_release_packages.sh" in public_commands

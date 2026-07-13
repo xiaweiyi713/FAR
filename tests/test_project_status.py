@@ -98,5 +98,5 @@ def test_project_status_verifier_rejects_stale_snapshots(tmp_path: Path) -> None
 def test_solo_gate_verifies_project_status_snapshot() -> None:
     script = (ROOT / "scripts/solo_diagnostic_check.sh").read_text(encoding="utf-8")
 
-    assert "uv run falsirag-project-status --verify" in script
+    assert "uv run falsirag ops project-status --verify" in script
     assert "tests/test_project_status.py" in script

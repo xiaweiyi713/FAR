@@ -70,13 +70,13 @@ jobs:
       - name: Check shell syntax
         run: bash -n scripts/*.sh
       - name: Audit repository maintenance invariants
-        run: uv run --locked falsirag-repository-maintenance --check
+        run: uv run --locked falsirag ops repository-maintenance --check
       - name: Audit long-term roadmap status
-        run: uv run --locked falsirag-longterm-status --check
+        run: uv run --locked falsirag ops longterm-status --check
       - name: Scan tracked files for secrets
-        run: uv run --locked falsirag-scan-secrets --json
+        run: uv run --locked falsirag release scan-secrets --json
       - name: Validate candidate benchmark
-        run: uv run --locked falsirag-validate-bench --data-dir bench
+        run: uv run --locked falsirag bench validate --data-dir bench
       - name: Verify public diagnostic evidence
         run: bash scripts/solo_diagnostic_check.sh
       - name: Build release distributions

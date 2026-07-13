@@ -158,12 +158,23 @@ output_rel="build/tmlr"
   cd "${paper_dir}"
   TEXINPUTS="${output_dir}:" BSTINPUTS="${output_dir}:" \
     latexmk -pdf -interaction=nonstopmode -halt-on-error \
-      -outdir="${output_rel}" -jobname=tmlr "${output_rel}/main.tex"
+      -g -outdir="${output_rel}" -jobname=tmlr "${output_rel}/main.tex"
 )
 
 pdf="${output_dir}/tmlr.pdf"
 if [[ ! -s "${pdf}" ]]; then
   echo "TMLR PDF was not produced: ${pdf}" >&2
+  exit 1
+fi
+
+log="${output_dir}/tmlr.log"
+if [[ ! -f "${log}" ]]; then
+  echo "TMLR build log was not produced: ${log}" >&2
+  exit 1
+fi
+if grep -Eqi 'Overfull \\hbox|LaTeX Warning:.*undefined|There were undefined references|Citation .* undefined' "${log}"; then
+  echo "TMLR build contains a layout overflow or unresolved reference:" >&2
+  grep -Ein 'Overfull \\hbox|LaTeX Warning:.*undefined|There were undefined references|Citation .* undefined' "${log}" >&2
   exit 1
 fi
 

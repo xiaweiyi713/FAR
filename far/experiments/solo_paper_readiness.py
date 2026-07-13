@@ -164,8 +164,7 @@ def _p6m_evidence(root: Path) -> dict[str, Any]:
             "negative_consensus_result": (
                 result.get("samples") == 217
                 and result.get("consensus_samples") == 15
-                and result.get("dispositions")
-                == {"unanimous": 1, "majority": 14, "contested": 202}
+                and result.get("dispositions") == {"unanimous": 1, "majority": 14, "contested": 202}
             ),
             "machine_only_boundary": (
                 result.get("human_annotation_replaced") is False
@@ -175,8 +174,7 @@ def _p6m_evidence(root: Path) -> dict[str, Any]:
                 and result.get("confirmatory_h4") is False
                 and result.get("test_accessed") is False
             ),
-            "association_not_estimable": result.get("association", {}).get("estimable")
-            is False,
+            "association_not_estimable": result.get("association", {}).get("estimable") is False,
         }
         errors.extend(name for name, passed in checks.items() if not passed)
     except (OSError, TypeError, ValueError, json.JSONDecodeError) as exc:

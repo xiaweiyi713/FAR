@@ -115,6 +115,14 @@ limits, A/B/C outcome rules, reproducibility contract, and label/test boundary.
 `paper/supplement.tex` is retained only as the legacy AAAI upgrade-path
 supplement and is not the active TMLR evidence appendix.
 
+The active route now also has a separate fail-closed release command,
+`scripts/solo_paper_release_check.sh`. On a clean commit it reruns the public
+diagnostic and package checks, builds the TMLR artifact, rejects layout overflow
+or unresolved references, and fingerprints a nine-artifact `solo-paper`
+profile containing the PDF and its source lock. It intentionally consumes no
+strict submission evidence and cannot be used to claim human review or AAAI
+readiness.
+
 The main text now contains a dedicated mechanism-interpretation section. It
 frames retrieval, type mapping, detection, action selection, and revision as an
 opportunity chain rather than a monotone pipeline; explains why the local Qwen

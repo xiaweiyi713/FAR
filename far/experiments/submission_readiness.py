@@ -472,6 +472,7 @@ def _release_gate(root: Path, config: dict[str, Any], dev_suites: Gate) -> dict[
         path,
         project_root=root,
         required_roles=FINAL_RELEASE_ARTIFACT_ROLES,
+        required_profile="strict-submission",
     )
     if not audit.valid:
         raise ValueError(f"release checksum audit failed: {list(audit.errors)}")

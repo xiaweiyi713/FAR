@@ -72,9 +72,7 @@ def test_relaxed_profile_never_claims_human_or_external_evidence() -> None:
     assert "externally held blind test" in report["forbidden_claims"]
     assert "multi-model or external-domain generality" in report["forbidden_claims"]
     assert "H3 equivalence or H4 confirmation" in report["forbidden_claims"]
-    assert "P6-M as human review, human adjudication, or human IAA" in report[
-        "forbidden_claims"
-    ]
+    assert "P6-M as human review, human adjudication, or human IAA" in report["forbidden_claims"]
 
 
 def test_relaxed_paper_profile_requires_final_p5_and_p6m_disclosures() -> None:

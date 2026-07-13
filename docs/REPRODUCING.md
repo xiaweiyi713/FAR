@@ -18,6 +18,21 @@ access. The generated lock binds both `paper/main.tex` and the active
 content-only `paper/appendix.tex`. Do not edit the generated source; edit those
 tracked sources and rebuild.
 
+On a clean commit, build and fingerprint the complete accepted no-human paper
+release with:
+
+```bash
+bash scripts/solo_paper_release_check.sh
+```
+
+This gate reruns the public evidence checks, tests, benchmark validation,
+redacting secret scan, SBOM and package builds, then builds the TMLR PDF and
+fails on layout overflow or unresolved references. Its nine-artifact
+`solo-paper` checksum profile binds the wheel, sdist, SBOM, two audit reports,
+both tracked readiness reports, the active TMLR PDF, and `SOURCE.lock`. It does
+not read submission evidence or claim human review, adjudication, IAA, external
+blindness, or publication gold.
+
 For the role-by-role path from completed annotation through external blind
 custody, trusted scoring, and final acceptance, use
 `docs/EXTERNAL_ACTION_PACKET.md`.
@@ -84,12 +99,12 @@ This verifies the solo evidence bundle, the frozen FEVER binary diagnostic, the
 reader-facing report's numeric/source consistency, the generated JSON/Markdown
 project-status ledger's freshness, and inclusion of the reports in the source
 distribution. The ledger-only read-only check is
-`uv run falsirag-project-status --verify`.
+`uv run falsirag ops project-status --verify`.
 
 For the user-authorized paper profile with no human annotators, run:
 
 ```bash
-uv run falsirag-solo-paper-readiness
+uv run falsirag release solo-paper-readiness
 ```
 
 This validates the fingerprinted solo evidence and checks that the paper uses
@@ -103,7 +118,7 @@ Generate and validate the declared-dependency CycloneDX 1.5 SBOM before a
 release build:
 
 ```bash
-uv run falsirag-generate-sbom \
+uv run falsirag release sbom \
   --output build/sbom/far-sbom.cdx.json --check --json
 ```
 
@@ -118,7 +133,8 @@ release set:
 ```bash
 uv build
 bash scripts/check_release_packages.sh
-uv run falsirag-release-checksums \
+uv run falsirag release checksums \
+  --profile base \
   --sbom build/sbom/far-sbom.cdx.json \
   --artifact paper_main_pdf=paper/build/release/main.pdf \
   --output build/release-checksums.json --check --json
@@ -147,7 +163,7 @@ is byte-for-byte the evidence object being audited.
 Scan tracked and unignored text files before every commit or release:
 
 ```bash
-uv run falsirag-scan-secrets --json
+uv run falsirag release scan-secrets --json
 ```
 
 The scanner recognizes high-confidence OpenAI/DeepSeek, Anthropic, GitHub, AWS,
@@ -160,7 +176,7 @@ local workstation audit that also covers ignored `.env` files.
 ```bash
 uv run python -m far.bench.build.extend_from_verabench \
   --source-dir ../VeraRAG/data/verabench --output-dir bench
-uv run falsirag-validate-bench --output outputs/benchmark_validation.json
+uv run falsirag bench validate --output outputs/benchmark_validation.json
 uv run python -m far.bench.build.import_fever_slice
 ```
 
