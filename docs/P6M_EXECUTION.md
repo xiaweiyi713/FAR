@@ -14,16 +14,15 @@ not an input to the P6-M jurors or consensus.
 
 - The authorized `windows-gpu` worktree is clean and exactly matches `origin/main`.
 - The existing P6 packet is present at `/mnt/d/FAR-outputs/type_mappability_v1`.
-- `glm4:9b` and `llama3.1:8b` are already installed in the D-backed Ollama store.
+- `mistral:7b-instruct`, `glm4:9b`, and `llama3.1:8b` are already installed in the D-backed Ollama store.
   The runner refuses missing models; it never pulls them.
-- `DEEPSEEK_API_KEY` is available for J1.
-- Ollama is reachable on `127.0.0.1:11434` for J2/J3.
+- Ollama is reachable on `127.0.0.1:11434` for J1/J2/J3.
 
 ## Run the three jurors
 
-Run each role from the remote WSL shell. J2/J3 check GPU utilization every 60
+Run each role from the remote WSL shell. All three check GPU utilization every 60
 seconds and wait while another task is using the GPU. They run sequentially; do not
-start both together.
+start multiple roles together.
 
 ```bash
 cd /mnt/d/FAR-workspace/FAR-longterm

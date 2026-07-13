@@ -240,8 +240,9 @@ def test_p6m_annotation_runner_writes_two_views_without_a_real_model(
     config_path.write_text("llm:\n  max_tokens: 900\n")
     runtime = {
         "enabled": True,
-        "provider": "deepseek",
-        "model": "deepseek-chat",
+        "provider": "ollama",
+        "model": "mistral:7b-instruct",
+        "ollama_model": {"model": "mistral:7b-instruct", "digest": "1" * 64},
     }
     monkeypatch.setattr(p6m, "build_generator", lambda _: generator)
     monkeypatch.setattr(

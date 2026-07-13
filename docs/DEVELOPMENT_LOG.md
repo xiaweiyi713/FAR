@@ -3264,3 +3264,13 @@ evidence bundle verified successfully, releasing the GPU.
   post-freeze comparison signal.
 - The local Mac remains model-free. GLM and Llama execution is restricted to the
   authorized remote GPU host and must wait when that host is occupied.
+
+## 2026-07-13 — deviation: replace unavailable P6-M J1 before the first run
+
+- A post-sync, pre-run check found no DeepSeek API key in the remote execution
+  environment. No P6-M annotation, checkpoint, manifest, or model response existed.
+- Replaced J1 with the already-installed, digest-bound `mistral:7b-instruct` on the
+  remote D-backed Ollama store. J2/J3 remain GLM/Meta, so all three voting families
+  are distinct; no model was downloaded and Qwen remains excluded from voting.
+- The affected protocol fingerprint, config, runner identity checks, tests, and
+  execution handoff were updated before starting any P6-M inference.

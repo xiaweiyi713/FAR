@@ -47,11 +47,15 @@ from far.paths import repository_root
 
 ROOT = repository_root()
 PROTOCOL_PATH = ROOT / "docs" / "PREREG_TYPE_MAPPABILITY_MACHINE_2026-07-13.md"
-PROTOCOL_SHA256 = "d80918e1ec38911e8ce6d40dcf75ab149b923e6952431680acf76f43ce17339e"
+PROTOCOL_SHA256 = "8f672d6ca56e434f69d01f9b55fad4818fd2780e1c9a9df7295cf684ec0eae6a"
 PROFILE = "machine_ontology_stability_audit"
 VIEW_IDS = ("view_a", "view_b")
 JUROR_SPECS = {
-    "J1": {"family": "deepseek", "provider": "deepseek", "model": "deepseek-chat"},
+    "J1": {
+        "family": "mistral",
+        "provider": "ollama",
+        "model": "mistral:7b-instruct",
+    },
     "J2": {"family": "glm", "provider": "ollama", "model": "glm4:9b"},
     "J3": {"family": "meta", "provider": "ollama", "model": "llama3.1:8b"},
 }
