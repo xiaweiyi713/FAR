@@ -45,18 +45,28 @@ uv run falsirag release checksums \
 
 bundle_archive="${release_dir}/far-solo-paper-release.tar.gz"
 repro_archive="${release_dir}/far-solo-paper-release.repro.tar.gz"
+standalone_verifier="${release_dir}/verify_solo_paper_release.py"
+repro_verifier="${release_dir}/verify_solo_paper_release.repro.py"
+cleanup_repro() {
+  rm -f -- "${repro_archive}" "${repro_verifier}"
+}
+trap cleanup_repro EXIT
 uv run falsirag release solo-paper-bundle pack \
   --checksum-manifest "${release_dir}/release-checksums.json" \
-  --archive "${bundle_archive}" > "${release_dir}/bundle-build.json"
+  --archive "${bundle_archive}" \
+  --standalone-verifier "${standalone_verifier}" > "${release_dir}/bundle-build.json"
 uv run falsirag release solo-paper-bundle pack \
   --checksum-manifest "${release_dir}/release-checksums.json" \
-  --archive "${repro_archive}" > /dev/null
-if ! cmp -s "${bundle_archive}" "${repro_archive}"; then
-  echo "solo-paper portable archive is not deterministic" >&2
+  --archive "${repro_archive}" \
+  --standalone-verifier "${repro_verifier}" > /dev/null
+if ! cmp -s "${bundle_archive}" "${repro_archive}" || \
+   ! cmp -s "${standalone_verifier}" "${repro_verifier}"; then
+  echo "solo-paper archive or standalone verifier is not deterministic" >&2
   exit 1
 fi
-rm -f -- "${repro_archive}"
-uv run falsirag release solo-paper-bundle verify \
+cleanup_repro
+trap - EXIT
+python3 -I "${standalone_verifier}" verify \
   --archive "${bundle_archive}" > "${release_dir}/bundle-audit.json"
 
 echo "FAR solo TMLR paper release checks passed."

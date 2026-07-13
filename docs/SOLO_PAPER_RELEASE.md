@@ -19,22 +19,29 @@ archives to be byte-identical.
 The publishable outputs are ignored local artifacts:
 
 - `build/solo-paper-release/far-solo-paper-release.tar.gz`: portable release;
+- `build/solo-paper-release/verify_solo_paper_release.py`: paired,
+  standard-library-only verifier whose exact bytes are also inside the archive;
 - `build/solo-paper-release/bundle-build.json`: archive SHA-256, size, source
-  revision, artifact count, and frozen claim-boundary flags;
-- `build/solo-paper-release/bundle-audit.json`: independent archive-only audit;
+  revision, verifier SHA-256, artifact count, and frozen claim-boundary flags;
+- `build/solo-paper-release/bundle-audit.json`: isolated standalone audit;
 - `build/solo-paper-release/release-checksums.json`: original-path checksum
   profile used to build the archive.
 
 ## Verify after transfer
 
 ```bash
-uv run falsirag release solo-paper-bundle verify \
+python3 -I verify_solo_paper_release.py verify \
   --archive far-solo-paper-release.tar.gz
 ```
 
-Verification reads only the archive. It does not trust or require the original
-worktree paths. The verifier rejects:
+Verification imports only the Python standard library and reads only the paired
+verifier source plus the archive. `-I` ignores `PYTHONPATH`, the user site, and
+the current checkout; no FAR installation, dependency download, network, or
+model runtime is required. A Python 3.10+ interpreter is the only prerequisite.
+The verifier rejects:
 
+- a non-isolated invocation or an embedded verifier that is not byte-identical
+  to the executing sidecar, including coordinated manifest rehashing;
 - missing, extra, duplicate, linked, oversized, or unsafe archive members;
 - byte-size or SHA-256 changes relative to both the embedded bundle manifest and
   original release-checksum manifest;
@@ -46,14 +53,14 @@ worktree paths. The verifier rejects:
   publication gold.
 
 The archive contains exactly the nine `solo-paper` roles plus an embedded
-checksum manifest, interpretation-boundary README, and bundle manifest. It does
-not contain ignored model outputs, raw credentials, strict submission evidence,
-or a human-review substitute.
+checksum manifest, interpretation-boundary README, byte-identical standalone
+verifier, and bundle manifest. It does not contain ignored model outputs, raw
+credentials, strict submission evidence, or a human-review substitute.
 
 ## Publishing
 
-Publish the `.tar.gz` together with `bundle-build.json` and
-`bundle-audit.json`. The sidecar build record provides the archive SHA-256 that
-a recipient can check before running the semantic verifier. Publishing is an
-external action; generating this bundle does not itself submit the paper or
-upgrade its evidence tier.
+Publish the `.tar.gz` together with `verify_solo_paper_release.py`,
+`bundle-build.json`, and `bundle-audit.json`. The build record provides both
+SHA-256 values that a recipient can check before running the semantic verifier.
+Publishing is an external action; generating this bundle does not itself submit
+the paper or upgrade its evidence tier.

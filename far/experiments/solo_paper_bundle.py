@@ -10,6 +10,7 @@ import json
 import re
 import shutil
 import stat
+import sys
 import tarfile
 import tempfile
 import zipfile
@@ -17,17 +18,24 @@ import zlib
 from pathlib import Path, PurePosixPath
 from typing import Any
 
-from far.bench.build.common import sha256_file
-from far.experiments.generate_release_checksums import (
-    SOLO_PAPER_RELEASE_ARTIFACT_ROLES,
-    validate_checksum_manifest,
-)
-from far.paths import repository_root
-
-SCHEMA_VERSION = "far-solo-paper-release-bundle-v1"
+SCHEMA_VERSION = "far-solo-paper-release-bundle-v2"
 ARCHIVE_ROOT = "far-solo-paper-release"
 DEFAULT_CHECKSUM_MANIFEST = Path("build/solo-paper-release/release-checksums.json")
 DEFAULT_ARCHIVE = Path("build/solo-paper-release/far-solo-paper-release.tar.gz")
+DEFAULT_STANDALONE_VERIFIER = Path("build/solo-paper-release/verify_solo_paper_release.py")
+SOLO_PAPER_RELEASE_ARTIFACT_ROLES = frozenset(
+    {
+        "benchmark_validation_report",
+        "cyclonedx_sbom",
+        "sdist",
+        "secret_scan_report",
+        "solo_paper_readiness_json",
+        "solo_paper_readiness_markdown",
+        "tmlr_paper_pdf",
+        "tmlr_source_lock",
+        "wheel",
+    }
+)
 TMLR_STYLE_COMMIT = "7bf90efe3a0debbba703c05c43f3ff7e4d4a2992"
 BOUNDARY_FLAGS = {
     "paper_profile_ready": True,
@@ -104,6 +112,7 @@ READINESS_TOP_LEVEL_KEYS = frozenset(
 SUPPORT_PATHS = {
     "release_checksums": f"{ARCHIVE_ROOT}/release-checksums.json",
     "readme": f"{ARCHIVE_ROOT}/README.md",
+    "standalone_verifier": f"{ARCHIVE_ROOT}/verify_solo_paper_release.py",
 }
 MANIFEST_PATH = f"{ARCHIVE_ROOT}/bundle-manifest.json"
 MAX_ARCHIVE_MEMBERS = 64
@@ -129,6 +138,18 @@ def _sha256_bytes(value: bytes) -> str:
     return hashlib.sha256(value).hexdigest()
 
 
+def sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _verifier_bytes() -> bytes:
+    return Path(__file__).read_bytes()
+
+
 def _readme() -> bytes:
     return b"""# FAR no-human TMLR paper release
 
@@ -137,18 +158,20 @@ the wheel, source distribution, CycloneDX SBOM, benchmark and redacted secret
 scan reports, JSON and Markdown paper-readiness reports, the active anonymous
 TMLR PDF, and its source lock.
 
-Verify the archive from a FAR checkout or installed distribution with:
+Verify the archive with the paired standard-library-only sidecar; no FAR
+checkout, package installation, network, or model runtime is required:
 
 ```bash
-uv run falsirag release solo-paper-bundle verify \\
+python -I verify_solo_paper_release.py verify \\
   --archive far-solo-paper-release.tar.gz
 ```
 
-The verifier reads only this archive. It rejects missing or extra members,
-links, unsafe paths, hash changes, source-lock mismatches, and any upgrade to
-human review, adjudication, IAA, external blindness, publication gold, or
-strict submission readiness. This is a machine-audited development paper
-release, not a strict-human or externally blind publication package.
+The verifier reads only itself and this archive. It requires its embedded copy
+to be byte-identical, then rejects missing or extra members, links, unsafe
+paths, hash changes, source-lock mismatches, and any upgrade to human review,
+adjudication, IAA, external blindness, publication gold, or strict submission
+readiness. This is a machine-audited development paper release, not a
+strict-human or externally blind publication package.
 """
 
 
@@ -221,6 +244,13 @@ def _build_inventory(
     root: Path,
     checksum_path: Path,
 ) -> tuple[dict[str, Any], dict[str, Path], dict[str, bytes]]:
+    from far.experiments.generate_release_checksums import (
+        SOLO_PAPER_RELEASE_ARTIFACT_ROLES as CANONICAL_SOLO_PAPER_ROLES,
+    )
+    from far.experiments.generate_release_checksums import validate_checksum_manifest
+
+    if SOLO_PAPER_RELEASE_ARTIFACT_ROLES != CANONICAL_SOLO_PAPER_ROLES:
+        raise ValueError("standalone solo-paper roles differ from the checksum profile")
     audit = validate_checksum_manifest(
         checksum_path,
         project_root=root,
@@ -269,6 +299,7 @@ def _build_inventory(
 
     checksum_bytes = checksum_path.read_bytes()
     readme_bytes = _readme()
+    verifier_bytes = _verifier_bytes()
     support_files = [
         {
             "role": "release_checksums",
@@ -281,6 +312,12 @@ def _build_inventory(
             "archive_path": SUPPORT_PATHS["readme"],
             "bytes": len(readme_bytes),
             "sha256": _sha256_bytes(readme_bytes),
+        },
+        {
+            "role": "standalone_verifier",
+            "archive_path": SUPPORT_PATHS["standalone_verifier"],
+            "bytes": len(verifier_bytes),
+            "sha256": _sha256_bytes(verifier_bytes),
         },
     ]
     manifest = {
@@ -297,6 +334,7 @@ def _build_inventory(
         MANIFEST_PATH: _json_bytes(manifest),
         SUPPORT_PATHS["release_checksums"]: checksum_bytes,
         SUPPORT_PATHS["readme"]: readme_bytes,
+        SUPPORT_PATHS["standalone_verifier"]: verifier_bytes,
     }
     return manifest, source_files, generated_files
 
@@ -305,6 +343,7 @@ def pack_bundle(
     project_root: Path,
     checksum_manifest: Path,
     archive: Path,
+    standalone_verifier: Path | None = None,
 ) -> dict[str, Any]:
     """Create a deterministic portable archive from a valid clean-commit profile."""
 
@@ -319,6 +358,10 @@ def pack_bundle(
         raise ValueError(
             f"created solo-paper archive failed verification: {verification['errors']}"
         )
+    verifier_bytes = generated_files[SUPPORT_PATHS["standalone_verifier"]]
+    if standalone_verifier is not None:
+        standalone_verifier.parent.mkdir(parents=True, exist_ok=True)
+        standalone_verifier.write_bytes(verifier_bytes)
     return {
         "schema_version": SCHEMA_VERSION,
         "valid": True,
@@ -328,6 +371,11 @@ def pack_bundle(
         "artifact_count": manifest["artifact_count"],
         "source_revision": manifest["source_revision"],
         "boundary_flags": manifest["boundary_flags"],
+        "standalone_verifier": (
+            str(standalone_verifier) if standalone_verifier is not None else None
+        ),
+        "standalone_verifier_bytes": len(verifier_bytes),
+        "standalone_verifier_sha256": _sha256_bytes(verifier_bytes),
     }
 
 
@@ -450,6 +498,25 @@ def _verify_entry(
     if entry.get("sha256") != _sha256_bytes(payload):
         errors.append(f"archive member fingerprint mismatch: {path}")
     return role, path
+
+
+def _verify_standalone_identity(payloads: dict[str, bytes], errors: list[str]) -> None:
+    if __package__ not in {None, ""}:
+        return
+    if sys.flags.isolated != 1:
+        errors.append("standalone verifier must run in Python isolated mode (-I)")
+    loaded_far_modules = sorted(
+        name for name in sys.modules if name == "far" or name.startswith("far.")
+    )
+    if loaded_far_modules:
+        errors.append("standalone verifier loaded FAR package modules")
+    try:
+        executing_verifier = _verifier_bytes()
+    except OSError as exc:
+        errors.append(f"executing standalone verifier is unreadable: {exc}")
+        return
+    if payloads.get(SUPPORT_PATHS["standalone_verifier"]) != executing_verifier:
+        errors.append("embedded standalone verifier differs from executing verifier")
 
 
 def _lock_values(payload: bytes) -> dict[str, str]:
@@ -776,6 +843,7 @@ def verify_bundle(archive: Path) -> dict[str, Any]:
         errors.append("bundle support files are incomplete")
     if payloads.get(SUPPORT_PATHS["readme"]) != _readme():
         errors.append("bundle README differs from the frozen interpretation boundary")
+    _verify_standalone_identity(payloads, errors)
     if set(payloads) != expected_paths:
         errors.append("archive member set differs from the embedded manifest")
 
@@ -822,8 +890,9 @@ def verify_bundle(archive: Path) -> dict[str, Any]:
         _verify_semantics(payload_by_role, checksums, errors)
 
     archive_is_safe_file = archive.is_file() and archive.stat().st_size <= MAX_COMPRESSED_BYTES
+    verifier_payload = payloads.get(SUPPORT_PATHS["standalone_verifier"])
     return {
-        "schema_version": "far-solo-paper-release-bundle-audit-v1",
+        "schema_version": "far-solo-paper-release-bundle-audit-v2",
         "valid": not errors,
         "errors": errors,
         "archive": str(archive),
@@ -832,22 +901,37 @@ def verify_bundle(archive: Path) -> dict[str, Any]:
         "artifact_count": len(roles),
         "source_revision": manifest.get("source_revision") if isinstance(manifest, dict) else None,
         "boundary_flags": manifest.get("boundary_flags") if isinstance(manifest, dict) else None,
+        "standalone_verifier_sha256": (
+            _sha256_bytes(verifier_payload) if verifier_payload is not None else None
+        ),
+        "standalone_execution": __package__ in {None, ""},
+        "python_isolated": sys.flags.isolated == 1,
     }
 
 
-def main() -> None:
+def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     subparsers = parser.add_subparsers(dest="command", required=True)
     pack_parser = subparsers.add_parser("pack")
     verify_parser = subparsers.add_parser("verify")
-    pack_parser.add_argument("--project-root", type=Path, default=repository_root())
+    pack_parser.add_argument("--project-root", type=Path, default=Path.cwd())
     pack_parser.add_argument("--checksum-manifest", type=Path, default=DEFAULT_CHECKSUM_MANIFEST)
     pack_parser.add_argument("--archive", type=Path, default=DEFAULT_ARCHIVE)
+    pack_parser.add_argument(
+        "--standalone-verifier",
+        type=Path,
+        default=DEFAULT_STANDALONE_VERIFIER,
+    )
     verify_parser.add_argument("--archive", type=Path, default=DEFAULT_ARCHIVE)
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     if args.command == "pack":
-        result = pack_bundle(args.project_root, args.checksum_manifest, args.archive)
+        result = pack_bundle(
+            args.project_root,
+            args.checksum_manifest,
+            args.archive,
+            args.standalone_verifier,
+        )
     else:
         result = verify_bundle(args.archive)
     print(json.dumps(result, indent=2, sort_keys=True))

@@ -125,10 +125,11 @@ readiness.
 
 That command now also emits a deterministic portable
 `far-solo-paper-release.tar.gz`. It requires a byte-identical second pack and
-then runs an archive-only verifier over the embedded nine-artifact checksums,
-TMLR source lock, P5/P6-M boundaries, package fingerprints, and claim flags. The
-archive is a transferable machine-audited paper release, not human validation
-or submission itself.
+then runs the paired standard-library-only verifier in Python isolated mode
+over its byte-identical embedded copy, the nine-artifact checksums, TMLR source
+lock, P5/P6-M boundaries, package fingerprints, and claim flags. The verifier
+requires no FAR checkout or installation. The archive is a transferable
+machine-audited paper release, not human validation or submission itself.
 
 The main text now contains a dedicated mechanism-interpretation section. It
 frames retrieval, type mapping, detection, action selection, and revision as an

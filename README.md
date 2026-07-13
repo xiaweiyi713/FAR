@@ -173,6 +173,8 @@ bash scripts/solo_paper_release_check.sh
 
 最后一个命令还会生成可搬运且可独立复核的
 `build/solo-paper-release/far-solo-paper-release.tar.gz`，并通过二次打包逐字节比较证明确定性。
+配对的 `verify_solo_paper_release.py` 可用系统 Python 的 `-I` 隔离模式验真，无需 checkout、
+安装 FAR、联网或模型运行时。
 归档布局、transfer 后验证和严格非真人边界见
 [Portable No-Human TMLR Release](docs/SOLO_PAPER_RELEASE.md)。
 

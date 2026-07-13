@@ -4,6 +4,7 @@ import hashlib
 import io
 import json
 import subprocess
+import sys
 import tarfile
 import tempfile
 import zipfile
@@ -283,21 +284,110 @@ def test_solo_paper_bundle_is_deterministic_and_independently_verifiable(
     root, checksums = _release_tree(tmp_path)
     first = root / "build/release/first.tar.gz"
     second = root / "build/release/second.tar.gz"
+    first_verifier = root / "build/release/verify-first.py"
+    second_verifier = root / "build/release/verify-second.py"
 
-    first_result = pack_bundle(root, checksums, first)
-    second_result = pack_bundle(root, checksums, second)
+    first_result = pack_bundle(root, checksums, first, first_verifier)
+    second_result = pack_bundle(root, checksums, second, second_verifier)
     checksum_payload = json.loads(checksums.read_text(encoding="utf-8"))
     for item in checksum_payload["artifacts"]:
         (root / item["path"]).unlink()
     checksums.unlink()
     audit = verify_bundle(first)
+    standalone = subprocess.run(
+        [
+            sys.executable,
+            "-I",
+            str(first_verifier),
+            "verify",
+            "--archive",
+            str(first),
+        ],
+        cwd=tmp_path,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    standalone_audit = json.loads(standalone.stdout)
+    with tarfile.open(first, "r:gz") as archive:
+        embedded_verifier = archive.extractfile(SUPPORT_PATHS["standalone_verifier"])
+        assert embedded_verifier is not None
+        embedded_verifier_bytes = embedded_verifier.read()
 
     assert first_result["archive_sha256"] == second_result["archive_sha256"]
     assert first.read_bytes() == second.read_bytes()
+    assert first_verifier.read_bytes() == second_verifier.read_bytes()
+    assert (
+        first_result["standalone_verifier_sha256"]
+        == hashlib.sha256(first_verifier.read_bytes()).hexdigest()
+    )
+    assert embedded_verifier_bytes == first_verifier.read_bytes()
     assert audit["valid"] is True
     assert audit["artifact_count"] == 9
     assert audit["boundary_flags"]["strict_submission_ready"] is False
     assert audit["boundary_flags"]["human_review"] is False
+    assert standalone_audit["valid"] is True
+    assert standalone_audit["schema_version"] == "far-solo-paper-release-bundle-audit-v2"
+    assert standalone_audit["standalone_execution"] is True
+    assert standalone_audit["python_isolated"] is True
+
+
+def test_standalone_verifier_rejects_identity_drift_and_nonisolated_execution(
+    tmp_path: Path,
+) -> None:
+    root, checksums = _release_tree(tmp_path)
+    original = root / "build/release/original.tar.gz"
+    verifier = root / "build/release/verify.py"
+    pack_bundle(root, checksums, original, verifier)
+    with tarfile.open(original, "r:gz") as archive:
+        manifest_file = archive.extractfile(MANIFEST_PATH)
+        assert manifest_file is not None
+        manifest = json.loads(manifest_file.read())
+
+    changed_verifier = verifier.read_bytes() + b"\n# coordinated replacement\n"
+    support_entry = next(
+        item for item in manifest["support_files"] if item["role"] == "standalone_verifier"
+    )
+    support_entry["bytes"] = len(changed_verifier)
+    support_entry["sha256"] = hashlib.sha256(changed_verifier).hexdigest()
+    changed_manifest = (json.dumps(manifest, indent=2, sort_keys=True) + "\n").encode()
+    rewritten = root / "build/release/changed-verifier.tar.gz"
+    _rewrite_archive(
+        original,
+        rewritten,
+        {
+            MANIFEST_PATH: changed_manifest,
+            SUPPORT_PATHS["standalone_verifier"]: changed_verifier,
+        },
+    )
+
+    identity_check = subprocess.run(
+        [sys.executable, "-I", str(verifier), "verify", "--archive", str(rewritten)],
+        cwd=tmp_path,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    identity_audit = json.loads(identity_check.stdout)
+    nonisolated_check = subprocess.run(
+        [sys.executable, str(verifier), "verify", "--archive", str(original)],
+        cwd=tmp_path,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    nonisolated_audit = json.loads(nonisolated_check.stdout)
+
+    assert identity_check.returncode == 1
+    assert identity_audit["valid"] is False
+    assert (
+        "embedded standalone verifier differs from executing verifier" in identity_audit["errors"]
+    )
+    assert nonisolated_check.returncode == 1
+    assert nonisolated_audit["valid"] is False
+    assert (
+        "standalone verifier must run in Python isolated mode (-I)" in nonisolated_audit["errors"]
+    )
 
 
 def test_solo_paper_bundle_rejects_tampering_and_extra_members(tmp_path: Path) -> None:

@@ -3435,3 +3435,19 @@ evidence bundle verified successfully, releasing the GPU.
   gold.
 - The end-to-end release script now packs twice and requires byte identity,
   retains a SHA-256 build sidecar, and writes a separate archive-only audit.
+
+## 2026-07-13 — remove the verifier installation dependency
+
+- Audited the portable release from a recipient's perspective and found that
+  archive-only verification still required a FAR checkout or installed wheel.
+- Refactored the verify path to import only Python standard-library modules.
+  Pack-only FAR checksum imports are now lazy and cannot enter standalone
+  verification.
+- The archive now fingerprints and embeds the exact standalone verifier source;
+  packing emits the same bytes as `verify_solo_paper_release.py`. The executing
+  sidecar rejects an embedded verifier that differs even after coordinated
+  manifest rehashing. Because this adds a required member, the bundle and audit
+  schemas advance from v1 to v2 rather than silently changing v1 semantics.
+- The formal gate packs both archive and verifier twice, requires byte identity
+  for both, then audits with `python3 -I`. This isolates the recipient check from
+  the checkout, user site-packages, `PYTHONPATH`, network, and model runtimes.

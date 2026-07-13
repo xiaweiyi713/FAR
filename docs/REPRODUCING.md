@@ -36,8 +36,11 @@ blindness, or publication gold.
 The same command also creates
 `build/solo-paper-release/far-solo-paper-release.tar.gz`, repacks it a second
 time and requires byte identity, then verifies the archive without reading its
-original worktree artifact paths. The sidecars `bundle-build.json` and
-`bundle-audit.json` record the archive SHA-256 and independent result. See
+original worktree artifact paths. The paired standard-library-only
+`verify_solo_paper_release.py` is itself embedded and fingerprinted; the final
+audit runs it with `python3 -I`, without a FAR checkout or installation. The
+sidecars `bundle-build.json` and `bundle-audit.json` record the archive and
+verifier SHA-256 values plus the independent result. See
 [`SOLO_PAPER_RELEASE.md`](SOLO_PAPER_RELEASE.md) for the exact layout, transfer
 verification command, and claim boundaries.
 

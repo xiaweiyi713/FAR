@@ -1,7 +1,8 @@
 # FAR 当前运行状态
 
-状态时间：2026-07-13 11:47 CST
-适用范围：长期路线 WS1--WS6、重定位 P0--P10 与 P6-M；当前无 GPU 任务。
+状态时间：2026-07-13 19:33 CST
+适用范围：长期路线 WS1--WS6、重定位 P0--P10、P6-M 与 standalone paper release；
+本批不需要 GPU，未启动任何远端或本机模型任务。
 
 ## 当前结论
 
@@ -23,14 +24,15 @@
   `solo-paper` profile 强制绑定 wheel、sdist、SBOM、两个审计报告、两份 readiness 报告、
   TMLR PDF 与 `SOURCE.lock`。它不读取真人/投稿 evidence，也不冒充严格 AAAI release gate。
 - 该门现会把九项产物打成确定性 `far-solo-paper-release.tar.gz`，二次打包必须 byte-identical；
-  `falsirag release solo-paper-bundle verify` 只读归档即可独立拒绝内容篡改、额外/危险成员、
-  source-lock 漂移以及任何真人或严格投稿主张升级。
+  配对的 `verify_solo_paper_release.py` 也必须 byte-identical，并以 `python3 -I` 隔离模式只读
+  自身与归档，独立拒绝内容/验证器篡改、额外/危险成员、source-lock 漂移以及任何真人或严格
+  投稿主张升级；接收者不需要 checkout、安装 FAR、联网或模型运行时。
 
 ## 既有 WS1--WS6 结论（2026-07-09 冻结）
 
 - WS1--WS6 均已有本地可复算证据，长期路线账本返回 `valid=true` 且
-  `goal_complete=true`。后续不再需要 GPU；剩余动作是可选的 commit/push、release
-  packaging 与作者人工审阅，而不是路线内必需实验。
+  `goal_complete=true`。后续不再需要 GPU；剩余动作是可选的 commit/push、portable release
+  packaging/独立验真与作者自行决定的外部投稿，而不是路线内必需实验或真人复核依赖。
 - WS2 三个 family 已全部完成并正常退出；本地 release 已 finalize，独立 verifier 返回
   `valid=true`、`errors=[]`、`gate_f_passed=true`、`direction_consistent=true`。
 - WS3 外部 boundary mapping 已完成、同步回本地并 finalize。独立 verifier 返回

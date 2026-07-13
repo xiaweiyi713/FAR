@@ -271,11 +271,14 @@ def test_solo_paper_release_check_fingerprints_active_tmlr_artifacts() -> None:
     assert "submission/evidence" not in script
     assert "submission-readiness" not in script
     assert "falsirag release solo-paper-bundle pack" in script
-    assert "falsirag release solo-paper-bundle verify" in script
+    assert "--standalone-verifier" in script
+    assert "verify_solo_paper_release.py" in script
+    assert 'python3 -I "${standalone_verifier}" verify' in script
     assert "far-solo-paper-release.tar.gz" in script
     assert 'bundle-build.json"' in script
     assert 'bundle-audit.json"' in script
     assert "cmp -s" in script
+    assert "repro_verifier" in script
 
 
 def test_completed_roadmap_does_not_require_unavailable_human_review() -> None:
@@ -284,7 +287,7 @@ def test_completed_roadmap_does_not_require_unavailable_human_review() -> None:
     next_step = report["progress"]["next_training_step"]
 
     assert "portable solo-paper release" in next_step
-    assert "archive-only independent audit" in next_step
+    assert "paired isolated standard-library verifier" in next_step
     assert "human author review" not in next_step
 
 
