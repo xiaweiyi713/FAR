@@ -3369,3 +3369,19 @@ evidence bundle verified successfully, releasing the GPU.
   the 1.7 MiB, secret-scanned minimal juror inputs into the tracked report tree
   and changed the fetch workflow to verify that public copy. No weights, model
   caches, credentials or private paths are included.
+
+## 2026-07-13 — close the accepted no-human redirection profile
+
+- The user confirmed that two real reviewers and a distinct adjudicator cannot
+  be sourced. The strict-human P6 packet remains truthful at
+  `ready_to_analyze=false`; no synthetic identity or model label is written into
+  a human slot.
+- Accepted the verified P6-M negative stability result as terminal evidence for
+  the active no-human redirection profile. No additional model panel is queued
+  to simulate human review or adjudication.
+- Retired the strict-human P6 branch from the active queue. It has no owner or
+  deadline and may reopen only if real people become available and the project
+  explicitly pursues population human-mappability, human-IAA, or adjudicated
+  human-gold claims.
+- This scope decision changes project completion semantics, not frozen evidence:
+  P6-M still cannot replace human P6, confirm H4, or support human-gold claims.

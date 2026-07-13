@@ -20,18 +20,21 @@ machine, or retrospective evidence to human gold or held-out confirmation.
 | P3 | Produce and independently verify the eight-method stage-wise failure map | `reports/stage_trace_map.{json,md}`; `tests/test_stage_trace_map.py`; `falsirag diag trace-map verify` | Complete | T1 is `8/8`; T2 is `+0.3914` with 95% CI `[+0.3554,+0.4275]`; no human gold/test claim |
 | P4 | Rewrite the TMLR MVP around the capability-aware mechanism result and claim ladder | `paper/main.tex`; `reports/tmlr_result_integration_matrix.md`; solo-paper readiness gate | Complete for the machine-audited TMLR draft | Human author review and any venue submission remain external actions |
 | P5 | Run the registered clean 3x350 RAMDocs dev ablations and freeze H3/H5 verdicts | `reports/p5_ramdocs_ablations.{json,md}`; `far/experiments/p5_ablations.py` independent verifier | Complete | H3 is `uncertain`; H5 is `equivalent`; neither is human-gold or held-out evidence |
-| P6 | Measure type mappability with frozen machine prelabels, two blind human reviewers, and third-person adjudication | `diagnostics/type_mappability_v1/completed/machine_*`; `docs/P6_EXECUTION.md`; `falsirag diag type-mappability status`; deterministic reviewer/adjudicator handoff builders | Machine stage complete; human stage pending | Machine rows are 217/217 and provenance-valid, but `ready_to_analyze=false` until two real reviewers and a distinct adjudicator finish; H4 remains retrospective/non-confirmatory |
-| P6-M | Provide a scientifically bounded machine-only substitute when no human reviewers are available | `docs/PREREG_TYPE_MAPPABILITY_MACHINE_2026-07-13.md`; tracked raw jurors and report under `reports/type_mappability_machine/`; `falsirag diag type-mappability-machine verify` | Machine-only audit complete; tracked-evidence verifier `valid=true` | All jurors completed 434/434 with zero failed attempts, but stability was 50/217, 88/217, and 24/217; only 15/217 samples reached consensus and 202 were contested. This negative result rules out treating this panel as a broad human substitute and does not complete P6 |
+| P6 | Preserve the frozen strict-human mappability protocol and complete its machine-prelabel infrastructure | `diagnostics/type_mappability_v1/completed/machine_*`; `docs/P6_EXECUTION.md`; `falsirag diag type-mappability status`; deterministic reviewer/adjudicator handoff builders | Machine branch complete; human branch inactive and outside the accepted no-human profile | Machine rows are 217/217 and provenance-valid. `ready_to_analyze=false` remains truthful; the branch reopens only for future strict human-mappability claims when two real reviewers and a distinct adjudicator exist |
+| P6-M | Provide a scientifically bounded machine-only audit when no human reviewers are available | `docs/PREREG_TYPE_MAPPABILITY_MACHINE_2026-07-13.md`; tracked raw jurors and report under `reports/type_mappability_machine/`; `falsirag diag type-mappability-machine verify` | Complete; terminal evidence for the accepted no-human profile; tracked-evidence verifier `valid=true` | All jurors completed 434/434 with zero failed attempts, but stability was 50/217, 88/217, and 24/217; only 15/217 samples reached consensus and 202 were contested. This rules out a broad human substitute and does not complete the separate strict-human P6 profile |
 | P7 | Remove VeraRAG from the default runtime path and provide self-contained BM25/Ollama interfaces | `far/adapters/retrieval.py`; `examples/bm25_quickstart.py`; adapter and package-smoke tests | Complete | Explicit `vera_*` backends remain optional and fail closed when unavailable |
 | P8 | Reframe README/product positioning and move detailed research caveats into durable status docs | `README.md`; `docs/RESEARCH_STATUS.md` | Complete | Claim boundaries must be refreshed when new human or release evidence arrives |
 | P9 | Converge on the grouped `falsirag` command tree while retaining migration aliases | `far/cli.py`; `tests/test_cli.py`; deprecated alias warnings | Complete | Compatibility aliases remain intentionally transitional |
 | P10-A | Consolidate the `far.*` namespace and separate installable code from diagnostic payloads | package smoke; `far/data/diagnostics-v1.json`; `falsirag ops diagnostic-data verify/install` | Complete | Current local archive contains 336 files and verifies after an empty-directory install |
 | P10-B | Publish the exact diagnostic archive, download/verify it independently, then remove `diagnostics/` from the main tree | [`artifacts-v1`](https://github.com/xiaweiyi713/FAR/releases/tag/artifacts-v1), SHA-256 `5e3f28dcd81d2af3170f740611b9f59b8bbe1ee6e869379d5794730db4ecf96e`; manifest `published:true`; independent 336-file readback tree `8f620af737f3b04f5b3813b06c7183743a3ae14f7c8fd869f43a83b9a821dbff`; CI installer | Complete | Current-tree payload removed; immutable tag retains the source snapshot. Git-history rewrite/LFS was not authorized and remains out of scope |
 
-The redirection plan is therefore **implementation-complete except for the
-irreducible P6 human stage**. The completed P6-M negative audit empirically
-reinforces rather than removes that boundary: model consensus covered only
-15/217 samples. P6 may not be closed with model labels or synthetic identities.
+The accepted **no-human redirection profile is complete**. The P6-M negative
+audit is its terminal result: model consensus covered only 15/217 samples, so no
+further model panel is treated as a route to human-equivalent labels. The strict
+human-mappability profile is intentionally not ready and is no longer an active
+project blocker; it may reopen only if real reviewers exist and strict human
+claims are explicitly requested. P6 may never be closed with model labels or
+synthetic identities.
 P10-B completed only after the authorized upload and independent download/install
 comparison; no Git-history rewrite was performed.
 
@@ -76,6 +79,12 @@ only if its active G-A branch and every subsequently authorized G-K/G-S/release/
 readiness gate close with fingerprinted artifacts. If Round 2 G-A fails, faithful
 completion means enforcing the registered stop and downgrade branch, not bypassing
 it with jury labels. These profiles must never be conflated. In particular:
+
+The accepted no-human redirection profile additionally closes when the tracked
+P6-M verifier is valid and the negative outcome is retained without human-label
+claims. Its closure does not change the strict human packet's
+`ready_to_analyze=false` state; that packet is an inactive optional protocol,
+not a remaining task for the accepted profile.
 
 1. LLM preannotations may reduce reviewer effort but cannot be reported as two
    independent human annotations or Cohen's kappa.

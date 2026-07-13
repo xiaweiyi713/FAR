@@ -198,12 +198,16 @@ RAMDocs Round 1 的 8 方法 × 350 条预测位于 `diagnostics/ramdocs_v2/roun
 - [预注册](docs/PREREG_ORACLE_ATTRIBUTION.md)
 - [标签碰撞 amendment](docs/PREREG_ORACLE_ATTRIBUTION_AMENDMENT_2026-07-10.md)
 - [P5 注册消融运行手册](docs/P5_EXECUTION.md)
-- [P6 类型可映射性执行与人工交接](docs/P6_EXECUTION.md)
+- [P6 类型可映射性与可选未来人工分支](docs/P6_EXECUTION.md)
 - [P6-M 机器本体稳定性运行手册](docs/P6M_EXECUTION.md)
 - [P6-M 机器本体稳定性报告](reports/type_mappability_machine/type_mappability_machine.md)
 - [重定位剩余外部动作顺序](docs/REDIRECTION_EXTERNAL_ACTIONS.md)
 - [完整研究状态](docs/RESEARCH_STATUS.md)
 - [8 方法 stage trace map](reports/stage_trace_map.md)
+
+当前接受的无真人重定位 profile 已由 P6-M 阴性结果闭环。原 P6 人工复核/仲裁分支保持
+`ready_to_analyze=false`，但已退出活动待办；它只在未来有真实人员且明确恢复严格人工主张时重新开启。
+P6-M 不被称为真人复核、IAA、仲裁或金标。
 
 ## 基准与发布边界
 

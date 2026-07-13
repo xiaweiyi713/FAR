@@ -1,4 +1,18 @@
 {
+  "accepted_no_human_redirection_profile": {
+    "allowed_claim": "the machine-only ontology audit is complete and its negative result closes the accepted no-human redirection profile",
+    "complete": true,
+    "forbidden_claims": [
+      "population human mappability",
+      "human inter-annotator agreement",
+      "adjudicated human gold",
+      "H4 confirmation"
+    ],
+    "human_p6_active": false,
+    "human_p6_reopens_only_for_strict_human_claims": true,
+    "human_p6_required_for_this_profile": false,
+    "terminal_outcome": "negative_machine_panel_stability"
+  },
   "cross_family_jury_external_validation_paper": {
     "blockers": [
       "G-A external validation gate has not passed",
@@ -142,7 +156,7 @@
     },
     "reader_reports": {
       "files": {
-        "reports/README.md": "9eb254733f59e1e288d37c48cebf263e8529fe7c956859d69aaa9b5ec58c2d3f",
+        "reports/README.md": "62e297e929f96f224808e8d63782e6120f6a405e0bac6deacd53056bcc9d3440",
         "reports/single_author_diagnostic_report.md": "9f8d088ee1c848c0340c74974ec5c7d8f0682cbcc75bb0aab70fbf8938467a21",
         "reports/solo_human_review_priority.csv": "bb036eb51e27d4b654978dd2bd0a2330422c58bf7bc2e6769fced165242a5dee",
         "reports/solo_paper_readiness.json": "96cf0d2b0053469432d4a87c863e3c1d6ecce2528ea2df7d9aa000a1609ccc6d",
@@ -355,7 +369,7 @@
     }
   },
   "project_profile": "far_proposal_completion_status",
-  "schema_version": "far-project-status-snapshot-v3",
+  "schema_version": "far-project-status-snapshot-v4",
   "single_author_machine_audited_diagnostic": {
     "allowed_claim": "public single-author machine-audited diagnostic",
     "complete": true,
@@ -403,5 +417,11 @@
     ],
     "ready": false,
     "template_evidence_used_for_status_only": true
+  },
+  "strict_human_mappability_profile": {
+    "active": false,
+    "optional_future_branch": true,
+    "ready": false,
+    "reopen_condition": "real independent reviewers and a distinct adjudicator become available"
   }
 }

@@ -5,6 +5,13 @@ cannot confirm H4 because the underlying WS3 results predate H4 registration.
 The frozen semantics and claim limits remain authoritative in
 [`PREREG_TYPE_MAPPABILITY_2026-07-10.md`](PREREG_TYPE_MAPPABILITY_2026-07-10.md).
 
+Status decision (2026-07-13): real reviewers and an adjudicator could not be
+sourced, so this strict-human branch is inactive and outside the accepted
+no-human redirection profile. The instructions below are retained only as a
+future protocol. They have no current owner or deadline and reopen only if real
+people become available and strict human-mappability claims are explicitly
+requested.
+
 ## Execution placement
 
 Machine prelabels run only on the existing `windows-gpu` host. The developer
@@ -99,9 +106,10 @@ uv run --locked falsirag ops diagnostic-data verify
 directory. The preservation steps below are therefore mandatory for future
 human returns.
 
-## Human-only remainder
+## Optional future human-only branch (inactive)
 
-Machine prelabels are complete, hidden from reviewers, and are not gold. Two distinct
+This section is not a current work queue. If the branch is explicitly reopened,
+machine prelabels remain hidden from reviewers and are not gold. Two distinct
 people must independently complete all 217 rows. Because the tracked packet now
 contains machine prelabels, never distribute the repository or packet directory
 itself. Generate the two role-isolated, deterministic ZIPs instead:

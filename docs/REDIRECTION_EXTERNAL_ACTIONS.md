@@ -2,7 +2,7 @@
 
 This ledger records the external actions for
 [`PLAN_REDIRECTION.md`](PLAN_REDIRECTION.md), including completed mutations and
-the remaining human-only work. External steps mutate GitHub, the remote GPU
+the optional inactive human-only branch. External steps mutate GitHub, the remote GPU
 host, or human evidence and therefore must not be inferred from an ordinary
 build/test request.
 
@@ -96,9 +96,15 @@ The minimal 1.7 MiB juror evidence tree is tracked with the report so a fresh
 clone can rerun prompt/raw-response and identity verification after installing
 the published diagnostic packet; no model weights or caches are included.
 
-## 5. Complete P6 human work (remaining)
+## 5. Optional future P6 human branch (inactive)
 
-This cannot be automated or substituted with more models:
+No real reviewers or adjudicator are available. This branch is outside the
+accepted no-human profile, has no active owner or deadline, and is not a current
+project blocker. It reopens only if real people become available and the project
+explicitly chooses to pursue strict human-mappability, human-IAA, or
+adjudicated-gold claims. It cannot be automated or substituted with more models.
+
+If it is ever reopened:
 
 1. Give two distinct reviewers only their respective blank 217-row templates
    and visible contexts; hide machine labels, scores, analysis strata, and the
@@ -146,5 +152,7 @@ The following are deliberately separate approvals:
 - start/fetch P6-M machine-only audit artifacts;
 - publish the diagnostic GitHub release and remove tracked diagnostics;
 - supply real reviewer/adjudicator work.
+
+The final item is an optional future authorization, not an active dependency.
 
 An approval for one item does not imply any later item.

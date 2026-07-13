@@ -1,8 +1,9 @@
 # P6-M execution handoff
 
 P6-M is the machine-only ontology-stability audit registered in
-`PREREG_TYPE_MAPPABILITY_MACHINE_2026-07-13.md`. It does not complete the frozen
-human P6 and cannot report human IAA or human gold.
+`PREREG_TYPE_MAPPABILITY_MACHINE_2026-07-13.md`. Its verified negative result
+closes the accepted no-human redirection profile. It does not complete the
+separate frozen strict-human P6 and cannot report human IAA or human gold.
 
 ## Local boundary
 
@@ -59,8 +60,9 @@ attempt provenance into `outputs/p6m_remote/`, builds
 the tracked `reports/type_mappability_machine/jurors/` evidence tree, and performs
 deterministic recomputation from that tracked copy. A fresh clone with the
 published diagnostic packet can therefore rerun the verifier without access to
-the remote host. The original P6 packet remains `ready_to_analyze=false` until
-real humans exist; P6-M does not write its reviewer/adjudicator slots.
+the remote host. The original P6 packet remains `ready_to_analyze=false`; its
+human branch is inactive unless real humans become available and strict claims
+are reopened. P6-M does not write its reviewer/adjudicator slots.
 
 ## Completed formal run (2026-07-13)
 
@@ -83,7 +85,8 @@ returned `valid=true`, `errors=[]`. The result was a negative stability audit:
 These values describe model-panel sensitivity, not population mappability. The
 15 consensus rows are a selected subset and their mappability/delta summaries
 must not be extrapolated to all 217 samples. The original human P6 remains
-`ready_to_analyze=false`.
+`ready_to_analyze=false` and inactive. This is the terminal outcome of the
+accepted no-human profile; no additional model panel is queued as a substitute.
 
 Reproduce the final check from tracked evidence after installing the diagnostic
 packet:

@@ -25,7 +25,9 @@ This directory contains durable, versioned reports derived from tracked project 
   and [machine-readable JSON](type_mappability_machine/type_mappability_machine.json):
   all three jurors completed, but only 15/217 samples reached stable machine
   consensus and 202 were contested. This is negative model-panel sensitivity
-  evidence, not human mappability, IAA, gold, or completion of P6. The tracked
+  evidence and the terminal outcome for the accepted no-human redirection
+  profile. It is not human mappability, IAA, gold, or completion of the separate
+  strict-human P6. That optional human branch is inactive. The tracked
   [juror inputs](type_mappability_machine/jurors/) preserve the minimal raw
   response and identity evidence required for fresh-clone verification.
 - [Single-author machine-audited paper readiness](solo_paper_readiness.md) and

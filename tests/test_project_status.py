@@ -27,6 +27,16 @@ def test_project_status_keeps_dual_track_claim_boundary() -> None:
     assert snapshot["single_author_machine_audited_diagnostic"]["complete"] is True
     assert snapshot["single_author_machine_audited_paper"]["ready"] is True
     assert snapshot["single_author_machine_audited_paper"]["strict_aaai_submission_ready"] is False
+    no_human = snapshot["accepted_no_human_redirection_profile"]
+    assert no_human["complete"] is True
+    assert no_human["terminal_outcome"] == "negative_machine_panel_stability"
+    assert no_human["human_p6_required_for_this_profile"] is False
+    assert no_human["human_p6_active"] is False
+    assert no_human["human_p6_reopens_only_for_strict_human_claims"] is True
+    strict_human = snapshot["strict_human_mappability_profile"]
+    assert strict_human["ready"] is False
+    assert strict_human["active"] is False
+    assert strict_human["optional_future_branch"] is True
     assert snapshot["strict_aaai_submission"]["ready"] is False
     assert snapshot["evidence"]["solo_release"]["valid"] is True
     assert snapshot["evidence"]["fever_binary"]["valid"] is True
@@ -54,6 +64,8 @@ def test_project_status_is_portable_and_reader_facing() -> None:
     assert "submission/evidence.template.json" in markdown
     assert "consensus=15/217" in markdown
     assert "cannot replace human P6" in markdown
+    assert "Accepted no-human redirection | `true`" in markdown
+    assert "human P6 is retired from the" in markdown
 
 
 def test_project_status_verifier_accepts_tracked_snapshots() -> None:
@@ -61,6 +73,7 @@ def test_project_status_verifier_accepts_tracked_snapshots() -> None:
 
     assert audit["valid"] is True
     assert audit["diagnostic_complete"] is True
+    assert audit["no_human_redirection_complete"] is True
     assert audit["errors"] == []
 
 
@@ -76,6 +89,7 @@ def test_project_status_verifier_rejects_stale_snapshots(tmp_path: Path) -> None
 
     assert audit["valid"] is False
     assert audit["diagnostic_complete"] is True
+    assert audit["no_human_redirection_complete"] is True
     assert len(audit["errors"]) == 2
     assert "JSON snapshot is stale" in audit["errors"][0]
     assert "Markdown snapshot is stale" in audit["errors"][1]

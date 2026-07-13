@@ -5,6 +5,8 @@
 
 ## 当前结论
 
+- 当前接受的无真人重定位 profile 已完成：P6-M 阴性结果是终止证据；人工 P6 已从活动队列移出，
+  不再等待复核者或仲裁者。只有未来主动恢复严格人工可映射性/IAA/gold 主张时才重新开启。
 - P6-M 三家族双视图正式运行已完成：J1/J2/J3 均为 `434/434`，失败尝试 `0`；
   本地确定性 verifier 返回 `valid=true`、`errors=[]`。
 - 机器面板稳定性低：J1/J2/J3 分别为 `50/217`、`88/217`、`24/217`；只有
@@ -12,8 +14,8 @@
   总体可映射率、human IAA/gold 或 H4 confirmation。
 - `far-p6m.service` 与 `far-ollama-2plus4.service` 均为 inactive，远端无 P6-M Python、
   Ollama 或 llama-server 进程；本机从未下载或运行模型。
-- 原 P6 仍为 217/217 机器预标完成、真人 reviewer/adjudicator 缺失、
-  `ready_to_analyze=false`。没有模型结果写入人工槽位。
+- 原 P6 仍为 217/217 机器预标完成、`ready_to_analyze=false`。这是被保留的非活动严格人工协议；
+  没有模型结果写入人工槽位，也不影响当前无真人 profile 的完成状态。
 
 ## 既有 WS1--WS6 结论（2026-07-09 冻结）
 

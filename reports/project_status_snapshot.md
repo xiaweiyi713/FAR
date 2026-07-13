@@ -9,6 +9,8 @@ ledger for the project proposal, not a submission waiver.
 |---|---|---|
 | Single-author machine-audited diagnostic | `true` | public single-author machine-audited diagnostic |
 | Single-author machine-audited paper | `true` | Narrow typed-control mechanism claim with mandatory negative ablations |
+| Accepted no-human redirection | `true` | the machine-only ontology audit is complete and its negative result closes the accepted no-human redirection profile |
+| Optional strict human mappability | `false` | Inactive; reopens only if real reviewers and an adjudicator become available |
 | Cross-family jury + external validation paper | `false` | Preregistered external upstream-label validation plus cross-family LLM jury |
 | Strict AAAI submission | `false` | Requires real external evidence and cannot be satisfied by templates or machine labels |
 
@@ -54,4 +56,7 @@ machine-audited diagnostic; it must not be described as human gold. The 2+4
 track replaces the unavailable human gate only for its explicitly named profile;
 it remains LLM jury + author adjudication, not human IAA or externally held
 blind-test evidence. The separate P6-M audit reached consensus on only 15/217
-samples and explicitly cannot replace human P6.
+samples and explicitly cannot replace human P6. Its negative result is terminal
+evidence for the accepted no-human profile, so human P6 is retired from the
+active queue. Human P6 remains necessary only if a future project explicitly
+reopens population human-mappability, human-IAA, or adjudicated-gold claims.

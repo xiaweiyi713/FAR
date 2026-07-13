@@ -348,13 +348,19 @@ print(result.revised_answer, result.to_dict()["conflicts"])
 | **P3（完成）** | `experiments/stage_trace_map.py`：8 方法观察性失效地图 + verifier + 指纹；T1 8/8，T2 +0.3914 [0.3554,0.4275] | 工程 | P2 | `reports/stage_trace_map.{json,md}` | ✅ |
 | **P4（完成）** | TMLR MVP 重写：capability-aware 协议 + 8 方法地图 + FAR 阴性/边界；标题、摘要、主表、附录和 claim ladder 对齐 | 研究 | P3 | 12 页可编译 TMLR 稿 | ✅ |
 | **P5（完成）** | 注册的远端 3×350 dev 消融完成并通过零模型独立 verifier：full EM `0.3057`，激进度匹配去类型修订 EM `0.3086`，flat-claim EM `0.3057`；H3 `uncertain`，H5 `equivalent` | 研究 | P3 | `reports/p5_ramdocs_ablations.{json,md}`；上游 dev 标签、非人类金标、非 test | 增强 |
-| **P6（机器预标完成）** | 217 条空白包、default-deny 远端机器预标/回传、双人标注/仲裁、κ/描述关联与 verifier 已实现；217/217 机器预标已安装，真人标注尚未执行 | 研究 | P3 | `diagnostics/type_mappability_v1`；报告待两位复核者与第三位仲裁者输入 | 增强 |
-| **P6-M（机器审计完成）** | 无真人时执行独立、非替代性的三家族×双视图稳定性审计；三位 juror 均 434/434、失败 0，但仅 15/217 形成共识、202 条 contested，证明该机器面板不能充当广覆盖人工同位替代 | 研究 | P6 协议/机器包 | `reports/type_mappability_machine/`；verifier `valid=true`，非 human IAA/gold，H4 不确认 | 增强 |
+| **P6（机器分支完成；人工分支退出当前范围）** | 217 条空白包、default-deny 远端机器预标/回传、双人标注/仲裁、κ/描述关联与 verifier 已实现；217/217 机器预标已安装。因无法取得真人，人工分支保留为空白未来协议，不在当前待办 | 研究 | P3 | `diagnostics/type_mappability_v1`；`ready_to_analyze=false` 如实保留，不再等待人员输入 | 增强 |
+| **P6-M（无真人路线终点，已完成）** | 独立三家族×双视图稳定性审计；三位 juror 均 434/434、失败 0，但仅 15/217 形成共识、202 条 contested。该阴性结果关闭当前无真人路线，并证明机器面板不能充当广覆盖人工同位替代 | 研究 | P6 协议/机器包 | `reports/type_mappability_machine/`；verifier `valid=true`，非 human IAA/gold，H4 不确认 | 增强 |
 | **P7（完成）** | 切断默认 VeraRAG（自足 BM25 + 直连 Ollama）+ 删活跃代码硬编码路径 + quickstart + package smoke | 开源 | — | 开箱可跑 | 开源必做 |
 | **P8（完成）** | README 产品化重构 + `docs/RESEARCH_STATUS.md` 下沉 | 开源 | P7 | 产品化 README + 完整诚实性披露 | 开源必做 |
 | **P9（完成）** | `falsirag` 子命令树 + 全量 deprecated alias 迁移提示 | 开源 | P7 | 单主命令，旧自动化兼容 | 开源建议 |
 | **P10-A（完成）** | 命名空间收拢（`far.*`）+ 安装包数据分离 + release 清单/归档/安装器 | 工程 | P9 | 消除 hack、轻量 wheel/sdist、可校验 cutover | 开源建议 |
 | **P10-B（完成）** | `artifacts-v1` 精确归档已上传并独立回读验证；主树删除 `diagnostics/`，CI/本地按 manifest 安装；历史重写/LFS 未执行 | 外部 | P10-A | 轻 checkout + SHA/整树验证；旧历史保留 | 开源建议 |
+
+**2026-07-13 范围决定**：无法取得两名真人复核者和独立仲裁者后，项目接受
+“无真人、机器审计的重定位 profile”为当前完成口径。P6-M 的阴性稳定性结果是该 profile
+的终止证据；原 P6 人工分支从活动队列移出，不设负责人或期限。它只在未来明确要主张总体人工
+可映射性、human IAA 或 adjudicated human gold，且真实人员可用时重新开启。此决定不把模型身份
+伪装成人，也不把 P6-M 标签写入人工槽位。
 
 **关键路径（出论文核心结果）**：P0 → P1 为零模型调用；P2 若选择真正因果 oracle，R/D/A 必须重放下游并产生新答案，
 因此不能再宣称全程零模型调用。若坚持零调用，则 P2/P3 必须降格为 trace attribution，避免循环论证。

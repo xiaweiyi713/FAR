@@ -26,7 +26,7 @@ from far.experiments.type_mappability_machine import (
 )
 from far.paths import repository_root
 
-SNAPSHOT_SCHEMA_VERSION = "far-project-status-snapshot-v3"
+SNAPSHOT_SCHEMA_VERSION = "far-project-status-snapshot-v4"
 SNAPSHOT_AUDIT_SCHEMA_VERSION = "far-project-status-snapshot-audit-v1"
 
 
@@ -145,6 +145,7 @@ def build_status_snapshot(root: Path) -> dict[str, Any]:
             bool(reports["valid"]),
         ]
     )
+    no_human_redirection_complete = single_author_complete and bool(p6m["valid"])
     return {
         "schema_version": SNAPSHOT_SCHEMA_VERSION,
         "project_profile": "far_proposal_completion_status",
@@ -163,6 +164,31 @@ def build_status_snapshot(root: Path) -> dict[str, Any]:
             "allowed_claim": solo_paper["allowed_claim"],
             "strict_aaai_submission_ready": False,
             "required_limitations": solo_paper["required_limitations"],
+        },
+        "accepted_no_human_redirection_profile": {
+            "complete": no_human_redirection_complete,
+            "terminal_outcome": "negative_machine_panel_stability",
+            "human_p6_required_for_this_profile": False,
+            "human_p6_active": False,
+            "human_p6_reopens_only_for_strict_human_claims": True,
+            "allowed_claim": (
+                "the machine-only ontology audit is complete and its negative result "
+                "closes the accepted no-human redirection profile"
+            ),
+            "forbidden_claims": [
+                "population human mappability",
+                "human inter-annotator agreement",
+                "adjudicated human gold",
+                "H4 confirmation",
+            ],
+        },
+        "strict_human_mappability_profile": {
+            "ready": False,
+            "active": False,
+            "optional_future_branch": True,
+            "reopen_condition": (
+                "real independent reviewers and a distinct adjudicator become available"
+            ),
         },
         "cross_family_jury_external_validation_paper": {
             "ready": bool(jury_paper["ready"]),
@@ -202,12 +228,24 @@ def build_status_snapshot(root: Path) -> dict[str, Any]:
 def render_markdown(snapshot: dict[str, Any]) -> str:
     diagnostic = snapshot["single_author_machine_audited_diagnostic"]
     paper_profile = snapshot["single_author_machine_audited_paper"]
+    no_human_profile = snapshot["accepted_no_human_redirection_profile"]
+    strict_human_profile = snapshot["strict_human_mappability_profile"]
     jury_profile = snapshot["cross_family_jury_external_validation_paper"]
     strict = snapshot["strict_aaai_submission"]
     evidence = snapshot["evidence"]
     diagnostic_status = str(diagnostic["complete"]).lower()
     paper_profile_status = str(paper_profile["ready"]).lower()
+    no_human_profile_status = str(no_human_profile["complete"]).lower()
+    strict_human_profile_status = str(strict_human_profile["ready"]).lower()
     paper_profile_meaning = "Narrow typed-control mechanism claim with mandatory negative ablations"
+    no_human_profile_meaning = no_human_profile["allowed_claim"]
+    strict_human_profile_meaning = (
+        "Inactive; reopens only if real reviewers and an adjudicator become available"
+    )
+    strict_human_profile_row = (
+        f"| Optional strict human mappability | `{strict_human_profile_status}` | "
+        f"{strict_human_profile_meaning} |"
+    )
     strict_status = str(strict["ready"]).lower()
     jury_profile_status = str(jury_profile["ready"]).lower()
     jury_profile_meaning = (
@@ -255,6 +293,8 @@ ledger for the project proposal, not a submission waiver.
 |---|---|---|
 | Single-author machine-audited diagnostic | `{diagnostic_status}` | {diagnostic["allowed_claim"]} |
 | Single-author machine-audited paper | `{paper_profile_status}` | {paper_profile_meaning} |
+| Accepted no-human redirection | `{no_human_profile_status}` | {no_human_profile_meaning} |
+{strict_human_profile_row}
 | Cross-family jury + external validation paper | `{jury_profile_status}` | {jury_profile_meaning} |
 | Strict AAAI submission | `{strict_status}` | {strict_meaning} |
 
@@ -287,7 +327,10 @@ machine-audited diagnostic; it must not be described as human gold. The 2+4
 track replaces the unavailable human gate only for its explicitly named profile;
 it remains LLM jury + author adjudication, not human IAA or externally held
 blind-test evidence. The separate P6-M audit reached consensus on only 15/217
-samples and explicitly cannot replace human P6.
+samples and explicitly cannot replace human P6. Its negative result is terminal
+evidence for the accepted no-human profile, so human P6 is retired from the
+active queue. Human P6 remains necessary only if a future project explicitly
+reopens population human-mappability, human-IAA, or adjudicated-gold claims.
 """
 
 
@@ -323,6 +366,9 @@ def verify_status_snapshot(
         "diagnostic_complete": bool(
             expected["single_author_machine_audited_diagnostic"]["complete"]
         ),
+        "no_human_redirection_complete": bool(
+            expected["accepted_no_human_redirection_profile"]["complete"]
+        ),
         "checked": {
             "json": _display_path(root, json_path),
             "markdown": _display_path(root, markdown_path),
@@ -351,7 +397,11 @@ def main() -> None:
         ).resolve()
         audit = verify_status_snapshot(root, json_path, markdown_path)
         print(json.dumps(audit, ensure_ascii=False, indent=2, sort_keys=True))
-        if not audit["valid"] or not audit["diagnostic_complete"]:
+        if (
+            not audit["valid"]
+            or not audit["diagnostic_complete"]
+            or not audit["no_human_redirection_complete"]
+        ):
             raise SystemExit(1)
         return
 
@@ -362,7 +412,10 @@ def main() -> None:
         args.markdown_output.parent.mkdir(parents=True, exist_ok=True)
         args.markdown_output.write_text(render_markdown(snapshot), encoding="utf-8")
     print(json.dumps(snapshot, ensure_ascii=False, indent=2, sort_keys=True))
-    if not snapshot["single_author_machine_audited_diagnostic"]["complete"]:
+    if (
+        not snapshot["single_author_machine_audited_diagnostic"]["complete"]
+        or not snapshot["accepted_no_human_redirection_profile"]["complete"]
+    ):
         raise SystemExit(1)
 
 
