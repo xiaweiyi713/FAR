@@ -905,9 +905,10 @@ def compute_result(
         consensus_annotation: dict[str, Any] | None = None
         if disposition != "contested":
             representative = stable_votes[supporters[0]]
+            _, normalized_types = _decision(representative)
             consensus_annotation = {
                 "mappability": representative["mappability"],
-                "mapped_types": representative["mapped_types"],
+                "mapped_types": list(normalized_types),
             }
             resolved[sample_id] = consensus_annotation
         vote_labels = [_decision_text(annotation) for annotation in stable_votes.values()]

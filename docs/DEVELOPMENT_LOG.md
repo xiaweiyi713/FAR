@@ -3341,5 +3341,7 @@ evidence bundle verified successfully, releasing the GPU.
   test for reversed type order. The change does not alter prompts, model calls,
   accepted annotations, raw responses, checkpoints, or any frozen threshold, so
   already collected juror rows remain valid and do not require model reruns.
+- Consensus annotations now emit the same sorted canonical type list used for
+  voting, while every source annotation retains the model's original list order.
 - The correction was made before any three-juror consensus report was generated.
   Final analysis and its deterministic verifier both use the corrected rule.

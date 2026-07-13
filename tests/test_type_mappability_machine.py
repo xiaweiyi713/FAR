@@ -224,7 +224,10 @@ def test_p6m_decision_normalizes_mapped_type_order() -> None:
         "mappability": "partial",
         "mapped_types": ["entity", "definition"],
     }
-    assert p6m._decision(left) == p6m._decision(right)
+    assert p6m._decision(left) == p6m._decision(right) == (
+        "partial",
+        ("definition", "entity"),
+    )
 
 
 def test_p6m_consensus_preserves_majority_and_contested_layers(tmp_path: Path) -> None:
