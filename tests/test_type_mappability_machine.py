@@ -240,6 +240,12 @@ def test_p6m_consensus_preserves_majority_and_contested_layers(tmp_path: Path) -
         "majority": 1,
         "unanimous": 215,
     }
+    assert result["stable_vote_count_distribution"] == {
+        "0": 0,
+        "1": 0,
+        "2": 2,
+        "3": 215,
+    }
     assert by_id[majority_id]["disposition"] == "majority"
     assert by_id[majority_id]["stable_juror_count"] == 2
     assert by_id[contested_id]["disposition"] == "contested"
@@ -258,6 +264,10 @@ def test_p6m_report_verifies_and_tampering_fails_closed(tmp_path: Path) -> None:
     assert manifest["human_annotation_replaced"] is False
     assert verify_report(PACKET, jurors, report_dir)["valid"] is True
     report_path = report_dir / "type_mappability_machine.md"
+    report = report_path.read_text()
+    assert "mapped-type one-vs-rest kappas" in report
+    assert "稳定投票与 pair sensitivity" in report
+    assert "typed-minus-untyped delta (sample bootstrap)" in report
     report_path.write_text(report_path.read_text() + "tampered\n")
     audit = verify_report(PACKET, jurors, report_dir)
     assert audit["valid"] is False

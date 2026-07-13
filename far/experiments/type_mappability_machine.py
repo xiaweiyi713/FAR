@@ -1025,6 +1025,23 @@ def compute_result(
         "view_agreement": view_agreement,
         "pair_sensitivity": pair_sensitivity,
         "dispositions": dict(sorted(dispositions.items())),
+        "stable_vote_count_distribution": {
+            str(count): sum(row["stable_juror_count"] == count for row in consensus_rows)
+            for count in range(len(juror_ids) + 1)
+        },
+        "vote_entropy_summary": {
+            "defined_samples": sum(row["vote_entropy"] is not None for row in consensus_rows),
+            "mean": (
+                mean(
+                    float(row["vote_entropy"])
+                    for row in consensus_rows
+                    if row["vote_entropy"] is not None
+                )
+                if any(row["vote_entropy"] is not None for row in consensus_rows)
+                else None
+            ),
+            "per_sample_file": "consensus_rows.jsonl",
+        },
         "consensus_samples": len(resolved),
         "consensus_coverage": len(resolved) / len(items),
         "by_dataset": by_dataset,
@@ -1080,6 +1097,30 @@ def report_text(result: dict[str, Any]) -> str:
             f"- {view_id} pairwise Cohen kappas: "
             f"`{json.dumps(row['mappability_pairwise_cohen_kappa'], sort_keys=True)}`"
         )
+        lines.append(
+            f"- {view_id} mapped-type macro kappas: "
+            f"`{json.dumps(row['mapped_type_pairwise_macro_kappa'], sort_keys=True)}`"
+        )
+        for pair, values in row["mapped_type_pairwise_kappas"].items():
+            lines.append(
+                f"- {view_id} {pair} mapped-type one-vs-rest kappas: "
+                f"`{json.dumps(values, sort_keys=True)}`"
+            )
+    lines.extend(["", "## 稳定投票与 pair sensitivity", ""])
+    lines.append(
+        "- Stable-juror count distribution: "
+        f"`{json.dumps(result['stable_vote_count_distribution'], sort_keys=True)}`"
+    )
+    lines.append(
+        "- Mean per-sample normalized vote entropy when defined: "
+        f"`{_fmt(result['vote_entropy_summary']['mean'])}`; exact stable votes and entropy are "
+        "preserved in `consensus_rows.jsonl`."
+    )
+    for pair, row in result["pair_sensitivity"].items():
+        lines.append(
+            f"- {pair}: same stable decision `{row['same_decision']}/{row['both_stable']}` "
+            f"(`{_fmt(row['same_decision_rate'])}`)"
+        )
     lines.extend(
         [
             "",
@@ -1095,6 +1136,23 @@ def report_text(result: dict[str, Any]) -> str:
         lines.append(
             f"| {dataset} | {row['samples']} | {counts['clean']} | {counts['partial']} | "
             f"{counts['unmappable']} | {_fmt(row['weighted_mappability'])} |"
+        )
+    lines.extend(
+        [
+            "",
+            "### 共识层 typed-minus-untyped delta (sample bootstrap)",
+            "",
+            f"`{result['bootstrap_resamples']}` resamples, seed `{result['bootstrap_seed']}`.",
+            "",
+            "| mappability | n | estimate | lower | upper |",
+            "|---|---:|---:|---:|---:|",
+        ]
+    )
+    for label in MAPPABILITY_LABELS:
+        row = result["combined_consensus"]["delta_by_mappability"][label]
+        lines.append(
+            f"| {label} | {row['samples']} | {_fmt(row['estimate'])} | "
+            f"{_fmt(row['lower'])} | {_fmt(row['upper'])} |"
         )
     lines.extend(["", "## 外部标签分层 (收敛证据，不是金标)", ""])
     lines.extend(

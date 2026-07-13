@@ -3345,3 +3345,8 @@ evidence bundle verified successfully, releasing the GPU.
   voting, while every source annotation retains the model's original list order.
 - The correction was made before any three-juror consensus report was generated.
   Final analysis and its deterministic verifier both use the corrected rule.
+- The pre-analysis protocol audit also found that several already-computed frozen
+  statistics were present only in the machine-readable JSON/JSONL. The Markdown
+  report now exposes mapped-type one-vs-rest and macro kappas, stable-pair
+  sensitivity, stable-vote counts, entropy location/summary, and the registered
+  typed-minus-untyped bootstrap intervals without changing any estimator.
