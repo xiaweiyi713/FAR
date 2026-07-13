@@ -21,6 +21,12 @@ does not alter F1--F10, G-F, G-B, G-P, label status, or held-out/test policy.
   external condition (Google CONFLICTS outdated information) and no no-conflict
   safety violation. This selects a weak A-line mechanism-and-boundary story,
   not a global transfer story.
+- P5 supplies registered negative component evidence: H3 remains `uncertain`
+  for typed revision, while H5 is `equivalent` only for the exact flat-claim arm
+  under the frozen +/-0.02 rule.
+- P6-M supplies a terminal machine-only ontology-stability result: 15/217 stable
+  consensus rows and 202 contested rows. It is not human mappability, IAA,
+  adjudicated gold, or H4 confirmation.
 
 ## Outcome-to-paper mapping
 
@@ -73,5 +79,10 @@ ceilings remain binding.
   publication gold, or external blind testing.
 - Never use WS3 subgroup positives to reopen RAMDocs G-A or to claim end-to-end
   advantage.
+- Insert P5 only with its registered equivalence rule: H3 is uncertain and H5
+  is scoped equivalence, not a general no-effect result.
+- Insert P6-M only as negative machine-panel sensitivity. Never extrapolate the
+  selected 15 consensus rows to population mappability or place them in human
+  reviewer/adjudicator slots.
 - Keep the AAAI strict profile inactive unless real independent human
   annotation, adjudication, and external custody become available.

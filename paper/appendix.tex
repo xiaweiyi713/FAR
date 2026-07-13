@@ -10,8 +10,7 @@ boundary evidence can narrow an earlier claim, but an unfinished workstream
 cannot strengthen it.
 
 \begin{table}[h]
-\caption{Claim ceiling by evidence layer. ``Pending'' rows are protocol facts,
-not empirical results.}
+\caption{Claim ceiling by completed evidence layer.}
 \label{tab:claim-ledger}
 \begin{center}
 \small
@@ -26,6 +25,10 @@ generality \\
 RAMDocs development & Two preregistered 350-item rounds fail G-A; Round~2 is
 $-0.0029$ against the frozen strongest baseline & No demonstrated end-to-end
 advantage on this upstream-labelled external development distribution \\
+P5 registered ablations & Full exact match is 0.3057; removal of typed revision
+is 0.3086 with H3 uncertain; flat claims are 0.3057 with H5 equivalent & No
+registered evidence that typed revision improves RAMDocs exact match; flat
+claims are equivalent only under the frozen $\pm0.02$ rule \\
 Capability-aware trace map & Eight methods $\times$ 350 items; changed-wrong
 errors after retrieving correct evidence exceed retrieval misses in 8/8 methods;
 pooled difference $+0.3914$ with 95\% CI $[+0.3554,+0.4275]$ & A cross-method
@@ -44,6 +47,10 @@ WS3 public development & 600 formal predictions plus 20 calibration predictions;
 global differences are near null, with a narrow positive outdated-information
 condition & A weak public-development applicability boundary; not global transfer
 or held-out evidence \\
+P6-M ontology stability & Three families each label two views of 217 WS3 items;
+only 15 items reach stable consensus and 202 are contested & Negative
+machine-panel sensitivity evidence; not population mappability, human IAA,
+adjudicated gold, or H4 confirmation \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -52,10 +59,12 @@ or held-out evidence \\
 The machine-readable sources for these rows are
 \path{diagnostics/solo_v1},
 \path{diagnostics/ramdocs_v2},
-\path{diagnostics/attribution_v1/manifest.json}, and
-\path{diagnostics/power_v1/manifest.json}, and
-\path{diagnostics/family_dev_v1/manifest.json}, and
-\path{reports/stage_trace_map.json}. The active roadmap fingerprint is
+\path{diagnostics/attribution_v1/manifest.json},
+\path{diagnostics/power_v1/manifest.json},
+\path{diagnostics/family_dev_v1/manifest.json},
+\path{reports/stage_trace_map.json},
+\path{reports/p5_ramdocs_ablations.json}, and
+\path{reports/type_mappability_machine/type_mappability_machine.json}. The active roadmap fingerprint is
 \texttt{91eb3205fe127271bc5f4882025243d9974a711e311ef074fcbde09aa86e7cf7};
 it binds the ten frozen facts F1--F10 and is not changed by this appendix.
 
@@ -135,6 +144,66 @@ availability and textual answer transformation. It does not show that detection
 was sufficient or that revision is the independent causal bottleneck. Typed
 detection/action detail is reported only for FAR and untyped FAR, the two methods
 with matching instrumentation.
+
+\section{Registered P5 RAMDocs Component Checks}
+\label{app:p5}
+
+P5 is a registered enhancement on the same 350 upstream-labelled RAMDocs
+development items. It compares full FAR with an aggressiveness-matched removal
+of typed revision and a flat-claim arm. Full exact match is 0.3057. Removing
+typed revision yields 0.3086, so the full-minus-ablation difference is
+$-0.0029$ with a 90\% sample-cluster bootstrap interval of
+$[-0.0229,+0.0171]$. This crosses the lower edge of the registered
+$[-0.02,+0.02]$ equivalence region; H3 is therefore \texttt{uncertain}, not
+equivalent.
+
+The flat-claim arm also obtains 0.3057. Its full-minus-ablation difference is
+0 with a 90\% interval of $[-0.0057,+0.0057]$, wholly inside the registered
+region, so H5 is \texttt{equivalent}. The verifier records 350 pairs, zero
+model calls during finalization, no test access, no human IAA, and no
+publication-gold claim. H5 is a scoped equivalence result for this exact
+upstream-labelled development design; it is not a general no-effect result.
+
+\section{Machine-Only Ontology Stability Audit}
+\label{app:p6m}
+
+P6-M applies the frozen seven-type ontology to 217 public-development WS3
+items using three distinct model families. Each juror sees two semantically
+matched views with reversed evidence order. A stable juror vote requires the
+same mappability label and mapped type set in both views. Consensus is computed
+only from stable votes; items without a stable majority are contested rather
+than synthetically adjudicated.
+
+\begin{table}[h]
+\caption{P6-M dual-view stability and terminal disposition. These are machine
+panel statistics, not human agreement.}
+\label{tab:p6m-stability}
+\begin{center}
+\small
+\begin{tabular}{lr}
+\toprule
+Quantity & Count / value \\
+\midrule
+J1 stable & 50/217 (0.2304) \\
+J2 stable & 88/217 (0.4055) \\
+J3 stable & 24/217 (0.1106) \\
+Stable consensus & 15/217 (0.0691) \\
+Unanimous / majority & 1 / 14 \\
+Contested & 202 \\
+View A / B Fleiss $\kappa$ & 0.1666 / $-0.0408$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{table}
+
+One of the six frozen external-label strata has no consensus, so the registered
+association is not estimable. The 15 consensus rows form a selected 6.9\%
+subset and cannot estimate population mappability or mediate the WS3 effect.
+The deterministic verifier recomputes the report from tracked prompt, raw
+response, annotation, and identity evidence. It records
+\texttt{human\_annotation\_replaced=false},
+\texttt{human\_iaa\_computed=false},
+\texttt{confirmatory\_h4=false}, and \texttt{test\_accessed=false}.
 
 \section{Power and Outcome-Conditioned Interpretation}
 \label{app:power}
@@ -227,3 +296,10 @@ and the earlier three-system-family matrix were not run after the RAMDocs stop
 rule. Completed WS2 evidence remains machine-audited development evidence;
 completed WS3 evidence remains public-development boundary evidence. Neither may be
 described as human IAA, publication gold, or external blind testing.
+
+P5 likewise uses upstream-labelled RAMDocs development data: H3 remains
+uncertain and must not be reported as equivalence, while H5 equivalence is
+limited to the frozen $\pm0.02$ rule and exact arm. P6-M is a machine-only
+sensitivity audit. Its 15 stable consensus rows do not replace the inactive
+human P6 packet, estimate population mappability, provide adjudicated labels,
+or confirm H4.

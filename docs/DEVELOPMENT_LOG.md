@@ -3385,3 +3385,21 @@ evidence bundle verified successfully, releasing the GPU.
   human-gold claims.
 - This scope decision changes project completion semantics, not frozen evidence:
   P6-M still cannot replace human P6, confirm H4, or support human-gold claims.
+
+## 2026-07-13 — integrate final P5 and P6-M evidence into the active paper
+
+- Audited the active TMLR draft after closing the no-human profile. WS2/WS3 were
+  already integrated, but the final registered P5 ablations and P6-M negative
+  ontology-stability result were absent from the paper and its readiness gate.
+- Added P5 to the main mechanism evidence and appendix claim ledger: full exact
+  match 0.3057, aggressiveness-matched removal of typed revision 0.3086 with H3
+  `uncertain`, and flat claims 0.3057 with scoped H5 `equivalent`.
+- Added the machine-only P6-M stress test: dual-view stability 50/217, 88/217,
+  and 24/217; stable consensus 15/217; 202 contested; view A/B Fleiss kappa
+  0.1666/-0.0408; the registered association is not estimable.
+- Upgraded solo-paper readiness to bind the tracked P5 report and recompute P6-M
+  from tracked juror evidence. The gate rejects H3 equivalence, H4 confirmation,
+  human-review language, and extrapolation from the 15 selected consensus rows.
+- Rebuilt the active TMLR PDF without model calls. The 14-page output has no
+  overfull boxes or unresolved references; rendered page inspection found no
+  clipping, overlap, unreadable table, or broken section transition.

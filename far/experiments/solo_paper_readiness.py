@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import math
 from pathlib import Path
 from typing import Any
 
@@ -13,9 +14,12 @@ from far.eval.stats import paired_bootstrap_comparison
 from far.experiments.diagnostic_release import verify_solo_release
 from far.experiments.evaluate_fever_binary import verify_evaluation as verify_fever_binary
 from far.experiments.stage_trace_map import verify_reports as verify_stage_trace_map
+from far.experiments.type_mappability_machine import (
+    verify_report as verify_type_mappability_machine_report,
+)
 from far.paths import repository_root
 
-SCHEMA_VERSION = "far-solo-paper-readiness-v1"
+SCHEMA_VERSION = "far-solo-paper-readiness-v2"
 REQUIRED_PAPER_FRAGMENTS = (
     "machine-audited synthetic benchmark",
     "single-model development diagnostic",
@@ -36,6 +40,12 @@ REQUIRED_PAPER_FRAGMENTS = (
     "Across eight methods and 350 upstream-labelled RAMDocs development items",
     "T1 passes for 8/8 methods",
     "cannot identify a cross-method detection bottleneck",
+    "Registered clean RAMDocs ablations",
+    "H3 remains \\texttt{uncertain}",
+    "H5 is \\texttt{equivalent}",
+    "15 of 217 items",
+    "202 are contested",
+    "cannot estimate population type mappability",
 )
 FORBIDDEN_PAPER_FRAGMENTS = (
     "PENDING-EMPIRICAL-RUN",
@@ -61,6 +71,126 @@ def _stable_floats(value: Any) -> Any:
     if isinstance(value, list):
         return [_stable_floats(item) for item in value]
     return value
+
+
+def _tracked_p5_evidence(root: Path) -> dict[str, Any]:
+    """Audit the frozen tracked P5 report without claiming raw-output recomputation."""
+    json_path = root / "reports/p5_ramdocs_ablations.json"
+    markdown_path = root / "reports/p5_ramdocs_ablations.md"
+    errors: list[str] = []
+    checks: dict[str, bool] = {}
+    result: dict[str, Any] = {}
+    try:
+        result = json.loads(json_path.read_text(encoding="utf-8"))
+        markdown = markdown_path.read_text(encoding="utf-8")
+        evaluations = result["evaluations"]
+        h3 = result["hypotheses"]["H3"]
+        h5 = result["hypotheses"]["H5"]
+        checks = {
+            "registered_dev_metadata": (
+                result.get("schema_version") == "far-p5-ramdocs-ablations-v1"
+                and result.get("samples") == 350
+                and result.get("split") == "dev"
+                and result.get("registered_enhancement") is True
+                and result.get("model_calls_during_finalize") == 0
+                and result.get("test_accessed") is False
+                and result.get("publication_gold") is False
+                and result.get("human_iaa") is False
+            ),
+            "frozen_exact_match_values": (
+                math.isclose(
+                    evaluations["full"]["metrics"]["ramdocs_exact_match"],
+                    0.3057142857142857,
+                )
+                and math.isclose(
+                    evaluations["minus_typed_revision_aggressive"]["metrics"][
+                        "ramdocs_exact_match"
+                    ],
+                    0.30857142857142855,
+                )
+                and math.isclose(
+                    evaluations["flat_claims"]["metrics"]["ramdocs_exact_match"],
+                    0.3057142857142857,
+                )
+            ),
+            "h3_uncertain": (
+                h3["verdict"] == "uncertain"
+                and h3["comparison"]["lower"] < -0.02
+                and h3["comparison"]["upper"] < 0.02
+            ),
+            "h5_equivalent": (
+                h5["verdict"] == "equivalent"
+                and h5["comparison"]["lower"] >= -0.02
+                and h5["comparison"]["upper"] <= 0.02
+            ),
+            "reader_report_discloses_boundaries": (
+                "upstream-labelled" in markdown
+                and "publication-grade human gold" in markdown
+                and "`uncertain`" in markdown
+                and "`equivalent`" in markdown
+            ),
+        }
+        errors.extend(name for name, passed in checks.items() if not passed)
+    except (OSError, KeyError, TypeError, ValueError, json.JSONDecodeError) as exc:
+        errors.append(str(exc))
+    return {
+        "valid": not errors,
+        "errors": errors,
+        "checks": checks,
+        "samples": result.get("samples"),
+        "h3_verdict": result.get("hypotheses", {}).get("H3", {}).get("verdict"),
+        "h5_verdict": result.get("hypotheses", {}).get("H5", {}).get("verdict"),
+        "raw_outputs_recomputed_by_this_gate": False,
+        "json_sha256": sha256_file(json_path) if json_path.is_file() else None,
+        "markdown_sha256": sha256_file(markdown_path) if markdown_path.is_file() else None,
+    }
+
+
+def _p6m_evidence(root: Path) -> dict[str, Any]:
+    report_root = root / "reports/type_mappability_machine"
+    audit = verify_type_mappability_machine_report(
+        root / "diagnostics/type_mappability_v1",
+        [report_root / "jurors" / juror_id for juror_id in ("J1", "J2", "J3")],
+        report_root,
+    )
+    errors = list(audit["errors"])
+    result: dict[str, Any] = {}
+    checks: dict[str, bool] = {}
+    try:
+        result = json.loads(
+            (report_root / "type_mappability_machine.json").read_text(encoding="utf-8")
+        )
+        checks = {
+            "negative_consensus_result": (
+                result.get("samples") == 217
+                and result.get("consensus_samples") == 15
+                and result.get("dispositions")
+                == {"unanimous": 1, "majority": 14, "contested": 202}
+            ),
+            "machine_only_boundary": (
+                result.get("human_annotation_replaced") is False
+                and result.get("human_iaa_computed") is False
+                and result.get("human_identity_verified") is False
+                and result.get("publication_gold") is False
+                and result.get("confirmatory_h4") is False
+                and result.get("test_accessed") is False
+            ),
+            "association_not_estimable": result.get("association", {}).get("estimable")
+            is False,
+        }
+        errors.extend(name for name, passed in checks.items() if not passed)
+    except (OSError, TypeError, ValueError, json.JSONDecodeError) as exc:
+        errors.append(str(exc))
+    return {
+        **audit,
+        "valid": not errors,
+        "errors": errors,
+        "checks": checks,
+        "samples": result.get("samples"),
+        "consensus_samples": result.get("consensus_samples"),
+        "dispositions": result.get("dispositions"),
+        "association_estimable": result.get("association", {}).get("estimable"),
+    }
 
 
 def _label_sensitivity(root: Path) -> dict[str, Any]:
@@ -183,12 +313,16 @@ def audit(root: Path, *, paper_path: Path | None = None) -> dict[str, Any]:
         output_json=root / "reports/stage_trace_map.json",
         output_report=root / "reports/stage_trace_map.md",
     )
+    p5 = _tracked_p5_evidence(root)
+    p6m = _p6m_evidence(root)
     claim_scope = audit_claim_scope(root, paper_text)
     gates = {
         "tracked_solo_evidence": bool(solo.get("valid")),
         "claim_scope_matches_observed_ablations": bool(claim_scope["valid"]),
         "frozen_fever_negative_transfer_disclosed": bool(fever.get("valid")),
         "tracked_stage_trace_map": bool(stage_trace.get("valid")),
+        "tracked_registered_p5_report": bool(p5.get("valid")),
+        "verified_p6m_negative_stability_audit": bool(p6m.get("valid")),
     }
     ready = all(gates.values())
     return {
@@ -202,15 +336,19 @@ def audit(root: Path, *, paper_path: Path | None = None) -> dict[str, Any]:
             "solo_release": solo,
             "fever_binary": fever,
             "stage_trace_map": stage_trace,
+            "p5_registered_ablations": p5,
+            "p6m_machine_ontology_stability": p6m,
             "paper_main_sha256": sha256_file(paper),
+            "paper_appendix_sha256": sha256_file(root / "paper/appendix.tex"),
             "paper_supplement_sha256": sha256_file(root / "paper/supplement.tex"),
             "paper_checklist_sha256": sha256_file(
                 root / "paper/aaai27/ReproducibilityChecklist.tex"
             ),
         },
         "allowed_claim": (
-            "On a construction-derived, machine-audited 60-item Qwen development diagnostic, "
-            "typed conflict control improves over its untyped ablation."
+            "Across eight RAMDocs development methods, errors concentrate after retrieved "
+            "evidence and answer transformation; FAR shows a narrower machine-audited typed-"
+            "control signal whose transport and ontology stability are explicitly bounded."
         ),
         "required_limitations": [
             "labels are not human-validated gold",
@@ -221,6 +359,9 @@ def audit(root: Path, *, paper_path: Path | None = None) -> dict[str, Any]:
             "FEVER binary transfer shows no paired accuracy gain",
             "machine-disposition sensitivity is post-hoc and not independent label validation",
             "cross-method trace attribution does not identify detection or action causal gaps",
+            "P5 uses upstream-labelled development evidence and H3 remains uncertain",
+            "P6-M is machine-panel sensitivity, not population type mappability",
+            "the strict human P6 analysis was not completed",
         ],
         "forbidden_claims": [
             "human inter-annotator agreement",
@@ -229,6 +370,9 @@ def audit(root: Path, *, paper_path: Path | None = None) -> dict[str, Any]:
             "publication-grade benchmark gold",
             "positive marginal contribution from every FAR component",
             "multi-model or external-domain generality",
+            "H3 equivalence or H4 confirmation",
+            "P6-M as human review, human adjudication, or human IAA",
+            "population mappability estimated from the 15 machine-consensus rows",
         ],
     }
 
@@ -244,6 +388,8 @@ def render_markdown(report: dict[str, Any]) -> str:
     claim_scope = str(gates["claim_scope_matches_observed_ablations"]).lower()
     fever = str(gates["frozen_fever_negative_transfer_disclosed"]).lower()
     stage_trace = str(gates["tracked_stage_trace_map"]).lower()
+    p5 = str(gates["tracked_registered_p5_report"]).lower()
+    p6m = str(gates["verified_p6m_negative_stability_audit"]).lower()
     far_answer = observed["far_answer_correctness"]
     answer_delta = observed["typed_minus_untyped_answer_correctness"]
     f1_delta = observed["typed_minus_untyped_conflict_f1"]
@@ -265,6 +411,8 @@ multi-model generality.
 | Paper claim scope matches ablations | `{claim_scope}` |
 | FEVER negative transfer disclosed | `{fever}` |
 | Tracked stage trace map | `{stage_trace}` |
+| Tracked registered P5 report | `{p5}` |
+| Verified P6-M negative stability audit | `{p6m}` |
 
 ## Narrow supported claim
 

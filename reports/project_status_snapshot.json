@@ -114,7 +114,7 @@
           "meta": "4829dfae7697f1784830eeb09d493cd2a7d45858d2a0ddd706a1447907a15c77",
           "mistral": "156bcdd7a7bbf1a33b17982491731a6b08abfef1b11f9a29424c43758ead77b3"
         },
-        "paper_sha256": "e3efc2028d3685d439926f5c929302eda56982b141633b31601f2b76a36d290a",
+        "paper_sha256": "d70fd7d02bfaf70f96382ddd5ff98fc48d54ac088e7008a53a2107690fe78aff",
         "ramdocs_manifest_sha256": "5cd9ff842789afd69fa8e64ff89c0f85eca2f8bc934aa4c694aeec92388074df",
         "ramdocs_round2_manifest_sha256": "33978e7a198b5eaaf9d401ec36a774cf97ce3c760535f78fe0550f3fb24e00da"
       },
@@ -156,11 +156,11 @@
     },
     "reader_reports": {
       "files": {
-        "reports/README.md": "62e297e929f96f224808e8d63782e6120f6a405e0bac6deacd53056bcc9d3440",
+        "reports/README.md": "31d6786337c2fa02cbe21095c648520fcc940a627a8682ef52695493472c6a72",
         "reports/single_author_diagnostic_report.md": "9f8d088ee1c848c0340c74974ec5c7d8f0682cbcc75bb0aab70fbf8938467a21",
         "reports/solo_human_review_priority.csv": "bb036eb51e27d4b654978dd2bd0a2330422c58bf7bc2e6769fced165242a5dee",
-        "reports/solo_paper_readiness.json": "96cf0d2b0053469432d4a87c863e3c1d6ecce2528ea2df7d9aa000a1609ccc6d",
-        "reports/solo_paper_readiness.md": "2f1e550145d74c5d3df8e243da4d344f7eb49d316a97adf373f53935135f6226"
+        "reports/solo_paper_readiness.json": "3d33611d496970795029017af1a5119efecfdcceeebf09ca90ee7422c9c503b9",
+        "reports/solo_paper_readiness.md": "5075656064d5b9e01d2ae3bbadab46b5e3eacd7723d3991cf559e32b45bc9ee6"
       },
       "missing": [],
       "valid": true
@@ -177,7 +177,7 @@
       "valid": true
     },
     "solo_paper_readiness": {
-      "allowed_claim": "On a construction-derived, machine-audited 60-item Qwen development diagnostic, typed conflict control improves over its untyped ablation.",
+      "allowed_claim": "Across eight RAMDocs development methods, errors concentrate after retrieved evidence and answer transformation; FAR shows a narrower machine-audited typed-control signal whose transport and ontology stability are explicitly bounded.",
       "claim_scope": {
         "checks": {
           "boundary_ablation_not_positive": true,
@@ -309,8 +309,52 @@
           "schema_version": "far-fever-binary-evaluation-audit-v1",
           "valid": true
         },
+        "p5_registered_ablations": {
+          "checks": {
+            "frozen_exact_match_values": true,
+            "h3_uncertain": true,
+            "h5_equivalent": true,
+            "reader_report_discloses_boundaries": true,
+            "registered_dev_metadata": true
+          },
+          "errors": [],
+          "h3_verdict": "uncertain",
+          "h5_verdict": "equivalent",
+          "json_sha256": "f0675a81f697640f1266c7bf63c3f7ff83e261fafbe360c0c24ef3ec8935a270",
+          "markdown_sha256": "1a30324c4fc7d5b5aa5542c05733ed8dbd33486e8643d906d34e5c167df2b046",
+          "raw_outputs_recomputed_by_this_gate": false,
+          "samples": 350,
+          "valid": true
+        },
+        "p6m_machine_ontology_stability": {
+          "association_estimable": false,
+          "checks": {
+            "association_not_estimable": true,
+            "machine_only_boundary": true,
+            "negative_consensus_result": true
+          },
+          "confirmatory_h4": false,
+          "consensus_samples": 15,
+          "dispositions": {
+            "contested": 202,
+            "majority": 14,
+            "unanimous": 1
+          },
+          "errors": [],
+          "human_annotation_replaced": false,
+          "human_iaa_computed": false,
+          "human_identity_verified": false,
+          "publication_gold": false,
+          "retrospective": true,
+          "samples": 217,
+          "schema_version": "far-p6m-report-audit-v1",
+          "study_profile": "machine_ontology_stability_audit",
+          "test_accessed": false,
+          "valid": true
+        },
+        "paper_appendix_sha256": "b0517884ca98886580ca23269700d1aa8d5408ebeb369a08089a0100aa98f450",
         "paper_checklist_sha256": "e3b92d8cc9e056eb1ebba33e91c6b338a6bbbb29e34e19abe7f3eb94c42b967a",
-        "paper_main_sha256": "e3efc2028d3685d439926f5c929302eda56982b141633b31601f2b76a36d290a",
+        "paper_main_sha256": "d70fd7d02bfaf70f96382ddd5ff98fc48d54ac088e7008a53a2107690fe78aff",
         "paper_supplement_sha256": "17a325914f811c66aa97ce5c996ca8365fb793b2b45fc284baa98b0d8b57aefb",
         "solo_release": {
           "errors": [],
@@ -336,13 +380,18 @@
         "externally held blind test",
         "publication-grade benchmark gold",
         "positive marginal contribution from every FAR component",
-        "multi-model or external-domain generality"
+        "multi-model or external-domain generality",
+        "H3 equivalence or H4 confirmation",
+        "P6-M as human review, human adjudication, or human IAA",
+        "population mappability estimated from the 15 machine-consensus rows"
       ],
       "gates": {
         "claim_scope_matches_observed_ablations": true,
         "frozen_fever_negative_transfer_disclosed": true,
+        "tracked_registered_p5_report": true,
         "tracked_solo_evidence": true,
-        "tracked_stage_trace_map": true
+        "tracked_stage_trace_map": true,
+        "verified_p6m_negative_stability_audit": true
       },
       "ready": true,
       "required_limitations": [
@@ -353,9 +402,12 @@
         "typed revision trades lower answer correctness for non-zero revision behavior",
         "FEVER binary transfer shows no paired accuracy gain",
         "machine-disposition sensitivity is post-hoc and not independent label validation",
-        "cross-method trace attribution does not identify detection or action causal gaps"
+        "cross-method trace attribution does not identify detection or action causal gaps",
+        "P5 uses upstream-labelled development evidence and H3 remains uncertain",
+        "P6-M is machine-panel sensitivity, not population type mappability",
+        "the strict human P6 analysis was not completed"
       ],
-      "schema_version": "far-solo-paper-readiness-v1",
+      "schema_version": "far-solo-paper-readiness-v2",
       "strict_aaai_submission_ready": false,
       "study_profile": "single_author_machine_audited_paper"
     },
@@ -381,7 +433,7 @@
     ]
   },
   "single_author_machine_audited_paper": {
-    "allowed_claim": "On a construction-derived, machine-audited 60-item Qwen development diagnostic, typed conflict control improves over its untyped ablation.",
+    "allowed_claim": "Across eight RAMDocs development methods, errors concentrate after retrieved evidence and answer transformation; FAR shows a narrower machine-audited typed-control signal whose transport and ontology stability are explicitly bounded.",
     "ready": true,
     "required_limitations": [
       "labels are not human-validated gold",
@@ -391,7 +443,10 @@
       "typed revision trades lower answer correctness for non-zero revision behavior",
       "FEVER binary transfer shows no paired accuracy gain",
       "machine-disposition sensitivity is post-hoc and not independent label validation",
-      "cross-method trace attribution does not identify detection or action causal gaps"
+      "cross-method trace attribution does not identify detection or action causal gaps",
+      "P5 uses upstream-labelled development evidence and H3 remains uncertain",
+      "P6-M is machine-panel sensitivity, not population type mappability",
+      "the strict human P6 analysis was not completed"
     ],
     "strict_aaai_submission_ready": false
   },

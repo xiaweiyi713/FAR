@@ -20,7 +20,7 @@
 \maketitle
 
 \begin{abstract}
-End-to-end accuracy does not reveal whether a self-correcting retrieval system failed to find evidence or failed after evidence became available. We introduce a capability-aware trace attribution protocol that compares only instrumentation shared by all methods and fails closed when a stage is not observed. Across eight methods and 350 upstream-labelled RAMDocs development items, every method has more errors after at least one correct document was retrieved and the answer text changed than retrieval-miss errors. The pooled difference is $+0.3914$ (95\% sample-cluster bootstrap $[+0.3554,+0.4275]$). This is evidence of post-retrieval answer-transformation failure, not a causal oracle decomposition: six baselines do not expose comparable detection or action traces, and two items lack upstream correct-document labels. FAR provides an instrumented case study. On a 60-item Qwen3.5 9B machine-audited development diagnostic, typed control improves over a matched untyped ablation by 0.078 (95\% paired bootstrap [0.034, 0.124]), with a positive directional reproduction across Mistral, Gemma, and Llama. Yet two preregistered RAMDocs rounds show no end-to-end advantage, all 34 positive Qwen item-level deltas pass through changed revisions, and removing typed revision improves the overall mean. We therefore claim a reproducible cross-method concentration of errors after retrieval and answer transformation, plus a narrower typed-control case study; we do not claim a cross-method detection bottleneck, human-validated gold, external blindness, or general superiority.
+End-to-end accuracy does not reveal whether a self-correcting retrieval system failed to find evidence or failed after evidence became available. We introduce a capability-aware trace attribution protocol that compares only instrumentation shared by all methods and fails closed when a stage is not observed. Across eight methods and 350 upstream-labelled RAMDocs development items, every method has more errors after at least one correct document was retrieved and the answer text changed than retrieval-miss errors. The pooled difference is $+0.3914$ (95\% sample-cluster bootstrap $[+0.3554,+0.4275]$). This is evidence of post-retrieval answer-transformation failure, not a causal oracle decomposition: six baselines do not expose comparable detection or action traces, and two items lack upstream correct-document labels. FAR provides an instrumented case study. On a 60-item Qwen3.5 9B machine-audited development diagnostic, typed control improves over a matched untyped ablation by 0.078 (95\% paired bootstrap [0.034, 0.124]), with a positive directional reproduction across Mistral, Gemma, and Llama. Yet two preregistered RAMDocs rounds show no end-to-end advantage, registered clean ablations do not establish a typed-revision benefit, and a three-family ontology stress test reaches stable machine consensus on only 15/217 external items. We therefore claim a reproducible cross-method concentration of errors after retrieval and answer transformation, plus a narrower typed-control case study; we do not claim a cross-method detection bottleneck, human-validated gold, external blindness, population type mappability, or general superiority.
 \end{abstract}
 
 \section{Introduction}
@@ -209,6 +209,18 @@ removed, this identifies revision as a heterogeneous mediator of both local
 benefit and larger aggregate harm. It does not identify a uniformly beneficial
 component or rescue the RAMDocs gate.
 
+\paragraph{Registered clean RAMDocs ablations.}
+P5 reran full FAR, an aggressiveness-matched removal of typed revision, and a
+flat-claim arm on all 350 upstream-labelled development items. Full exact match
+is 0.3057 versus 0.3086 without typed revision; the full-minus-ablation
+difference is $-0.0029$ with a 90\% sample-cluster interval of
+$[-0.0229,+0.0171]$. Because that interval crosses the registered
+$[-0.02,+0.02]$ equivalence boundary, H3 remains \texttt{uncertain}. The
+flat-claim arm also obtains 0.3057; its difference is 0 with interval
+$[-0.0057,+0.0057]$, so H5 is \texttt{equivalent} under the registered rule.
+These results strengthen the negative component evidence without turning
+upstream-labelled development data into human gold or a held-out result.
+
 Table~\ref{tab:preconditions} turns these negative and mixed findings into an
 operational applicability checklist. These are observed necessary checks, not
 sufficient conditions or a causal theorem: satisfying one row did not by itself
@@ -319,8 +331,31 @@ conditions where it can help, but the observed external effect is tiny,
 dataset-dependent, and not a global transfer result. WS3 cannot rescue RAMDocs
 G-A, unlock held-out data, or reinstate a general end-to-end claim.
 
+\subsection{Machine-only ontology stability stress test}
+
+P6-M tests whether three model families apply the frozen seven-type conflict
+ontology consistently to the 217 public-development WS3 items. Each juror sees
+two semantically matched views with reversed evidence order. A juror contributes
+a stable vote only when its mappability label and mapped type set agree across
+views; otherwise the item remains unresolved for that juror. J1, J2, and J3 are
+stable on 50, 88, and 24 items, respectively. View-level mappability Fleiss
+$\kappa$ is 0.167 for view A and $-0.041$ for view B.
+
+Only 15 of 217 items reach stable machine consensus: one unanimous and 14
+majority decisions; 202 are contested. This selected 6.9\% subset cannot estimate population type mappability, human agreement, or human gold. One
+frozen stratum has zero consensus, so the registered six-stratum association
+is not estimable. The negative result instead identifies ontology application
+itself as an unstable precondition: conclusions can change under semantically
+equivalent prompts and evidence order. It does not confirm H4, replace the
+inactive human P6 protocol, or license extrapolation from the 15 consensus rows.
+
 \section{Limitations and Responsible Use}
 The candidate set reuses a small controlled source corpus, includes synthetic passages, and has correlated variants. Its labels are not human-validated gold, the reported split is development data, and evaluation is not externally blind. The machine audit measures agreement with construction labels and cannot reveal errors shared by construction, the LLM signal, and deterministic rules. The completed family reproduction uses four local model families on the same constructed development distribution and therefore does not establish external-domain or deployment generality. Rule conflict detectors are high precision but incomplete; model detectors inherit calibration and domain-shift risk. Retrieval failure can hide a true counterexample, while spurious low-quality contradictions can induce over-correction. The benchmark is not current factual advice and is unsuitable for medical, legal, financial, or policy decisions. Final authors remain responsible for checking all text, citations, experiments, and disclosure requirements.
+
+The P6-M panel is a machine-sensitivity audit, not human review,
+adjudication, inter-annotator agreement, or an estimate of population
+mappability. The strict human P6 packet remains unanalyzed and inactive; no
+model output occupies a human reviewer or adjudicator role.
 
 The cross-method trace map is limited by heterogeneous instrumentation. It can
 compare retrieved document identifiers and textual answer changes, but it cannot
@@ -360,7 +395,9 @@ its capability matrix also prevents a stronger claim: six methods do not expose
 comparable detection or action states. FAR turns ``what could make this answer
 wrong?'' into an instrumented typed-control case study. Its local typed signal
 recurs directionally across three additional families, while two RAMDocs nulls
-and the revision ablation show that transformation is not reliably correction.
+and the registered revision ablations show that transformation is not reliably
+correction. Low cross-view machine consensus further shows that stable type
+mapping is itself an applicability boundary.
 The resulting contribution is a reproducible account of post-retrieval answer-
 transformation failure and a narrower revision-mediated FAR effect---not a
 causal detection bottleneck, human-gold, blind-test, external-domain, or general

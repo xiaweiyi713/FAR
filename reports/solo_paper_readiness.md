@@ -12,10 +12,12 @@ multi-model generality.
 | Paper claim scope matches ablations | `true` |
 | FEVER negative transfer disclosed | `true` |
 | Tracked stage trace map | `true` |
+| Tracked registered P5 report | `true` |
+| Verified P6-M negative stability audit | `true` |
 
 ## Narrow supported claim
 
-On a construction-derived, machine-audited 60-item Qwen development diagnostic, typed conflict control improves over its untyped ablation.
+Across eight RAMDocs development methods, errors concentrate after retrieved evidence and answer transformation; FAR shows a narrower machine-audited typed-control signal whose transport and ontology stability are explicitly bounded.
 
 - FAR answer correctness: `0.797`
 - Typed minus untyped answer correctness: `+0.078`
@@ -34,6 +36,9 @@ On a construction-derived, machine-audited 60-item Qwen development diagnostic, 
 - FEVER binary transfer shows no paired accuracy gain
 - machine-disposition sensitivity is post-hoc and not independent label validation
 - cross-method trace attribution does not identify detection or action causal gaps
+- P5 uses upstream-labelled development evidence and H3 remains uncertain
+- P6-M is machine-panel sensitivity, not population type mappability
+- the strict human P6 analysis was not completed
 
 ## Forbidden claims
 
@@ -43,3 +48,6 @@ On a construction-derived, machine-audited 60-item Qwen development diagnostic, 
 - publication-grade benchmark gold
 - positive marginal contribution from every FAR component
 - multi-model or external-domain generality
+- H3 equivalence or H4 confirmation
+- P6-M as human review, human adjudication, or human IAA
+- population mappability estimated from the 15 machine-consensus rows

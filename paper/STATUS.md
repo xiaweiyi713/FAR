@@ -87,6 +87,22 @@ both dataset-level comparisons are near null. The draft may include the
 verified WS2 and WS3 releases only with the public-dev, machine-audited,
 low-power caveats.
 
+P5 is now complete and integrated as registered negative component evidence.
+Across 350 upstream-labelled RAMDocs development items, full FAR obtains 0.3057
+exact match, the aggressiveness-matched removal of typed revision obtains
+0.3086, and flat claims obtain 0.3057. H3 remains `uncertain` because the 90%
+interval `[-0.0229,+0.0171]` crosses the registered equivalence boundary; H5 is
+`equivalent` because `[-0.0057,+0.0057]` lies wholly inside it. The paper must
+not promote H3 to equivalence or H5 to a general no-effect claim.
+
+P6-M is also complete and integrated as a negative ontology-stability audit.
+J1/J2/J3 are dual-view stable on 50/217, 88/217, and 24/217 items. Only 15/217
+items reach stable machine consensus and 202 are contested; one frozen stratum
+has no consensus, so the registered association is not estimable. This is
+machine-panel sensitivity evidence, not population mappability, human IAA,
+adjudicated gold, or H4 confirmation. It closes the accepted no-human profile
+without filling any human reviewer or adjudicator role.
+
 The active text now also has a reproducible TMLR submission build path:
 `scripts/build_tmlr_paper.sh` takes the scientific body from `paper/main.tex`,
 wraps it in the unmodified official TMLR anonymous-submission style pinned at
@@ -116,13 +132,16 @@ all four component ablations, paired inference for typed versus untyped FAR,
 and the frozen FEVER binary transfer result. The paper claim is deliberately
 narrow:
 
-> On a construction-derived, machine-audited Qwen development diagnostic,
-> typed conflict control improves over a matched untyped ablation.
+> Across eight RAMDocs development methods, errors concentrate after retrieved
+> evidence and answer transformation; FAR shows a narrower machine-audited
+> typed-control signal whose transport and ontology stability are explicitly
+> bounded.
 
 The gate requires the paper to disclose that removing refutation or boundary
 queries does not reduce answer correctness, while removing typed revision
 raises answer correctness and eliminates revision behavior. It also requires
-the non-human-gold, non-blind, single-model, and FEVER-null-transfer limits.
+the registered P5 verdicts, the P6-M 15/217 negative result, and the
+non-human-gold, non-blind, single-model, and FEVER-null-transfer limits.
 The tracked status is in `reports/solo_paper_readiness.{md,json}`.
 
 ## Preregistered 2+4 single-author evidence profile

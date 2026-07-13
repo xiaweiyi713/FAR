@@ -16,6 +16,9 @@
   Ollama 或 llama-server 进程；本机从未下载或运行模型。
 - 原 P6 仍为 217/217 机器预标完成、`ready_to_analyze=false`。这是被保留的非活动严格人工协议；
   没有模型结果写入人工槽位，也不影响当前无真人 profile 的完成状态。
+- TMLR 主文和附录已纳入 P5 注册消融及 P6-M 阴性稳定性结果；paper-readiness 会同时校验
+  H3 `uncertain`、H5 scoped `equivalent`、P6-M 15/217 共识/202 contested 与全部非真人边界。
+  当前 14 页构建无 overfull box 或未解析引用；此更新没有调用模型或 GPU。
 
 ## 既有 WS1--WS6 结论（2026-07-09 冻结）
 
