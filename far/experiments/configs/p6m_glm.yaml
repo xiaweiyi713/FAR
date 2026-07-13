@@ -5,7 +5,7 @@ llm:
   model: glm4:9b
   base_url: http://localhost:11434
   temperature: 0.0
-  max_tokens: 900
+  max_tokens: 1200
   unload_after_sample: true
   cache_enabled: true
   cache_path: /mnt/d/FAR-outputs/cache/p6m_glm4.sqlite3

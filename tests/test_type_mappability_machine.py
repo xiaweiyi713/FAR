@@ -10,11 +10,13 @@ import far.experiments.type_mappability_machine as p6m
 from far.bench.build.common import sha256_file, write_json, write_jsonl
 from far.experiments.type_mappability_machine import (
     JUROR_SPECS,
+    P6M_MAX_ATTEMPTS,
     PROFILE,
     PROMPT_TEMPLATE_SHA256,
     PROTOCOL_PATH,
     PROTOCOL_SHA256,
     VIEW_IDS,
+    _parse_p6m_response,
     _prompt,
     _source,
     analyze,
@@ -114,7 +116,9 @@ def _write_juror(
                 }
             )
     annotations_path = output_dir / f"annotations_{juror_id}.jsonl"
+    failures_path = output_dir / "failed_attempts.jsonl"
     write_jsonl(annotations_path, rows)
+    write_jsonl(failures_path, [])
     write_json(
         output_dir / "juror_manifest.json",
         {
@@ -136,6 +140,9 @@ def _write_juror(
             "complete": True,
             "annotation_file": annotations_path.name,
             "annotation_sha256": sha256_file(annotations_path),
+            "failed_attempt_file": failures_path.name,
+            "failed_attempts": 0,
+            "failed_attempt_sha256": sha256_file(failures_path),
             "run_identity_sha256": sha256_file(identity_path),
             "qwen_prelabels_used": False,
             "human_annotator": False,
@@ -174,6 +181,17 @@ def test_p6m_protocol_fingerprint_and_views_are_frozen() -> None:
     for evidence_id in evidence_ids:
         assert prompt_a.count(evidence_id) == 1
         assert prompt_b.count(evidence_id) == 1
+
+
+def test_p6m_parser_extracts_one_object_but_keeps_schema_fail_closed() -> None:
+    annotation = _annotation("clean", "temporal")
+    response = f"Preface\n```json\n{json.dumps(annotation)}\n```\nTrailing prose"
+    assert _parse_p6m_response(response, sample_id="sample") == annotation
+    with pytest.raises(ValueError, match="mapped_types must be unique"):
+        _parse_p6m_response(
+            json.dumps({**annotation, "mapped_types": ["temporal", "temporal"]}),
+            sample_id="sample",
+        )
 
 
 def test_p6m_consensus_preserves_majority_and_contested_layers(tmp_path: Path) -> None:
@@ -266,6 +284,7 @@ def test_p6m_annotation_runner_writes_two_views_without_a_real_model(
     )
     assert manifest["complete"] is False
     assert manifest["rows"] == 2
+    assert manifest["failed_attempts"] == 0
     assert len(generator.prompts) == 2
     assert generator.prompts[0] != generator.prompts[1]
     assert generator.released is True
@@ -282,3 +301,53 @@ def test_p6m_annotation_runner_writes_two_views_without_a_real_model(
             limit=1,
             resume=True,
         )
+
+
+def test_p6m_terminal_failures_are_fsynced_and_retries_do_not_nest(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    class InvalidGenerator:
+        def __init__(self) -> None:
+            self.prompts: list[str] = []
+
+        def complete(self, prompt: str, **_: object) -> str:
+            self.prompts.append(prompt)
+            return "not-json"
+
+    generator = InvalidGenerator()
+    config_path = tmp_path / "config.yaml"
+    config_path.write_text("llm:\n  max_tokens: 1200\n")
+    runtime = {
+        "enabled": True,
+        "provider": "ollama",
+        "model": "mistral:7b-instruct",
+        "ollama_model": {"model": "mistral:7b-instruct", "digest": "1" * 64},
+    }
+    monkeypatch.setattr(p6m, "build_generator", lambda _: generator)
+    monkeypatch.setattr(
+        p6m,
+        "_validate_runtime",
+        lambda _config, _juror: (JUROR_SPECS["J1"], runtime),
+    )
+    monkeypatch.setattr(
+        p6m,
+        "_source_revision",
+        lambda: {"git_dirty": False, "git_commit": "d" * 40},
+    )
+    output_dir = tmp_path / "failed-juror"
+    with pytest.raises(ValueError, match=f"invalid after {P6M_MAX_ATTEMPTS} attempts"):
+        annotate_juror(
+            PACKET,
+            config_path,
+            output_dir,
+            juror_id="J1",
+            limit=1,
+            resume=True,
+        )
+    failures = [
+        json.loads(line) for line in (output_dir / "failed_attempts.jsonl").read_text().splitlines()
+    ]
+    assert len(failures) == P6M_MAX_ATTEMPTS
+    assert [row["sequence"] for row in failures] == list(range(1, P6M_MAX_ATTEMPTS + 1))
+    assert len(generator.prompts) == P6M_MAX_ATTEMPTS
+    assert all(prompt.count("Your preceding response") == 1 for prompt in generator.prompts[1:])

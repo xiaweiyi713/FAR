@@ -30,7 +30,6 @@ from far.experiments.type_mappability import (
     BOOTSTRAP_RESAMPLES,
     BOOTSTRAP_SEED,
     DATASET_ORDER,
-    MACHINE_PRELABEL_MAX_ATTEMPTS,
     MACHINE_PRELABEL_RESPONSE_SCHEMA,
     MAPPABILITY_LABELS,
     TYPE_NAMES,
@@ -38,18 +37,19 @@ from far.experiments.type_mappability import (
     _association,
     _bootstrap_mean,
     _mapping_weight,
-    _parse_machine_response,
     _score_deltas,
     _stable_sha,
     _stratum_key,
+    validate_annotation,
 )
 from far.paths import repository_root
 
 ROOT = repository_root()
 PROTOCOL_PATH = ROOT / "docs" / "PREREG_TYPE_MAPPABILITY_MACHINE_2026-07-13.md"
-PROTOCOL_SHA256 = "8f672d6ca56e434f69d01f9b55fad4818fd2780e1c9a9df7295cf684ec0eae6a"
+PROTOCOL_SHA256 = "bc93cb9c6c1c8db60a49dea0fefdf0dc2ffa32336c6d96810321d536c0b2bfb3"
 PROFILE = "machine_ontology_stability_audit"
 VIEW_IDS = ("view_a", "view_b")
+P6M_MAX_ATTEMPTS = 5
 JUROR_SPECS = {
     "J1": {
         "family": "mistral",
@@ -135,6 +135,7 @@ def _prompt(item: dict[str, Any], view_id: str) -> str:
     return (
         f"{task}\n\nFrozen type guide:\n{type_guide}\n\n"
         "Required JSON fields: mappability, mapped_types, missing_concept, rationale.\n"
+        "Keep missing_concept to a short phrase and rationale to at most two concise sentences.\n"
         "For insufficient evidence use unmappable with no mapped types and "
         "missing_concept=insufficient_visible_evidence. counter_evidence is not a generic "
         "fallback when a more specific type applies.\n\n"
@@ -174,7 +175,7 @@ PROMPT_TEMPLATE_SHA256 = _stable_sha(
         "response_schema": MACHINE_PRELABEL_RESPONSE_SCHEMA,
         "view_rule": "sha256_order_then_reverse",
         "retry": _RETRY,
-        "max_attempts": MACHINE_PRELABEL_MAX_ATTEMPTS,
+        "max_attempts": P6M_MAX_ATTEMPTS,
     }
 )
 
@@ -184,6 +185,55 @@ def _retry_prompt(base_prompt: str, previous: str, error: str) -> str:
         f"{base_prompt}\n\n{_RETRY}\nValidation error: {error}\n"
         f"Previous invalid response:\n{previous}"
     )
+
+
+def _parse_p6m_response(response: str, *, sample_id: str) -> dict[str, Any]:
+    stripped = response.strip()
+    decoder = json.JSONDecoder()
+    for index, character in enumerate(stripped):
+        if character != "{":
+            continue
+        try:
+            value, _ = decoder.raw_decode(stripped[index:])
+        except json.JSONDecodeError:
+            continue
+        if isinstance(value, dict):
+            return validate_annotation(value, sample_id=sample_id)
+    raise ValueError(f"{sample_id}: P6-M response does not contain a valid JSON object")
+
+
+def _validate_failure_log(
+    rows: list[dict[str, Any]],
+    items: dict[str, dict[str, Any]],
+    *,
+    juror_id: str,
+    model_family: str,
+) -> None:
+    for sequence, row in enumerate(rows, start=1):
+        sample_id = str(row.get("sample_id", ""))
+        view_id = str(row.get("view_id", ""))
+        prompt = str(row.get("prompt", ""))
+        response = str(row.get("raw_response", ""))
+        if (
+            row.get("schema_version") != "far-p6m-failed-attempt-v1"
+            or row.get("sequence") != sequence
+            or sample_id not in items
+            or view_id not in VIEW_IDS
+            or row.get("juror_id") != juror_id
+            or row.get("model_family") != model_family
+            or row.get("context_sha256") != items[sample_id]["context_sha256"]
+            or row.get("attempt") not in range(1, P6M_MAX_ATTEMPTS + 1)
+            or row.get("prompt_sha256") != hashlib.sha256(prompt.encode()).hexdigest()
+            or row.get("raw_response_sha256") != hashlib.sha256(response.encode()).hexdigest()
+        ):
+            raise ValueError("P6-M failed-attempt log provenance is invalid")
+        try:
+            _parse_p6m_response(response, sample_id=sample_id)
+        except ValueError as exc:
+            if row.get("validation_error") != str(exc):
+                raise ValueError("P6-M failed-attempt error changed") from exc
+        else:
+            raise ValueError("P6-M failed-attempt log contains a valid response")
 
 
 def _validate_runtime(
@@ -227,13 +277,10 @@ def _attempts_valid(
     item: dict[str, Any],
     view_id: str,
 ) -> dict[str, Any]:
-    if (
-        not isinstance(attempts, list)
-        or not attempts
-        or len(attempts) > MACHINE_PRELABEL_MAX_ATTEMPTS
-    ):
+    if not isinstance(attempts, list) or not attempts or len(attempts) > P6M_MAX_ATTEMPTS:
         raise ValueError(f"{item['sample_id']}:{view_id}: invalid attempt chain")
-    prompt = _prompt(item, view_id)
+    base_prompt = _prompt(item, view_id)
+    prompt = base_prompt
     parsed: dict[str, Any] | None = None
     for index, attempt in enumerate(attempts, start=1):
         if not isinstance(attempt, dict) or attempt.get("attempt") != index:
@@ -247,7 +294,7 @@ def _attempts_valid(
         ):
             raise ValueError(f"{item['sample_id']}:{view_id}: response fingerprint mismatch")
         try:
-            candidate = _parse_machine_response(response, sample_id=str(item["sample_id"]))
+            candidate = _parse_p6m_response(response, sample_id=str(item["sample_id"]))
         except ValueError as exc:
             if attempt.get("valid") is not False or attempt.get("validation_error") != str(exc):
                 raise ValueError(f"{item['sample_id']}:{view_id}: invalid failure record") from exc
@@ -255,7 +302,7 @@ def _attempts_valid(
                 raise ValueError(
                     f"{item['sample_id']}:{view_id}: attempt chain ends invalid"
                 ) from exc
-            prompt = _retry_prompt(prompt, response, str(exc))
+            prompt = _retry_prompt(base_prompt, response, str(exc))
         else:
             if attempt.get("valid") is not True or attempt.get("validation_error") is not None:
                 raise ValueError(f"{item['sample_id']}:{view_id}: invalid success record")
@@ -322,7 +369,16 @@ def annotate_juror(
     else:
         write_json(identity_path, identity)
     rows_path = output_dir / f"annotations_{juror_id}.jsonl"
+    failures_path = output_dir / "failed_attempts.jsonl"
     existing_rows = read_jsonl(rows_path) if rows_path.is_file() else []
+    failure_rows = read_jsonl(failures_path) if failures_path.is_file() else []
+    _validate_failure_log(
+        failure_rows,
+        items,
+        juror_id=juror_id,
+        model_family=spec["family"],
+    )
+    failure_sequence = len(failure_rows)
     completed: dict[tuple[str, str], dict[str, Any]] = {}
     for row in existing_rows:
         sample_id = str(row.get("sample_id", ""))
@@ -352,22 +408,26 @@ def annotate_juror(
     if generator is None:
         raise ValueError("P6-M annotation requires an enabled generator")
     try:
-        with rows_path.open("a", encoding="utf-8") as handle:
+        with (
+            rows_path.open("a", encoding="utf-8") as handle,
+            failures_path.open("a", encoding="utf-8") as failure_handle,
+        ):
             for sample_id in ordered_ids:
                 item = items[sample_id]
                 for view_id in VIEW_IDS:
                     key = (sample_id, view_id)
                     if key in completed:
                         continue
-                    prompt = _prompt(item, view_id)
+                    base_prompt = _prompt(item, view_id)
+                    prompt = base_prompt
                     attempts: list[dict[str, Any]] = []
                     annotation: dict[str, Any] | None = None
-                    for attempt_number in range(1, MACHINE_PRELABEL_MAX_ATTEMPTS + 1):
+                    for attempt_number in range(1, P6M_MAX_ATTEMPTS + 1):
                         response = generator.complete(
                             prompt,
                             system_prompt=_SYSTEM_PROMPTS[view_id],
                             temperature=0.0,
-                            max_tokens=int(config.get("llm", {}).get("max_tokens", 900)),
+                            max_tokens=int(config.get("llm", {}).get("max_tokens", 1200)),
                             response_format=MACHINE_PRELABEL_RESPONSE_SCHEMA,
                         ).strip()
                         attempt = {
@@ -379,16 +439,37 @@ def annotate_juror(
                             ).hexdigest(),
                         }
                         try:
-                            annotation = _parse_machine_response(response, sample_id=sample_id)
+                            annotation = _parse_p6m_response(response, sample_id=sample_id)
                         except ValueError as exc:
                             attempt.update({"valid": False, "validation_error": str(exc)})
                             attempts.append(attempt)
-                            if attempt_number == MACHINE_PRELABEL_MAX_ATTEMPTS:
+                            failure_sequence += 1
+                            failure_row = {
+                                "schema_version": "far-p6m-failed-attempt-v1",
+                                "sequence": failure_sequence,
+                                "sample_id": sample_id,
+                                "view_id": view_id,
+                                "context_sha256": item["context_sha256"],
+                                "juror_id": juror_id,
+                                "model_family": spec["family"],
+                                "prompt": prompt,
+                                **attempt,
+                            }
+                            failure_handle.write(
+                                json.dumps(failure_row, ensure_ascii=False, sort_keys=True) + "\n"
+                            )
+                            failure_handle.flush()
+                            os.fsync(failure_handle.fileno())
+                            print(
+                                f"p6m: invalid {juror_id} {sample_id} {view_id} "
+                                f"attempt={attempt_number}: {exc}"
+                            )
+                            if attempt_number == P6M_MAX_ATTEMPTS:
                                 raise ValueError(
                                     f"{sample_id}:{view_id}: invalid after "
-                                    f"{MACHINE_PRELABEL_MAX_ATTEMPTS} attempts"
+                                    f"{P6M_MAX_ATTEMPTS} attempts"
                                 ) from exc
-                            prompt = _retry_prompt(prompt, response, str(exc))
+                            prompt = _retry_prompt(base_prompt, response, str(exc))
                         else:
                             attempt.update({"valid": True, "validation_error": None})
                             attempts.append(attempt)
@@ -435,6 +516,9 @@ def annotate_juror(
         "complete": complete,
         "annotation_file": rows_path.name,
         "annotation_sha256": sha256_file(rows_path),
+        "failed_attempt_file": failures_path.name,
+        "failed_attempts": failure_sequence,
+        "failed_attempt_sha256": sha256_file(failures_path),
         "run_identity_sha256": sha256_file(identity_path),
         "qwen_prelabels_used": False,
         "human_annotator": False,
@@ -472,6 +556,8 @@ def _load_juror(
         or manifest.get("provider") != spec["provider"]
         or manifest.get("model") != spec["model"]
         or len(str(manifest.get("config_sha256", ""))) != 64
+        or not isinstance(manifest.get("failed_attempts"), int)
+        or int(manifest.get("failed_attempts", -1)) < 0
         or manifest.get("qwen_prelabels_used") is not False
         or manifest.get("human_annotator") is not False
         or manifest.get("human_annotation_replaced") is not False
@@ -483,11 +569,17 @@ def _load_juror(
     annotation_file = str(manifest.get("annotation_file", ""))
     if not annotation_file or Path(annotation_file).name != annotation_file:
         raise ValueError(f"{directory}: invalid P6-M annotation filename")
+    failed_attempt_file = str(manifest.get("failed_attempt_file", ""))
+    if not failed_attempt_file or Path(failed_attempt_file).name != failed_attempt_file:
+        raise ValueError(f"{directory}: invalid P6-M failed-attempt filename")
     annotations_path = directory / annotation_file
+    failures_path = directory / failed_attempt_file
     identity_path = directory / "run_identity.json"
-    if sha256_file(annotations_path) != manifest.get("annotation_sha256") or sha256_file(
-        identity_path
-    ) != manifest.get("run_identity_sha256"):
+    if (
+        sha256_file(annotations_path) != manifest.get("annotation_sha256")
+        or sha256_file(failures_path) != manifest.get("failed_attempt_sha256")
+        or sha256_file(identity_path) != manifest.get("run_identity_sha256")
+    ):
         raise ValueError(f"{directory}: P6-M juror fingerprint mismatch")
     identity = json.loads(identity_path.read_text(encoding="utf-8"))
     runtime = identity.get("llm_runtime")
@@ -519,6 +611,15 @@ def _load_juror(
             or len(str(ollama.get("digest", ""))) != 64
         ):
             raise ValueError(f"{directory}: missing immutable Ollama digest")
+    failure_rows = read_jsonl(failures_path)
+    if len(failure_rows) != manifest.get("failed_attempts"):
+        raise ValueError(f"{directory}: P6-M failed-attempt count mismatch")
+    _validate_failure_log(
+        failure_rows,
+        items,
+        juror_id=juror_id,
+        model_family=spec["family"],
+    )
     rows: dict[str, dict[str, dict[str, Any]]] = defaultdict(dict)
     for row in read_jsonl(annotations_path):
         sample_id = str(row.get("sample_id", ""))
@@ -853,6 +954,8 @@ def compute_result(
                 "config_sha256": manifest["config_sha256"],
                 "run_identity_sha256": manifest["run_identity_sha256"],
                 "annotation_sha256": manifest["annotation_sha256"],
+                "failed_attempts": manifest["failed_attempts"],
+                "failed_attempt_sha256": manifest["failed_attempt_sha256"],
             }
             for manifest in manifests
         ],

@@ -35,6 +35,10 @@ Each role writes 217×2 rows under `/mnt/d/FAR-outputs/p6m/J*`. `--resume` is
 always used, so an interrupted role continues only when its run identity, commit,
 model, prompt, config, and source packet still match.
 
+Every invalid structured response is fsynced to `failed_attempts.jsonl` before a
+retry. Fenced or surrounding prose may be removed only to extract the first JSON
+object; the extracted object must still pass the exact frozen four-field schema.
+
 ## Fetch, analyze, and verify without models
 
 Dry-run first:

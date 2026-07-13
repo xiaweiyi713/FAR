@@ -114,3 +114,22 @@ P6-M 不使用第四个模型强行仲裁 contested 样本，不把代表性 rat
 
 缺文件、模型家族重复、模型身份不符、视图缺失、上下文/提示/响应指纹变化、样本集
 不完整或任何字段冒充人工证据时，流程必须失败关闭。
+
+### 2026-07-13 首次失败后的格式恢复偏离
+
+首次 J1 执行在写入 11/434 行后，因 `GCON0012/view_b` 连续三次响应不能被整段
+`json.loads` 解析而失败；J2/J3 未启动，没有共识或分析结果。失败与 GPU、标签值和
+typed−untyped score 无关。该 11 行失败运行整体归档且不进入正式 P6-M。
+
+正式重启前只修改格式容错与审计，不修改四字段语义、投票或统计：
+
+- 从 fenced/prefixed/suffixed 响应中提取第一个完整 JSON object，再执行完全相同的
+  frozen annotation schema；字段不合法仍拒绝，不做标签猜测或语义修补；
+- retry 永远基于原始 prompt 加上最近一次错误，不再把历次 retry prompt 递归嵌套；
+- 最大尝试从 3 次增至 5 次，输出预算从 900 增至 1200 tokens，并要求 rationale 最多
+  两个简短句子；
+- 每个失败尝试在下一次调用前立即写入带 prompt/raw/error 指纹的 append-only 日志；
+- 新 protocol/prompt/config/implementation 指纹下从 0/434 重启三个 juror，旧 11 行
+  不复用。
+
+该偏离依据纯格式失败而非任何标注分布或研究效果作出，所有主张边界保持不变。

@@ -3274,3 +3274,19 @@ evidence bundle verified successfully, releasing the GPU.
   are distinct; no model was downloaded and Qwen remains excluded from voting.
 - The affected protocol fingerprint, config, runner identity checks, tests, and
   execution handoff were updated before starting any P6-M inference.
+
+## 2026-07-13 — deviation: harden P6-M structured-output recovery after abort
+
+- The first Mistral J1 run stopped at 11/434 rows when `GCON0012/view_b`
+  produced non-parseable JSON on all three attempts. J2/J3 never started and no
+  consensus, analysis, or claim was produced. The GPU and Ollama behaved normally.
+- Archived the entire failed run instead of mixing implementations. The formal
+  restart uses a new protocol/prompt/config/implementation identity and starts J1
+  from zero.
+- Limited the fix to structured-output transport: extract the first complete JSON
+  object before applying the unchanged schema, use non-recursive retry prompts,
+  allow five attempts and 1200 output tokens, request concise rationales, and fsync
+  every failed response with prompt/raw/error fingerprints before retrying.
+- Added parser, retry, terminal-failure provenance, resume, and tamper regression
+  tests. No label was inferred from malformed text and no research threshold,
+  aggregation rule, score, sample, or claim boundary changed.
