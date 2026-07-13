@@ -3306,3 +3306,15 @@ evidence bundle verified successfully, releasing the GPU.
 - Added a required six-sample/12-view transport smoke that must cross the former
   failure point before another zero-based formal restart. Smoke labels are excluded
   from all analysis.
+
+## 2026-07-13 — deviation: restore bounded conditional schema after zero-row smoke
+
+- The first transport smoke made zero accepted rows: the simple structural schema
+  allowed `clean` with multiple mapped types, and deterministic retries repeated the
+  same conditional violation. No formal output was affected.
+- Restored the frozen `oneOf`/unique-items generation constraints and added only a
+  hard seven-item upper bound to every mapped-types branch (with the existing clean
+  and unmappable bounds remaining stricter). The authoritative post-generation
+  validator is unchanged.
+- Required the same six-sample/12-view smoke to be rerun from an empty directory
+  before formal execution.

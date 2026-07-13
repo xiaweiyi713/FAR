@@ -193,8 +193,11 @@ def test_p6m_parser_extracts_one_object_but_keeps_schema_fail_closed() -> None:
             json.dumps({**annotation, "mapped_types": ["temporal", "temporal"]}),
             sample_id="sample",
         )
-    assert P6M_RESPONSE_SCHEMA["properties"]["mapped_types"]["maxItems"] == 7
-    assert "uniqueItems" not in P6M_RESPONSE_SCHEMA["properties"]["mapped_types"]
+    mapped_schemas = [
+        branch["properties"]["mapped_types"] for branch in P6M_RESPONSE_SCHEMA["oneOf"]
+    ]
+    assert [schema["maxItems"] for schema in mapped_schemas] == [1, 7, 0]
+    assert all(schema["uniqueItems"] is True for schema in mapped_schemas)
 
 
 def test_p6m_consensus_preserves_majority_and_contested_layers(tmp_path: Path) -> None:

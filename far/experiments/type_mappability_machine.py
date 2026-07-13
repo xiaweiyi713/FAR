@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import copy
 import hashlib
 import json
 import math
@@ -46,7 +47,7 @@ from far.paths import repository_root
 
 ROOT = repository_root()
 PROTOCOL_PATH = ROOT / "docs" / "PREREG_TYPE_MAPPABILITY_MACHINE_2026-07-13.md"
-PROTOCOL_SHA256 = "cc81ad6b8422499bd5d2a4bb966f2a11d48d790b8476cbae6134efcdb4e4327b"
+PROTOCOL_SHA256 = "63488c9cdd83f6da4aa110ca8ee836c793b12ddbffd01011961053c9c08b400e"
 PROFILE = "machine_ontology_stability_audit"
 VIEW_IDS = ("view_a", "view_b")
 P6M_MAX_ATTEMPTS = 5
@@ -59,21 +60,10 @@ JUROR_SPECS = {
     "J2": {"family": "glm", "provider": "ollama", "model": "glm4:9b"},
     "J3": {"family": "meta", "provider": "ollama", "model": "llama3.1:8b"},
 }
-P6M_RESPONSE_SCHEMA: dict[str, Any] = {
-    "type": "object",
-    "properties": {
-        "mappability": {"type": "string", "enum": list(MAPPABILITY_LABELS)},
-        "mapped_types": {
-            "type": "array",
-            "items": {"type": "string", "enum": list(TYPE_NAMES)},
-            "maxItems": len(TYPE_NAMES),
-        },
-        "missing_concept": {"type": "string"},
-        "rationale": {"type": "string"},
-    },
-    "required": ["mappability", "mapped_types", "missing_concept", "rationale"],
-    "additionalProperties": False,
-}
+P6M_RESPONSE_SCHEMA: dict[str, Any] = copy.deepcopy(MACHINE_PRELABEL_RESPONSE_SCHEMA)
+for _branch in P6M_RESPONSE_SCHEMA["oneOf"]:
+    _mapped_types = _branch["properties"]["mapped_types"]
+    _mapped_types["maxItems"] = min(int(_mapped_types.get("maxItems", len(TYPE_NAMES))), 7)
 _TYPE_GUIDE = {
     "temporal": "time, date, version, or validity-period conflict for the same fact slot",
     "entity": "entity identity, reference, namesake, or entity-value substitution",
