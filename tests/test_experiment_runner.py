@@ -245,6 +245,7 @@ def test_suite_runs_far_baseline_ablation_and_artifacts(tmp_path: Path) -> None:
     assert artifact_manifest["publication_ready"] is False
     assert artifact_manifest["test_only"] is False
     assert artifact_manifest["scored_splits"] == ["dev"]
+    assert artifact_manifest["metric_profile"] == ("falsirag-evaluation-metrics-v2-revision-delta")
     assert artifact_manifest["strict_requirements"] == {
         "publication_ready": False,
         "test_only": False,
@@ -258,6 +259,9 @@ def test_suite_runs_far_baseline_ablation_and_artifacts(tmp_path: Path) -> None:
         )
     )
     assert far_report["comparison"]["baseline_method"] == "vanilla_rag"
+    assert far_report["metric_profile"] == "falsirag-evaluation-metrics-v2-revision-delta"
+    assert "revision_delta_f1" in far_report["confidence_intervals"]
+    assert "typed_revision_delta_f1" in far_report["confidence_intervals"]
     assert far_report["comparison"]["candidate_method"] == "far"
     assert ablation_report["comparison"]["baseline_method"] == "far"
     assert ablation_report["comparison"]["candidate_method"] == "far_minus_typed_conflict"

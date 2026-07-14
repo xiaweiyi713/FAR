@@ -3451,3 +3451,39 @@ evidence bundle verified successfully, releasing the GPU.
 - The formal gate packs both archive and verifier twice, requires byte identity
   for both, then audits with `python3 -I`. This isolates the recipient check from
   the checkout, user site-packages, `PYTHONPATH`, network, and model runtimes.
+
+## 2026-07-13 — P11 revision-delta metric audit and diagnostics v2
+
+- Audited the next paper-facing research gap and found that whole-answer soft F1
+  can give an unchanged erroneous answer about 0.983 on the 60-item dev split
+  because most construction references change only a small token span. This
+  makes it unsafe to interpret the existing answer score alone as repair quality.
+- Added post-hoc token-multiset revision-delta precision, recall, and F1 plus an
+  action-conditioned typed delta. The metric contract is frozen as
+  `falsirag-evaluation-metrics-v2-revision-delta`; public diagnostic verification
+  rejects missing or legacy profiles. The audit is lexical, not semantic, and
+  neither rewrites labels nor upgrades machine evidence.
+- Recomputed all 11 Qwen development reports from recorded predictions through
+  `--reports-only`, with zero model calls and no test access. FAR raw/typed delta
+  F1 is 0.145/0.096; untyped conflict is 0.093/0; no typed revision is 0.072/0.
+  CRAG-style and Vanilla have higher raw delta (0.307/0.264), and removing
+  refutation queries raises raw delta to 0.194, so the paper records mixed and
+  negative component evidence rather than a new superiority claim.
+- The long-term verifier then exposed six stale WS2 cross-family evaluation
+  reports under the upgraded evaluator. Added a fail-closed
+  `family-dev refresh-evaluations` path and refreshed only those derived reports
+  from the frozen predictions. The independent WS2 verifier again passes with
+  G-F and the 3/3 positive answer-score result unchanged; no model was loaded.
+  The newly available post-hoc raw delta difference is also positive in 3/3
+  families, combined `+0.0398` with family-cluster interval
+  `[+0.0133,+0.0536]`; typed delta is `+0.0816` `[+0.0353,+0.1137]`.
+  Readiness binds this as non-preregistered lexical sensitivity, not a semantic
+  correctness or external-generalization claim.
+- Preserved immutable `artifacts-v1` and created versioned `artifacts-v2` for
+  the refreshed 336-file diagnostic tree. The deterministic candidate is
+  5,636,721 bytes with SHA-256
+  `016988b09b856e94025e2d50312ebb79d13a48e73155c3ca96cd611acb24b383`;
+  its tree SHA-256 is
+  `362761dc85faf14d5a3b9e7f397c40e39383a8475ec0502efcbb904d973e92ae`.
+  Local empty-directory install and the nested solo verifier both passed before
+  remote publication.

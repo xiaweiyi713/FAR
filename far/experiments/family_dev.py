@@ -13,7 +13,7 @@ from statistics import mean
 from typing import Any, cast
 
 from far.bench.build.common import read_jsonl, sha256_file, write_json
-from far.eval.run_eval import evaluate
+from far.eval.run_eval import METRIC_PROFILE, evaluate
 from far.eval.stats import mcnemar_exact
 from far.experiments.protocol_family_dev import (
     CORPUS_SHA256,
@@ -265,6 +265,8 @@ def compute_result(output_root: Path) -> dict[str, Any]:
     dispositions = _dev_dispositions(dev_ids)
     family_rows: list[dict[str, Any]] = []
     family_deltas: dict[str, list[float]] = {}
+    family_revision_deltas: dict[str, list[float]] = {}
+    family_typed_revision_deltas: dict[str, list[float]] = {}
     all_baseline_success: list[bool] = []
     all_candidate_success: list[bool] = []
     sensitivity_values: dict[str, list[float]] = {
@@ -288,6 +290,18 @@ def compute_result(output_root: Path) -> dict[str, Any]:
             for sample_id in sorted(dev_ids)
         ]
         family_deltas[family] = deltas
+        revision_deltas = [
+            float(typed_scores[sample_id]["revision_delta_f1"])
+            - float(untyped_scores[sample_id]["revision_delta_f1"])
+            for sample_id in sorted(dev_ids)
+        ]
+        typed_revision_deltas = [
+            float(typed_scores[sample_id]["typed_revision_delta_f1"])
+            - float(untyped_scores[sample_id]["typed_revision_delta_f1"])
+            for sample_id in sorted(dev_ids)
+        ]
+        family_revision_deltas[family] = revision_deltas
+        family_typed_revision_deltas[family] = typed_revision_deltas
         typed_success = [
             float(typed_scores[item]["answer_correctness"]) >= CORRECTNESS_THRESHOLD
             for item in sorted(dev_ids)
@@ -325,6 +339,8 @@ def compute_result(output_root: Path) -> dict[str, Any]:
                     typed_report["aggregate"]["metrics"]["revision_accuracy"]
                 )
                 - float(untyped_report["aggregate"]["metrics"]["revision_accuracy"]),
+                "typed_minus_untyped_revision_delta_f1": mean(revision_deltas),
+                "typed_minus_untyped_typed_revision_delta_f1": mean(typed_revision_deltas),
                 "mcnemar": mcnemar_exact(untyped_success, typed_success),
                 "direction_positive": mean(deltas) > 0.0,
             }
@@ -356,6 +372,32 @@ def compute_result(output_root: Path) -> dict[str, Any]:
             key: {"pairs": len(values), "combined_delta": mean(values)}
             for key, values in sensitivity_values.items()
         },
+        "post_hoc_revision_delta": {
+            "metric_profile": METRIC_PROFILE,
+            "preregistered_primary": False,
+            "model_calls": 0,
+            "test_accessed": False,
+            "raw": {
+                "metric": "typed_minus_untyped_revision_delta_f1",
+                "combined_delta": mean(
+                    value for values in family_revision_deltas.values() for value in values
+                ),
+                "positive_families": sum(
+                    mean(values) > 0.0 for values in family_revision_deltas.values()
+                ),
+                "family_cluster_bootstrap": _cluster_bootstrap(family_revision_deltas),
+            },
+            "typed": {
+                "metric": "typed_minus_untyped_typed_revision_delta_f1",
+                "combined_delta": mean(
+                    value for values in family_typed_revision_deltas.values() for value in values
+                ),
+                "positive_families": sum(
+                    mean(values) > 0.0 for values in family_typed_revision_deltas.values()
+                ),
+                "family_cluster_bootstrap": _cluster_bootstrap(family_typed_revision_deltas),
+            },
+        },
         "gate_p_completed": True,
         "adequately_powered": False,
         "required_claim_level": "directional_reproduction",
@@ -375,18 +417,26 @@ def _report_text(result: dict[str, Any]) -> str:
         "",
         "> 机器审计 dev、非真人金标、非盲测、非外部验证；G-P 预先限定为方向性复现。",
         "",
-        "| 家族 | typed-untyped answer | typed conflict F1 | revision accuracy | 方向 |",
-        "|---|---:|---:|---:|---|",
+        "| 家族 | typed-untyped answer | raw delta F1 | typed delta F1 | "
+        "typed conflict F1 | revision accuracy | 方向 |",
+        "|---|---:|---:|---:|---:|---:|---|",
     ]
     for row in result["families"]:
         lines.append(
             f"| {row['family']} | {row['typed_minus_untyped_answer_correctness']:+.4f} | "
+            f"{row['typed_minus_untyped_revision_delta_f1']:+.4f} | "
+            f"{row['typed_minus_untyped_typed_revision_delta_f1']:+.4f} | "
             f"{row['typed_minus_untyped_typed_conflict_f1']:+.4f} | "
             f"{row['typed_minus_untyped_revision_accuracy']:+.4f} | "
             f"{'正' if row['direction_positive'] else '非正'} |"
         )
     cluster = primary["family_cluster_bootstrap"]
     mcnemar = primary["stratified_exact_mcnemar"]
+    revision_delta = result["post_hoc_revision_delta"]
+    raw_delta = revision_delta["raw"]
+    raw_cluster = raw_delta["family_cluster_bootstrap"]
+    typed_delta = revision_delta["typed"]
+    typed_cluster = typed_delta["family_cluster_bootstrap"]
     lines.extend(
         [
             "",
@@ -403,14 +453,23 @@ def _report_text(result: dict[str, Any]) -> str:
             "G-F 不显著不能在 0.414 功效下解释为机制不存在；少于 2/3 家族正方向或合并差"
             "非正时，主张按预注册收窄为 Qwen-specific。所有次级指标仅作描述性披露。",
             "",
+            "## P11 事后 revision-delta 敏感性",
+            "",
+            f"- raw delta F1 typed-untyped 合并差: {raw_delta['combined_delta']:+.4f}；"
+            f"正方向家族 {raw_delta['positive_families']}/3；family-cluster 95% CI "
+            f"[{raw_cluster['lower']:+.4f}, {raw_cluster['upper']:+.4f}]。",
+            f"- typed delta F1 typed-untyped 合并差: {typed_delta['combined_delta']:+.4f}；"
+            f"正方向家族 {typed_delta['positive_families']}/3；family-cluster 95% CI "
+            f"[{typed_cluster['lower']:+.4f}, {typed_cluster['upper']:+.4f}]。",
+            "- 该分析使用冻结 prediction、零模型调用且未访问 test；它不是预注册 WS2 主指标，"
+            "也不是语义正确率或真人验证。",
+            "",
         ]
     )
     return "\n".join(lines)
 
 
-def finalize(output_root: Path) -> dict[str, Any]:
-    if (output_root / "manifest.json").exists():
-        raise FileExistsError("family-dev release is already finalized")
+def _write_release(output_root: Path) -> dict[str, Any]:
     dev_path = ROOT / "bench" / "splits" / "dev.jsonl"
     for family in FAMILY_ORDER:
         for method in METHODS:
@@ -456,6 +515,28 @@ def finalize(output_root: Path) -> dict[str, Any]:
     return manifest
 
 
+def finalize(output_root: Path) -> dict[str, Any]:
+    if (output_root / "manifest.json").exists():
+        raise FileExistsError("family-dev release is already finalized")
+    return _write_release(output_root)
+
+
+def refresh_evaluations(output_root: Path) -> dict[str, Any]:
+    """Refresh derived reports from frozen predictions without model calls."""
+
+    manifest_path = output_root / "manifest.json"
+    if not manifest_path.is_file():
+        raise FileNotFoundError("family-dev refresh requires a finalized release")
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    if (
+        manifest.get("schema_version") != "far-family-dev-release-v1"
+        or manifest.get("publication_gold") is not False
+        or manifest.get("test_accessed") is not False
+    ):
+        raise ValueError("family-dev refresh refused an incompatible release manifest")
+    return _write_release(output_root)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -467,13 +548,20 @@ def main() -> None:
     run.add_argument("--output-dir", type=Path, required=True)
     finish = subparsers.add_parser("finalize")
     finish.add_argument("--output-dir", type=Path, required=True)
+    refresh = subparsers.add_parser(
+        "refresh-evaluations",
+        help="recompute reports from frozen predictions without model calls",
+    )
+    refresh.add_argument("--output-dir", type=Path, required=True)
     args = parser.parse_args()
     if args.command == "prepare-input":
         result = prepare_dev_view(args.output_dir)
     elif args.command == "run-family":
         result = run_family(args.family, args.input_dir, args.output_dir)
-    else:
+    elif args.command == "finalize":
         result = finalize(args.output_dir)
+    else:
+        result = refresh_evaluations(args.output_dir)
     print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
 
 

@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any
 
 from far.bench.build.common import read_jsonl, sha256_file, write_json
+from far.eval.run_eval import METRIC_PROFILE
 
 GENERATED_ARTIFACT_FILES = (
     "main_results.csv",
@@ -44,6 +45,8 @@ def _validated_reports(paths: dict[str, Path]) -> dict[str, dict[str, Any]]:
         report = json.loads(path.read_text(encoding="utf-8"))
         if report.get("schema_version") != "falsirag-evaluation-report-v1":
             raise ValueError(f"{path}: unsupported report schema")
+        if report.get("metric_profile") != METRIC_PROFILE:
+            raise ValueError(f"{path}: unsupported or missing metric profile")
         scores_path = path.parent / "scores.jsonl"
         if report.get("provenance", {}).get("scores_sha256") != sha256_file(scores_path):
             raise ValueError(f"{path}: scores fingerprint mismatch")
@@ -64,6 +67,7 @@ def _report_publication_summary(report: dict[str, Any]) -> dict[str, Any]:
     benchmark_sha = provenance.get("benchmark_sha256")
     benchmark_manifest_sha = provenance.get("benchmark_manifest_sha256")
     return {
+        "metric_profile": report.get("metric_profile"),
         "publication_ready": bool(report.get("publication_ready")),
         "partial": bool(report.get("partial")),
         "phase": publication.get("phase"),
@@ -96,6 +100,9 @@ def _validate_artifact_publication_scope(
     benchmark_hashes = _unique_summary_values(summary, "benchmark_sha256")
     if len(benchmark_hashes) != 1:
         raise ValueError("artifact reports use different benchmark fingerprints")
+    metric_profiles = _unique_summary_values(summary, "metric_profile")
+    if metric_profiles != {METRIC_PROFILE}:
+        raise ValueError("artifact reports use an unsupported metric profile")
     benchmark_manifest_hashes = _unique_summary_values(
         summary, "benchmark_manifest_sha256", allow_none=True
     )
@@ -148,6 +155,8 @@ def _table_rows(reports: dict[str, dict[str, Any]], labels: list[str]) -> list[d
             "answer_correctness",
             "typed_conflict_f1",
             "revision_accuracy",
+            "revision_delta_f1",
+            "typed_revision_delta_f1",
             "overclaim_reduction",
             "counter_evidence_recall",
             "unsupported_claim_rate",
@@ -172,15 +181,17 @@ def _write_csv(path: Path, rows: list[dict[str, Any]]) -> None:
 
 def _write_latex(path: Path, rows: list[dict[str, Any]]) -> None:
     lines = [
-        r"\begin{tabular}{lrrrr}",
+        r"\begin{tabular}{lrrrrrr}",
         r"\toprule",
-        r"Method & Answer & Typed F1 & Revision & Counter Recall \\",
+        r"Method & Answer & Delta F1 & Typed Delta & Typed F1 & Revision & Counter Recall \\",
         r"\midrule",
     ]
     for row in rows:
         method = str(row["method"]).replace("_", "\\_")
         lines.append(
             f"{method} & {row['answer_correctness']:.3f} & "
+            f"{row['revision_delta_f1']:.3f} & "
+            f"{row['typed_revision_delta_f1']:.3f} & "
             f"{row['typed_conflict_f1']:.3f} & {row['revision_accuracy']:.3f} & "
             f"{row['counter_evidence_recall']:.3f} \\\\"
         )
@@ -346,6 +357,7 @@ def build(
             "test_only": require_test_only,
         },
         "publication": publication_summary,
+        "metric_profile": METRIC_PROFILE,
         "benchmark_sha256": next(
             iter(_unique_summary_values(publication_summary, "benchmark_sha256"))
         ),

@@ -54,7 +54,7 @@ FAR declares Python 3.10+ support in `pyproject.toml`. The checked-in
 `.python-version` pins the local development environment to Python 3.12, but
 the static type/lint contract targets Python 3.10 so the artifact does not
 silently drift beyond the proposal's compatibility claim. A fresh checkout
-does not track the 41.9 MiB diagnostic tree; install the immutable release
+does not track the 42.0 MiB diagnostic tree; install the immutable v2 release
 before running evidence-dependent tests or verifiers:
 
 ```bash
@@ -119,9 +119,12 @@ uv run falsirag release solo-paper-readiness
 ```
 
 This validates the fingerprinted solo evidence and checks that the paper uses
-only the supported typed-versus-untyped mechanism claim. It fails if pending
-cells return or if the refutation, boundary, typed-revision, FEVER, non-human,
-non-blind, or single-model limitations are removed. A passing result certifies
+only the supported typed-versus-untyped mechanism claim. It also requires the
+post-hoc P11 revision-delta profile, the higher raw baseline/no-refutation
+deltas, and the explicit warning that delta F1 is lexical rather than semantic
+correctness. It fails if pending cells return or if the refutation, boundary,
+typed-revision, FEVER, non-human, non-blind, or single-model limitations are
+removed. A passing result certifies
 only `single_author_machine_audited_paper`; it does not satisfy strict AAAI
 readiness.
 
@@ -534,6 +537,27 @@ It requires every selected run to be complete and verifies method, split,
 limit, config, benchmark, corpus, signature, and prediction fingerprints before
 overwriting reports and artifacts.
 
+P11 used this exact model-free path on the frozen Qwen suite:
+
+```bash
+uv run falsirag suite \
+  --config far/experiments/configs/qwen_open.yaml \
+  --data-dir bench \
+  --output-dir outputs/remote_qwen_six_baseline_suite \
+  --reports-only
+```
+
+The reports bind metric profile
+`falsirag-evaluation-metrics-v2-revision-delta`. The public diagnostic verifier
+rejects a missing profile or incomplete raw/action-conditioned delta metrics;
+the command must retain `allow_test:false` and `reports_only:true`.
+
+The WS2 refresh command below applies the same profile to the three already
+frozen typed/untyped family pairs. Its raw combined difference is `+0.0398`
+with 3/3 positive directions and family-cluster 95% interval
+`[+0.0133,+0.0536]`; this is explicitly post-hoc sensitivity rather than the
+registered G-F primary outcome.
+
 If a standalone Qwen FAR dev run is already active on the Windows GPU, queue the
 remaining matched suite without repeating those 60 FAR predictions:
 
@@ -823,6 +847,17 @@ then the full 60 paired dev samples. After rsyncing the raw directory to
 
 ```bash
 uv run falsirag-family-dev finalize \
+  --output-dir diagnostics/family_dev_v1
+uv run falsirag-family-dev-evidence \
+  --output-dir diagnostics/family_dev_v1
+```
+
+After an evaluator-only metric-profile upgrade, refresh the six derived WS2
+reports from the frozen predictions without calling any model, then rerun the
+independent verifier:
+
+```bash
+uv run falsirag-family-dev refresh-evaluations \
   --output-dir diagnostics/family_dev_v1
 uv run falsirag-family-dev-evidence \
   --output-dir diagnostics/family_dev_v1

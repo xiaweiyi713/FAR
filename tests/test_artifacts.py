@@ -65,16 +65,16 @@ def test_namespace_and_packaged_benchmark_snapshots_are_consolidated() -> None:
 
 
 def test_published_diagnostic_cutover_is_complete_and_ignored() -> None:
-    manifest = json.loads((ROOT / "far/data/diagnostics-v1.json").read_text(encoding="utf-8"))
+    manifest = json.loads((ROOT / "far/data/diagnostics-v2.json").read_text(encoding="utf-8"))
     assert manifest["archive"] == {
-        "bytes": 5639635,
-        "filename": "far-diagnostics-v1.tar.gz",
+        "bytes": 5636721,
+        "filename": "far-diagnostics-v2.tar.gz",
         "published": True,
         "release_url": (
             "https://github.com/xiaweiyi713/FAR/releases/download/"
-            "artifacts-v1/far-diagnostics-v1.tar.gz"
+            "artifacts-v2/far-diagnostics-v2.tar.gz"
         ),
-        "sha256": "5e3f28dcd81d2af3170f740611b9f59b8bbe1ee6e869379d5794730db4ecf96e",
+        "sha256": "016988b09b856e94025e2d50312ebb79d13a48e73155c3ca96cd611acb24b383",
     }
     release = audit_repository_maintenance(ROOT)["diagnostic_release"]
     assert release["cutover_valid"] is True

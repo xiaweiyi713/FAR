@@ -80,7 +80,7 @@ def _release_tree(tmp_path: Path) -> tuple[Path, Path]:
     main_sha = "1" * 64
     appendix_sha = "2" * 64
     readiness = {
-        "schema_version": "far-solo-paper-readiness-v2",
+        "schema_version": "far-solo-paper-readiness-v3",
         "ready": True,
         "strict_aaai_submission_ready": False,
         "study_profile": "single_author_machine_audited_paper",

@@ -10,7 +10,13 @@ from far.baselines import (
     VanillaRAG,
 )
 from far.claims import ClaimNode, ClaimType
-from far.eval.metrics import PredictionRecord, aggregate_scores, score_sample, soft_f1
+from far.eval.metrics import (
+    PredictionRecord,
+    aggregate_scores,
+    revision_delta_scores,
+    score_sample,
+    soft_f1,
+)
 from far.eval.stats import (
     dependency_cluster_bootstrap_ci,
     dependency_cluster_typed_conflict_f1_ci,
@@ -113,9 +119,49 @@ def test_metrics_cover_revision_conflict_evidence_and_overclaim() -> None:
     row = score_sample(sample, prediction)
     assert row["answer_correctness"] == 1.0
     assert row["revision_accuracy"] == 1.0
+    assert row["revision_delta_precision"] == 1.0
+    assert row["revision_delta_recall"] == 1.0
+    assert row["revision_delta_f1"] == 1.0
+    assert row["typed_revision_delta_f1"] == 1.0
     assert row["overclaim_reduction"] == 1.0
     assert aggregate_scores([row])["metrics"]["typed_conflict_f1"] == 1.0
     assert soft_f1("18 million", "Revenue was 18 million.") > 0.5
+
+    wrong_action = PredictionRecord(
+        sample_id="F1",
+        answer="Revenue was 18 million.",
+        evidence_ids=("D1",),
+        predicted_conflict_types=("numerical",),
+        revision_action="qualify_uncertainty",
+        method="far",
+    )
+    wrong_action_row = score_sample(sample, wrong_action)
+    assert wrong_action_row["revision_delta_f1"] == 1.0
+    assert wrong_action_row["typed_revision_delta_f1"] == 0.0
+
+
+def test_revision_delta_scores_reject_unchanged_error_and_overediting() -> None:
+    initial = "The value was 2031 according to the report."
+    reference = "The value was 2030 according to the report."
+
+    assert revision_delta_scores(initial, initial, reference) == (0.0, 0.0, 0.0)
+    assert revision_delta_scores(initial, reference, reference) == (1.0, 1.0, 1.0)
+
+    precision, recall, f1 = revision_delta_scores(
+        initial,
+        "A different report says the value was 2030, with substantial uncertainty.",
+        reference,
+    )
+    assert 0.0 < precision < 1.0
+    assert recall == 1.0
+    assert 0.0 < f1 < 1.0
+
+
+def test_revision_delta_scores_handles_reference_with_no_required_edit() -> None:
+    answer = "No conflict is present."
+
+    assert revision_delta_scores(answer, answer, answer) == (1.0, 1.0, 1.0)
+    assert revision_delta_scores(answer, "An unnecessary rewrite.", answer) == (0.0, 1.0, 0.0)
 
 
 def test_causal_overclaim_reduction_requires_causal_marker_removal() -> None:

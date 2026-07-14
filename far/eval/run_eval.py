@@ -34,6 +34,10 @@ ROW_METRICS = (
     "typed_conflict_correct",
     "revision_action_correct",
     "revision_accuracy",
+    "revision_delta_precision",
+    "revision_delta_recall",
+    "revision_delta_f1",
+    "typed_revision_delta_f1",
     "overclaim_reduction",
 )
 
@@ -44,6 +48,8 @@ BINARY_SUCCESS_METRICS = (
     "revision_action_correct",
     "revision_accuracy",
 )
+
+METRIC_PROFILE = "falsirag-evaluation-metrics-v2-revision-delta"
 
 
 def _publication_context(
@@ -279,6 +285,7 @@ def evaluate(
     )
     report = {
         "schema_version": "falsirag-evaluation-report-v1",
+        "metric_profile": METRIC_PROFILE,
         "method": next(iter(methods)),
         "samples": len(scores),
         "split_counts": aggregate.get("by_category")

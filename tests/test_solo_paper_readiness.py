@@ -20,8 +20,13 @@ def test_relaxed_paper_profile_is_ready_but_not_strict_aaai_ready() -> None:
     assert report["claim_scope"]["checks"]["refutation_ablation_not_positive"] is True
     assert report["claim_scope"]["checks"]["boundary_ablation_not_positive"] is True
     assert report["claim_scope"]["checks"]["typed_revision_answer_tradeoff"] is True
+    assert report["claim_scope"]["checks"]["typed_conflict_revision_delta_advantage"] is True
+    assert report["claim_scope"]["checks"]["typed_revision_delta_advantage"] is True
+    assert report["claim_scope"]["checks"]["raw_baseline_delta_exceeds_far"] is True
+    assert report["claim_scope"]["checks"]["refutation_ablation_delta_exceeds_far"] is True
     assert report["gates"]["tracked_registered_p5_report"] is True
     assert report["gates"]["verified_p6m_negative_stability_audit"] is True
+    assert report["gates"]["verified_post_hoc_family_revision_delta"] is True
     p5 = report["evidence"]["p5_registered_ablations"]
     assert p5["valid"] is True
     assert p5["h3_verdict"] == "uncertain"
@@ -32,6 +37,13 @@ def test_relaxed_paper_profile_is_ready_but_not_strict_aaai_ready() -> None:
     assert p6m["consensus_samples"] == 15
     assert p6m["dispositions"] == {"unanimous": 1, "majority": 14, "contested": 202}
     assert p6m["association_estimable"] is False
+    family_delta = report["evidence"]["family_revision_delta_sensitivity"]
+    assert family_delta["valid"] is True
+    assert family_delta["post_hoc_revision_delta"]["preregistered_primary"] is False
+    assert family_delta["post_hoc_revision_delta"]["model_calls"] == 0
+    assert family_delta["post_hoc_revision_delta"]["test_accessed"] is False
+    assert family_delta["post_hoc_revision_delta"]["raw"]["positive_families"] == 3
+    assert family_delta["post_hoc_revision_delta"]["typed"]["positive_families"] == 3
     assert report["evidence"]["paper_appendix_sha256"]
     assert (
         report["claim_scope"]["checks"][

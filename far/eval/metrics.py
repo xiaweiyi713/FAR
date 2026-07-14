@@ -72,6 +72,45 @@ def soft_f1(predicted: str, reference: str) -> float:
     return 2 * precision * recall / (precision + recall)
 
 
+def revision_delta_scores(
+    initial: str,
+    predicted: str,
+    reference: str,
+) -> tuple[float, float, float]:
+    """Score only the token-multiset edits required by the reference revision.
+
+    Whole-answer lexical overlap can reward an unchanged erroneous answer when the
+    reference differs by only one date, number, or entity. This diagnostic instead
+    compares the token additions and removals made by ``predicted`` against the
+    additions and removals that transform ``initial`` into ``reference``. Precision
+    penalizes unnecessary edits; recall penalizes retained errors or missing repairs.
+    """
+
+    initial_tokens = Counter(_soft_tokens(initial))
+    predicted_tokens = Counter(_soft_tokens(predicted))
+    reference_tokens = Counter(_soft_tokens(reference))
+
+    expected_removed = initial_tokens - reference_tokens
+    expected_added = reference_tokens - initial_tokens
+    predicted_removed = initial_tokens - predicted_tokens
+    predicted_added = predicted_tokens - initial_tokens
+
+    expected = sum(expected_removed.values()) + sum(expected_added.values())
+    proposed = sum(predicted_removed.values()) + sum(predicted_added.values())
+    correct = sum((expected_removed & predicted_removed).values()) + sum(
+        (expected_added & predicted_added).values()
+    )
+
+    if expected == 0:
+        precision = 1.0 if proposed == 0 else 0.0
+        recall = 1.0
+    else:
+        precision = correct / proposed if proposed else 0.0
+        recall = correct / expected
+    f1 = 2 * precision * recall / (precision + recall) if precision + recall else 0.0
+    return precision, recall, f1
+
+
 def exact_match(predicted: str, reference: str) -> float:
     return float(_normalize(predicted) == _normalize(reference))
 
@@ -138,6 +177,11 @@ def score_sample(sample: dict[str, Any], prediction: PredictionRecord) -> dict[s
         else not predicted_conflicts
     )
     answer_score = soft_f1(prediction.answer, reference)
+    revision_delta_precision, revision_delta_recall, revision_delta_f1 = revision_delta_scores(
+        str(sample["initial_answer"]),
+        prediction.answer,
+        reference,
+    )
     action_correct = prediction.revision_action == sample["expected_revision"]["action"]
     return {
         "sample_id": sample["id"],
@@ -159,6 +203,10 @@ def score_sample(sample: dict[str, Any], prediction: PredictionRecord) -> dict[s
         "predicted_conflict_count": len(predicted_conflicts),
         "revision_action_correct": float(action_correct),
         "revision_accuracy": float(action_correct and answer_score >= 0.8),
+        "revision_delta_precision": revision_delta_precision,
+        "revision_delta_recall": revision_delta_recall,
+        "revision_delta_f1": revision_delta_f1,
+        "typed_revision_delta_f1": revision_delta_f1 if action_correct else 0.0,
         "overclaim_reduction": _overclaim_reduction(sample, prediction.answer),
     }
 
@@ -177,6 +225,10 @@ def aggregate_scores(rows: list[dict[str, Any]]) -> dict[str, Any]:
         "typed_conflict_correct",
         "revision_action_correct",
         "revision_accuracy",
+        "revision_delta_precision",
+        "revision_delta_recall",
+        "revision_delta_f1",
+        "typed_revision_delta_f1",
         "overclaim_reduction",
     )
 

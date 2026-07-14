@@ -11,6 +11,7 @@ from typing import Any
 
 from far.bench.build.build_blind_bundle import audit_bundle
 from far.bench.build.common import sha256_file, write_json
+from far.eval.run_eval import METRIC_PROFILE
 from far.experiments.solo_readiness import ARTIFACT_LABELS, EXPECTED_METHODS, audit
 from far.experiments.validate_results import validate_result_bundle
 
@@ -108,6 +109,8 @@ def _source_artifact_files(suite_dir: Path) -> list[str]:
         raise ValueError("source artifacts are not marked diagnostic-only")
     if manifest.get("publication_ready") is not False:
         raise ValueError("source artifacts incorrectly claim publication readiness")
+    if manifest.get("metric_profile") != METRIC_PROFILE:
+        raise ValueError("source artifacts use an unsupported metric profile")
     outputs = manifest.get("outputs")
     if not isinstance(outputs, dict) or not outputs:
         raise ValueError("source artifact manifest has no output fingerprints")
@@ -254,6 +257,17 @@ def verify_solo_release(bundle_dir: Path) -> dict[str, Any]:
                 errors.append(f"{method}: invalid result bundle: {validation['errors']}")
             report_path = evaluation_dir / "report.json"
             report = _json(report_path)
+            if report.get("metric_profile") != METRIC_PROFILE:
+                errors.append(f"{method}: unsupported or missing metric profile")
+            report_metrics = report.get("aggregate", {}).get("metrics", {})
+            required_revision_metrics = {
+                "revision_delta_precision",
+                "revision_delta_recall",
+                "revision_delta_f1",
+                "typed_revision_delta_f1",
+            }
+            if not required_revision_metrics <= set(report_metrics):
+                errors.append(f"{method}: revision-delta metrics are incomplete")
             scores_path = evaluation_dir / "scores.jsonl"
             if report.get("provenance", {}).get("scores_sha256") != sha256_file(scores_path):
                 errors.append(f"{method}: scores fingerprint mismatch")
@@ -267,6 +281,8 @@ def verify_solo_release(bundle_dir: Path) -> dict[str, Any]:
             or artifact.get("publication_ready") is not False
         ):
             errors.append("embedded artifacts are not marked diagnostic-only")
+        if artifact.get("metric_profile") != METRIC_PROFILE:
+            errors.append("embedded artifacts use an unsupported metric profile")
         for name, expected in artifact.get("outputs", {}).items():
             if sha256_file(artifact_dir / str(name)) != expected:
                 errors.append(f"embedded artifact fingerprint mismatch: {name}")

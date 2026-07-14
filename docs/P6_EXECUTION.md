@@ -211,12 +211,12 @@ v1 manifest:
 ```bash
 uv run --locked falsirag ops diagnostic-data pack \
   --source diagnostics \
-  --archive artifact-dist/far-diagnostics-v2.tar.gz \
-  --manifest artifact-dist/diagnostics-v2.candidate.json
+  --archive artifact-dist/far-diagnostics-v3.tar.gz \
+  --manifest artifact-dist/diagnostics-v3.candidate.json
 ```
 
-Do not mutate the `artifacts-v1` release or point the repository at this local
-candidate. Publishing `artifacts-v2`, independently downloading it into an
+Do not mutate the `artifacts-v1` or `artifacts-v2` release or point the repository at this local
+candidate. Publishing `artifacts-v3`, independently downloading it into an
 empty directory, comparing the complete tree, and switching the packaged
 manifest require a separately reviewed and authorized release cutover. Until
 that succeeds, preserve the installed diagnostic tree and all three original

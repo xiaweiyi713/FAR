@@ -196,8 +196,10 @@ uv run falsirag diag fever-binary verify \
   diagnostics/fever_binary_v1
 ```
 
-`diagnostics/` 不再由 Git 跟踪。安装器从 `artifacts-v1` release 下载 5.6 MiB
+`diagnostics/` 不再由 Git 跟踪。安装器从 `artifacts-v2` release 下载 5.4 MiB
 确定性归档，先核对归档 SHA-256，再核对 336 个文件和整树指纹，并拒绝覆盖已有目录。
+不可变的 `artifacts-v1` 继续保留为 P10-B 历史快照；v2 新增 P11 revision-delta
+metric profile，没有覆盖旧资产。
 
 这些命令成功只证明相应 machine-audited 诊断包完整、主张边界一致；不代表严格投稿、人类 IAA 或外部盲测就绪。
 

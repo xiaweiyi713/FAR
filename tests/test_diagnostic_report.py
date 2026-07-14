@@ -57,6 +57,8 @@ def test_single_author_report_key_metrics_match_tracked_artifacts() -> None:
         expected_values = [
             str(row["samples"]),
             _fmt3(row["answer_correctness"]),
+            _fmt3(row["revision_delta_f1"]),
+            _fmt3(row["typed_revision_delta_f1"]),
             _fmt3(row["typed_conflict_f1"]),
             _fmt3(row["revision_accuracy"]),
             _fmt3(row["counter_evidence_recall"]),
@@ -76,6 +78,8 @@ def test_single_author_report_key_metrics_match_tracked_artifacts() -> None:
         expected_values = [
             str(row["samples"]),
             _fmt3(row["answer_correctness"]),
+            _fmt3(row["revision_delta_f1"]),
+            _fmt3(row["typed_revision_delta_f1"]),
             _fmt3(row["typed_conflict_f1"]),
             _fmt3(row["revision_accuracy"]),
             _fmt3(row["counter_evidence_recall"]),

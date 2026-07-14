@@ -19,9 +19,9 @@ cannot strengthen it.
 Evidence layer & Completed observation & Maximum licensed claim \\
 \midrule
 Qwen development & 60 machine-audited items; typed minus untyped answer score
-+0.078, with positive intervals on both machine-disposition strata & A local,
-construction-derived typed-control signal; not human validation or model-family
-generality \\
++0.078; post-hoc raw delta F1 is 0.145 versus 0.093, while typed delta F1 is
+0.096 versus 0 & A local, construction-derived typed-control and lexical-edit
+signal; not semantic correctness, human validation, or model-family generality \\
 RAMDocs development & Two preregistered 350-item rounds fail G-A; Round~2 is
 $-0.0029$ against the frozen strongest baseline & No demonstrated end-to-end
 advantage on this upstream-labelled external development distribution \\
@@ -39,10 +39,10 @@ registered hypotheses are not supported & A revision-mediated heterogeneous
 effect and observed boundary, not an upstream-only or metric-rescue explanation \\
 G-P power audit & Estimated WS2 exact-McNemar power is 0.414 for a +0.078 effect
 & WS2 is directional; nonsignificance cannot establish absence \\
-WS2 family development & Mistral, Gemma, and Llama are 3/3 positive; combined
-typed-minus-untyped answer difference is $+0.0645$, G-F passes, and the
-independent release audit is valid & Directional reproduction across these
-local machine-audited development families; not external or human validation \\
+WS2 family development & 3/3 answer directions are positive, combined $+0.0645$;
+G-F passes; post-hoc raw/typed delta differences are $+0.0398/+0.0816$, both
+3/3 positive & Directional answer reproduction plus post-hoc lexical-edit
+sensitivity on local machine-audited development; not external, semantic, or human validation \\
 WS3 public development & 600 formal predictions plus 20 calibration predictions;
 global differences are near null, with a narrow positive outdated-information
 condition & A weak public-development applicability boundary; not global transfer

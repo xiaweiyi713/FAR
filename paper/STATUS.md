@@ -103,6 +103,27 @@ machine-panel sensitivity evidence, not population mappability, human IAA,
 adjudicated gold, or H4 confirmation. It closes the accepted no-human profile
 without filling any human reviewer or adjudicator role.
 
+P11 adds an explicitly post-hoc revision-delta metric audit over the already
+frozen 60-item predictions; it makes zero model calls and never accesses the
+test split. Whole-answer soft F1 can reward an unchanged erroneous answer when
+the construction reference changes only a small token span. The new raw delta
+F1 scores only the token additions/removals required by that reference, while
+typed delta F1 additionally requires the declared revision action to match.
+FAR obtains raw/typed delta F1 `0.145/0.096`; minus typed conflict obtains
+`0.093/0`, and minus typed revision obtains `0.072/0`. However CRAG-style and
+Vanilla raw delta F1 are higher (`0.307/0.264`), and removing refutation queries
+raises raw delta F1 to `0.194`. The paper therefore treats P11 as lexical
+edit-fidelity and negative/mixed component evidence, not semantic correctness,
+human validation, or a new superiority claim.
+
+The same model-free audit was then applied to the frozen WS2 family predictions.
+Mistral, Gemma, and Llama show raw typed-minus-untyped delta differences of
+`+0.0133/+0.0524/+0.0536`; the combined difference is `+0.0398` with a
+family-cluster 95% interval `[+0.0133,+0.0536]`. Typed delta is also 3/3
+positive, combined `+0.0816` `[+0.0353,+0.1137]`. This is explicitly post-hoc
+transport sensitivity rather than a preregistered WS2 endpoint, and it does not
+erase the Qwen broad-baseline ranking or license semantic/general superiority.
+
 The active text now also has a reproducible TMLR submission build path:
 `scripts/build_tmlr_paper.sh` takes the scientific body from `paper/main.tex`,
 wraps it in the unmodified official TMLR anonymous-submission style pinned at

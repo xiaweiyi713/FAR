@@ -5,7 +5,11 @@ from pathlib import Path
 
 from far.bench.build.common import sha256_file
 from far.experiments.evidence_family_dev import verify_release
-from far.experiments.family_dev import _cluster_bootstrap, prepare_dev_view
+from far.experiments.family_dev import (
+    _cluster_bootstrap,
+    prepare_dev_view,
+    refresh_evaluations,
+)
 from far.experiments.protocol_family_dev import (
     FAMILY_DEV_ACTIVE_SHA256,
     FAMILY_DEV_PLAN,
@@ -48,3 +52,12 @@ def test_family_dev_verifier_fails_closed_without_release(tmp_path: Path) -> Non
     assert audit["valid"] is False
     assert audit["gate_f_passed"] is False
     assert audit["test_accessed"] is False
+
+
+def test_family_dev_refresh_requires_finalized_release(tmp_path: Path) -> None:
+    try:
+        refresh_evaluations(tmp_path / "missing")
+    except FileNotFoundError as exc:
+        assert "finalized release" in str(exc)
+    else:
+        raise AssertionError("refresh must fail closed without a finalized release")

@@ -1,14 +1,14 @@
 # FAR Single-Author Machine-Audited Diagnostic Report
 
-Generated from the public evidence frozen on 2026-07-03.
+Generated from the frozen prediction evidence; metric audit refreshed on 2026-07-13.
 
 ## Technical summary
 
 FAR is complete enough to support a single-author, machine-audited synthetic-benchmark diagnostic. The automated readiness gate passes all four diagnostic requirements: the 300-sample candidate benchmark is structurally valid; the machine-consensus audit is complete; the 11-method local Qwen development suite is complete on the 60-sample dev split; and the local 58-sample test bundle is gold-free and structurally audited.
 
-The evidence supports a narrow diagnostic claim: typed conflict control is useful as a development-set mechanism signal. FAR reaches 0.797 answer correctness and 0.983 counter-evidence recall on the local Qwen dev suite, above the six transparent baselines. Against the untyped FAR ablation, FAR improves answer correctness by 7.83 points and revision accuracy by 21.67 points. The revision result is still modest in absolute terms, and several component ablations are mixed, so the report does not claim that every FAR submodule has a positive marginal effect.
+The evidence supports a narrow diagnostic claim: typed conflict control is useful as a development-set mechanism signal. FAR reaches 0.797 whole-answer correctness and 0.983 counter-evidence recall on the local Qwen dev suite, above the six transparent baselines on those two metrics. Against the untyped FAR ablation, FAR improves answer correctness by 7.83 points and revision accuracy by 21.67 points. A post-hoc metric audit adds raw revision-delta F1 0.145 and action-conditioned typed delta F1 0.096. FAR exceeds the untyped arm on both edit diagnostics, but broad baselines obtain higher raw delta F1, and the refutation-query ablation also exceeds full FAR. The revision result is therefore modest and mixed rather than evidence that every FAR submodule has a positive marginal effect.
 
-This report does not complete the strict AAAI submission path. The benchmark remains construction-derived and machine-audited rather than independently human-adjudicated; the local test bundle is not externally held blind evaluation; and all dev results come from one local model family rather than a final multi-model matrix. These boundaries are intentional and enforced by the release verifiers.
+This report does not complete the strict AAAI submission path. The benchmark remains construction-derived and machine-audited rather than independently human-adjudicated; the local test bundle is not externally held blind evaluation; and the six-way baseline ranking plus P11 delta audit come from the Qwen diagnostic. A separate three-family typed/untyped sensitivity exists, but it is post-hoc for delta and does not constitute a final external multi-model matrix. These boundaries are intentional and enforced by the release verifiers.
 
 ## Key findings with visual evidence
 
@@ -20,15 +20,15 @@ FAR has the highest counter-evidence recall in the 60-sample Qwen dev suite: 0.9
 
 The comparison is diagnostic rather than publication-final: it uses construction-derived labels on the dev split and should be rerun on adjudicated gold before any main-paper table is filled.
 
-| Method | Samples | Answer correctness | Typed conflict F1 | Revision accuracy | Counter-evidence recall | Unsupported claim rate |
-|---|---:|---:|---:|---:|---:|---:|
-| FAR | 60 | 0.797 | 0.420 | 0.217 | 0.983 | 0.017 |
-| Vanilla RAG | 60 | 0.725 | 0.000 | 0.000 | 0.667 | 0.267 |
-| Multi-query RAG | 60 | 0.701 | 0.000 | 0.000 | 0.817 | 0.133 |
-| Reflective RAG | 60 | 0.678 | 0.000 | 0.000 | 0.750 | 0.183 |
-| CRAG-style reproduction | 60 | 0.772 | 0.000 | 0.000 | 0.667 | 0.267 |
-| Self-RAG-style reproduction | 60 | 0.751 | 0.000 | 0.000 | 0.817 | 0.150 |
-| CounterRefine-style reproduction | 60 | 0.710 | 0.000 | 0.000 | 0.883 | 0.083 |
+| Method | Samples | Answer | Delta F1 | Typed delta | Typed conflict F1 | Revision accuracy | Counter recall | Unsupported |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| FAR | 60 | 0.797 | 0.145 | 0.096 | 0.420 | 0.217 | 0.983 | 0.017 |
+| Vanilla RAG | 60 | 0.725 | 0.264 | 0.000 | 0.000 | 0.000 | 0.667 | 0.267 |
+| Multi-query RAG | 60 | 0.701 | 0.226 | 0.000 | 0.000 | 0.000 | 0.817 | 0.133 |
+| Reflective RAG | 60 | 0.678 | 0.205 | 0.000 | 0.000 | 0.000 | 0.750 | 0.183 |
+| CRAG-style reproduction | 60 | 0.772 | 0.307 | 0.000 | 0.000 | 0.000 | 0.667 | 0.267 |
+| Self-RAG-style reproduction | 60 | 0.751 | 0.256 | 0.000 | 0.000 | 0.000 | 0.817 | 0.150 |
+| CounterRefine-style reproduction | 60 | 0.710 | 0.261 | 0.000 | 0.000 | 0.000 | 0.883 | 0.083 |
 
 Source: `diagnostics/solo_v1/experiments/artifacts/main_results.csv`.
 
@@ -36,21 +36,21 @@ Source: `diagnostics/solo_v1/experiments/artifacts/main_results.csv`.
 
 The strongest ablation evidence is the paired typed-versus-untyped comparison. FAR keeps counter-evidence recall equal to the untyped ablation but improves answer correctness, typed conflict F1, revision accuracy, and revision-action behavior. This is the main claim that the current dev evidence can support.
 
-| Variant | Samples | Answer correctness | Typed conflict F1 | Revision accuracy | Counter-evidence recall |
-|---|---:|---:|---:|---:|---:|
-| FAR | 60 | 0.797 | 0.420 | 0.217 | 0.983 |
-| Minus typed conflict | 60 | 0.719 | 0.000 | 0.000 | 0.983 |
-| Minus refutation query | 60 | 0.826 | 0.429 | 0.267 | 0.967 |
-| Minus boundary query | 60 | 0.801 | 0.418 | 0.233 | 0.983 |
-| Minus typed revision | 60 | 0.873 | 0.423 | 0.000 | 0.983 |
+| Variant | Samples | Answer | Delta F1 | Typed delta | Typed conflict F1 | Revision accuracy | Counter recall |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| FAR | 60 | 0.797 | 0.145 | 0.096 | 0.420 | 0.217 | 0.983 |
+| Minus typed conflict | 60 | 0.719 | 0.093 | 0.000 | 0.000 | 0.000 | 0.983 |
+| Minus refutation query | 60 | 0.826 | 0.194 | 0.124 | 0.429 | 0.267 | 0.967 |
+| Minus boundary query | 60 | 0.801 | 0.166 | 0.104 | 0.418 | 0.233 | 0.983 |
+| Minus typed revision | 60 | 0.873 | 0.072 | 0.000 | 0.423 | 0.000 | 0.983 |
 
 Source: `diagnostics/solo_v1/experiments/artifacts/ablation_results.csv`.
 
-The mixed ablations matter. Removing refutation or boundary queries does not hurt answer correctness on this dev set, and removing typed revision raises answer correctness while zeroing revision metrics. That means the project can honestly argue for typed conflict control, but it cannot yet claim monotonic benefit from every query or revision component.
+The mixed ablations matter. Removing refutation or boundary queries does not hurt answer correctness on this dev set. Removing refutation queries raises raw delta F1 from 0.145 to 0.194, with a paired interval that excludes zero. Removing typed revision raises answer correctness while lowering raw delta F1 to 0.072 and zeroing action-conditioned revision metrics. This supports typed control as an inspectable mechanism, but it rules out a monotonic benefit claim for every query or revision component.
 
 ### Revision works, but the absolute rate remains a limitation
 
-Only FAR shows non-zero revision accuracy among the seven method-level diagnostic runs, and the category breakdown is uneven. The chart is useful mostly because it keeps the limitation visible: FAR is not yet a high-recall automatic correction system.
+Only FAR exposes non-zero typed revision accuracy among the seven method-level diagnostic runs, and the category breakdown is uneven. Its raw delta F1 is below all six broad baselines: CRAG-style reaches 0.307 and Vanilla reaches 0.264 versus FAR at 0.145. Those baselines have zero typed delta because they do not expose the expected typed action, but their raw lexical edits must remain visible. The chart is useful mostly because it keeps the limitation visible: FAR is not yet a high-recall automatic correction system.
 
 ![Typed conflict revision accuracy by category](https://raw.githubusercontent.com/xiaweiyi713/FAR/artifacts-v1/diagnostics/solo_v1/experiments/artifacts/typed_conflict_breakdown.png)
 
@@ -102,6 +102,8 @@ Excluded evidence:
 Metric definitions:
 
 - **Answer correctness**: soft answer-level correctness computed by the project evaluator over the dev split.
+- **Revision-delta precision/recall/F1**: post-hoc token-multiset agreement between the edits made from the initial answer and the edits required by the construction reference. Unchanged erroneous answers score zero; extra edits reduce precision. This is lexical edit fidelity, not semantic correctness.
+- **Typed revision delta F1**: revision-delta F1 retained only when the declared revision action matches the construction-derived expected action; otherwise zero.
 - **Typed conflict F1**: F1 for predicted typed conflict behavior against the construction-derived reference.
 - **Revision accuracy**: whether the selected revision behavior matches the expected construction-derived revision action and revised answer conditions.
 - **Counter-evidence recall**: whether expected falsifying evidence is retrieved or selected.
@@ -140,7 +142,7 @@ and does not claim any human or gold-label status.
 The local dev suite evaluates 11 matched runs on 60 dev samples. Every run has tracked predictions, a run identity, a run manifest, scores, and an evaluation report. The suite manifest SHA is:
 
 ```text
-dccd854c74d3eec109fb879e0c0d1fb838763694adc655b24eb83219807c4467
+2b8c1330d53670d50817950444b7ef3f7218956f236d8904831005420cf2b9fe
 ```
 
 Key prediction fingerprints:
@@ -179,24 +181,24 @@ What remains uncertain:
 
 - The construction-derived labels may encode design assumptions from the benchmark builder.
 - Machine agreement can reveal suspicious rows but cannot replace independent annotation or adjudication.
-- The Qwen dev suite is a single local-model diagnostic, not a three-provider result.
+- The broad-baseline and component ranking is a single-Qwen diagnostic. The separate three-family typed/untyped delta recurrence is post-hoc and construction-dependent, not a final external-provider result.
 - The local test bundle has been sanitized but has not been externally held or one-shot scored by a custodian.
 - FEVER transfer is binary and visible; it does not validate typed conflict detection or revision.
 
 ## Recommended next steps
 
 1. Use this report as the single-author public deliverable if no annotators are available.
-2. If any small amount of human review becomes available, start with [`reports/solo_human_review_priority.csv`](solo_human_review_priority.csv), not the full 300 rows.
-3. The relaxed single-author paper may use these complete dev results only with the machine-audited, non-blind, single-model qualifiers and negative ablations enforced by `falsirag-solo-paper-readiness`; the strict AAAI profile remains pending.
+2. Keep [`reports/solo_human_review_priority.csv`](solo_human_review_priority.csv) as an archival triage aid for an optional future strict-human branch; it is not an active dependency or blocker.
+3. The relaxed single-author paper may use these complete dev results only with the machine-audited, non-blind, Qwen-suite and directional cross-family qualifiers plus negative ablations enforced by `falsirag-solo-paper-readiness`; the strict AAAI profile remains pending.
 4. If time allows, target revision reliability next rather than broad detector tuning. The current evidence shows retrieval is relatively strong, while revision accuracy is the visible bottleneck.
 5. Do not tune on the frozen FEVER 100-pair diagnostic. If external development is needed, create a separate development split and reserve a new frozen evaluation slice.
 6. Rotate any exposed API keys before cloud experiments. The repository should only use environment variables or local ignored secrets.
 
 ## Further questions
 
-- After the 122-row priority table is reviewed, which categories produce true benchmark-builder mistakes versus expected machine limitations?
+- Can a future independently sourced benchmark separate construction-reference artifacts from genuine revision failures without reopening the inactive human branch?
 - Can typed revision be improved without sacrificing the answer-correctness gains seen in the `minus_typed_revision` ablation?
-- Does the typed-versus-untyped advantage survive on adjudicated labels and across DeepSeek V4-Flash and Qwen3.7 Plus?
+- Does the post-hoc revision-delta direction survive on a separately frozen external distribution rather than only the current constructed development set?
 - Which external dataset can provide typed conflict labels without post-hoc tuning on the FEVER diagnostic slice?
 
 ## Reproducibility commands

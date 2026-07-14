@@ -13,13 +13,14 @@ from far.bench.build.common import read_jsonl, sha256_file, write_json
 from far.eval.stats import paired_bootstrap_comparison
 from far.experiments.diagnostic_release import verify_solo_release
 from far.experiments.evaluate_fever_binary import verify_evaluation as verify_fever_binary
+from far.experiments.evidence_family_dev import verify_release as verify_family_dev_release
 from far.experiments.stage_trace_map import verify_reports as verify_stage_trace_map
 from far.experiments.type_mappability_machine import (
     verify_report as verify_type_mappability_machine_report,
 )
 from far.paths import repository_root
 
-SCHEMA_VERSION = "far-solo-paper-readiness-v2"
+SCHEMA_VERSION = "far-solo-paper-readiness-v3"
 REQUIRED_PAPER_FRAGMENTS = (
     "machine-audited synthetic benchmark",
     "single-model development diagnostic",
@@ -29,6 +30,15 @@ REQUIRED_PAPER_FRAGMENTS = (
     "Removing refutation queries does not reduce answer correctness",
     "Removing boundary queries is also neutral on answer correctness",
     "Removing typed revision increases answer correctness",
+    "post-hoc revision-delta audit",
+    "An unchanged erroneous answer receives zero",
+    "raw delta F1 0.145",
+    "raises raw delta F1 from 0.145 to 0.194",
+    "CRAG-style and Vanilla obtain raw delta F1 values of 0.307 and 0.264",
+    "Across the three frozen WS2 families, the post-hoc raw delta difference is positive in 3/3",
+    "combined +0.0398 with a family-cluster 95\\% interval of [+0.0133,+0.0536]",
+    "This was not a preregistered WS2 primary metric",
+    "not semantic correctness",
     "both obtain 0.72 accuracy",
     "post-hoc label-audit sensitivity",
     "machine-confirmed subset ($n=35$)",
@@ -191,6 +201,48 @@ def _p6m_evidence(root: Path) -> dict[str, Any]:
     }
 
 
+def _family_revision_delta_evidence(root: Path) -> dict[str, Any]:
+    release_root = root / "diagnostics/family_dev_v1"
+    audit = verify_family_dev_release(release_root)
+    errors = list(audit.get("errors", []))
+    result: dict[str, Any] = {}
+    checks: dict[str, bool] = {}
+    try:
+        result = json.loads((release_root / "result.json").read_text(encoding="utf-8"))
+        delta = result["post_hoc_revision_delta"]
+        raw = delta["raw"]
+        typed = delta["typed"]
+        checks = {
+            "frozen_release_valid": audit.get("valid") is True,
+            "post_hoc_boundary": (
+                delta.get("metric_profile") == "falsirag-evaluation-metrics-v2-revision-delta"
+                and delta.get("preregistered_primary") is False
+                and delta.get("model_calls") == 0
+                and delta.get("test_accessed") is False
+            ),
+            "raw_direction_recurs": (
+                raw.get("positive_families") == 3
+                and raw.get("combined_delta", 0.0) > 0.0
+                and raw.get("family_cluster_bootstrap", {}).get("lower", 0.0) > 0.0
+            ),
+            "typed_direction_recurs": (
+                typed.get("positive_families") == 3
+                and typed.get("combined_delta", 0.0) > 0.0
+                and typed.get("family_cluster_bootstrap", {}).get("lower", 0.0) > 0.0
+            ),
+        }
+        errors.extend(name for name, passed in checks.items() if not passed)
+    except (OSError, KeyError, TypeError, ValueError, json.JSONDecodeError) as exc:
+        errors.append(str(exc))
+    return {
+        **audit,
+        "valid": not errors,
+        "errors": errors,
+        "checks": checks,
+        "post_hoc_revision_delta": result.get("post_hoc_revision_delta"),
+    }
+
+
 def _label_sensitivity(root: Path) -> dict[str, Any]:
     consensus_rows = read_jsonl(
         root / "diagnostics/solo_v1/machine_annotation/machine_consensus_rows.jsonl"
@@ -238,11 +290,27 @@ def audit_claim_scope(root: Path, paper_text: str) -> dict[str, Any]:
     untyped_typed_f1 = _metric(ablations, "minus_typed_conflict", "typed_conflict_f1")
     far_revision = _metric(ablations, "far", "revision_accuracy")
     untyped_revision = _metric(ablations, "minus_typed_conflict", "revision_accuracy")
+    far_delta = _metric(ablations, "far", "revision_delta_f1")
+    untyped_delta = _metric(ablations, "minus_typed_conflict", "revision_delta_f1")
+    far_typed_delta = _metric(ablations, "far", "typed_revision_delta_f1")
+    untyped_typed_delta = _metric(ablations, "minus_typed_conflict", "typed_revision_delta_f1")
     label_sensitivity = _label_sensitivity(root)
     checks = {
         "typed_answer_advantage": far_answer > untyped_answer,
         "typed_conflict_f1_advantage": far_typed_f1 > untyped_typed_f1,
         "typed_revision_accuracy_advantage": far_revision > untyped_revision,
+        "typed_conflict_revision_delta_advantage": far_delta > untyped_delta,
+        "typed_conflict_typed_delta_advantage": far_typed_delta > untyped_typed_delta,
+        "typed_revision_delta_advantage": far_delta
+        > _metric(ablations, "minus_typed_revision", "revision_delta_f1"),
+        "raw_baseline_delta_exceeds_far": max(
+            _metric(main, method, "revision_delta_f1") for method in main if method != "far"
+        )
+        > far_delta,
+        "refutation_ablation_delta_exceeds_far": _metric(
+            ablations, "minus_refutation_query", "revision_delta_f1"
+        )
+        > far_delta,
         "refutation_ablation_not_positive": _metric(
             ablations, "minus_refutation_query", "answer_correctness"
         )
@@ -280,6 +348,19 @@ def audit_claim_scope(root: Path, paper_text: str) -> dict[str, Any]:
             "typed_minus_untyped_answer_correctness": far_answer - untyped_answer,
             "typed_minus_untyped_conflict_f1": far_typed_f1 - untyped_typed_f1,
             "typed_minus_untyped_revision_accuracy": far_revision - untyped_revision,
+            "far_revision_delta_f1": far_delta,
+            "far_typed_revision_delta_f1": far_typed_delta,
+            "typed_minus_untyped_revision_delta_f1": far_delta - untyped_delta,
+            "typed_minus_untyped_typed_revision_delta_f1": (far_typed_delta - untyped_typed_delta),
+            "best_baseline_revision_delta_f1": max(
+                _metric(main, method, "revision_delta_f1") for method in main if method != "far"
+            ),
+            "minus_refutation_revision_delta_f1": _metric(
+                ablations, "minus_refutation_query", "revision_delta_f1"
+            ),
+            "minus_typed_revision_revision_delta_f1": _metric(
+                ablations, "minus_typed_revision", "revision_delta_f1"
+            ),
             "minus_refutation_answer_correctness": _metric(
                 ablations, "minus_refutation_query", "answer_correctness"
             ),
@@ -313,6 +394,7 @@ def audit(root: Path, *, paper_path: Path | None = None) -> dict[str, Any]:
     )
     p5 = _tracked_p5_evidence(root)
     p6m = _p6m_evidence(root)
+    family_delta = _family_revision_delta_evidence(root)
     claim_scope = audit_claim_scope(root, paper_text)
     gates = {
         "tracked_solo_evidence": bool(solo.get("valid")),
@@ -321,6 +403,7 @@ def audit(root: Path, *, paper_path: Path | None = None) -> dict[str, Any]:
         "tracked_stage_trace_map": bool(stage_trace.get("valid")),
         "tracked_registered_p5_report": bool(p5.get("valid")),
         "verified_p6m_negative_stability_audit": bool(p6m.get("valid")),
+        "verified_post_hoc_family_revision_delta": bool(family_delta.get("valid")),
     }
     ready = all(gates.values())
     return {
@@ -336,6 +419,7 @@ def audit(root: Path, *, paper_path: Path | None = None) -> dict[str, Any]:
             "stage_trace_map": stage_trace,
             "p5_registered_ablations": p5,
             "p6m_machine_ontology_stability": p6m,
+            "family_revision_delta_sensitivity": family_delta,
             "paper_main_sha256": sha256_file(paper),
             "paper_appendix_sha256": sha256_file(root / "paper/appendix.tex"),
             "paper_supplement_sha256": sha256_file(root / "paper/supplement.tex"),
@@ -351,9 +435,12 @@ def audit(root: Path, *, paper_path: Path | None = None) -> dict[str, Any]:
         "required_limitations": [
             "labels are not human-validated gold",
             "evaluation is not externally blind",
-            "one local model does not establish multi-model generality",
+            "the broad baseline delta ranking is Qwen-only and does not establish "
+            "multi-model generality",
             "refutation and boundary query ablations do not support positive marginal claims",
             "typed revision trades lower answer correctness for non-zero revision behavior",
+            "revision-delta metrics are post-hoc lexical diagnostics, not semantic correctness",
+            "raw baseline revision delta exceeds FAR despite zero typed action-conditioned delta",
             "FEVER binary transfer shows no paired accuracy gain",
             "machine-disposition sensitivity is post-hoc and not independent label validation",
             "cross-method trace attribution does not identify detection or action causal gaps",
@@ -388,13 +475,20 @@ def render_markdown(report: dict[str, Any]) -> str:
     stage_trace = str(gates["tracked_stage_trace_map"]).lower()
     p5 = str(gates["tracked_registered_p5_report"]).lower()
     p6m = str(gates["verified_p6m_negative_stability_audit"]).lower()
+    family_delta_gate = str(gates["verified_post_hoc_family_revision_delta"]).lower()
     far_answer = observed["far_answer_correctness"]
     answer_delta = observed["typed_minus_untyped_answer_correctness"]
     f1_delta = observed["typed_minus_untyped_conflict_f1"]
     revision_delta = observed["typed_minus_untyped_revision_accuracy"]
+    edit_delta = observed["far_revision_delta_f1"]
+    typed_edit_delta = observed["far_typed_revision_delta_f1"]
+    edit_advantage = observed["typed_minus_untyped_revision_delta_f1"]
     sensitivity = report["claim_scope"]["label_sensitivity"]
     confirmed = sensitivity["machine_confirmed"]["answer_correctness"]
     disputed = sensitivity["machine_disputed"]["answer_correctness"]
+    family_delta = report["evidence"]["family_revision_delta_sensitivity"][
+        "post_hoc_revision_delta"
+    ]
     return f"""# Single-Author Machine-Audited Paper Readiness
 
 This report audits the explicitly relaxed paper profile. It does not certify
@@ -411,6 +505,7 @@ multi-model generality.
 | Tracked stage trace map | `{stage_trace}` |
 | Tracked registered P5 report | `{p5}` |
 | Verified P6-M negative stability audit | `{p6m}` |
+| Verified post-hoc family revision-delta sensitivity | `{family_delta_gate}` |
 
 ## Narrow supported claim
 
@@ -420,6 +515,11 @@ multi-model generality.
 - Typed minus untyped answer correctness: `{answer_delta:+.3f}`
 - Typed minus untyped conflict F1: `{f1_delta:+.3f}`
 - Typed minus untyped revision accuracy: `{revision_delta:+.3f}`
+- FAR post-hoc revision delta F1: `{edit_delta:.3f}`
+- FAR post-hoc typed revision delta F1: `{typed_edit_delta:.3f}`
+- Typed minus untyped revision delta F1: `{edit_advantage:+.3f}`
+- Three-family post-hoc raw delta difference: `{family_delta["raw"]["combined_delta"]:+.4f}`
+- Three-family post-hoc typed delta difference: `{family_delta["typed"]["combined_delta"]:+.4f}`
 - Machine-confirmed answer delta (`n=35`): `{confirmed["candidate_minus_baseline"]:+.3f}`
 - Machine-disputed answer delta (`n=25`): `{disputed["candidate_minus_baseline"]:+.3f}`
 

@@ -459,7 +459,8 @@ def build_status(root: Path = ROOT) -> dict[str, Any]:
     if goal_complete:
         next_training_step = (
             "no required roadmap work remains; optional next steps are maintaining the "
-            "portable solo-paper release and its paired isolated standard-library verifier; "
+            "versioned diagnostic release, P11 revision-delta audit, portable solo-paper "
+            "release, and its paired isolated standard-library verifier; "
             "external publication or submission remains an author-owned action"
         )
     elif ws2_status == "complete" and ws3_status == "complete" and ws4_status != "complete":

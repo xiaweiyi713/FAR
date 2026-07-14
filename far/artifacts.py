@@ -17,9 +17,9 @@ from urllib.request import Request, urlopen
 from far.paths import repository_root
 
 SCHEMA_VERSION = "far-diagnostic-artifacts-v1"
-ARTIFACT_ID = "far-diagnostics-v1"
+ARTIFACT_ID = "far-diagnostics-v2"
 DEFAULT_SOURCE = repository_root() / "diagnostics"
-DEFAULT_MANIFEST = Path(__file__).resolve().parent / "data" / "diagnostics-v1.json"
+DEFAULT_MANIFEST = Path(__file__).resolve().parent / "data" / "diagnostics-v2.json"
 DEFAULT_ARCHIVE = repository_root() / "artifact-dist" / f"{ARTIFACT_ID}.tar.gz"
 
 

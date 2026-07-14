@@ -1,11 +1,11 @@
 {
   "claim_scope": "engineering hygiene only; does not alter F1-F10 or experimental gates",
   "diagnostic_release": {
-    "archive_sha256": "5e3f28dcd81d2af3170f740611b9f59b8bbe1ee6e869379d5794730db4ecf96e",
+    "archive_sha256": "016988b09b856e94025e2d50312ebb79d13a48e73155c3ca96cd611acb24b383",
     "cutover_valid": true,
     "local_install_target_ignored": true,
     "published": true,
-    "release_url": "https://github.com/xiaweiyi713/FAR/releases/download/artifacts-v1/far-diagnostics-v1.tar.gz",
+    "release_url": "https://github.com/xiaweiyi713/FAR/releases/download/artifacts-v2/far-diagnostics-v2.tar.gz",
     "tracked_files_removed": true
   },
   "diagnostics": {
@@ -37,9 +37,9 @@
     "single_file_mib": 50.0
   },
   "tracked_files": {
-    "bytes": 14534155,
+    "bytes": 14571703,
     "count": 360,
-    "mib": 13.861
+    "mib": 13.897
   },
   "valid": true
 }

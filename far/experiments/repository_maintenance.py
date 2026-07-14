@@ -104,7 +104,7 @@ def audit(
     )
     diagnostics_under_threshold = _bytes_to_mib(diagnostics_bytes) <= diagnostics_threshold_mib
     largest_under_threshold = _bytes_to_mib(largest.bytes) <= single_file_threshold_mib
-    diagnostic_manifest_path = root / "far/data/diagnostics-v1.json"
+    diagnostic_manifest_path = root / "far/data/diagnostics-v2.json"
     try:
         diagnostic_manifest = json.loads(diagnostic_manifest_path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):

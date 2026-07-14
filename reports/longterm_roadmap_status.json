@@ -12,7 +12,7 @@
     ],
     "goal_complete": true,
     "incomplete_workstreams": [],
-    "next_training_step": "no required roadmap work remains; optional next steps are maintaining the portable solo-paper release and its paired isolated standard-library verifier; external publication or submission remains an author-owned action"
+    "next_training_step": "no required roadmap work remains; optional next steps are maintaining the versioned diagnostic release, P11 revision-delta audit, portable solo-paper release, and its paired isolated standard-library verifier; external publication or submission remains an author-owned action"
   },
   "roadmap": {
     "active_sha256": "09cd929fe7a5e0b822914b9009edd7494e3d58da6c5da5256e573c2d9664a6d2",
@@ -116,12 +116,12 @@
         {
           "exists": true,
           "path": "docs/CURRENT_OPERATIONAL_STATE.md",
-          "sha256": "d334c1d0f54f62f8dd2c6fbe353a08f6cd73b569dd883f64e16866bdd78c9b71"
+          "sha256": "5ab8ab0a56412373c144dfad8dfd79929d5677636640659218b40e1d9bc93483"
         },
         {
           "exists": true,
           "path": "diagnostics/family_dev_v1/manifest.json",
-          "sha256": "b3602c31f3b7721c91e2e4b0f4466eb2403b3c59cf216e90e0a03a22328e807d"
+          "sha256": "c1d2b5b8766c7f8333bdbf7520891ce0a257e56608d5a74d97107db557c747a7"
         }
       ],
       "name": "WS2 cross-family typed/untyped dev reproduction",
@@ -199,17 +199,17 @@
         {
           "exists": true,
           "path": "paper/STATUS.md",
-          "sha256": "3659f088a5337bd9d98f26d5b26b076bd4e52ee4777c88a2e06eab94393e9630"
+          "sha256": "85b698acf54ec66368f6ffd9db5395c9949573f440fac1fadfcac64ec40ee0cf"
         },
         {
           "exists": true,
           "path": "paper/main.tex",
-          "sha256": "d70fd7d02bfaf70f96382ddd5ff98fc48d54ac088e7008a53a2107690fe78aff"
+          "sha256": "287d45bfec4efda02dd6aae663bddb7fb85db9b6a9f1c7c9dfd9fff847a65c4d"
         },
         {
           "exists": true,
           "path": "reports/solo_paper_readiness.json",
-          "sha256": "3d33611d496970795029017af1a5119efecfdcceeebf09ca90ee7422c9c503b9"
+          "sha256": "a1c4b606a7f9185f23cfdde8fbe1a3cb9bf5855589dfc608921310bf24b830d7"
         },
         {
           "exists": true,

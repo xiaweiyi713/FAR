@@ -114,7 +114,7 @@
           "meta": "4829dfae7697f1784830eeb09d493cd2a7d45858d2a0ddd706a1447907a15c77",
           "mistral": "156bcdd7a7bbf1a33b17982491731a6b08abfef1b11f9a29424c43758ead77b3"
         },
-        "paper_sha256": "d70fd7d02bfaf70f96382ddd5ff98fc48d54ac088e7008a53a2107690fe78aff",
+        "paper_sha256": "287d45bfec4efda02dd6aae663bddb7fb85db9b6a9f1c7c9dfd9fff847a65c4d",
         "ramdocs_manifest_sha256": "5cd9ff842789afd69fa8e64ff89c0f85eca2f8bc934aa4c694aeec92388074df",
         "ramdocs_round2_manifest_sha256": "33978e7a198b5eaaf9d401ec36a774cf97ce3c760535f78fe0550f3fb24e00da"
       },
@@ -157,10 +157,10 @@
     "reader_reports": {
       "files": {
         "reports/README.md": "31d6786337c2fa02cbe21095c648520fcc940a627a8682ef52695493472c6a72",
-        "reports/single_author_diagnostic_report.md": "9f8d088ee1c848c0340c74974ec5c7d8f0682cbcc75bb0aab70fbf8938467a21",
+        "reports/single_author_diagnostic_report.md": "2d547fc2c8f8677cacc7cac0d373629b0f5988cbbc58da7fec87626d166b5d05",
         "reports/solo_human_review_priority.csv": "bb036eb51e27d4b654978dd2bd0a2330422c58bf7bc2e6769fced165242a5dee",
-        "reports/solo_paper_readiness.json": "3d33611d496970795029017af1a5119efecfdcceeebf09ca90ee7422c9c503b9",
-        "reports/solo_paper_readiness.md": "5075656064d5b9e01d2ae3bbadab46b5e3eacd7723d3991cf559e32b45bc9ee6"
+        "reports/solo_paper_readiness.json": "a1c4b606a7f9185f23cfdde8fbe1a3cb9bf5855589dfc608921310bf24b830d7",
+        "reports/solo_paper_readiness.md": "f60f59293ac035d81d46187a41fa906ea73b475b6fa7a8bb8576117b910ad1e0"
       },
       "missing": [],
       "valid": true
@@ -182,12 +182,17 @@
         "checks": {
           "boundary_ablation_not_positive": true,
           "far_exceeds_all_six_baselines_on_answer": true,
+          "raw_baseline_delta_exceeds_far": true,
+          "refutation_ablation_delta_exceeds_far": true,
           "refutation_ablation_not_positive": true,
           "typed_answer_advantage": true,
           "typed_answer_advantage_same_direction_by_machine_disposition": true,
           "typed_conflict_f1_advantage": true,
+          "typed_conflict_revision_delta_advantage": true,
+          "typed_conflict_typed_delta_advantage": true,
           "typed_revision_accuracy_advantage": true,
-          "typed_revision_answer_tradeoff": true
+          "typed_revision_answer_tradeoff": true,
+          "typed_revision_delta_advantage": true
         },
         "forbidden_stale_claims": [],
         "label_sensitivity": {
@@ -291,18 +296,81 @@
         },
         "missing_required_disclosures": [],
         "observed": {
-          "far_answer_correctness": 0.7973782240376361,
-          "minus_boundary_answer_correctness": 0.8013551728186074,
+          "best_baseline_revision_delta_f1": 0.3068598660446911,
+          "far_answer_correctness": 0.7973782240376363,
+          "far_revision_delta_f1": 0.14544003604780276,
+          "far_typed_revision_delta_f1": 0.0961040800241924,
+          "minus_boundary_answer_correctness": 0.8013551728186076,
           "minus_refutation_answer_correctness": 0.8262613305723462,
+          "minus_refutation_revision_delta_f1": 0.19371227341249841,
           "minus_typed_revision_answer_correctness": 0.873361070934565,
           "minus_typed_revision_revision_accuracy": 0.0,
-          "typed_minus_untyped_answer_correctness": 0.0783303521930897,
+          "minus_typed_revision_revision_delta_f1": 0.07225192012288786,
+          "typed_minus_untyped_answer_correctness": 0.07833035219308981,
           "typed_minus_untyped_conflict_f1": 0.42038216560509556,
-          "typed_minus_untyped_revision_accuracy": 0.21666666666666667
+          "typed_minus_untyped_revision_accuracy": 0.21666666666666667,
+          "typed_minus_untyped_revision_delta_f1": 0.05252579708324037,
+          "typed_minus_untyped_typed_revision_delta_f1": 0.0961040800241924
         },
         "valid": true
       },
       "evidence": {
+        "family_revision_delta_sensitivity": {
+          "checks": {
+            "frozen_release_valid": true,
+            "post_hoc_boundary": true,
+            "raw_direction_recurs": true,
+            "typed_direction_recurs": true
+          },
+          "direction_consistent": true,
+          "errors": [],
+          "gate_f_passed": true,
+          "gate_p_completed": true,
+          "human_iaa": false,
+          "post_hoc_revision_delta": {
+            "metric_profile": "falsirag-evaluation-metrics-v2-revision-delta",
+            "model_calls": 0,
+            "preregistered_primary": false,
+            "raw": {
+              "combined_delta": 0.03978542971540436,
+              "family_cluster_bootstrap": {
+                "clusters": 3,
+                "confidence": 0.95,
+                "lower": 0.013324651456705415,
+                "method": "family-cluster-percentile-bootstrap-v1",
+                "pairs_per_cluster": 60,
+                "probability_positive": 1.0,
+                "resamples": 2000,
+                "seed": 1729,
+                "upper": 0.05360968864027876
+              },
+              "metric": "typed_minus_untyped_revision_delta_f1",
+              "positive_families": 3
+            },
+            "test_accessed": false,
+            "typed": {
+              "combined_delta": 0.08164532922995402,
+              "family_cluster_bootstrap": {
+                "clusters": 3,
+                "confidence": 0.95,
+                "lower": 0.035261450714595216,
+                "method": "family-cluster-percentile-bootstrap-v1",
+                "pairs_per_cluster": 60,
+                "probability_positive": 1.0,
+                "resamples": 2000,
+                "seed": 1729,
+                "upper": 0.11373046242858066
+              },
+              "metric": "typed_minus_untyped_typed_revision_delta_f1",
+              "positive_families": 3
+            }
+          },
+          "publication_gold": false,
+          "required_claim_level": "directional_reproduction",
+          "schema_version": "far-family-dev-release-audit-v1",
+          "test_accessed": false,
+          "valid": true
+        },
         "fever_binary": {
           "errors": [],
           "publication_ready_main_result": false,
@@ -352,9 +420,9 @@
           "test_accessed": false,
           "valid": true
         },
-        "paper_appendix_sha256": "b0517884ca98886580ca23269700d1aa8d5408ebeb369a08089a0100aa98f450",
+        "paper_appendix_sha256": "b1da3def20ec12b61c22ba95fdb86f9729fb566af04c1c2d074957cd33291f89",
         "paper_checklist_sha256": "e3b92d8cc9e056eb1ebba33e91c6b338a6bbbb29e34e19abe7f3eb94c42b967a",
-        "paper_main_sha256": "d70fd7d02bfaf70f96382ddd5ff98fc48d54ac088e7008a53a2107690fe78aff",
+        "paper_main_sha256": "287d45bfec4efda02dd6aae663bddb7fb85db9b6a9f1c7c9dfd9fff847a65c4d",
         "paper_supplement_sha256": "17a325914f811c66aa97ce5c996ca8365fb793b2b45fc284baa98b0d8b57aefb",
         "solo_release": {
           "errors": [],
@@ -391,15 +459,18 @@
         "tracked_registered_p5_report": true,
         "tracked_solo_evidence": true,
         "tracked_stage_trace_map": true,
-        "verified_p6m_negative_stability_audit": true
+        "verified_p6m_negative_stability_audit": true,
+        "verified_post_hoc_family_revision_delta": true
       },
       "ready": true,
       "required_limitations": [
         "labels are not human-validated gold",
         "evaluation is not externally blind",
-        "one local model does not establish multi-model generality",
+        "the broad baseline delta ranking is Qwen-only and does not establish multi-model generality",
         "refutation and boundary query ablations do not support positive marginal claims",
         "typed revision trades lower answer correctness for non-zero revision behavior",
+        "revision-delta metrics are post-hoc lexical diagnostics, not semantic correctness",
+        "raw baseline revision delta exceeds FAR despite zero typed action-conditioned delta",
         "FEVER binary transfer shows no paired accuracy gain",
         "machine-disposition sensitivity is post-hoc and not independent label validation",
         "cross-method trace attribution does not identify detection or action causal gaps",
@@ -407,7 +478,7 @@
         "P6-M is machine-panel sensitivity, not population type mappability",
         "the strict human P6 analysis was not completed"
       ],
-      "schema_version": "far-solo-paper-readiness-v2",
+      "schema_version": "far-solo-paper-readiness-v3",
       "strict_aaai_submission_ready": false,
       "study_profile": "single_author_machine_audited_paper"
     },
@@ -438,9 +509,11 @@
     "required_limitations": [
       "labels are not human-validated gold",
       "evaluation is not externally blind",
-      "one local model does not establish multi-model generality",
+      "the broad baseline delta ranking is Qwen-only and does not establish multi-model generality",
       "refutation and boundary query ablations do not support positive marginal claims",
       "typed revision trades lower answer correctness for non-zero revision behavior",
+      "revision-delta metrics are post-hoc lexical diagnostics, not semantic correctness",
+      "raw baseline revision delta exceeds FAR despite zero typed action-conditioned delta",
       "FEVER binary transfer shows no paired accuracy gain",
       "machine-disposition sensitivity is post-hoc and not independent label validation",
       "cross-method trace attribution does not identify detection or action causal gaps",

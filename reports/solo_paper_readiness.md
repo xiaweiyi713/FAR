@@ -14,6 +14,7 @@ multi-model generality.
 | Tracked stage trace map | `true` |
 | Tracked registered P5 report | `true` |
 | Verified P6-M negative stability audit | `true` |
+| Verified post-hoc family revision-delta sensitivity | `true` |
 
 ## Narrow supported claim
 
@@ -23,6 +24,11 @@ Across eight RAMDocs development methods, errors concentrate after retrieved evi
 - Typed minus untyped answer correctness: `+0.078`
 - Typed minus untyped conflict F1: `+0.420`
 - Typed minus untyped revision accuracy: `+0.217`
+- FAR post-hoc revision delta F1: `0.145`
+- FAR post-hoc typed revision delta F1: `0.096`
+- Typed minus untyped revision delta F1: `+0.053`
+- Three-family post-hoc raw delta difference: `+0.0398`
+- Three-family post-hoc typed delta difference: `+0.0816`
 - Machine-confirmed answer delta (`n=35`): `+0.101`
 - Machine-disputed answer delta (`n=25`): `+0.047`
 
@@ -30,9 +36,11 @@ Across eight RAMDocs development methods, errors concentrate after retrieved evi
 
 - labels are not human-validated gold
 - evaluation is not externally blind
-- one local model does not establish multi-model generality
+- the broad baseline delta ranking is Qwen-only and does not establish multi-model generality
 - refutation and boundary query ablations do not support positive marginal claims
 - typed revision trades lower answer correctness for non-zero revision behavior
+- revision-delta metrics are post-hoc lexical diagnostics, not semantic correctness
+- raw baseline revision delta exceeds FAR despite zero typed action-conditioned delta
 - FEVER binary transfer shows no paired accuracy gain
 - machine-disposition sensitivity is post-hoc and not independent label validation
 - cross-method trace attribution does not identify detection or action causal gaps

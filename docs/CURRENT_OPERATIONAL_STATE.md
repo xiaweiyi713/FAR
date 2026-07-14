@@ -1,7 +1,7 @@
 # FAR 当前运行状态
 
-状态时间：2026-07-13 19:33 CST
-适用范围：长期路线 WS1--WS6、重定位 P0--P10、P6-M 与 standalone paper release；
+状态时间：2026-07-14 19:42 CST
+适用范围：长期路线 WS1--WS6、重定位 P0--P11、P6-M 与 standalone paper release；
 本批不需要 GPU，未启动任何远端或本机模型任务。
 
 ## 当前结论
@@ -20,6 +20,16 @@
 - TMLR 主文和附录已纳入 P5 注册消融及 P6-M 阴性稳定性结果；paper-readiness 会同时校验
   H3 `uncertain`、H5 scoped `equivalent`、P6-M 15/217 共识/202 contested 与全部非真人边界。
   当前 14 页构建无 overfull box 或未解析引用；此更新没有调用模型或 GPU。
+- P11 在冻结 prediction 上完成零模型 revision-delta 度量审计。它修复了 whole-answer soft F1
+  可给“原错误答案不修改”高分的盲点：FAR raw/typed delta F1 为 `0.145/0.096`，untyped
+  conflict arm 为 `0.093/0`，但 CRAG-style 与 Vanilla raw delta F1 更高（`0.307/0.264`），
+  且去掉 refutation query 提高到 `0.194`。这只支持“typed control 更可审计”，不支持 FAR
+  在词面修订质量上优于广义基线，也不是语义正确率或真人 gold。
+- 相同的事后度量在冻结 WS2 predictions 上显示 Mistral/Gemma/Llama raw delta 差均为正，
+  合并 `+0.0398`、family-cluster 95% CI `[+0.0133,+0.0536]`；typed delta 合并
+  `+0.0816` `[+0.0353,+0.1137]`。该方向性复现不是 WS2 预注册主指标，也不改变以上负面排名。
+- 当前诊断安装源升级为不可变 `artifacts-v2`：336 文件、44,128,752 bytes、整树 SHA-256
+  `362761dc...e92ae`；原 `artifacts-v1` 未覆盖并继续作为 P10-B 历史快照。
 - 活动 TMLR 路线现有独立的 `scripts/solo_paper_release_check.sh`：在 clean commit 上用
   `solo-paper` profile 强制绑定 wheel、sdist、SBOM、两个审计报告、两份 readiness 报告、
   TMLR PDF 与 `SOURCE.lock`。它不读取真人/投稿 evidence，也不冒充严格 AAAI release gate。

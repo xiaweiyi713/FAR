@@ -626,7 +626,7 @@ def _verify_semantics(payload_by_role: dict[str, bytes], checksums: Any, errors:
             raise TypeError("paper readiness is not an object")
         if readiness.get("ready") is not True:
             errors.append("embedded paper profile is not ready")
-        if readiness.get("schema_version") != "far-solo-paper-readiness-v2":
+        if readiness.get("schema_version") != "far-solo-paper-readiness-v3":
             errors.append("embedded paper readiness schema is unsupported")
         if readiness.get("strict_aaai_submission_ready") is not False:
             errors.append("embedded paper profile upgrades strict submission readiness")
