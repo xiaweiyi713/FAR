@@ -93,6 +93,23 @@ def _release_tree(tmp_path: Path) -> tuple[Path, Path]:
             "checks": dict.fromkeys(CLAIM_SCOPE_CHECKS, True),
             "missing_required_disclosures": [],
             "forbidden_stale_claims": [],
+            "observed": {
+                "best_baseline_revision_delta_f1": 0.31,
+                "far_answer_correctness": 0.80,
+                "far_revision_delta_f1": 0.15,
+                "far_typed_revision_delta_f1": 0.10,
+                "minus_boundary_answer_correctness": 0.81,
+                "minus_refutation_answer_correctness": 0.83,
+                "minus_refutation_revision_delta_f1": 0.19,
+                "minus_typed_revision_answer_correctness": 0.87,
+                "minus_typed_revision_revision_accuracy": 0.0,
+                "minus_typed_revision_revision_delta_f1": 0.07,
+                "typed_minus_untyped_answer_correctness": 0.08,
+                "typed_minus_untyped_conflict_f1": 0.42,
+                "typed_minus_untyped_revision_accuracy": 0.22,
+                "typed_minus_untyped_revision_delta_f1": 0.05,
+                "typed_minus_untyped_typed_revision_delta_f1": 0.10,
+            },
         },
         "evidence": {
             "paper_main_sha256": main_sha,
@@ -119,6 +136,62 @@ def _release_tree(tmp_path: Path) -> tuple[Path, Path]:
                 "publication_gold": False,
                 "confirmatory_h4": False,
                 "test_accessed": False,
+            },
+            "family_revision_delta_sensitivity": {
+                "valid": True,
+                "schema_version": "far-family-dev-release-audit-v1",
+                "required_claim_level": "directional_reproduction",
+                "direction_consistent": True,
+                "gate_f_passed": True,
+                "gate_p_completed": True,
+                "checks": {
+                    "frozen_release_valid": True,
+                    "post_hoc_boundary": True,
+                    "raw_direction_recurs": True,
+                    "typed_direction_recurs": True,
+                },
+                "errors": [],
+                "human_iaa": False,
+                "publication_gold": False,
+                "test_accessed": False,
+                "post_hoc_revision_delta": {
+                    "metric_profile": "falsirag-evaluation-metrics-v2-revision-delta",
+                    "model_calls": 0,
+                    "preregistered_primary": False,
+                    "test_accessed": False,
+                    "raw": {
+                        "metric": "typed_minus_untyped_revision_delta_f1",
+                        "combined_delta": 0.04,
+                        "positive_families": 3,
+                        "family_cluster_bootstrap": {
+                            "method": "family-cluster-percentile-bootstrap-v1",
+                            "clusters": 3,
+                            "pairs_per_cluster": 60,
+                            "confidence": 0.95,
+                            "resamples": 2000,
+                            "seed": 1729,
+                            "probability_positive": 1.0,
+                            "lower": 0.01,
+                            "upper": 0.05,
+                        },
+                    },
+                    "typed": {
+                        "metric": "typed_minus_untyped_typed_revision_delta_f1",
+                        "combined_delta": 0.08,
+                        "positive_families": 3,
+                        "family_cluster_bootstrap": {
+                            "method": "family-cluster-percentile-bootstrap-v1",
+                            "clusters": 3,
+                            "pairs_per_cluster": 60,
+                            "confidence": 0.95,
+                            "resamples": 2000,
+                            "seed": 1729,
+                            "probability_positive": 1.0,
+                            "lower": 0.04,
+                            "upper": 0.11,
+                        },
+                    },
+                },
             },
             "fever_binary": {
                 "valid": True,
@@ -170,6 +243,10 @@ def _release_tree(tmp_path: Path) -> tuple[Path, Path]:
                     b"| Strict AAAI submission | `false` |\n"
                     b"- labels are not human-validated gold\n"
                     b"- evaluation is not externally blind\n"
+                    b"- revision-delta metrics are post-hoc lexical diagnostics, "
+                    b"not semantic correctness\n"
+                    b"- raw baseline revision delta exceeds FAR despite zero typed "
+                    b"action-conditioned delta\n"
                     b"- P6-M as human review, human adjudication, or human IAA\n"
                 ),
             ),
@@ -452,6 +529,23 @@ def test_solo_paper_bundle_rejects_claim_boundary_upgrade(tmp_path: Path) -> Non
 
     assert internal_audit["valid"] is False
     assert "embedded stage-trace boundary was upgraded or changed" in internal_audit["errors"]
+
+    readiness["evidence"]["stage_trace_map"]["publication_gold"] = False
+    readiness["evidence"]["family_revision_delta_sensitivity"]["post_hoc_revision_delta"][
+        "preregistered_primary"
+    ] = True
+    readiness_payload = (json.dumps(readiness, indent=2, sort_keys=True) + "\n").encode()
+    upgraded_post_hoc = root / "build/release/upgraded-post-hoc.tar.gz"
+    _coordinated_artifact_rewrite(
+        original,
+        upgraded_post_hoc,
+        "solo_paper_readiness_json",
+        readiness_payload,
+    )
+    post_hoc_audit = verify_bundle(upgraded_post_hoc)
+
+    assert post_hoc_audit["valid"] is False
+    assert "embedded family revision-delta boundary is unsafe" in post_hoc_audit["errors"]
 
 
 def test_solo_paper_bundle_rejects_invalid_wheel_after_coordinated_rehash(

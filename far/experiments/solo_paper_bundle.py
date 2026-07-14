@@ -7,6 +7,7 @@ import gzip
 import hashlib
 import io
 import json
+import math
 import re
 import shutil
 import stat
@@ -54,9 +55,11 @@ ALLOWED_CLAIM = (
 REQUIRED_LIMITATIONS = (
     "labels are not human-validated gold",
     "evaluation is not externally blind",
-    "one local model does not establish multi-model generality",
+    "the broad baseline delta ranking is Qwen-only and does not establish multi-model generality",
     "refutation and boundary query ablations do not support positive marginal claims",
     "typed revision trades lower answer correctness for non-zero revision behavior",
+    "revision-delta metrics are post-hoc lexical diagnostics, not semantic correctness",
+    "raw baseline revision delta exceeds FAR despite zero typed action-conditioned delta",
     "FEVER binary transfer shows no paired accuracy gain",
     "machine-disposition sensitivity is post-hoc and not independent label validation",
     "cross-method trace attribution does not identify detection or action causal gaps",
@@ -82,19 +85,50 @@ READINESS_GATES = {
     "tracked_solo_evidence": True,
     "tracked_stage_trace_map": True,
     "verified_p6m_negative_stability_audit": True,
+    "verified_post_hoc_family_revision_delta": True,
 }
 CLAIM_SCOPE_CHECKS = frozenset(
     {
         "boundary_ablation_not_positive",
         "far_exceeds_all_six_baselines_on_answer",
+        "raw_baseline_delta_exceeds_far",
+        "refutation_ablation_delta_exceeds_far",
         "refutation_ablation_not_positive",
         "typed_answer_advantage",
         "typed_answer_advantage_same_direction_by_machine_disposition",
         "typed_conflict_f1_advantage",
+        "typed_conflict_revision_delta_advantage",
+        "typed_conflict_typed_delta_advantage",
         "typed_revision_accuracy_advantage",
         "typed_revision_answer_tradeoff",
+        "typed_revision_delta_advantage",
     }
 )
+CLAIM_SCOPE_OBSERVED_KEYS = frozenset(
+    {
+        "best_baseline_revision_delta_f1",
+        "far_answer_correctness",
+        "far_revision_delta_f1",
+        "far_typed_revision_delta_f1",
+        "minus_boundary_answer_correctness",
+        "minus_refutation_answer_correctness",
+        "minus_refutation_revision_delta_f1",
+        "minus_typed_revision_answer_correctness",
+        "minus_typed_revision_revision_accuracy",
+        "minus_typed_revision_revision_delta_f1",
+        "typed_minus_untyped_answer_correctness",
+        "typed_minus_untyped_conflict_f1",
+        "typed_minus_untyped_revision_accuracy",
+        "typed_minus_untyped_revision_delta_f1",
+        "typed_minus_untyped_typed_revision_delta_f1",
+    }
+)
+FAMILY_DELTA_CHECKS = {
+    "frozen_release_valid": True,
+    "post_hoc_boundary": True,
+    "raw_direction_recurs": True,
+    "typed_direction_recurs": True,
+}
 READINESS_TOP_LEVEL_KEYS = frozenset(
     {
         "allowed_claim",
@@ -655,6 +689,39 @@ def _verify_semantics(payload_by_role: dict[str, bytes], checksums: Any, errors:
             or any(value is not True for value in claim_checks.values())
         ):
             errors.append("embedded paper claim-scope audit is unsafe")
+        claim_observed = claim_scope.get("observed")
+        if (
+            not isinstance(claim_observed, dict)
+            or set(claim_observed) != CLAIM_SCOPE_OBSERVED_KEYS
+            or any(
+                isinstance(value, bool)
+                or not isinstance(value, (int, float))
+                or not math.isfinite(value)
+                for value in claim_observed.values()
+            )
+        ):
+            errors.append("embedded paper claim-scope observations are incomplete")
+        elif not (
+            claim_observed["typed_minus_untyped_answer_correctness"] > 0
+            and claim_observed["typed_minus_untyped_conflict_f1"] > 0
+            and claim_observed["typed_minus_untyped_revision_accuracy"] > 0
+            and claim_observed["typed_minus_untyped_revision_delta_f1"] > 0
+            and claim_observed["typed_minus_untyped_typed_revision_delta_f1"] > 0
+            and claim_observed["far_revision_delta_f1"]
+            > claim_observed["minus_typed_revision_revision_delta_f1"]
+            and claim_observed["best_baseline_revision_delta_f1"]
+            > claim_observed["far_revision_delta_f1"]
+            and claim_observed["minus_refutation_revision_delta_f1"]
+            > claim_observed["far_revision_delta_f1"]
+            and claim_observed["minus_refutation_answer_correctness"]
+            >= claim_observed["far_answer_correctness"]
+            and claim_observed["minus_boundary_answer_correctness"]
+            >= claim_observed["far_answer_correctness"]
+            and claim_observed["minus_typed_revision_answer_correctness"]
+            > claim_observed["far_answer_correctness"]
+            and claim_observed["minus_typed_revision_revision_accuracy"] == 0.0
+        ):
+            errors.append("embedded paper claim-scope observations contradict the audit")
         evidence = readiness.get("evidence")
         if not isinstance(evidence, dict):
             raise TypeError("paper readiness evidence is not an object")
@@ -692,11 +759,73 @@ def _verify_semantics(payload_by_role: dict[str, bytes], checksums: Any, errors:
             if p6m.get(field) is not False:
                 errors.append(f"embedded P6-M boundary is unsafe: {field}")
 
+        family_delta = evidence.get("family_revision_delta_sensitivity")
+        if not isinstance(family_delta, dict):
+            raise TypeError("paper readiness family revision-delta evidence is not an object")
+        if (
+            family_delta.get("valid") is not True
+            or family_delta.get("schema_version") != "far-family-dev-release-audit-v1"
+            or family_delta.get("required_claim_level") != "directional_reproduction"
+            or family_delta.get("direction_consistent") is not True
+            or family_delta.get("gate_f_passed") is not True
+            or family_delta.get("gate_p_completed") is not True
+            or family_delta.get("checks") != FAMILY_DELTA_CHECKS
+            or family_delta.get("errors") != []
+            or family_delta.get("human_iaa") is not False
+            or family_delta.get("publication_gold") is not False
+            or family_delta.get("test_accessed") is not False
+        ):
+            errors.append("embedded family revision-delta evidence is incomplete")
+        family_post_hoc = family_delta.get("post_hoc_revision_delta")
+        if not isinstance(family_post_hoc, dict):
+            raise TypeError("paper readiness post-hoc revision-delta evidence is not an object")
+        if (
+            family_post_hoc.get("metric_profile") != "falsirag-evaluation-metrics-v2-revision-delta"
+            or family_post_hoc.get("model_calls") != 0
+            or family_post_hoc.get("preregistered_primary") is not False
+            or family_post_hoc.get("test_accessed") is not False
+        ):
+            errors.append("embedded family revision-delta boundary is unsafe")
+        for name, metric in (
+            ("raw", "typed_minus_untyped_revision_delta_f1"),
+            ("typed", "typed_minus_untyped_typed_revision_delta_f1"),
+        ):
+            result = family_post_hoc.get(name)
+            bootstrap = result.get("family_cluster_bootstrap") if isinstance(result, dict) else None
+            if (
+                not isinstance(result, dict)
+                or result.get("metric") != metric
+                or result.get("positive_families") != 3
+                or isinstance(result.get("combined_delta"), bool)
+                or not isinstance(result.get("combined_delta"), (int, float))
+                or not math.isfinite(result["combined_delta"])
+                or result["combined_delta"] <= 0
+                or not isinstance(bootstrap, dict)
+                or bootstrap.get("method") != "family-cluster-percentile-bootstrap-v1"
+                or bootstrap.get("clusters") != 3
+                or bootstrap.get("pairs_per_cluster") != 60
+                or bootstrap.get("confidence") != 0.95
+                or bootstrap.get("resamples") != 2000
+                or bootstrap.get("seed") != 1729
+                or bootstrap.get("probability_positive") != 1.0
+                or isinstance(bootstrap.get("lower"), bool)
+                or not isinstance(bootstrap.get("lower"), (int, float))
+                or not math.isfinite(bootstrap["lower"])
+                or bootstrap["lower"] <= 0
+                or isinstance(bootstrap.get("upper"), bool)
+                or not isinstance(bootstrap.get("upper"), (int, float))
+                or not math.isfinite(bootstrap["upper"])
+                or bootstrap["upper"] < bootstrap["lower"]
+            ):
+                errors.append(f"embedded family {name} revision-delta result is unsafe")
+
         markdown = payload_by_role["solo_paper_readiness_markdown"].decode("utf-8")
         required_markdown_boundaries = (
             "| Strict AAAI submission | `false` |",
             "labels are not human-validated gold",
             "evaluation is not externally blind",
+            "revision-delta metrics are post-hoc lexical diagnostics, not semantic correctness",
+            "raw baseline revision delta exceeds FAR despite zero typed action-conditioned delta",
             "P6-M as human review, human adjudication, or human IAA",
         )
         for boundary in required_markdown_boundaries:
