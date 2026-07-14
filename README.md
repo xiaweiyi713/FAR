@@ -177,10 +177,10 @@ bash scripts/solo_paper_release_check.sh
 安装 FAR、联网或模型运行时。
 归档布局、transfer 后验证和严格非真人边界见
 [Portable No-Human TMLR Release](docs/SOLO_PAPER_RELEASE.md)。
-不可变公开版本见
-[`paper-v1`](https://github.com/xiaweiyi713/FAR/releases/tag/paper-v1)：归档 SHA-256
-`7e94e1e7ed63f0d4945d90164db418eb87e816fd284bb972373ca46cb1d852e8`，已完成远端下载与
-`python3 -I` 独立回读验证。
+当前不可变公开版本见
+[`paper-v2`](https://github.com/xiaweiyi713/FAR/releases/tag/paper-v2)：归档 SHA-256
+`000499205716a93306080ac2bd7a181b5c45df454eb72b65faf70e36e5398217`，已完成远端下载与
+`python3 -I` 独立回读验证；`paper-v1` 继续保留为 P12 历史快照。
 
 wheel 与 sdist 的隔离安装 smoke 会验证：包内基准、离线配置、命令入口，以及自足 BM25 确实可用。
 生成的诊断运行不会进入安装包；其逐文件指纹、确定性归档流程和发布状态见

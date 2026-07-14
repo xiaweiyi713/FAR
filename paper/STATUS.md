@@ -54,6 +54,12 @@ conditional delta fidelity or target completeness. This is a post-hoc
 feasibility audit, not a calibrated or deployable selector, causal policy
 effect, semantic evaluation, or held-out result.
 
+The current immutable portable paper cut is
+[`paper-v2`](https://github.com/xiaweiyi713/FAR/releases/tag/paper-v2), bound to
+clean commit `30dc37f62deeaec79d44e23876e1787bd9876174` and independently verified
+after remote download with system `python3 -I`. The earlier `paper-v1` release
+remains the immutable P12 snapshot.
+
 G-P estimates only 0.414 exact-McNemar power for the registered 3 x 60 family
 study at a +0.078 effect. WS2 is consequently a directional reproduction: a
 nonsignificant G-F cannot establish absence, while fewer than 2/3 positive

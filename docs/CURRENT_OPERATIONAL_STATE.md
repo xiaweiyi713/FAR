@@ -1,6 +1,6 @@
 # FAR 当前运行状态
 
-状态时间：2026-07-14 20:25 CST
+状态时间：2026-07-14 20:57 CST
 适用范围：长期路线 WS1--WS6、重定位 P0--P13、P6-M 与 standalone paper release；
 本批不需要 GPU，未启动任何远端或本机模型任务。
 
@@ -48,10 +48,11 @@
   配对的 `verify_solo_paper_release.py` 也必须 byte-identical，并以 `python3 -I` 隔离模式只读
   自身与归档，独立拒绝内容/验证器篡改、额外/危险成员、source-lock 漂移以及任何真人或严格
   投稿主张升级；接收者不需要 checkout、安装 FAR、联网或模型运行时。
-- 不可变公开版本 [`paper-v1`](https://github.com/xiaweiyi713/FAR/releases/tag/paper-v1) 已绑定
-  clean commit `434414f6eec712abd13070619248f577cb4d3e0a`。归档为 2,328,609 bytes，SHA-256
-  `7e94e1e7ed63f0d4945d90164db418eb87e816fd284bb972373ca46cb1d852e8`；从 GitHub 下载到空临时目录
-  后，以系统 `python3 -I` 独立验证通过，`valid=true`、`errors=[]`。
+- 当前不可变公开版本 [`paper-v2`](https://github.com/xiaweiyi713/FAR/releases/tag/paper-v2) 已绑定
+  clean commit `30dc37f62deeaec79d44e23876e1787bd9876174`。归档为 2,363,474 bytes，SHA-256
+  `000499205716a93306080ac2bd7a181b5c45df454eb72b65faf70e36e5398217`；从 GitHub 下载到空临时目录
+  后，以系统 `python3 -I` 独立验证通过，`valid=true`、`errors=[]`。`paper-v1` 继续保留为 P12
+  历史快照，没有被覆盖或改写。
 
 ## 既有 WS1--WS6 结论（2026-07-09 冻结）
 

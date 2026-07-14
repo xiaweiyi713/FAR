@@ -60,14 +60,36 @@ credentials, strict submission evidence, or a human-review substitute.
 ## Publishing
 
 Publish the `.tar.gz` together with `verify_solo_paper_release.py`,
-`bundle-build.json`, and `bundle-audit.json`. The build record provides both
-SHA-256 values that a recipient can check before running the semantic verifier.
-Publishing is an external action; generating this bundle does not itself submit
-the paper or upgrade its evidence tier.
+`release-checksums.json`, and the TMLR PDF. Keep `bundle-build.json` and
+`bundle-audit.json` as local build/readback records. Publishing is an external
+action; generating this bundle does not itself submit the paper or upgrade its
+evidence tier.
+
+## Public release v2
+
+The current immutable public cut is
+[`paper-v2`](https://github.com/xiaweiyi713/FAR/releases/tag/paper-v2), bound to
+clean Git commit `30dc37f62deeaec79d44e23876e1787bd9876174`:
+
+- archive: 2,363,474 bytes, SHA-256
+  `000499205716a93306080ac2bd7a181b5c45df454eb72b65faf70e36e5398217`;
+- standalone verifier: 56,517 bytes, SHA-256
+  `af26d64f233c6c70bc80bafc4e011ee9aa872b407499c63061ba41623c1d3c24`;
+- release checksum manifest: 2,255 bytes, SHA-256
+  `4d4c736ec4bd3bbd67fa7904f4948f419ea4b01c562a3898295f9083dbc2d593`;
+- 15-page TMLR PDF: 294,328 bytes, SHA-256
+  `5a77a5eb0cd8b1d2368b0ccc4ea162c7bf923922045f3f4a22a70c4fc83b4733`.
+
+All four assets were downloaded from GitHub into an empty temporary directory.
+Their sizes and hashes matched the clean local candidate, and the downloaded
+sidecar passed system `python3 -I` verification with `valid=true`, no errors,
+the same source revision, and all human/gold/blindness/strict-readiness flags
+false. This release adds the P13 post-hoc selective-revision feasibility audit;
+it does not evaluate a deployable selector or prospective policy.
 
 ## Public release v1
 
-The first immutable public cut is
+The first immutable public cut, retained as the P12 historical snapshot, is
 [`paper-v1`](https://github.com/xiaweiyi713/FAR/releases/tag/paper-v1), bound to
 clean Git commit `434414f6eec712abd13070619248f577cb4d3e0a`:
 

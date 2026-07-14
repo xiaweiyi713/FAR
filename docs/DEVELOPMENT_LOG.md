@@ -3536,3 +3536,11 @@ evidence bundle verified successfully, releasing the GPU.
   bundle checks. All boundaries explicitly reject a deployable selector,
   prospective calibration, causal policy effect, semantic correctness, human
   review, and held-out/test evidence.
+- Rebuilt and rendered the 15-page TMLR PDF. Every page was visually inspected;
+  no clipping, overlap, unreadable table, overfull box, or unresolved reference
+  remains.
+- Published immutable GitHub release `paper-v2` from clean commit
+  `30dc37f62deeaec79d44e23876e1787bd9876174`. Its 2,363,474-byte archive has
+  SHA-256 `000499205716a93306080ac2bd7a181b5c45df454eb72b65faf70e36e5398217`.
+  All four remote assets matched the local candidate, and a fresh empty-directory
+  download passed standalone system `python3 -I` verification with no errors.
