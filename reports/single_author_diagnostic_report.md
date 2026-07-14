@@ -1,12 +1,12 @@
 # FAR Single-Author Machine-Audited Diagnostic Report
 
-Generated from the frozen prediction evidence; metric audit refreshed on 2026-07-13.
+Generated from the frozen prediction evidence; metric and trace audits refreshed on 2026-07-14.
 
 ## Technical summary
 
 FAR is complete enough to support a single-author, machine-audited synthetic-benchmark diagnostic. The automated readiness gate passes all four diagnostic requirements: the 300-sample candidate benchmark is structurally valid; the machine-consensus audit is complete; the 11-method local Qwen development suite is complete on the 60-sample dev split; and the local 58-sample test bundle is gold-free and structurally audited.
 
-The evidence supports a narrow diagnostic claim: typed conflict control is useful as a development-set mechanism signal. FAR reaches 0.797 whole-answer correctness and 0.983 counter-evidence recall on the local Qwen dev suite, above the six transparent baselines on those two metrics. Against the untyped FAR ablation, FAR improves answer correctness by 7.83 points and revision accuracy by 21.67 points. A post-hoc metric audit adds raw revision-delta F1 0.145 and action-conditioned typed delta F1 0.096. FAR exceeds the untyped arm on both edit diagnostics, but broad baselines obtain higher raw delta F1, and the refutation-query ablation also exceeds full FAR. The revision result is therefore modest and mixed rather than evidence that every FAR submodule has a positive marginal effect.
+The evidence supports a narrow diagnostic claim: typed conflict control is useful as a development-set mechanism signal. FAR reaches 0.797 whole-answer correctness and 0.983 counter-evidence recall on the local Qwen dev suite, above the six transparent baselines on those two metrics. Against the untyped FAR ablation, FAR improves answer correctness by 7.83 points and revision accuracy by 21.67 points. A post-hoc metric audit adds raw revision-delta F1 0.145 and action-conditioned typed delta F1 0.096. A second frozen trace audit finds mean trace delta F1 0.082: only 15/60 traces completely cover the construction target, 19/60 are off-target, and 12/60 make no lexical target edit. Typed exceeds untyped on trace F1, but broad baselines obtain higher final raw delta F1 and the refutation-query ablation also exceeds full FAR. The revision result is therefore modest and mixed rather than evidence that every FAR submodule has a positive marginal effect or that revision is generally reliable.
 
 This report does not complete the strict AAAI submission path. The benchmark remains construction-derived and machine-audited rather than independently human-adjudicated; the local test bundle is not externally held blind evaluation; and the six-way baseline ranking plus P11 delta audit come from the Qwen diagnostic. A separate three-family typed/untyped sensitivity exists, but it is post-hoc for delta and does not constitute a final external multi-model matrix. These boundaries are intentional and enforced by the release verifiers.
 
@@ -176,12 +176,14 @@ What is already guarded by code:
 - `falsirag-solo-readiness` rejects the solo profile if the benchmark, machine audit, complete local dev suite, or gold-free test-bundle audit is missing.
 - `falsirag-eval-fever-binary verify --data-dir bench/external/fever_pair_candidates_v1 diagnostics/fever_binary_v1` recomputes FEVER source fingerprints, detector predictions, and paired statistics.
 - `falsirag-submission-readiness` remains a separate fail-closed gate for the strict AAAI path.
+- `falsirag diag revision-trace-audit verify` recomputes every Qwen/WS2 trace row, prediction fingerprint, paired interval, and post-hoc boundary without model calls.
 
 What remains uncertain:
 
 - The construction-derived labels may encode design assumptions from the benchmark builder.
 - Machine agreement can reveal suspicious rows but cannot replace independent annotation or adjudication.
 - The broad-baseline and component ranking is a single-Qwen diagnostic. The separate three-family typed/untyped delta recurrence is post-hoc and construction-dependent, not a final external-provider result.
+- Trace alignment is lexical and construction-reference-dependent. It cannot identify a semantic repair, valid paraphrase, or causal action oracle.
 - The local test bundle has been sanitized but has not been externally held or one-shot scored by a custodian.
 - FEVER transfer is binary and visible; it does not validate typed conflict detection or revision.
 
@@ -190,7 +192,7 @@ What remains uncertain:
 1. Use this report as the single-author public deliverable if no annotators are available.
 2. Keep [`reports/solo_human_review_priority.csv`](solo_human_review_priority.csv) as an archival triage aid for an optional future strict-human branch; it is not an active dependency or blocker.
 3. The relaxed single-author paper may use these complete dev results only with the machine-audited, non-blind, Qwen-suite and directional cross-family qualifiers plus negative ablations enforced by `falsirag-solo-paper-readiness`; the strict AAAI profile remains pending.
-4. If time allows, target revision reliability next rather than broad detector tuning. The current evidence shows retrieval is relatively strong, while revision accuracy is the visible bottleneck.
+4. Treat revision reliability as the next prospective engineering target rather than tuning on the now-visible trace audit. Any new repair policy requires a new preregistered development branch and fresh, separately frozen evidence.
 5. Do not tune on the frozen FEVER 100-pair diagnostic. If external development is needed, create a separate development split and reserve a new frozen evaluation slice.
 6. Rotate any exposed API keys before cloud experiments. The repository should only use environment variables or local ignored secrets.
 
@@ -211,6 +213,8 @@ uv run falsirag-solo-release verify diagnostics/solo_v1
 uv run falsirag-eval-fever-binary verify \
   --data-dir bench/external/fever_pair_candidates_v1 \
   diagnostics/fever_binary_v1
+
+uv run falsirag diag revision-trace-audit verify
 ```
 
 To rebuild the solo readiness object, use the original ignored evidence locations documented in `diagnostics/solo_v1/README.md`. The tracked public evidence check is `falsirag-solo-release verify`.

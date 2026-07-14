@@ -27,6 +27,7 @@ def test_relaxed_paper_profile_is_ready_but_not_strict_aaai_ready() -> None:
     assert report["gates"]["tracked_registered_p5_report"] is True
     assert report["gates"]["verified_p6m_negative_stability_audit"] is True
     assert report["gates"]["verified_post_hoc_family_revision_delta"] is True
+    assert report["gates"]["verified_post_hoc_revision_trace_fidelity"] is True
     p5 = report["evidence"]["p5_registered_ablations"]
     assert p5["valid"] is True
     assert p5["h3_verdict"] == "uncertain"
@@ -44,6 +45,14 @@ def test_relaxed_paper_profile_is_ready_but_not_strict_aaai_ready() -> None:
     assert family_delta["post_hoc_revision_delta"]["test_accessed"] is False
     assert family_delta["post_hoc_revision_delta"]["raw"]["positive_families"] == 3
     assert family_delta["post_hoc_revision_delta"]["typed"]["positive_families"] == 3
+    trace = report["evidence"]["revision_trace_fidelity"]
+    assert trace["valid"] is True
+    assert trace["boundaries"]["model_calls"] == 0
+    assert trace["boundaries"]["test_accessed"] is False
+    assert trace["boundaries"]["preregistered_primary"] is False
+    assert trace["qwen_far"]["trace_bucket_counts"]["off_target"] == 19
+    assert trace["qwen_far"]["trace_bucket_counts"]["no_lexical_edit"] == 12
+    assert trace["family_trace_delta_f1"]["positive_families"] == 3
     assert report["evidence"]["paper_appendix_sha256"]
     assert (
         report["claim_scope"]["checks"][

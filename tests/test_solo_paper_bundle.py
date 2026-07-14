@@ -80,7 +80,7 @@ def _release_tree(tmp_path: Path) -> tuple[Path, Path]:
     main_sha = "1" * 64
     appendix_sha = "2" * 64
     readiness = {
-        "schema_version": "far-solo-paper-readiness-v3",
+        "schema_version": "far-solo-paper-readiness-v4",
         "ready": True,
         "strict_aaai_submission_ready": False,
         "study_profile": "single_author_machine_audited_paper",
@@ -193,6 +193,67 @@ def _release_tree(tmp_path: Path) -> tuple[Path, Path]:
                     },
                 },
             },
+            "revision_trace_fidelity": {
+                "schema_version": "far-revision-trace-fidelity-report-audit-v1",
+                "valid": True,
+                "errors": [],
+                "model_calls": 0,
+                "test_accessed": False,
+                "human_review": False,
+                "publication_gold": False,
+                "semantic_correctness": False,
+                "analysis_profile": "post-hoc-frozen-revision-trace-fidelity-v1",
+                "checks": {
+                    "absolute_fidelity_bounded": True,
+                    "deterministic_report_valid": True,
+                    "family_trace_direction_recurs": True,
+                    "post_hoc_boundary": True,
+                    "typed_trace_direction_positive_but_hit_not_improved": True,
+                },
+                "boundaries": {
+                    "causal_attribution": False,
+                    "construction_reference_dependent": True,
+                    "human_iaa": False,
+                    "human_review": False,
+                    "model_calls": 0,
+                    "post_hoc": True,
+                    "preregistered_primary": False,
+                    "publication_gold": False,
+                    "semantic_correctness": False,
+                    "test_accessed": False,
+                },
+                "json_sha256": "3" * 64,
+                "markdown_sha256": "4" * 64,
+                "qwen_far": {
+                    "samples": 60,
+                    "mean_trace_delta_f1": 0.08231897898428224,
+                    "trace_bucket_counts": {
+                        "complete_with_collateral": 14,
+                        "exact_target": 1,
+                        "no_lexical_edit": 12,
+                        "off_target": 19,
+                        "partial_target": 1,
+                        "partial_with_collateral": 13,
+                    },
+                },
+                "qwen_typed_minus_untyped": {
+                    "trace_delta_f1": {
+                        "candidate_minus_baseline": 0.0481,
+                        "lower": 0.0084,
+                        "upper": 0.0998,
+                    },
+                    "trace_target_hit": {
+                        "candidate_minus_baseline": -0.0333,
+                        "lower": -0.1167,
+                        "upper": 0.05,
+                    },
+                },
+                "family_trace_delta_f1": {
+                    "positive_families": 3,
+                    "combined_delta": 0.0232,
+                    "family_cluster_bootstrap": {"lower": 0.0064, "upper": 0.0355},
+                },
+            },
             "fever_binary": {
                 "valid": True,
                 "publication_ready_main_result": False,
@@ -245,6 +306,8 @@ def _release_tree(tmp_path: Path) -> tuple[Path, Path]:
                     b"- evaluation is not externally blind\n"
                     b"- revision-delta metrics are post-hoc lexical diagnostics, "
                     b"not semantic correctness\n"
+                    b"- revision traces frequently miss the construction target or add "
+                    b"collateral edits\n"
                     b"- raw baseline revision delta exceeds FAR despite zero typed "
                     b"action-conditioned delta\n"
                     b"- P6-M as human review, human adjudication, or human IAA\n"
@@ -546,6 +609,23 @@ def test_solo_paper_bundle_rejects_claim_boundary_upgrade(tmp_path: Path) -> Non
 
     assert post_hoc_audit["valid"] is False
     assert "embedded family revision-delta boundary is unsafe" in post_hoc_audit["errors"]
+
+    readiness["evidence"]["family_revision_delta_sensitivity"]["post_hoc_revision_delta"][
+        "preregistered_primary"
+    ] = False
+    readiness["evidence"]["revision_trace_fidelity"]["boundaries"]["preregistered_primary"] = True
+    readiness_payload = (json.dumps(readiness, indent=2, sort_keys=True) + "\n").encode()
+    upgraded_trace = root / "build/release/upgraded-trace.tar.gz"
+    _coordinated_artifact_rewrite(
+        original,
+        upgraded_trace,
+        "solo_paper_readiness_json",
+        readiness_payload,
+    )
+    trace_audit = verify_bundle(upgraded_trace)
+
+    assert trace_audit["valid"] is False
+    assert "embedded revision-trace evidence or boundary is unsafe" in trace_audit["errors"]
 
 
 def test_solo_paper_bundle_rejects_invalid_wheel_after_coordinated_rehash(

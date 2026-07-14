@@ -143,6 +143,20 @@ The remaining ablations contradict a stronger component-wise story. Removing ref
 
 The unconditioned audit also prevents an overclaim in FAR's favor. CRAG-style and Vanilla obtain raw delta F1 values of 0.307 and 0.264, both above FAR's 0.145; FAR-minus-Vanilla is $-0.119$ [$-0.194,-0.038$]. Their typed delta is zero because they expose no matching typed action, but the raw result remains visible: broad answer reconstruction can cover more required lexical edits even without FAR's typed-control trace. We report all of these outcomes as negative or mixed evidence rather than attributing gains to all three query families or every repair stage.
 
+A post-hoc frozen revision-trace audit asks whether the recorded claim-level
+edits themselves align with the construction-derived target before final answer
+rendering. Qwen FAR has mean trace delta F1 0.082. Only 15 of 60 traces completely
+cover the construction target, while 19 are off-target and 12 make no lexical
+target edit. The typed-minus-untyped trace delta is +0.048 with a paired 95\%
+interval of [+0.008,+0.100], and target-complete rate rises by 0.083
+[+0.017,+0.167]. However, any-target-hit rate is lower by 0.033
+[$-0.117,+0.050$], so typed control does not make some target overlap more
+frequent. The same post-hoc trace-F1 direction is positive in all three WS2
+families, combined +0.0232 with a family-cluster interval of
+[+0.0064,+0.0355]. This narrower lexical alignment signal does not establish
+semantic repair: absolute fidelity remains low and collateral rewriting is
+common.
+
 \subsection{Cross-method stage trace map}
 
 Table~\ref{tab:stage-trace} reports the registered common-observable map. T1 passes for 8/8 methods: changed-answer errors after retrieving at least one
@@ -357,6 +371,12 @@ inactive human P6 protocol, or license extrapolation from the 15 consensus rows.
 
 \section{Limitations and Responsible Use}
 The candidate set reuses a small controlled source corpus, includes synthetic passages, and has correlated variants. Its labels are not human-validated gold, the reported split is development data, and evaluation is not externally blind. The machine audit measures agreement with construction labels and cannot reveal errors shared by construction, the LLM signal, and deterministic rules. The completed family reproduction uses four local model families on the same constructed development distribution and therefore does not establish external-domain or deployment generality. Rule conflict detectors are high precision but incomplete; model detectors inherit calibration and domain-shift risk. Retrieval failure can hide a true counterexample, while spurious low-quality contradictions can induce over-correction. The post-hoc delta metric is not semantic correctness: token multisets ignore position, valid paraphrases can be penalized, incidental copying can receive credit, and the metric inherits the construction reference. The benchmark is not current factual advice and is unsuitable for medical, legal, financial, or policy decisions. Final authors remain responsible for checking all text, citations, experiments, and disclosure requirements.
+
+The trace audit inherits the same lexical and construction-reference limits.
+It records that revision traces frequently miss the construction target or add
+collateral edits, but it cannot determine whether an alternative trace is a
+valid semantic paraphrase, whether the reference is uniquely correct, or which
+pipeline stage causally produced the final token overlap.
 
 The P6-M panel is a machine-sensitivity audit, not human review,
 adjudication, inter-annotator agreement, or an estimate of population

@@ -59,6 +59,7 @@ REQUIRED_LIMITATIONS = (
     "refutation and boundary query ablations do not support positive marginal claims",
     "typed revision trades lower answer correctness for non-zero revision behavior",
     "revision-delta metrics are post-hoc lexical diagnostics, not semantic correctness",
+    "revision traces frequently miss the construction target or add collateral edits",
     "raw baseline revision delta exceeds FAR despite zero typed action-conditioned delta",
     "FEVER binary transfer shows no paired accuracy gain",
     "machine-disposition sensitivity is post-hoc and not independent label validation",
@@ -86,6 +87,7 @@ READINESS_GATES = {
     "tracked_stage_trace_map": True,
     "verified_p6m_negative_stability_audit": True,
     "verified_post_hoc_family_revision_delta": True,
+    "verified_post_hoc_revision_trace_fidelity": True,
 }
 CLAIM_SCOPE_CHECKS = frozenset(
     {
@@ -128,6 +130,25 @@ FAMILY_DELTA_CHECKS = {
     "post_hoc_boundary": True,
     "raw_direction_recurs": True,
     "typed_direction_recurs": True,
+}
+TRACE_FIDELITY_CHECKS = {
+    "absolute_fidelity_bounded": True,
+    "deterministic_report_valid": True,
+    "family_trace_direction_recurs": True,
+    "post_hoc_boundary": True,
+    "typed_trace_direction_positive_but_hit_not_improved": True,
+}
+TRACE_FIDELITY_BOUNDARIES = {
+    "causal_attribution": False,
+    "construction_reference_dependent": True,
+    "human_iaa": False,
+    "human_review": False,
+    "model_calls": 0,
+    "post_hoc": True,
+    "preregistered_primary": False,
+    "publication_gold": False,
+    "semantic_correctness": False,
+    "test_accessed": False,
 }
 READINESS_TOP_LEVEL_KEYS = frozenset(
     {
@@ -660,7 +681,7 @@ def _verify_semantics(payload_by_role: dict[str, bytes], checksums: Any, errors:
             raise TypeError("paper readiness is not an object")
         if readiness.get("ready") is not True:
             errors.append("embedded paper profile is not ready")
-        if readiness.get("schema_version") != "far-solo-paper-readiness-v3":
+        if readiness.get("schema_version") != "far-solo-paper-readiness-v4":
             errors.append("embedded paper readiness schema is unsupported")
         if readiness.get("strict_aaai_submission_ready") is not False:
             errors.append("embedded paper profile upgrades strict submission readiness")
@@ -819,12 +840,81 @@ def _verify_semantics(payload_by_role: dict[str, bytes], checksums: Any, errors:
             ):
                 errors.append(f"embedded family {name} revision-delta result is unsafe")
 
+        trace_fidelity = evidence.get("revision_trace_fidelity")
+        if not isinstance(trace_fidelity, dict):
+            raise TypeError("paper readiness revision-trace evidence is not an object")
+        if (
+            trace_fidelity.get("valid") is not True
+            or trace_fidelity.get("schema_version") != "far-revision-trace-fidelity-report-audit-v1"
+            or trace_fidelity.get("analysis_profile")
+            != "post-hoc-frozen-revision-trace-fidelity-v1"
+            or trace_fidelity.get("checks") != TRACE_FIDELITY_CHECKS
+            or trace_fidelity.get("boundaries") != TRACE_FIDELITY_BOUNDARIES
+            or trace_fidelity.get("errors") != []
+            or trace_fidelity.get("model_calls") != 0
+            or trace_fidelity.get("test_accessed") is not False
+            or trace_fidelity.get("human_review") is not False
+            or trace_fidelity.get("publication_gold") is not False
+            or trace_fidelity.get("semantic_correctness") is not False
+            or not re.fullmatch(r"[0-9a-f]{64}", str(trace_fidelity.get("json_sha256", "")))
+            or not re.fullmatch(r"[0-9a-f]{64}", str(trace_fidelity.get("markdown_sha256", "")))
+        ):
+            errors.append("embedded revision-trace evidence or boundary is unsafe")
+        trace_qwen = trace_fidelity.get("qwen_far")
+        trace_comparison = trace_fidelity.get("qwen_typed_minus_untyped")
+        trace_family = trace_fidelity.get("family_trace_delta_f1")
+        trace_buckets = (
+            trace_qwen.get("trace_bucket_counts") if isinstance(trace_qwen, dict) else None
+        )
+        trace_delta = (
+            trace_comparison.get("trace_delta_f1") if isinstance(trace_comparison, dict) else None
+        )
+        trace_hit = (
+            trace_comparison.get("trace_target_hit") if isinstance(trace_comparison, dict) else None
+        )
+        trace_cluster = (
+            trace_family.get("family_cluster_bootstrap") if isinstance(trace_family, dict) else None
+        )
+        if (
+            not isinstance(trace_qwen, dict)
+            or trace_qwen.get("samples") != 60
+            or not math.isclose(
+                float(trace_qwen.get("mean_trace_delta_f1", -1.0)),
+                0.08231897898428224,
+                rel_tol=0.0,
+                abs_tol=1e-12,
+            )
+            or trace_buckets
+            != {
+                "complete_with_collateral": 14,
+                "exact_target": 1,
+                "no_lexical_edit": 12,
+                "off_target": 19,
+                "partial_target": 1,
+                "partial_with_collateral": 13,
+            }
+            or not isinstance(trace_delta, dict)
+            or trace_delta.get("candidate_minus_baseline", 0.0) <= 0.0
+            or trace_delta.get("lower", 0.0) <= 0.0
+            or not isinstance(trace_hit, dict)
+            or trace_hit.get("candidate_minus_baseline", 0.0) >= 0.0
+            or trace_hit.get("lower", 0.0) >= 0.0
+            or trace_hit.get("upper", 0.0) <= 0.0
+            or not isinstance(trace_family, dict)
+            or trace_family.get("positive_families") != 3
+            or trace_family.get("combined_delta", 0.0) <= 0.0
+            or not isinstance(trace_cluster, dict)
+            or trace_cluster.get("lower", 0.0) <= 0.0
+        ):
+            errors.append("embedded revision-trace result is incomplete or contradicted")
+
         markdown = payload_by_role["solo_paper_readiness_markdown"].decode("utf-8")
         required_markdown_boundaries = (
             "| Strict AAAI submission | `false` |",
             "labels are not human-validated gold",
             "evaluation is not externally blind",
             "revision-delta metrics are post-hoc lexical diagnostics, not semantic correctness",
+            "revision traces frequently miss the construction target or add collateral edits",
             "raw baseline revision delta exceeds FAR despite zero typed action-conditioned delta",
             "P6-M as human review, human adjudication, or human IAA",
         )

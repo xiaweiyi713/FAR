@@ -286,8 +286,8 @@ def test_completed_roadmap_does_not_require_unavailable_human_review() -> None:
     report = json.loads((root / "reports/longterm_roadmap_status.json").read_text(encoding="utf-8"))
     next_step = report["progress"]["next_training_step"]
 
-    assert "portable solo-paper release" in next_step
-    assert "paired isolated standard-library verifier" in next_step
+    assert "immutable diagnostic and paper releases" in next_step
+    assert "independent verifiers" in next_step
     assert "human author review" not in next_step
 
 
@@ -391,6 +391,8 @@ def test_source_archive_includes_reader_facing_reports(tmp_path: Path) -> None:
         "reports/ramdocs_round2_failure_readiness.json",
         "reports/repository_maintenance.json",
         "reports/repository_maintenance.md",
+        "reports/revision_trace_fidelity.json",
+        "reports/revision_trace_fidelity.md",
         "reports/single_author_diagnostic_report.md",
         "reports/solo_human_review_priority.csv",
         "reports/solo_paper_readiness.json",

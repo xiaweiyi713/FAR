@@ -1,7 +1,7 @@
 # FAR 当前运行状态
 
 状态时间：2026-07-14 19:42 CST
-适用范围：长期路线 WS1--WS6、重定位 P0--P11、P6-M 与 standalone paper release；
+适用范围：长期路线 WS1--WS6、重定位 P0--P12、P6-M 与 standalone paper release；
 本批不需要 GPU，未启动任何远端或本机模型任务。
 
 ## 当前结论
@@ -28,6 +28,12 @@
 - 相同的事后度量在冻结 WS2 predictions 上显示 Mistral/Gemma/Llama raw delta 差均为正，
   合并 `+0.0398`、family-cluster 95% CI `[+0.0133,+0.0536]`；typed delta 合并
   `+0.0816` `[+0.0353,+0.1137]`。该方向性复现不是 WS2 预注册主指标，也不改变以上负面排名。
+- P12 进一步对冻结 claim-level revision trace 做零模型审计。Qwen FAR trace delta F1 仅
+  `0.0823`；完整覆盖 construction target 的只有 `15/60`，`19/60` 纯 off-target，`12/60`
+  无词法目标编辑。typed-minus-untyped trace delta 为 `+0.0481`、95% CI
+  `[+0.0084,+0.0998]`，三个 WS2 家族方向也均为正，合并 `+0.0232`
+  `[+0.0064,+0.0355]`；但 any-target-hit 差为 `-0.0333` 且区间跨零。这支持更窄的目标对齐
+  信号，同时确认绝对修订可靠性和 collateral rewriting 仍是主要风险，不是语义正确率。
 - 当前诊断安装源升级为不可变 `artifacts-v2`：336 文件、44,128,752 bytes、整树 SHA-256
   `362761dc...e92ae`；原 `artifacts-v1` 未覆盖并继续作为 P10-B 历史快照。
 - 活动 TMLR 路线现有独立的 `scripts/solo_paper_release_check.sh`：在 clean commit 上用

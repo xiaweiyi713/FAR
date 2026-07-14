@@ -427,6 +427,12 @@ def stage_trace_map_main() -> None:
     main()
 
 
+def revision_trace_audit_main() -> None:
+    from far.experiments.revision_trace_audit import main
+
+    main()
+
+
 def type_mappability_main() -> None:
     _warn_legacy_alias()
     from far.experiments.type_mappability import main
@@ -639,6 +645,13 @@ def _build_parser() -> argparse.ArgumentParser:
         stage_trace_map_main,
         "Build or verify the capability-aware stage trace map.",
         "diag trace-map",
+    )
+    _add_leaf(
+        diag,
+        "revision-trace-audit",
+        revision_trace_audit_main,
+        "Build or verify frozen revision-trace fidelity.",
+        "diag revision-trace-audit",
     )
     _add_leaf(
         diag,

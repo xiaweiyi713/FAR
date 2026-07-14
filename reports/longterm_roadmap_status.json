@@ -12,7 +12,7 @@
     ],
     "goal_complete": true,
     "incomplete_workstreams": [],
-    "next_training_step": "no required roadmap work remains; optional next steps are maintaining the versioned diagnostic release, P11 revision-delta audit, portable solo-paper release, and its paired isolated standard-library verifier; external publication or submission remains an author-owned action"
+    "next_training_step": "no required roadmap work remains; maintain the immutable diagnostic and paper releases plus their independent verifiers; any future revision-policy experiment requires a new preregistered development branch and separately frozen evidence; external publication or submission remains an author-owned action"
   },
   "roadmap": {
     "active_sha256": "09cd929fe7a5e0b822914b9009edd7494e3d58da6c5da5256e573c2d9664a6d2",
@@ -116,7 +116,7 @@
         {
           "exists": true,
           "path": "docs/CURRENT_OPERATIONAL_STATE.md",
-          "sha256": "5ab8ab0a56412373c144dfad8dfd79929d5677636640659218b40e1d9bc93483"
+          "sha256": "20a3bd9b9be2df5ebaece6231bddbbe59d40e43f0c0d00994a95ae7e3da22998"
         },
         {
           "exists": true,
@@ -204,12 +204,12 @@
         {
           "exists": true,
           "path": "paper/main.tex",
-          "sha256": "287d45bfec4efda02dd6aae663bddb7fb85db9b6a9f1c7c9dfd9fff847a65c4d"
+          "sha256": "a52d8cac748e36426ea2b06ae732b9cff920a56145d1973c7a61477e9b811107"
         },
         {
           "exists": true,
           "path": "reports/solo_paper_readiness.json",
-          "sha256": "a1c4b606a7f9185f23cfdde8fbe1a3cb9bf5855589dfc608921310bf24b830d7"
+          "sha256": "a678216a7ec5674402e3b765368f3eca14f609a8b00f1110fa211970578eb0db"
         },
         {
           "exists": true,
@@ -256,7 +256,7 @@
       "details": {
         "diagnostics_mib": 0.0,
         "outputs_tracks_only_gitkeep": true,
-        "tracked_files": 360
+        "tracked_files": 362
       },
       "errors": [],
       "gate": "repository-maintenance audit",

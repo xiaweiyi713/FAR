@@ -114,7 +114,7 @@
           "meta": "4829dfae7697f1784830eeb09d493cd2a7d45858d2a0ddd706a1447907a15c77",
           "mistral": "156bcdd7a7bbf1a33b17982491731a6b08abfef1b11f9a29424c43758ead77b3"
         },
-        "paper_sha256": "287d45bfec4efda02dd6aae663bddb7fb85db9b6a9f1c7c9dfd9fff847a65c4d",
+        "paper_sha256": "a52d8cac748e36426ea2b06ae732b9cff920a56145d1973c7a61477e9b811107",
         "ramdocs_manifest_sha256": "5cd9ff842789afd69fa8e64ff89c0f85eca2f8bc934aa4c694aeec92388074df",
         "ramdocs_round2_manifest_sha256": "33978e7a198b5eaaf9d401ec36a774cf97ce3c760535f78fe0550f3fb24e00da"
       },
@@ -157,10 +157,10 @@
     "reader_reports": {
       "files": {
         "reports/README.md": "31d6786337c2fa02cbe21095c648520fcc940a627a8682ef52695493472c6a72",
-        "reports/single_author_diagnostic_report.md": "2d547fc2c8f8677cacc7cac0d373629b0f5988cbbc58da7fec87626d166b5d05",
+        "reports/single_author_diagnostic_report.md": "76873e78e6b6fc50a848d67a272d2d6ebe79714e2463aefbed89e134866f44cd",
         "reports/solo_human_review_priority.csv": "bb036eb51e27d4b654978dd2bd0a2330422c58bf7bc2e6769fced165242a5dee",
-        "reports/solo_paper_readiness.json": "a1c4b606a7f9185f23cfdde8fbe1a3cb9bf5855589dfc608921310bf24b830d7",
-        "reports/solo_paper_readiness.md": "f60f59293ac035d81d46187a41fa906ea73b475b6fa7a8bb8576117b910ad1e0"
+        "reports/solo_paper_readiness.json": "a678216a7ec5674402e3b765368f3eca14f609a8b00f1110fa211970578eb0db",
+        "reports/solo_paper_readiness.md": "f31bcdea12d4bb5fe59770ce8c9cd578a0e04b97cd4532f866fee8dba0a2e893"
       },
       "missing": [],
       "valid": true
@@ -420,10 +420,207 @@
           "test_accessed": false,
           "valid": true
         },
-        "paper_appendix_sha256": "b1da3def20ec12b61c22ba95fdb86f9729fb566af04c1c2d074957cd33291f89",
+        "paper_appendix_sha256": "86421ea0c9df12da968fa7fc09684c06f1ef7e8f9187416585d5f8657317cc15",
         "paper_checklist_sha256": "e3b92d8cc9e056eb1ebba33e91c6b338a6bbbb29e34e19abe7f3eb94c42b967a",
-        "paper_main_sha256": "287d45bfec4efda02dd6aae663bddb7fb85db9b6a9f1c7c9dfd9fff847a65c4d",
+        "paper_main_sha256": "a52d8cac748e36426ea2b06ae732b9cff920a56145d1973c7a61477e9b811107",
         "paper_supplement_sha256": "17a325914f811c66aa97ce5c996ca8365fb793b2b45fc284baa98b0d8b57aefb",
+        "revision_trace_fidelity": {
+          "analysis_profile": "post-hoc-frozen-revision-trace-fidelity-v1",
+          "boundaries": {
+            "causal_attribution": false,
+            "construction_reference_dependent": true,
+            "human_iaa": false,
+            "human_review": false,
+            "model_calls": 0,
+            "post_hoc": true,
+            "preregistered_primary": false,
+            "publication_gold": false,
+            "semantic_correctness": false,
+            "test_accessed": false
+          },
+          "checks": {
+            "absolute_fidelity_bounded": true,
+            "deterministic_report_valid": true,
+            "family_trace_direction_recurs": true,
+            "post_hoc_boundary": true,
+            "typed_trace_direction_positive_but_hit_not_improved": true
+          },
+          "errors": [],
+          "family_trace_delta_f1": {
+            "combined_delta": 0.023192356417201365,
+            "family_cluster_bootstrap": {
+              "clusters": 3,
+              "confidence": 0.95,
+              "lower": 0.006383498418222992,
+              "method": "family-cluster-percentile-bootstrap-v1",
+              "pairs_per_cluster": 60,
+              "probability_positive": 1.0,
+              "resamples": 2000,
+              "seed": 1729,
+              "upper": 0.035527148359905336
+            },
+            "family_deltas": {
+              "google": 0.035527148359905336,
+              "meta": 0.027666422473475765,
+              "mistral": 0.006383498418222992
+            },
+            "positive_families": 3
+          },
+          "human_review": false,
+          "json_sha256": "49b9bd71181e2aa544322c2549c8d0d65c0db9b330e12e3bd97accd3a580193a",
+          "markdown_sha256": "b2848be44ba82d29442632dd2e9bcff9e368c00947184c76c1c7f22fa3f6bbb3",
+          "model_calls": 0,
+          "publication_gold": false,
+          "qwen_far": {
+            "action_accuracy": 0.36666666666666664,
+            "by_category": {
+              "causal_overclaim": {
+                "action_accuracy": 0.3333333333333333,
+                "mean_final_delta_f1": 0.027145849259636635,
+                "mean_trace_delta_f1": 0.032267254305466446,
+                "samples": 12,
+                "trace_target_complete_rate": 0.0,
+                "trace_target_hit_rate": 0.3333333333333333
+              },
+              "entity_confusion": {
+                "action_accuracy": 0.16666666666666666,
+                "mean_final_delta_f1": 0.10271395271395271,
+                "mean_trace_delta_f1": 0.10252622098259682,
+                "samples": 12,
+                "trace_target_complete_rate": 0.25,
+                "trace_target_hit_rate": 0.5
+              },
+              "multi_source_conflict": {
+                "action_accuracy": 0.5833333333333334,
+                "mean_final_delta_f1": 0.3856904936977668,
+                "mean_trace_delta_f1": 0.06565948725842514,
+                "samples": 12,
+                "trace_target_complete_rate": 0.0,
+                "trace_target_hit_rate": 0.4166666666666667
+              },
+              "numerical_conflict": {
+                "action_accuracy": 0.5833333333333334,
+                "mean_final_delta_f1": 0.09185555134243512,
+                "mean_trace_delta_f1": 0.09185555134243512,
+                "samples": 12,
+                "trace_target_complete_rate": 0.5,
+                "trace_target_hit_rate": 0.5833333333333334
+              },
+              "temporal_shift": {
+                "action_accuracy": 0.16666666666666666,
+                "mean_final_delta_f1": 0.1197943332252225,
+                "mean_trace_delta_f1": 0.1192863810324877,
+                "samples": 12,
+                "trace_target_complete_rate": 0.5,
+                "trace_target_hit_rate": 0.5833333333333334
+              }
+            },
+            "expected_edit_rows": 60,
+            "final_micro": {
+              "correct_edits": 135,
+              "expected_edits": 550,
+              "f1": 0.057058326289095525,
+              "precision": 0.032281205164992825,
+              "proposed_edits": 4182,
+              "recall": 0.24545454545454545
+            },
+            "mean_final_delta_f1": 0.14544003604780276,
+            "mean_trace_delta_f1": 0.08231897898428224,
+            "primary_action_match_rows": 60,
+            "samples": 60,
+            "trace_bucket_counts": {
+              "complete_with_collateral": 14,
+              "exact_target": 1,
+              "no_lexical_edit": 12,
+              "off_target": 19,
+              "partial_target": 1,
+              "partial_with_collateral": 13
+            },
+            "trace_changed_events": 116,
+            "trace_changed_flag_mismatches": 0,
+            "trace_micro": {
+              "correct_edits": 96,
+              "expected_edits": 550,
+              "f1": 0.040016673614005835,
+              "precision": 0.022598870056497175,
+              "proposed_edits": 4248,
+              "recall": 0.17454545454545456
+            },
+            "trace_target_complete_rate": 0.25,
+            "trace_target_hit_rate": 0.48333333333333334
+          },
+          "qwen_typed_minus_untyped": {
+            "action_correct": {
+              "candidate_minus_baseline": 0.36666666666666664,
+              "confidence": 0.95,
+              "higher_is_better": true,
+              "lower": 0.26666666666666666,
+              "method": "paired-stratified-percentile-bootstrap-v1",
+              "metric": "action_correct",
+              "pairs": 60,
+              "probability_candidate_better": 1.0,
+              "resamples": 2000,
+              "seed": 1729,
+              "upper": 0.48333333333333334
+            },
+            "final_delta_f1": {
+              "candidate_minus_baseline": 0.052525797083240365,
+              "confidence": 0.95,
+              "higher_is_better": true,
+              "lower": 0.003296437164621078,
+              "method": "paired-stratified-percentile-bootstrap-v1",
+              "metric": "final_delta_f1",
+              "pairs": 60,
+              "probability_candidate_better": 0.9845,
+              "resamples": 2000,
+              "seed": 1729,
+              "upper": 0.10916539207086964
+            },
+            "trace_delta_f1": {
+              "candidate_minus_baseline": 0.04809531782344935,
+              "confidence": 0.95,
+              "higher_is_better": true,
+              "lower": 0.008445230158999421,
+              "method": "paired-stratified-percentile-bootstrap-v1",
+              "metric": "trace_delta_f1",
+              "pairs": 60,
+              "probability_candidate_better": 0.995,
+              "resamples": 2000,
+              "seed": 1729,
+              "upper": 0.09981866708628238
+            },
+            "trace_target_complete": {
+              "candidate_minus_baseline": 0.08333333333333333,
+              "confidence": 0.95,
+              "higher_is_better": true,
+              "lower": 0.016666666666666666,
+              "method": "paired-stratified-percentile-bootstrap-v1",
+              "metric": "trace_target_complete",
+              "pairs": 60,
+              "probability_candidate_better": 0.983,
+              "resamples": 2000,
+              "seed": 1729,
+              "upper": 0.16666666666666666
+            },
+            "trace_target_hit": {
+              "candidate_minus_baseline": -0.03333333333333333,
+              "confidence": 0.95,
+              "higher_is_better": true,
+              "lower": -0.11666666666666667,
+              "method": "paired-stratified-percentile-bootstrap-v1",
+              "metric": "trace_target_hit",
+              "pairs": 60,
+              "probability_candidate_better": 0.188,
+              "resamples": 2000,
+              "seed": 1729,
+              "upper": 0.05
+            }
+          },
+          "schema_version": "far-revision-trace-fidelity-report-audit-v1",
+          "semantic_correctness": false,
+          "test_accessed": false,
+          "valid": true
+        },
         "solo_release": {
           "errors": [],
           "files": 69,
@@ -460,7 +657,8 @@
         "tracked_solo_evidence": true,
         "tracked_stage_trace_map": true,
         "verified_p6m_negative_stability_audit": true,
-        "verified_post_hoc_family_revision_delta": true
+        "verified_post_hoc_family_revision_delta": true,
+        "verified_post_hoc_revision_trace_fidelity": true
       },
       "ready": true,
       "required_limitations": [
@@ -470,6 +668,7 @@
         "refutation and boundary query ablations do not support positive marginal claims",
         "typed revision trades lower answer correctness for non-zero revision behavior",
         "revision-delta metrics are post-hoc lexical diagnostics, not semantic correctness",
+        "revision traces frequently miss the construction target or add collateral edits",
         "raw baseline revision delta exceeds FAR despite zero typed action-conditioned delta",
         "FEVER binary transfer shows no paired accuracy gain",
         "machine-disposition sensitivity is post-hoc and not independent label validation",
@@ -478,7 +677,7 @@
         "P6-M is machine-panel sensitivity, not population type mappability",
         "the strict human P6 analysis was not completed"
       ],
-      "schema_version": "far-solo-paper-readiness-v3",
+      "schema_version": "far-solo-paper-readiness-v4",
       "strict_aaai_submission_ready": false,
       "study_profile": "single_author_machine_audited_paper"
     },
@@ -513,6 +712,7 @@
       "refutation and boundary query ablations do not support positive marginal claims",
       "typed revision trades lower answer correctness for non-zero revision behavior",
       "revision-delta metrics are post-hoc lexical diagnostics, not semantic correctness",
+      "revision traces frequently miss the construction target or add collateral edits",
       "raw baseline revision delta exceeds FAR despite zero typed action-conditioned delta",
       "FEVER binary transfer shows no paired accuracy gain",
       "machine-disposition sensitivity is post-hoc and not independent label validation",

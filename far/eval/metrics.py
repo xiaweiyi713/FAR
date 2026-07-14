@@ -72,6 +72,14 @@ def soft_f1(predicted: str, reference: str) -> float:
     return 2 * precision * recall / (precision + recall)
 
 
+def token_edit_counters(source: str, target: str) -> tuple[Counter[str], Counter[str]]:
+    """Return token-multiset removals and additions from ``source`` to ``target``."""
+
+    source_tokens = Counter(_soft_tokens(source))
+    target_tokens = Counter(_soft_tokens(target))
+    return source_tokens - target_tokens, target_tokens - source_tokens
+
+
 def revision_delta_scores(
     initial: str,
     predicted: str,
@@ -86,14 +94,8 @@ def revision_delta_scores(
     penalizes unnecessary edits; recall penalizes retained errors or missing repairs.
     """
 
-    initial_tokens = Counter(_soft_tokens(initial))
-    predicted_tokens = Counter(_soft_tokens(predicted))
-    reference_tokens = Counter(_soft_tokens(reference))
-
-    expected_removed = initial_tokens - reference_tokens
-    expected_added = reference_tokens - initial_tokens
-    predicted_removed = initial_tokens - predicted_tokens
-    predicted_added = predicted_tokens - initial_tokens
+    expected_removed, expected_added = token_edit_counters(initial, reference)
+    predicted_removed, predicted_added = token_edit_counters(initial, predicted)
 
     expected = sum(expected_removed.values()) + sum(expected_added.values())
     proposed = sum(predicted_removed.values()) + sum(predicted_added.values())

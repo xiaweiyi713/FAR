@@ -26,7 +26,7 @@
 - 已闭合或已建立基线: WS1, WS2, WS3, WS4, WS5, WS6
 - 仍未完成: none
 - 总目标完成: `true`
-- 当前首要动作: no required roadmap work remains; optional next steps are maintaining the versioned diagnostic release, P11 revision-delta audit, portable solo-paper release, and its paired isolated standard-library verifier; external publication or submission remains an author-owned action
+- 当前首要动作: no required roadmap work remains; maintain the immutable diagnostic and paper releases plus their independent verifiers; any future revision-policy experiment requires a new preregistered development branch and separately frozen evidence; external publication or submission remains an author-owned action
 
 ## 安全边界
 

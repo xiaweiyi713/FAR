@@ -15,6 +15,7 @@ multi-model generality.
 | Tracked registered P5 report | `true` |
 | Verified P6-M negative stability audit | `true` |
 | Verified post-hoc family revision-delta sensitivity | `true` |
+| Verified post-hoc revision-trace fidelity audit | `true` |
 
 ## Narrow supported claim
 
@@ -29,6 +30,8 @@ Across eight RAMDocs development methods, errors concentrate after retrieved evi
 - Typed minus untyped revision delta F1: `+0.053`
 - Three-family post-hoc raw delta difference: `+0.0398`
 - Three-family post-hoc typed delta difference: `+0.0816`
+- Qwen FAR post-hoc mean trace delta F1: `0.0823`
+- Qwen typed minus untyped trace delta F1: `+0.0481`
 - Machine-confirmed answer delta (`n=35`): `+0.101`
 - Machine-disputed answer delta (`n=25`): `+0.047`
 
@@ -40,6 +43,7 @@ Across eight RAMDocs development methods, errors concentrate after retrieved evi
 - refutation and boundary query ablations do not support positive marginal claims
 - typed revision trades lower answer correctness for non-zero revision behavior
 - revision-delta metrics are post-hoc lexical diagnostics, not semantic correctness
+- revision traces frequently miss the construction target or add collateral edits
 - raw baseline revision delta exceeds FAR despite zero typed action-conditioned delta
 - FEVER binary transfer shows no paired accuracy gain
 - machine-disposition sensitivity is post-hoc and not independent label validation

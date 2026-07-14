@@ -14,13 +14,14 @@ from far.eval.stats import paired_bootstrap_comparison
 from far.experiments.diagnostic_release import verify_solo_release
 from far.experiments.evaluate_fever_binary import verify_evaluation as verify_fever_binary
 from far.experiments.evidence_family_dev import verify_release as verify_family_dev_release
+from far.experiments.revision_trace_audit import verify_reports as verify_revision_trace_reports
 from far.experiments.stage_trace_map import verify_reports as verify_stage_trace_map
 from far.experiments.type_mappability_machine import (
     verify_report as verify_type_mappability_machine_report,
 )
 from far.paths import repository_root
 
-SCHEMA_VERSION = "far-solo-paper-readiness-v3"
+SCHEMA_VERSION = "far-solo-paper-readiness-v4"
 REQUIRED_PAPER_FRAGMENTS = (
     "machine-audited synthetic benchmark",
     "single-model development diagnostic",
@@ -39,6 +40,14 @@ REQUIRED_PAPER_FRAGMENTS = (
     "combined +0.0398 with a family-cluster 95\\% interval of [+0.0133,+0.0536]",
     "This was not a preregistered WS2 primary metric",
     "not semantic correctness",
+    "post-hoc frozen revision-trace audit",
+    "mean trace delta F1 0.082",
+    "Only 15 of 60 traces",
+    "19 are off-target and 12 make no lexical",
+    "typed-minus-untyped trace delta is +0.048",
+    "any-target-hit rate is lower by 0.033",
+    "combined +0.0232 with a family-cluster interval",
+    "revision traces frequently miss the construction target",
     "both obtain 0.72 accuracy",
     "post-hoc label-audit sensitivity",
     "machine-confirmed subset ($n=35$)",
@@ -243,6 +252,80 @@ def _family_revision_delta_evidence(root: Path) -> dict[str, Any]:
     }
 
 
+def _revision_trace_evidence(root: Path) -> dict[str, Any]:
+    json_path = root / "reports/revision_trace_fidelity.json"
+    markdown_path = root / "reports/revision_trace_fidelity.md"
+    audit = verify_revision_trace_reports(
+        benchmark_path=root / "bench/splits/dev.jsonl",
+        solo_runs=root / "diagnostics/solo_v1/experiments/runs",
+        family_runs=root / "diagnostics/family_dev_v1/runs",
+        output_json=json_path,
+        output_markdown=markdown_path,
+    )
+    errors = list(audit.get("errors", []))
+    result: dict[str, Any] = {}
+    checks: dict[str, bool] = {}
+    try:
+        result = json.loads(json_path.read_text(encoding="utf-8"))
+        boundaries = result["boundaries"]
+        qwen_far = result["qwen"]["methods"]["far"]["summary"]
+        qwen_comparison = result["qwen"]["typed_minus_untyped"]
+        trace_delta = qwen_comparison["trace_delta_f1"]
+        trace_hit = qwen_comparison["trace_target_hit"]
+        family_delta = result["family_sensitivity"]["trace_delta_f1"]
+        checks = {
+            "deterministic_report_valid": audit.get("valid") is True,
+            "post_hoc_boundary": (
+                result.get("analysis_profile") == "post-hoc-frozen-revision-trace-fidelity-v1"
+                and boundaries.get("post_hoc") is True
+                and boundaries.get("preregistered_primary") is False
+                and boundaries.get("model_calls") == 0
+                and boundaries.get("test_accessed") is False
+                and boundaries.get("human_review") is False
+                and boundaries.get("human_iaa") is False
+                and boundaries.get("publication_gold") is False
+                and boundaries.get("semantic_correctness") is False
+                and boundaries.get("construction_reference_dependent") is True
+                and boundaries.get("causal_attribution") is False
+            ),
+            "absolute_fidelity_bounded": (
+                qwen_far.get("samples") == 60
+                and qwen_far.get("mean_trace_delta_f1", 1.0) < 0.2
+                and qwen_far.get("trace_bucket_counts", {}).get("exact_target") == 1
+                and qwen_far.get("trace_bucket_counts", {}).get("complete_with_collateral") == 14
+                and qwen_far.get("trace_bucket_counts", {}).get("off_target") == 19
+                and qwen_far.get("trace_bucket_counts", {}).get("no_lexical_edit") == 12
+            ),
+            "typed_trace_direction_positive_but_hit_not_improved": (
+                trace_delta.get("candidate_minus_baseline", 0.0) > 0.0
+                and trace_delta.get("lower", 0.0) > 0.0
+                and trace_hit.get("candidate_minus_baseline", 0.0) < 0.0
+                and trace_hit.get("lower", 0.0) < 0.0 < trace_hit.get("upper", 0.0)
+            ),
+            "family_trace_direction_recurs": (
+                family_delta.get("positive_families") == 3
+                and family_delta.get("combined_delta", 0.0) > 0.0
+                and family_delta.get("family_cluster_bootstrap", {}).get("lower", 0.0) > 0.0
+            ),
+        }
+        errors.extend(name for name, passed in checks.items() if not passed)
+    except (OSError, KeyError, TypeError, ValueError, json.JSONDecodeError) as exc:
+        errors.append(str(exc))
+    return {
+        **audit,
+        "valid": not errors,
+        "errors": errors,
+        "checks": checks,
+        "analysis_profile": result.get("analysis_profile"),
+        "boundaries": result.get("boundaries"),
+        "qwen_far": result.get("qwen", {}).get("methods", {}).get("far", {}).get("summary"),
+        "qwen_typed_minus_untyped": result.get("qwen", {}).get("typed_minus_untyped"),
+        "family_trace_delta_f1": result.get("family_sensitivity", {}).get("trace_delta_f1"),
+        "json_sha256": sha256_file(json_path) if json_path.is_file() else None,
+        "markdown_sha256": sha256_file(markdown_path) if markdown_path.is_file() else None,
+    }
+
+
 def _label_sensitivity(root: Path) -> dict[str, Any]:
     consensus_rows = read_jsonl(
         root / "diagnostics/solo_v1/machine_annotation/machine_consensus_rows.jsonl"
@@ -395,6 +478,7 @@ def audit(root: Path, *, paper_path: Path | None = None) -> dict[str, Any]:
     p5 = _tracked_p5_evidence(root)
     p6m = _p6m_evidence(root)
     family_delta = _family_revision_delta_evidence(root)
+    revision_trace = _revision_trace_evidence(root)
     claim_scope = audit_claim_scope(root, paper_text)
     gates = {
         "tracked_solo_evidence": bool(solo.get("valid")),
@@ -404,6 +488,7 @@ def audit(root: Path, *, paper_path: Path | None = None) -> dict[str, Any]:
         "tracked_registered_p5_report": bool(p5.get("valid")),
         "verified_p6m_negative_stability_audit": bool(p6m.get("valid")),
         "verified_post_hoc_family_revision_delta": bool(family_delta.get("valid")),
+        "verified_post_hoc_revision_trace_fidelity": bool(revision_trace.get("valid")),
     }
     ready = all(gates.values())
     return {
@@ -420,6 +505,7 @@ def audit(root: Path, *, paper_path: Path | None = None) -> dict[str, Any]:
             "p5_registered_ablations": p5,
             "p6m_machine_ontology_stability": p6m,
             "family_revision_delta_sensitivity": family_delta,
+            "revision_trace_fidelity": revision_trace,
             "paper_main_sha256": sha256_file(paper),
             "paper_appendix_sha256": sha256_file(root / "paper/appendix.tex"),
             "paper_supplement_sha256": sha256_file(root / "paper/supplement.tex"),
@@ -440,6 +526,7 @@ def audit(root: Path, *, paper_path: Path | None = None) -> dict[str, Any]:
             "refutation and boundary query ablations do not support positive marginal claims",
             "typed revision trades lower answer correctness for non-zero revision behavior",
             "revision-delta metrics are post-hoc lexical diagnostics, not semantic correctness",
+            "revision traces frequently miss the construction target or add collateral edits",
             "raw baseline revision delta exceeds FAR despite zero typed action-conditioned delta",
             "FEVER binary transfer shows no paired accuracy gain",
             "machine-disposition sensitivity is post-hoc and not independent label validation",
@@ -476,6 +563,7 @@ def render_markdown(report: dict[str, Any]) -> str:
     p5 = str(gates["tracked_registered_p5_report"]).lower()
     p6m = str(gates["verified_p6m_negative_stability_audit"]).lower()
     family_delta_gate = str(gates["verified_post_hoc_family_revision_delta"]).lower()
+    revision_trace_gate = str(gates["verified_post_hoc_revision_trace_fidelity"]).lower()
     far_answer = observed["far_answer_correctness"]
     answer_delta = observed["typed_minus_untyped_answer_correctness"]
     f1_delta = observed["typed_minus_untyped_conflict_f1"]
@@ -489,6 +577,9 @@ def render_markdown(report: dict[str, Any]) -> str:
     family_delta = report["evidence"]["family_revision_delta_sensitivity"][
         "post_hoc_revision_delta"
     ]
+    trace_evidence = report["evidence"]["revision_trace_fidelity"]
+    trace_summary = trace_evidence["qwen_far"]
+    trace_comparison = trace_evidence["qwen_typed_minus_untyped"]["trace_delta_f1"]
     return f"""# Single-Author Machine-Audited Paper Readiness
 
 This report audits the explicitly relaxed paper profile. It does not certify
@@ -506,6 +597,7 @@ multi-model generality.
 | Tracked registered P5 report | `{p5}` |
 | Verified P6-M negative stability audit | `{p6m}` |
 | Verified post-hoc family revision-delta sensitivity | `{family_delta_gate}` |
+| Verified post-hoc revision-trace fidelity audit | `{revision_trace_gate}` |
 
 ## Narrow supported claim
 
@@ -520,6 +612,8 @@ multi-model generality.
 - Typed minus untyped revision delta F1: `{edit_advantage:+.3f}`
 - Three-family post-hoc raw delta difference: `{family_delta["raw"]["combined_delta"]:+.4f}`
 - Three-family post-hoc typed delta difference: `{family_delta["typed"]["combined_delta"]:+.4f}`
+- Qwen FAR post-hoc mean trace delta F1: `{trace_summary["mean_trace_delta_f1"]:.4f}`
+- Qwen typed minus untyped trace delta F1: `{trace_comparison["candidate_minus_baseline"]:+.4f}`
 - Machine-confirmed answer delta (`n=35`): `{confirmed["candidate_minus_baseline"]:+.3f}`
 - Machine-disputed answer delta (`n=25`): `{disputed["candidate_minus_baseline"]:+.3f}`
 

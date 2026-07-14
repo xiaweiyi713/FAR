@@ -121,12 +121,23 @@ uv run falsirag release solo-paper-readiness
 This validates the fingerprinted solo evidence and checks that the paper uses
 only the supported typed-versus-untyped mechanism claim. It also requires the
 post-hoc P11 revision-delta profile, the higher raw baseline/no-refutation
-deltas, and the explicit warning that delta F1 is lexical rather than semantic
-correctness. It fails if pending cells return or if the refutation, boundary,
+deltas, the P12 frozen trace-fidelity report, and the explicit warning that
+delta/trace F1 is lexical rather than semantic correctness. It fails if pending
+cells return or if the refutation, boundary,
 typed-revision, FEVER, non-human, non-blind, or single-model limitations are
 removed. A passing result certifies
 only `single_author_machine_audited_paper`; it does not satisfy strict AAAI
 readiness.
+
+Recompute the model-free P12 trace audit from the installed immutable
+diagnostics:
+
+```bash
+uv run falsirag diag revision-trace-audit verify
+```
+
+This reads only the 60-item development split and frozen Qwen/WS2 predictions;
+it makes no model call and rejects fingerprint, row, Markdown, or boundary drift.
 
 Generate and validate the declared-dependency CycloneDX 1.5 SBOM before a
 release build:

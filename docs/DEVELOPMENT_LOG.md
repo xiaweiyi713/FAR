@@ -3487,3 +3487,27 @@ evidence bundle verified successfully, releasing the GPU.
   `362761dc85faf14d5a3b9e7f397c40e39383a8475ec0502efcbb904d973e92ae`.
   Local empty-directory install and the nested solo verifier both passed before
   remote publication.
+
+## 2026-07-14 — P12 frozen revision-trace fidelity audit
+
+- Audited the recorded claim-level revision traces against the frozen
+  construction-derived target edits, using only tracked predictions and
+  deterministic token counters. The build makes zero model calls, accesses no
+  held-out/test data, and does not substitute for semantic or human review.
+- Qwen FAR has mean trace-delta F1 0.082. Only 15/60 traces completely cover the
+  target; 19/60 are off-target and 12/60 make no lexical target edit. The
+  typed-minus-untyped trace-delta difference is +0.048 with paired 95% interval
+  [+0.008,+0.100], while any-target-hit changes by -0.033 with an interval that
+  crosses zero. This narrows the signal to lexical alignment rather than
+  establishing reliable semantic repair.
+- Recomputed the same post-hoc contrast for the three frozen WS2 model families.
+  All three trace-delta directions are positive; the combined difference is
+  +0.0232 with family-cluster interval [+0.0064,+0.0355]. This is recurring
+  construction-dependent sensitivity, not a preregistered family-level result.
+- Added a standalone verifier, CLI build/verify path, row-level prediction
+  fingerprints, changed-flag checks, target/action binding, and fail-closed
+  readiness/bundle gates. The active TMLR paper now states both the narrow signal
+  and the high absolute miss/collateral-edit rate.
+- Rebuilt and rendered the 15-page TMLR PDF. All pages were visually inspected;
+  there are no clipped or overlapping elements, unreadable tables, overfull
+  boxes, or unresolved references.

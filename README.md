@@ -191,6 +191,7 @@ uv run falsirag ops diagnostic-data install
 uv run falsirag release solo verify diagnostics/solo_v1
 uv run falsirag ops project-status --verify
 uv run falsirag release solo-paper-readiness
+uv run falsirag diag revision-trace-audit verify
 uv run falsirag diag fever-binary verify \
   --data-dir bench/external/fever_pair_candidates_v1 \
   diagnostics/fever_binary_v1
