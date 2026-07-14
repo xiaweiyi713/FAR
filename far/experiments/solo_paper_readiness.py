@@ -15,13 +15,16 @@ from far.experiments.diagnostic_release import verify_solo_release
 from far.experiments.evaluate_fever_binary import verify_evaluation as verify_fever_binary
 from far.experiments.evidence_family_dev import verify_release as verify_family_dev_release
 from far.experiments.revision_trace_audit import verify_reports as verify_revision_trace_reports
+from far.experiments.selective_revision_audit import (
+    verify_reports as verify_selective_revision_reports,
+)
 from far.experiments.stage_trace_map import verify_reports as verify_stage_trace_map
 from far.experiments.type_mappability_machine import (
     verify_report as verify_type_mappability_machine_report,
 )
 from far.paths import repository_root
 
-SCHEMA_VERSION = "far-solo-paper-readiness-v4"
+SCHEMA_VERSION = "far-solo-paper-readiness-v5"
 REQUIRED_PAPER_FRAGMENTS = (
     "machine-audited synthetic benchmark",
     "single-model development diagnostic",
@@ -48,6 +51,17 @@ REQUIRED_PAPER_FRAGMENTS = (
     "any-target-hit rate is lower by 0.033",
     "combined +0.0232 with a family-cluster interval",
     "revision traces frequently miss the construction target",
+    "post-hoc selective-revision feasibility audit",
+    "preserving the erroneous initial answer obtains mean whole-answer soft F1 0.978",
+    "all 60 rows above the historical 0.8 threshold",
+    "typed and generic revision obtain delta F1 0.145 and 0.072",
+    "reference-dependent per-item arm envelope reaches 0.162",
+    "only +0.016 over always typed",
+    "confidence at least 0.90 selects 31 of 60",
+    "conditional delta F1 0.139",
+    "5/31 target-complete",
+    "25/31 carry collateral edits",
+    "does not evaluate a deployable selector",
     "both obtain 0.72 accuracy",
     "post-hoc label-audit sensitivity",
     "machine-confirmed subset ($n=35$)",
@@ -326,6 +340,93 @@ def _revision_trace_evidence(root: Path) -> dict[str, Any]:
     }
 
 
+def _selective_revision_evidence(root: Path) -> dict[str, Any]:
+    json_path = root / "reports/selective_revision_feasibility.json"
+    markdown_path = root / "reports/selective_revision_feasibility.md"
+    audit = verify_selective_revision_reports(
+        benchmark_path=root / "bench/splits/dev.jsonl",
+        suite_manifest_path=root / "diagnostics/solo_v1/experiments/suite_manifest.json",
+        runs_root=root / "diagnostics/solo_v1/experiments/runs",
+        evaluations_root=root / "diagnostics/solo_v1/experiments/evaluations",
+        trace_json_path=root / "reports/revision_trace_fidelity.json",
+        trace_markdown_path=root / "reports/revision_trace_fidelity.md",
+        output_json=json_path,
+        output_markdown=markdown_path,
+    )
+    errors = list(audit.get("errors", []))
+    result: dict[str, Any] = {}
+    checks: dict[str, bool] = {}
+    high_confidence: dict[str, Any] = {}
+    try:
+        result = json.loads(json_path.read_text(encoding="utf-8"))
+        boundaries = result["boundaries"]
+        arms = result["fixed_arms"]
+        envelope = result["reference_arm_choice_envelope"]
+        high_rows = [
+            row for row in result["confidence_curves"]["preserve"] if row.get("threshold") == 0.9
+        ]
+        if len(high_rows) != 1:
+            raise ValueError("selective revision report lacks the 0.90 confidence row")
+        high_confidence = high_rows[0]
+        checks = {
+            "deterministic_report_valid": audit.get("valid") is True,
+            "post_hoc_non_policy_boundary": (
+                result.get("analysis_profile")
+                == "post-hoc-frozen-selective-revision-feasibility-v1"
+                and boundaries.get("post_hoc") is True
+                and boundaries.get("preregistered_primary") is False
+                and boundaries.get("reference_dependent") is True
+                and boundaries.get("deployable_selector_evaluated") is False
+                and boundaries.get("prospective_confidence_calibration") is False
+                and boundaries.get("registered_policy_utility") is False
+                and boundaries.get("counterfactual_policy_effect") is False
+                and boundaries.get("semantic_correctness") is False
+                and boundaries.get("independent_arm_runs") is True
+                and boundaries.get("preserve_output_generated") is False
+                and boundaries.get("model_calls") == 0
+                and boundaries.get("test_accessed") is False
+                and boundaries.get("human_review") is False
+                and boundaries.get("human_iaa") is False
+                and boundaries.get("publication_gold") is False
+            ),
+            "whole_answer_gate_invalidated": (
+                arms["preserve"]["samples"] == 60
+                and arms["preserve"]["answer_soft_f1_ge_0_8"] == 60
+                and arms["preserve"]["mean_answer_soft_f1"] > 0.97
+                and arms["preserve"]["mean_revision_delta_f1"] == 0.0
+            ),
+            "selection_headroom_bounded": (
+                envelope.get("reference_dependent") is True
+                and envelope.get("deployable") is False
+                and 0.0 < envelope.get("gain_over_always_typed", 1.0) < 0.02
+                and envelope.get("mean_per_item_max", 0.0) > arms["typed"]["mean_revision_delta_f1"]
+            ),
+            "confidence_not_fidelity_selector": (
+                high_confidence.get("selected_rows") == 31
+                and high_confidence.get("selected_mean_typed_revision_delta_f1", 1.0)
+                < arms["typed"]["mean_revision_delta_f1"]
+                and high_confidence.get("selected_trace_target_complete_rate") == 5 / 31
+                and high_confidence.get("selected_trace_collateral_rate") == 25 / 31
+            ),
+        }
+        errors.extend(name for name, passed in checks.items() if not passed)
+    except (OSError, KeyError, TypeError, ValueError, json.JSONDecodeError) as exc:
+        errors.append(str(exc))
+    return {
+        **audit,
+        "valid": not errors,
+        "errors": errors,
+        "checks": checks,
+        "analysis_profile": result.get("analysis_profile"),
+        "boundaries": result.get("boundaries"),
+        "fixed_arms": result.get("fixed_arms"),
+        "reference_arm_choice_envelope": result.get("reference_arm_choice_envelope"),
+        "confidence_threshold_0_90": high_confidence,
+        "json_sha256": sha256_file(json_path) if json_path.is_file() else None,
+        "markdown_sha256": sha256_file(markdown_path) if markdown_path.is_file() else None,
+    }
+
+
 def _label_sensitivity(root: Path) -> dict[str, Any]:
     consensus_rows = read_jsonl(
         root / "diagnostics/solo_v1/machine_annotation/machine_consensus_rows.jsonl"
@@ -479,6 +580,7 @@ def audit(root: Path, *, paper_path: Path | None = None) -> dict[str, Any]:
     p6m = _p6m_evidence(root)
     family_delta = _family_revision_delta_evidence(root)
     revision_trace = _revision_trace_evidence(root)
+    selective_revision = _selective_revision_evidence(root)
     claim_scope = audit_claim_scope(root, paper_text)
     gates = {
         "tracked_solo_evidence": bool(solo.get("valid")),
@@ -489,6 +591,7 @@ def audit(root: Path, *, paper_path: Path | None = None) -> dict[str, Any]:
         "verified_p6m_negative_stability_audit": bool(p6m.get("valid")),
         "verified_post_hoc_family_revision_delta": bool(family_delta.get("valid")),
         "verified_post_hoc_revision_trace_fidelity": bool(revision_trace.get("valid")),
+        "verified_post_hoc_selective_revision_feasibility": bool(selective_revision.get("valid")),
     }
     ready = all(gates.values())
     return {
@@ -506,6 +609,7 @@ def audit(root: Path, *, paper_path: Path | None = None) -> dict[str, Any]:
             "p6m_machine_ontology_stability": p6m,
             "family_revision_delta_sensitivity": family_delta,
             "revision_trace_fidelity": revision_trace,
+            "selective_revision_feasibility": selective_revision,
             "paper_main_sha256": sha256_file(paper),
             "paper_appendix_sha256": sha256_file(root / "paper/appendix.tex"),
             "paper_supplement_sha256": sha256_file(root / "paper/supplement.tex"),
@@ -527,6 +631,8 @@ def audit(root: Path, *, paper_path: Path | None = None) -> dict[str, Any]:
             "typed revision trades lower answer correctness for non-zero revision behavior",
             "revision-delta metrics are post-hoc lexical diagnostics, not semantic correctness",
             "revision traces frequently miss the construction target or add collateral edits",
+            "selective revision feasibility is post-hoc and does not evaluate a "
+            "deployable selector",
             "raw baseline revision delta exceeds FAR despite zero typed action-conditioned delta",
             "FEVER binary transfer shows no paired accuracy gain",
             "machine-disposition sensitivity is post-hoc and not independent label validation",
@@ -564,6 +670,7 @@ def render_markdown(report: dict[str, Any]) -> str:
     p6m = str(gates["verified_p6m_negative_stability_audit"]).lower()
     family_delta_gate = str(gates["verified_post_hoc_family_revision_delta"]).lower()
     revision_trace_gate = str(gates["verified_post_hoc_revision_trace_fidelity"]).lower()
+    selective_revision_gate = str(gates["verified_post_hoc_selective_revision_feasibility"]).lower()
     far_answer = observed["far_answer_correctness"]
     answer_delta = observed["typed_minus_untyped_answer_correctness"]
     f1_delta = observed["typed_minus_untyped_conflict_f1"]
@@ -580,6 +687,11 @@ def render_markdown(report: dict[str, Any]) -> str:
     trace_evidence = report["evidence"]["revision_trace_fidelity"]
     trace_summary = trace_evidence["qwen_far"]
     trace_comparison = trace_evidence["qwen_typed_minus_untyped"]["trace_delta_f1"]
+    selective = report["evidence"]["selective_revision_feasibility"]
+    selective_arms = selective["fixed_arms"]
+    selective_envelope = selective["reference_arm_choice_envelope"]
+    selective_high = selective["confidence_threshold_0_90"]
+    selective_high_complete = selective_high["selected_trace_target_complete_rate"]
     return f"""# Single-Author Machine-Audited Paper Readiness
 
 This report audits the explicitly relaxed paper profile. It does not certify
@@ -598,6 +710,7 @@ multi-model generality.
 | Verified P6-M negative stability audit | `{p6m}` |
 | Verified post-hoc family revision-delta sensitivity | `{family_delta_gate}` |
 | Verified post-hoc revision-trace fidelity audit | `{revision_trace_gate}` |
+| Verified post-hoc selective-revision feasibility audit | `{selective_revision_gate}` |
 
 ## Narrow supported claim
 
@@ -614,6 +727,10 @@ multi-model generality.
 - Three-family post-hoc typed delta difference: `{family_delta["typed"]["combined_delta"]:+.4f}`
 - Qwen FAR post-hoc mean trace delta F1: `{trace_summary["mean_trace_delta_f1"]:.4f}`
 - Qwen typed minus untyped trace delta F1: `{trace_comparison["candidate_minus_baseline"]:+.4f}`
+- Preserved initial-answer soft F1: `{selective_arms["preserve"]["mean_answer_soft_f1"]:.4f}`
+- Reference-dependent delta-F1 arm envelope: `{selective_envelope["mean_per_item_max"]:.4f}`
+- Envelope gain over always typed: `{selective_envelope["gain_over_always_typed"]:+.4f}`
+- Confidence >=0.90 selected trace-complete rate: `{selective_high_complete:.4f}`
 - Machine-confirmed answer delta (`n=35`): `{confirmed["candidate_minus_baseline"]:+.3f}`
 - Machine-disputed answer delta (`n=25`): `{disputed["candidate_minus_baseline"]:+.3f}`
 

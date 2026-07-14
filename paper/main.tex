@@ -306,10 +306,16 @@ and an always-revise policy. It does not establish that the six less-instrumente
 baselines detected conflicts adequately.
 It suggests a future selective-intervention design: revise only when the
 expected benefit of the typed action exceeds its risk, and otherwise preserve
-or abstain. No such selector has been evaluated here, so this is a design
-hypothesis rather than a reported FAR capability. A proper test would register
-the selector before execution and score selective risk, coverage, and answer
-quality without replacing the current frozen gates.
+or abstain. A post-hoc selective-revision feasibility audit quantifies whether
+the frozen signals are sufficient to support that design. Although every construction row requires a lexical edit, preserving the erroneous initial answer obtains mean whole-answer soft F1 0.978 and places all 60 rows above the historical 0.8 threshold.
+In contrast, typed and generic revision obtain delta F1 0.145 and 0.072, respectively, while lowering whole-answer overlap.
+A reference-dependent per-item arm envelope reaches 0.162 delta F1, only +0.016 over always typed.
+Recorded confidence does not isolate reliable edits: confidence at least 0.90 selects 31 of 60 rows, with conditional delta F1 0.139, only 5/31 target-complete, and 25/31 carry collateral edits. This replay
+does not evaluate a deployable selector: it uses the same development
+references, independently generated arms, no prospective calibration, and no
+registered policy utility. A proper future test must register the selector
+before execution and score selective risk, coverage, and answer quality without
+replacing the current frozen gates.
 
 \subsection{Cross-family directional reproduction}
 
@@ -377,6 +383,13 @@ It records that revision traces frequently miss the construction target or add
 collateral edits, but it cannot determine whether an alternative trace is a
 valid semantic paraphrase, whether the reference is uniquely correct, or which
 pipeline stage causally produced the final token overlap.
+
+The selective-revision audit inherits those limits and adds policy-selection
+ones. Its preserve arm is deterministically scored rather than generated, its
+typed and generic outputs come from independent runs, and its per-item envelope
+uses the construction reference. The confidence curve is an in-sample
+diagnostic, not calibrated risk, a causal counterfactual, or held-out policy
+evaluation.
 
 The P6-M panel is a machine-sensitivity audit, not human review,
 adjudication, inter-annotator agreement, or an estimate of population

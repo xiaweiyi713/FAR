@@ -393,6 +393,8 @@ def test_source_archive_includes_reader_facing_reports(tmp_path: Path) -> None:
         "reports/repository_maintenance.md",
         "reports/revision_trace_fidelity.json",
         "reports/revision_trace_fidelity.md",
+        "reports/selective_revision_feasibility.json",
+        "reports/selective_revision_feasibility.md",
         "reports/single_author_diagnostic_report.md",
         "reports/solo_human_review_priority.csv",
         "reports/solo_paper_readiness.json",

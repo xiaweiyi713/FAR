@@ -12,7 +12,7 @@
     ],
     "goal_complete": true,
     "incomplete_workstreams": [],
-    "next_training_step": "no required roadmap work remains; maintain the immutable diagnostic and paper releases plus their independent verifiers; any future revision-policy experiment requires a new preregistered development branch and separately frozen evidence; external publication or submission remains an author-owned action"
+    "next_training_step": "no required roadmap work remains; maintain the immutable diagnostic and paper releases plus their independent verifiers; P13 shows that recorded confidence is not a fidelity selector, so any future revision-policy experiment requires a new preregistered development branch, calibrated signal, and separately frozen evidence; external publication or submission remains an author-owned action"
   },
   "roadmap": {
     "active_sha256": "09cd929fe7a5e0b822914b9009edd7494e3d58da6c5da5256e573c2d9664a6d2",
@@ -116,7 +116,7 @@
         {
           "exists": true,
           "path": "docs/CURRENT_OPERATIONAL_STATE.md",
-          "sha256": "7dead27a8d44f98b436d1741c79e976d26202250526a79a0146c9c18fb8eb5d6"
+          "sha256": "1f0b0a98857ce933ced08d71be96bc7995dd55eb2ee5f385955be33e2fa66bac"
         },
         {
           "exists": true,
@@ -199,17 +199,17 @@
         {
           "exists": true,
           "path": "paper/STATUS.md",
-          "sha256": "85b698acf54ec66368f6ffd9db5395c9949573f440fac1fadfcac64ec40ee0cf"
+          "sha256": "60ec67d52564d37b539d5c10dd15a7127d98589800e9c6e4171814ce490b488a"
         },
         {
           "exists": true,
           "path": "paper/main.tex",
-          "sha256": "a52d8cac748e36426ea2b06ae732b9cff920a56145d1973c7a61477e9b811107"
+          "sha256": "e20cac907e6621602869fecf6fd038efc9836361916115564d9129e40e93ef2f"
         },
         {
           "exists": true,
           "path": "reports/solo_paper_readiness.json",
-          "sha256": "a678216a7ec5674402e3b765368f3eca14f609a8b00f1110fa211970578eb0db"
+          "sha256": "758a0ab41e6fea82b68b85330622ce37139da2c957db927ee4c061c2a3992f0a"
         },
         {
           "exists": true,

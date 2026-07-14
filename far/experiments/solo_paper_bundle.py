@@ -60,6 +60,7 @@ REQUIRED_LIMITATIONS = (
     "typed revision trades lower answer correctness for non-zero revision behavior",
     "revision-delta metrics are post-hoc lexical diagnostics, not semantic correctness",
     "revision traces frequently miss the construction target or add collateral edits",
+    "selective revision feasibility is post-hoc and does not evaluate a deployable selector",
     "raw baseline revision delta exceeds FAR despite zero typed action-conditioned delta",
     "FEVER binary transfer shows no paired accuracy gain",
     "machine-disposition sensitivity is post-hoc and not independent label validation",
@@ -88,6 +89,7 @@ READINESS_GATES = {
     "verified_p6m_negative_stability_audit": True,
     "verified_post_hoc_family_revision_delta": True,
     "verified_post_hoc_revision_trace_fidelity": True,
+    "verified_post_hoc_selective_revision_feasibility": True,
 }
 CLAIM_SCOPE_CHECKS = frozenset(
     {
@@ -147,6 +149,30 @@ TRACE_FIDELITY_BOUNDARIES = {
     "post_hoc": True,
     "preregistered_primary": False,
     "publication_gold": False,
+    "semantic_correctness": False,
+    "test_accessed": False,
+}
+SELECTIVE_REVISION_CHECKS = {
+    "confidence_not_fidelity_selector": True,
+    "deterministic_report_valid": True,
+    "post_hoc_non_policy_boundary": True,
+    "selection_headroom_bounded": True,
+    "whole_answer_gate_invalidated": True,
+}
+SELECTIVE_REVISION_BOUNDARIES = {
+    "counterfactual_policy_effect": False,
+    "deployable_selector_evaluated": False,
+    "human_iaa": False,
+    "human_review": False,
+    "independent_arm_runs": True,
+    "model_calls": 0,
+    "post_hoc": True,
+    "preregistered_primary": False,
+    "preserve_output_generated": False,
+    "prospective_confidence_calibration": False,
+    "publication_gold": False,
+    "reference_dependent": True,
+    "registered_policy_utility": False,
     "semantic_correctness": False,
     "test_accessed": False,
 }
@@ -681,7 +707,7 @@ def _verify_semantics(payload_by_role: dict[str, bytes], checksums: Any, errors:
             raise TypeError("paper readiness is not an object")
         if readiness.get("ready") is not True:
             errors.append("embedded paper profile is not ready")
-        if readiness.get("schema_version") != "far-solo-paper-readiness-v4":
+        if readiness.get("schema_version") != "far-solo-paper-readiness-v5":
             errors.append("embedded paper readiness schema is unsupported")
         if readiness.get("strict_aaai_submission_ready") is not False:
             errors.append("embedded paper profile upgrades strict submission readiness")
@@ -908,6 +934,82 @@ def _verify_semantics(payload_by_role: dict[str, bytes], checksums: Any, errors:
         ):
             errors.append("embedded revision-trace result is incomplete or contradicted")
 
+        selective_revision = evidence.get("selective_revision_feasibility")
+        if not isinstance(selective_revision, dict):
+            raise TypeError("paper readiness selective-revision evidence is not an object")
+        if (
+            selective_revision.get("valid") is not True
+            or selective_revision.get("schema_version")
+            != "far-selective-revision-feasibility-report-audit-v1"
+            or selective_revision.get("analysis_profile")
+            != "post-hoc-frozen-selective-revision-feasibility-v1"
+            or selective_revision.get("checks") != SELECTIVE_REVISION_CHECKS
+            or selective_revision.get("boundaries") != SELECTIVE_REVISION_BOUNDARIES
+            or selective_revision.get("errors") != []
+            or selective_revision.get("model_calls") != 0
+            or selective_revision.get("test_accessed") is not False
+            or selective_revision.get("human_review") is not False
+            or selective_revision.get("publication_gold") is not False
+            or selective_revision.get("semantic_correctness") is not False
+            or selective_revision.get("deployable_selector_evaluated") is not False
+            or not re.fullmatch(r"[0-9a-f]{64}", str(selective_revision.get("json_sha256", "")))
+            or not re.fullmatch(r"[0-9a-f]{64}", str(selective_revision.get("markdown_sha256", "")))
+        ):
+            errors.append("embedded selective-revision evidence or boundary is unsafe")
+        selective_arms = selective_revision.get("fixed_arms")
+        selective_envelope = selective_revision.get("reference_arm_choice_envelope")
+        selective_high = selective_revision.get("confidence_threshold_0_90")
+        if (
+            not isinstance(selective_arms, dict)
+            or set(selective_arms) != {"preserve", "generic", "typed"}
+            or any(
+                not isinstance(selective_arms.get(arm), dict)
+                or selective_arms[arm].get("samples") != 60
+                for arm in ("preserve", "generic", "typed")
+            )
+            or selective_arms["preserve"].get("answer_soft_f1_ge_0_8") != 60
+            or not math.isclose(
+                float(selective_arms["preserve"].get("mean_answer_soft_f1", -1.0)),
+                0.9783512842439768,
+                rel_tol=0.0,
+                abs_tol=1e-12,
+            )
+            or selective_arms["preserve"].get("mean_revision_delta_f1") != 0.0
+            or not math.isclose(
+                float(selective_arms["generic"].get("mean_revision_delta_f1", -1.0)),
+                0.07225192012288786,
+                rel_tol=0.0,
+                abs_tol=1e-12,
+            )
+            or not math.isclose(
+                float(selective_arms["typed"].get("mean_revision_delta_f1", -1.0)),
+                0.14544003604780276,
+                rel_tol=0.0,
+                abs_tol=1e-12,
+            )
+            or not isinstance(selective_envelope, dict)
+            or selective_envelope.get("reference_dependent") is not True
+            or selective_envelope.get("deployable") is not False
+            or not math.isclose(
+                float(selective_envelope.get("mean_per_item_max", -1.0)),
+                0.16182369870097854,
+                rel_tol=0.0,
+                abs_tol=1e-12,
+            )
+            or not math.isclose(
+                float(selective_envelope.get("gain_over_always_typed", -1.0)),
+                0.016383662653175785,
+                rel_tol=0.0,
+                abs_tol=1e-12,
+            )
+            or not isinstance(selective_high, dict)
+            or selective_high.get("threshold") != 0.9
+            or selective_high.get("selected_rows") != 31
+            or selective_high.get("selected_trace_target_complete_rate") != 5 / 31
+            or selective_high.get("selected_trace_collateral_rate") != 25 / 31
+        ):
+            errors.append("embedded selective-revision result is incomplete or contradicted")
+
         markdown = payload_by_role["solo_paper_readiness_markdown"].decode("utf-8")
         required_markdown_boundaries = (
             "| Strict AAAI submission | `false` |",
@@ -915,6 +1017,8 @@ def _verify_semantics(payload_by_role: dict[str, bytes], checksums: Any, errors:
             "evaluation is not externally blind",
             "revision-delta metrics are post-hoc lexical diagnostics, not semantic correctness",
             "revision traces frequently miss the construction target or add collateral edits",
+            "selective revision feasibility is post-hoc and does not evaluate a "
+            "deployable selector",
             "raw baseline revision delta exceeds FAR despite zero typed action-conditioned delta",
             "P6-M as human review, human adjudication, or human IAA",
         )

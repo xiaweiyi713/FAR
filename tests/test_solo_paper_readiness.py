@@ -28,6 +28,7 @@ def test_relaxed_paper_profile_is_ready_but_not_strict_aaai_ready() -> None:
     assert report["gates"]["verified_p6m_negative_stability_audit"] is True
     assert report["gates"]["verified_post_hoc_family_revision_delta"] is True
     assert report["gates"]["verified_post_hoc_revision_trace_fidelity"] is True
+    assert report["gates"]["verified_post_hoc_selective_revision_feasibility"] is True
     p5 = report["evidence"]["p5_registered_ablations"]
     assert p5["valid"] is True
     assert p5["h3_verdict"] == "uncertain"
@@ -53,6 +54,12 @@ def test_relaxed_paper_profile_is_ready_but_not_strict_aaai_ready() -> None:
     assert trace["qwen_far"]["trace_bucket_counts"]["off_target"] == 19
     assert trace["qwen_far"]["trace_bucket_counts"]["no_lexical_edit"] == 12
     assert trace["family_trace_delta_f1"]["positive_families"] == 3
+    selective = report["evidence"]["selective_revision_feasibility"]
+    assert selective["valid"] is True
+    assert selective["boundaries"]["deployable_selector_evaluated"] is False
+    assert selective["fixed_arms"]["preserve"]["answer_soft_f1_ge_0_8"] == 60
+    assert selective["reference_arm_choice_envelope"]["gain_over_always_typed"] < 0.02
+    assert selective["confidence_threshold_0_90"]["selected_rows"] == 31
     assert report["evidence"]["paper_appendix_sha256"]
     assert (
         report["claim_scope"]["checks"][

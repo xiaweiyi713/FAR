@@ -196,6 +196,7 @@ uv run falsirag release solo verify diagnostics/solo_v1
 uv run falsirag ops project-status --verify
 uv run falsirag release solo-paper-readiness
 uv run falsirag diag revision-trace-audit verify
+uv run falsirag diag selective-revision-audit verify
 uv run falsirag diag fever-binary verify \
   --data-dir bench/external/fever_pair_candidates_v1 \
   diagnostics/fever_binary_v1
@@ -219,6 +220,7 @@ RAMDocs Round 1 的 8 方法 × 350 条预测位于 `diagnostics/ramdocs_v2/roun
 - [重定位剩余外部动作顺序](docs/REDIRECTION_EXTERNAL_ACTIONS.md)
 - [完整研究状态](docs/RESEARCH_STATUS.md)
 - [8 方法 stage trace map](reports/stage_trace_map.md)
+- [P13 选择性修订可行性审计](reports/selective_revision_feasibility.md)
 
 当前接受的无真人重定位 profile 已由 P6-M 阴性结果闭环。原 P6 人工复核/仲裁分支保持
 `ready_to_analyze=false`，但已退出活动待办；它只在未来有真实人员且明确恢复严格人工主张时重新开启。

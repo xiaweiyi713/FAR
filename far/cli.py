@@ -433,6 +433,12 @@ def revision_trace_audit_main() -> None:
     main()
 
 
+def selective_revision_audit_main() -> None:
+    from far.experiments.selective_revision_audit import main
+
+    main()
+
+
 def type_mappability_main() -> None:
     _warn_legacy_alias()
     from far.experiments.type_mappability import main
@@ -652,6 +658,13 @@ def _build_parser() -> argparse.ArgumentParser:
         revision_trace_audit_main,
         "Build or verify frozen revision-trace fidelity.",
         "diag revision-trace-audit",
+    )
+    _add_leaf(
+        diag,
+        "selective-revision-audit",
+        selective_revision_audit_main,
+        "Build or verify frozen selective-revision feasibility.",
+        "diag selective-revision-audit",
     )
     _add_leaf(
         diag,

@@ -45,6 +45,15 @@ than revision. Its defensible mechanism statement is that revision mediates
 both local typed-control gains and larger heterogeneous harms. The evidence is
 machine-audited development analysis, not human gold or blind external testing.
 
+P13 now makes the selective-revision design boundary explicit. Preserving the
+erroneous initial answer scores 0.9784 whole-answer soft F1 and crosses the old
+0.8 threshold on 60/60 rows despite zero target edits. Typed/generic delta F1 is
+0.1454/0.0723, while a reference-dependent per-item arm envelope reaches only
+0.1618. Recorded confidence at least 0.90 selects 31/60 rows but does not improve
+conditional delta fidelity or target completeness. This is a post-hoc
+feasibility audit, not a calibrated or deployable selector, causal policy
+effect, semantic evaluation, or held-out result.
+
 G-P estimates only 0.414 exact-McNemar power for the registered 3 x 60 family
 study at a +0.078 effect. WS2 is consequently a directional reproduction: a
 nonsignificant G-F cannot establish absence, while fewer than 2/3 positive

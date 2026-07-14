@@ -80,7 +80,7 @@ def _release_tree(tmp_path: Path) -> tuple[Path, Path]:
     main_sha = "1" * 64
     appendix_sha = "2" * 64
     readiness = {
-        "schema_version": "far-solo-paper-readiness-v4",
+        "schema_version": "far-solo-paper-readiness-v5",
         "ready": True,
         "strict_aaai_submission_ready": False,
         "study_profile": "single_author_machine_audited_paper",
@@ -254,6 +254,76 @@ def _release_tree(tmp_path: Path) -> tuple[Path, Path]:
                     "family_cluster_bootstrap": {"lower": 0.0064, "upper": 0.0355},
                 },
             },
+            "selective_revision_feasibility": {
+                "schema_version": "far-selective-revision-feasibility-report-audit-v1",
+                "valid": True,
+                "errors": [],
+                "model_calls": 0,
+                "test_accessed": False,
+                "human_review": False,
+                "publication_gold": False,
+                "semantic_correctness": False,
+                "deployable_selector_evaluated": False,
+                "analysis_profile": "post-hoc-frozen-selective-revision-feasibility-v1",
+                "checks": {
+                    "confidence_not_fidelity_selector": True,
+                    "deterministic_report_valid": True,
+                    "post_hoc_non_policy_boundary": True,
+                    "selection_headroom_bounded": True,
+                    "whole_answer_gate_invalidated": True,
+                },
+                "boundaries": {
+                    "counterfactual_policy_effect": False,
+                    "deployable_selector_evaluated": False,
+                    "human_iaa": False,
+                    "human_review": False,
+                    "independent_arm_runs": True,
+                    "model_calls": 0,
+                    "post_hoc": True,
+                    "preregistered_primary": False,
+                    "preserve_output_generated": False,
+                    "prospective_confidence_calibration": False,
+                    "publication_gold": False,
+                    "reference_dependent": True,
+                    "registered_policy_utility": False,
+                    "semantic_correctness": False,
+                    "test_accessed": False,
+                },
+                "json_sha256": "5" * 64,
+                "markdown_sha256": "6" * 64,
+                "fixed_arms": {
+                    "preserve": {
+                        "samples": 60,
+                        "mean_answer_soft_f1": 0.9783512842439768,
+                        "answer_soft_f1_ge_0_8": 60,
+                        "mean_revision_delta_f1": 0.0,
+                    },
+                    "generic": {
+                        "samples": 60,
+                        "mean_answer_soft_f1": 0.873361070934565,
+                        "answer_soft_f1_ge_0_8": 51,
+                        "mean_revision_delta_f1": 0.07225192012288786,
+                    },
+                    "typed": {
+                        "samples": 60,
+                        "mean_answer_soft_f1": 0.7973782240376361,
+                        "answer_soft_f1_ge_0_8": 37,
+                        "mean_revision_delta_f1": 0.14544003604780276,
+                    },
+                },
+                "reference_arm_choice_envelope": {
+                    "reference_dependent": True,
+                    "deployable": False,
+                    "mean_per_item_max": 0.16182369870097854,
+                    "gain_over_always_typed": 0.016383662653175785,
+                },
+                "confidence_threshold_0_90": {
+                    "threshold": 0.9,
+                    "selected_rows": 31,
+                    "selected_trace_target_complete_rate": 5 / 31,
+                    "selected_trace_collateral_rate": 25 / 31,
+                },
+            },
             "fever_binary": {
                 "valid": True,
                 "publication_ready_main_result": False,
@@ -308,6 +378,8 @@ def _release_tree(tmp_path: Path) -> tuple[Path, Path]:
                     b"not semantic correctness\n"
                     b"- revision traces frequently miss the construction target or add "
                     b"collateral edits\n"
+                    b"- selective revision feasibility is post-hoc and does not evaluate "
+                    b"a deployable selector\n"
                     b"- raw baseline revision delta exceeds FAR despite zero typed "
                     b"action-conditioned delta\n"
                     b"- P6-M as human review, human adjudication, or human IAA\n"
@@ -626,6 +698,23 @@ def test_solo_paper_bundle_rejects_claim_boundary_upgrade(tmp_path: Path) -> Non
 
     assert trace_audit["valid"] is False
     assert "embedded revision-trace evidence or boundary is unsafe" in trace_audit["errors"]
+
+    readiness["evidence"]["revision_trace_fidelity"]["boundaries"]["preregistered_primary"] = False
+    readiness["evidence"]["selective_revision_feasibility"]["boundaries"][
+        "deployable_selector_evaluated"
+    ] = True
+    readiness_payload = (json.dumps(readiness, indent=2, sort_keys=True) + "\n").encode()
+    upgraded_selector = root / "build/release/upgraded-selector.tar.gz"
+    _coordinated_artifact_rewrite(
+        original,
+        upgraded_selector,
+        "solo_paper_readiness_json",
+        readiness_payload,
+    )
+    selector_audit = verify_bundle(upgraded_selector)
+
+    assert selector_audit["valid"] is False
+    assert "embedded selective-revision evidence or boundary is unsafe" in selector_audit["errors"]
 
 
 def test_solo_paper_bundle_rejects_invalid_wheel_after_coordinated_rehash(

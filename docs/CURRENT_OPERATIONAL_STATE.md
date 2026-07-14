@@ -1,7 +1,7 @@
 # FAR 当前运行状态
 
 状态时间：2026-07-14 20:25 CST
-适用范围：长期路线 WS1--WS6、重定位 P0--P12、P6-M 与 standalone paper release；
+适用范围：长期路线 WS1--WS6、重定位 P0--P13、P6-M 与 standalone paper release；
 本批不需要 GPU，未启动任何远端或本机模型任务。
 
 ## 当前结论
@@ -34,6 +34,11 @@
   `[+0.0084,+0.0998]`，三个 WS2 家族方向也均为正，合并 `+0.0232`
   `[+0.0064,+0.0355]`；但 any-target-hit 差为 `-0.0333` 且区间跨零。这支持更窄的目标对齐
   信号，同时确认绝对修订可靠性和 collateral rewriting 仍是主要风险，不是语义正确率。
+- P13 进一步审计冻结输出是否足以支持 selective revision。错误初始答案保留臂的 soft F1
+  为 `0.9784`、60/60 越过旧阈值但 delta F1 为 0；reference-dependent 三臂上界只比 always
+  typed 高 `+0.0164`。confidence `>=0.90` 的 31 条没有更高 fidelity（delta `0.1386`、
+  5/31 target-complete、25/31 collateral）。因此当前瓶颈是 realization quality，不能把
+  置信度阈值、reference oracle 或同一 dev replay 写成可部署 selector、校准风险或因果效果。
 - 当前诊断安装源升级为不可变 `artifacts-v2`：336 文件、44,128,752 bytes、整树 SHA-256
   `362761dc...e92ae`；原 `artifacts-v1` 未覆盖并继续作为 P10-B 历史快照。
 - 活动 TMLR 路线现有独立的 `scripts/solo_paper_release_check.sh`：在 clean commit 上用

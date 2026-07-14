@@ -242,9 +242,9 @@
       "test_accessed": false,
       "valid": true
     },
-    "paper_appendix_sha256": "86421ea0c9df12da968fa7fc09684c06f1ef7e8f9187416585d5f8657317cc15",
+    "paper_appendix_sha256": "e12fb8b7852e691f721ecced387e11d8b0f8a4142cad34bbb1c419b8bdda25b5",
     "paper_checklist_sha256": "e3b92d8cc9e056eb1ebba33e91c6b338a6bbbb29e34e19abe7f3eb94c42b967a",
-    "paper_main_sha256": "a52d8cac748e36426ea2b06ae732b9cff920a56145d1973c7a61477e9b811107",
+    "paper_main_sha256": "e20cac907e6621602869fecf6fd038efc9836361916115564d9129e40e93ef2f",
     "paper_supplement_sha256": "17a325914f811c66aa97ce5c996ca8365fb793b2b45fc284baa98b0d8b57aefb",
     "revision_trace_fidelity": {
       "analysis_profile": "post-hoc-frozen-revision-trace-fidelity-v1",
@@ -443,6 +443,89 @@
       "test_accessed": false,
       "valid": true
     },
+    "selective_revision_feasibility": {
+      "analysis_profile": "post-hoc-frozen-selective-revision-feasibility-v1",
+      "boundaries": {
+        "counterfactual_policy_effect": false,
+        "deployable_selector_evaluated": false,
+        "human_iaa": false,
+        "human_review": false,
+        "independent_arm_runs": true,
+        "model_calls": 0,
+        "post_hoc": true,
+        "preregistered_primary": false,
+        "preserve_output_generated": false,
+        "prospective_confidence_calibration": false,
+        "publication_gold": false,
+        "reference_dependent": true,
+        "registered_policy_utility": false,
+        "semantic_correctness": false,
+        "test_accessed": false
+      },
+      "checks": {
+        "confidence_not_fidelity_selector": true,
+        "deterministic_report_valid": true,
+        "post_hoc_non_policy_boundary": true,
+        "selection_headroom_bounded": true,
+        "whole_answer_gate_invalidated": true
+      },
+      "confidence_threshold_0_90": {
+        "answer_soft_f1_ge_0_8": 51,
+        "coverage": 0.5166666666666667,
+        "fallback": "preserve",
+        "mean_answer_soft_f1": 0.8980733308917859,
+        "mean_revision_delta_f1": 0.07161139675063502,
+        "selected_mean_typed_revision_delta_f1": 0.13860270338832584,
+        "selected_rows": 31,
+        "selected_trace_collateral_rate": 0.8064516129032258,
+        "selected_trace_target_complete_rate": 0.16129032258064516,
+        "threshold": 0.9
+      },
+      "deployable_selector_evaluated": false,
+      "errors": [],
+      "fixed_arms": {
+        "generic": {
+          "answer_soft_f1_ge_0_8": 51,
+          "mean_answer_soft_f1": 0.873361070934565,
+          "mean_revision_delta_f1": 0.07225192012288786,
+          "samples": 60
+        },
+        "preserve": {
+          "answer_soft_f1_ge_0_8": 60,
+          "mean_answer_soft_f1": 0.9783512842439768,
+          "mean_revision_delta_f1": 0.0,
+          "samples": 60
+        },
+        "typed": {
+          "answer_soft_f1_ge_0_8": 37,
+          "mean_answer_soft_f1": 0.7973782240376361,
+          "mean_revision_delta_f1": 0.14544003604780276,
+          "samples": 60
+        }
+      },
+      "human_review": false,
+      "json_sha256": "7c7d4d7a2a2ab96dc73faa98fa8f3502aab43dfb8d225823321725771233fe67",
+      "markdown_sha256": "e7b5cf84c1b93632c64d105b4af25f88d6365f804a9c190bed24bef0b8ffb121",
+      "model_calls": 0,
+      "publication_gold": false,
+      "reference_arm_choice_envelope": {
+        "deployable": false,
+        "gain_over_always_typed": 0.016383662653175785,
+        "mean_per_item_max": 0.16182369870097854,
+        "metric": "revision_delta_f1",
+        "reference_dependent": true,
+        "winner_counts": {
+          "generic": 7,
+          "generic+typed": 1,
+          "preserve+generic+typed": 24,
+          "typed": 28
+        }
+      },
+      "schema_version": "far-selective-revision-feasibility-report-audit-v1",
+      "semantic_correctness": false,
+      "test_accessed": false,
+      "valid": true
+    },
     "solo_release": {
       "errors": [],
       "files": 69,
@@ -480,7 +563,8 @@
     "tracked_stage_trace_map": true,
     "verified_p6m_negative_stability_audit": true,
     "verified_post_hoc_family_revision_delta": true,
-    "verified_post_hoc_revision_trace_fidelity": true
+    "verified_post_hoc_revision_trace_fidelity": true,
+    "verified_post_hoc_selective_revision_feasibility": true
   },
   "ready": true,
   "required_limitations": [
@@ -491,6 +575,7 @@
     "typed revision trades lower answer correctness for non-zero revision behavior",
     "revision-delta metrics are post-hoc lexical diagnostics, not semantic correctness",
     "revision traces frequently miss the construction target or add collateral edits",
+    "selective revision feasibility is post-hoc and does not evaluate a deployable selector",
     "raw baseline revision delta exceeds FAR despite zero typed action-conditioned delta",
     "FEVER binary transfer shows no paired accuracy gain",
     "machine-disposition sensitivity is post-hoc and not independent label validation",
@@ -499,7 +584,7 @@
     "P6-M is machine-panel sensitivity, not population type mappability",
     "the strict human P6 analysis was not completed"
   ],
-  "schema_version": "far-solo-paper-readiness-v4",
+  "schema_version": "far-solo-paper-readiness-v5",
   "strict_aaai_submission_ready": false,
   "study_profile": "single_author_machine_audited_paper"
 }

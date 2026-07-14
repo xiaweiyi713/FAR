@@ -3516,3 +3516,23 @@ evidence bundle verified successfully, releasing the GPU.
   `7e94e1e7ed63f0d4945d90164db418eb87e816fd284bb972373ca46cb1d852e8`.
   A fresh remote download matched all four published asset hashes and passed
   standalone `python3 -I` verification outside the checkout.
+
+## 2026-07-14 — P13 selective-revision feasibility audit
+
+- Followed the paper's open selective-intervention question without new
+  inference. Added a deterministic audit over the frozen Qwen typed and generic
+  revision outputs plus a no-generation preserve arm, with every input bound to
+  the solo-suite and P12 trace fingerprints.
+- Found that whole-answer overlap cannot be a revision safety gate: preserving
+  the erroneous initial answer scores 0.9784 mean soft F1 and all 60 rows exceed
+  the historical 0.8 threshold, while revision-delta F1 is exactly zero.
+- Typed and generic revision obtain mean delta F1 0.1454 and 0.0723. Even a
+  reference-dependent per-item maximum over preserve/generic/typed reaches only
+  0.1618, a +0.0164 in-sample envelope over always typed.
+- Recorded primary confidence is not a demonstrated fidelity signal. Threshold
+  0.90 selects 31/60 rows, but conditional delta F1 is 0.1386, only 5/31 traces
+  are target-complete, and 25/31 contain collateral edits.
+- Added a fail-closed verifier, CLI, row-level report, readiness v5 and portable
+  bundle checks. All boundaries explicitly reject a deployable selector,
+  prospective calibration, causal policy effect, semantic correctness, human
+  review, and held-out/test evidence.

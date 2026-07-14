@@ -34,8 +34,18 @@ This directory contains durable, versioned reports derived from tracked project 
   [machine-readable JSON](solo_paper_readiness.json): the explicitly relaxed
   paper gate. It permits only the narrow typed-control mechanism claim and
   requires disclosure of negative ablations and all non-human/non-blind limits.
-  The v2 gate additionally binds the registered P5 verdicts and independently
-  recomputes the P6-M negative stability audit from tracked juror evidence.
+  The v5 gate additionally binds the registered P5 verdicts, independently
+  recomputes the P6-M negative stability audit, and verifies the P11--P13
+  lexical edit, trace-fidelity, and selective-revision feasibility boundaries.
+- [P12 frozen revision-trace fidelity audit](revision_trace_fidelity.md) and
+  [machine-readable JSON](revision_trace_fidelity.json): row-level lexical
+  target alignment over frozen Qwen and WS2 traces. It is post-hoc and not
+  semantic correctness.
+- [P13 selective-revision feasibility audit](selective_revision_feasibility.md)
+  and [machine-readable JSON](selective_revision_feasibility.json): metric
+  conflict, a reference-dependent arm-choice envelope, and confidence-threshold
+  replay over frozen Qwen outputs. It explicitly does not evaluate a deployable
+  selector or causal policy effect.
 - The project-status snapshot also exposes the preregistered 2+4 profile:
   RAMDocs upstream-label validation, cross-family LLM jury, author-blind
   adjudication, multi-model jury-gold rescoring, and commit-bound one-shot tests.

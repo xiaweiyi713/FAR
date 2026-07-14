@@ -33,6 +33,7 @@ def test_group_help_lists_leaf_commands(capsys: pytest.CaptureFixture[str]) -> N
     assert "fever-binary" in output
     assert "trace-map" in output
     assert "revision-trace-audit" in output
+    assert "selective-revision-audit" in output
     assert "type-mappability" in output
 
     with pytest.raises(SystemExit) as release_exit:
