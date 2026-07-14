@@ -1057,6 +1057,26 @@ and Google outdated/misinformation/no-conflict strata. Power is below 0.60, so
 nulls cannot be interpreted as evidence of absence and positives remain scoped
 to the public dev distribution and the fixed Qwen runtime.
 
+## P14 selective acceptance
+
+P14 follows the negative P13 threshold audit with a preregistered,
+reference-free post-generation controller on new train rows. Verify the frozen
+protocol and inspect the guarded remote workflow with:
+
+```bash
+uv run falsirag diag selective-acceptance verify-protocol
+scripts/prepare_windows_selective_acceptance.sh
+scripts/start_windows_selective_acceptance.sh
+scripts/check_windows_selective_acceptance.sh
+```
+
+Preparation and start scripts default to dry-run. Formal inference is permitted
+only on an idle `windows-gpu` at `prereg-selective-acceptance-v1`; the local Mac
+must not run or download a model. The packet contains 120 train inputs with
+construction references removed, and a failed registered calibration gate
+stops before evaluation scoring. Full commands and recovery rules are in
+[P14_EXECUTION.md](P14_EXECUTION.md).
+
 ## Paper
 
 ```bash

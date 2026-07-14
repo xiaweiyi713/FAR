@@ -3544,3 +3544,25 @@ evidence bundle verified successfully, releasing the GPU.
   SHA-256 `000499205716a93306080ac2bd7a181b5c45df454eb72b65faf70e36e5398217`.
   All four remote assets matched the local candidate, and a fresh empty-directory
   download passed standalone system `python3 -I` verification with no errors.
+
+## 2026-07-14 — P14 reference-free selective-acceptance preregistration
+
+- Converted the negative P13 threshold result into a new prospective branch
+  instead of tuning the consumed 60-row development replay. The deterministic
+  split builder selects 60 calibration and 60 evaluation train rows, 12 per
+  category, with no shared dependency group.
+- The remote operational packet exposes exactly ID, category, split, question,
+  and initial answer. Construction references, expected actions, evidence
+  labels, source metadata, and the benchmark test split are excluded and
+  rejected by byte-for-byte packet verification.
+- Froze a 100-policy post-generation acceptance grid over changed/action state,
+  primary confidence, edit fraction, and trace-consistency margin. Calibration
+  coverage, +0.03 enrichment, collateral, and target-complete gates are fixed;
+  calibration failure terminates without evaluation scoring.
+- Added the formal runner, result recomputation, Markdown/JSON verifier, CLI,
+  tests, dedicated systemd units, and guarded prepare/preflight/start/status
+  scripts. They require the exact preregistration tag and an idle
+  `windows-gpu`; no local model execution or download is allowed.
+- No P14 model output existed when the protocol and code were written. The
+  paper continues to report only P13 until a tagged remote result passes the
+  independent verifier; null and calibration-stop outcomes remain terminal.

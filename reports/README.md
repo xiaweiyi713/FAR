@@ -46,6 +46,11 @@ This directory contains durable, versioned reports derived from tracked project 
   conflict, a reference-dependent arm-choice envelope, and confidence-threshold
   replay over frozen Qwen outputs. It explicitly does not evaluate a deployable
   selector or causal policy effect.
+- P14 has a frozen protocol and execution harness but no result report yet. Its
+  60/60 dependency-group-disjoint train split, label-free operational packet,
+  reference-free post-generation policy grid, and calibration stop are defined
+  in `docs/PREREG_SELECTIVE_ACCEPTANCE_2026-07-14.md`. A report may be added only
+  after the exact tagged remote run and independent recomputation.
 - The project-status snapshot also exposes the preregistered 2+4 profile:
   RAMDocs upstream-label validation, cross-family LLM jury, author-blind
   adjudication, multi-model jury-gold rescoring, and commit-bound one-shot tests.

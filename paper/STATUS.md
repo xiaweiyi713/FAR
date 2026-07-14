@@ -60,6 +60,13 @@ clean commit `30dc37f62deeaec79d44e23876e1787bd9876174` and independently verifi
 after remote download with system `python3 -I`. The earlier `paper-v1` release
 remains the immutable P12 snapshot.
 
+P14 is now preregistered as a future-evidence branch, not inserted as a paper
+result. It uses new train rows, a dependency-group-disjoint 60/60
+calibration/evaluation split, reference-free post-generation features, and a
+calibration-fail stop before evaluation scoring. Until the exact tagged run and
+independent verifier complete, the active paper retains the P13 conclusion that
+no deployable selector has been evaluated.
+
 G-P estimates only 0.414 exact-McNemar power for the registered 3 x 60 family
 study at a +0.078 effect. WS2 is consequently a directional reproduction: a
 nonsignificant G-F cannot establish absence, while fewer than 2/3 positive

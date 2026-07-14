@@ -439,6 +439,12 @@ def selective_revision_audit_main() -> None:
     main()
 
 
+def selective_acceptance_main() -> None:
+    from far.experiments.selective_acceptance import main
+
+    main()
+
+
 def type_mappability_main() -> None:
     _warn_legacy_alias()
     from far.experiments.type_mappability import main
@@ -665,6 +671,13 @@ def _build_parser() -> argparse.ArgumentParser:
         selective_revision_audit_main,
         "Build or verify frozen selective-revision feasibility.",
         "diag selective-revision-audit",
+    )
+    _add_leaf(
+        diag,
+        "selective-acceptance",
+        selective_acceptance_main,
+        "Prepare, run, or verify preregistered selective acceptance.",
+        "diag selective-acceptance",
     )
     _add_leaf(
         diag,

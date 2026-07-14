@@ -12,7 +12,7 @@
     ],
     "goal_complete": true,
     "incomplete_workstreams": [],
-    "next_training_step": "no required roadmap work remains; maintain the immutable diagnostic and paper releases plus their independent verifiers; P13 shows that recorded confidence is not a fidelity selector, so any future revision-policy experiment requires a new preregistered development branch, calibrated signal, and separately frozen evidence; external publication or submission remains an author-owned action"
+    "next_training_step": "no required roadmap work remains; maintain the immutable diagnostic and paper releases plus their independent verifiers; P14 now freezes the reference-free, group-disjoint selective-acceptance branch required by the negative P13 result; its optional formal run may start only on an idle windows-gpu at the exact preregistration tag, and a failed calibration gate terminates without evaluation scoring; external publication or submission remains an author-owned action"
   },
   "roadmap": {
     "active_sha256": "09cd929fe7a5e0b822914b9009edd7494e3d58da6c5da5256e573c2d9664a6d2",
@@ -116,7 +116,7 @@
         {
           "exists": true,
           "path": "docs/CURRENT_OPERATIONAL_STATE.md",
-          "sha256": "de2414b7277270b091cbe7bb662d3f8b7acccad39423c5e8ddfd8b802716db6f"
+          "sha256": "19e2613e026a94d73450bfe0cb09ef193c62d6fb262ff620b1c4c8376ec6fe22"
         },
         {
           "exists": true,
@@ -199,7 +199,7 @@
         {
           "exists": true,
           "path": "paper/STATUS.md",
-          "sha256": "9aefdcb1978ae143133aac0a9bb4c68ecf8c1d3fcbf5525e4104902a6a330bb5"
+          "sha256": "02fe4dfcf515051a48d68364a15d937a2c9db0dd50190f9f5848a02611c13a34"
         },
         {
           "exists": true,

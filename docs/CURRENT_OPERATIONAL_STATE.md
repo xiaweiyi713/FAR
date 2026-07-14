@@ -1,7 +1,7 @@
 # FAR 当前运行状态
 
-状态时间：2026-07-14 20:57 CST
-适用范围：长期路线 WS1--WS6、重定位 P0--P13、P6-M 与 standalone paper release；
+状态时间：2026-07-14 21:21 CST
+适用范围：长期路线 WS1--WS6、重定位 P0--P14、P6-M 与 standalone paper release；
 本批不需要 GPU，未启动任何远端或本机模型任务。
 
 ## 当前结论
@@ -39,6 +39,11 @@
   typed 高 `+0.0164`。confidence `>=0.90` 的 31 条没有更高 fidelity（delta `0.1386`、
   5/31 target-complete、25/31 collateral）。因此当前瓶颈是 realization quality，不能把
   置信度阈值、reference oracle 或同一 dev replay 写成可部署 selector、校准风险或因果效果。
+- P14 已在新模型输出产生前冻结：从 train 行确定 dependency-group 隔离的 60 calibration +
+  60 evaluation，远端 packet 仅含五个 operational 字段；controller 只使用生成后的 changed/action、
+  confidence、edit fraction 和 trace-consistency margin。100 个候选、coverage 范围、`+0.03`
+  enrichment、安全条件及 calibration-fail 即停止均固定。正式运行尚未启动，只能在精确 prereg tag
+  且 `windows-gpu` 空闲时执行；本机禁止模型下载/运行，test split 仍禁止访问。
 - 当前诊断安装源升级为不可变 `artifacts-v2`：336 文件、44,128,752 bytes、整树 SHA-256
   `362761dc...e92ae`；原 `artifacts-v1` 未覆盖并继续作为 P10-B 历史快照。
 - 活动 TMLR 路线现有独立的 `scripts/solo_paper_release_check.sh`：在 clean commit 上用

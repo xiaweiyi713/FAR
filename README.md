@@ -182,6 +182,13 @@ bash scripts/solo_paper_release_check.sh
 `000499205716a93306080ac2bd7a181b5c45df454eb72b65faf70e36e5398217`，已完成远端下载与
 `python3 -I` 独立回读验证；`paper-v1` 继续保留为 P12 历史快照。
 
+P13 的阴性选择性修订审计已触发新的 P14 预注册分支，而不是继续调旧 confidence 阈值。
+P14 使用 dependency-group 隔离的 60/60 train calibration/evaluation、去标签 operational packet
+和 reference-free 生成后接受策略；见
+[P14 preregistration](docs/PREREG_SELECTIVE_ACCEPTANCE_2026-07-14.md) 与
+[P14 execution](docs/P14_EXECUTION.md)。正式推理只允许在 `windows-gpu` 空闲时启动，本机不运行或
+下载模型。
+
 wheel 与 sdist 的隔离安装 smoke 会验证：包内基准、离线配置、命令入口，以及自足 BM25 确实可用。
 生成的诊断运行不会进入安装包；其逐文件指纹、确定性归档流程和发布状态见
 [制品存储说明](docs/ARTIFACT_STORAGE.md)。

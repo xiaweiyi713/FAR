@@ -26,7 +26,7 @@
 - 已闭合或已建立基线: WS1, WS2, WS3, WS4, WS5, WS6
 - 仍未完成: none
 - 总目标完成: `true`
-- 当前首要动作: no required roadmap work remains; maintain the immutable diagnostic and paper releases plus their independent verifiers; P13 shows that recorded confidence is not a fidelity selector, so any future revision-policy experiment requires a new preregistered development branch, calibrated signal, and separately frozen evidence; external publication or submission remains an author-owned action
+- 当前首要动作: no required roadmap work remains; maintain the immutable diagnostic and paper releases plus their independent verifiers; P14 now freezes the reference-free, group-disjoint selective-acceptance branch required by the negative P13 result; its optional formal run may start only on an idle windows-gpu at the exact preregistration tag, and a failed calibration gate terminates without evaluation scoring; external publication or submission remains an author-owned action
 
 ## 安全边界
 
