@@ -3511,3 +3511,8 @@ evidence bundle verified successfully, releasing the GPU.
 - Rebuilt and rendered the 15-page TMLR PDF. All pages were visually inspected;
   there are no clipped or overlapping elements, unreadable tables, overfull
   boxes, or unresolved references.
+- Published the clean-commit portable bundle as immutable GitHub release
+  `paper-v1`. The 2,328,609-byte archive has SHA-256
+  `7e94e1e7ed63f0d4945d90164db418eb87e816fd284bb972373ca46cb1d852e8`.
+  A fresh remote download matched all four published asset hashes and passed
+  standalone `python3 -I` verification outside the checkout.

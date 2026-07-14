@@ -64,3 +64,23 @@ Publish the `.tar.gz` together with `verify_solo_paper_release.py`,
 SHA-256 values that a recipient can check before running the semantic verifier.
 Publishing is an external action; generating this bundle does not itself submit
 the paper or upgrade its evidence tier.
+
+## Public release v1
+
+The first immutable public cut is
+[`paper-v1`](https://github.com/xiaweiyi713/FAR/releases/tag/paper-v1), bound to
+clean Git commit `434414f6eec712abd13070619248f577cb4d3e0a`:
+
+- archive: 2,328,609 bytes, SHA-256
+  `7e94e1e7ed63f0d4945d90164db418eb87e816fd284bb972373ca46cb1d852e8`;
+- standalone verifier: 51,501 bytes, SHA-256
+  `77fa692e1279e64050a7107c57f545a40bf8faac9ea2617ff0e036b65cc115da`;
+- build record SHA-256
+  `adba3ad599f67424a466bddb3f08b56a0acac29793e24776452c57437b212b69`;
+- isolated audit SHA-256
+  `982c7a43bd7ccd461c9745b6d6e936d539333b2aba89c23cc6026b1cf2bd20b5`.
+
+After publication, all four assets were downloaded from GitHub into an empty
+temporary directory. Their sizes and hashes matched the local candidate, and
+the downloaded sidecar passed `python3 -I` verification with `valid=true`, no
+errors, and the same source revision and non-human boundary flags.

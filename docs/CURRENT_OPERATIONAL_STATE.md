@@ -1,6 +1,6 @@
 # FAR 当前运行状态
 
-状态时间：2026-07-14 19:42 CST
+状态时间：2026-07-14 20:25 CST
 适用范围：长期路线 WS1--WS6、重定位 P0--P12、P6-M 与 standalone paper release；
 本批不需要 GPU，未启动任何远端或本机模型任务。
 
@@ -19,7 +19,7 @@
   没有模型结果写入人工槽位，也不影响当前无真人 profile 的完成状态。
 - TMLR 主文和附录已纳入 P5 注册消融及 P6-M 阴性稳定性结果；paper-readiness 会同时校验
   H3 `uncertain`、H5 scoped `equivalent`、P6-M 15/217 共识/202 contested 与全部非真人边界。
-  当前 14 页构建无 overfull box 或未解析引用；此更新没有调用模型或 GPU。
+  当前 15 页构建无 overfull box 或未解析引用；此更新没有调用模型或 GPU。
 - P11 在冻结 prediction 上完成零模型 revision-delta 度量审计。它修复了 whole-answer soft F1
   可给“原错误答案不修改”高分的盲点：FAR raw/typed delta F1 为 `0.145/0.096`，untyped
   conflict arm 为 `0.093/0`，但 CRAG-style 与 Vanilla raw delta F1 更高（`0.307/0.264`），
@@ -43,6 +43,10 @@
   配对的 `verify_solo_paper_release.py` 也必须 byte-identical，并以 `python3 -I` 隔离模式只读
   自身与归档，独立拒绝内容/验证器篡改、额外/危险成员、source-lock 漂移以及任何真人或严格
   投稿主张升级；接收者不需要 checkout、安装 FAR、联网或模型运行时。
+- 不可变公开版本 [`paper-v1`](https://github.com/xiaweiyi713/FAR/releases/tag/paper-v1) 已绑定
+  clean commit `434414f6eec712abd13070619248f577cb4d3e0a`。归档为 2,328,609 bytes，SHA-256
+  `7e94e1e7ed63f0d4945d90164db418eb87e816fd284bb972373ca46cb1d852e8`；从 GitHub 下载到空临时目录
+  后，以系统 `python3 -I` 独立验证通过，`valid=true`、`errors=[]`。
 
 ## 既有 WS1--WS6 结论（2026-07-09 冻结）
 
