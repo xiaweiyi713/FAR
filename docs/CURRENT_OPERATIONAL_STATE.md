@@ -1,8 +1,8 @@
 # FAR 当前运行状态
 
-状态时间：2026-07-14 21:21 CST
+状态时间：2026-07-14 22:12 CST
 适用范围：长期路线 WS1--WS6、重定位 P0--P14、P6-M 与 standalone paper release；
-本批不需要 GPU，未启动任何远端或本机模型任务。
+P14 v1 已按用户要求暂停并释放远端 GPU；当前仅在本机修改代码和文档，不运行或下载模型。
 
 ## 当前结论
 
@@ -39,11 +39,11 @@
   typed 高 `+0.0164`。confidence `>=0.90` 的 31 条没有更高 fidelity（delta `0.1386`、
   5/31 target-complete、25/31 collateral）。因此当前瓶颈是 realization quality，不能把
   置信度阈值、reference oracle 或同一 dev replay 写成可部署 selector、校准风险或因果效果。
-- P14 已在新模型输出产生前冻结：从 train 行确定 dependency-group 隔离的 60 calibration +
-  60 evaluation，远端 packet 仅含五个 operational 字段；controller 只使用生成后的 changed/action、
-  confidence、edit fraction 和 trace-consistency margin。100 个候选、coverage 范围、`+0.03`
-  enrichment、安全条件及 calibration-fail 即停止均固定。正式运行尚未启动，只能在精确 prereg tag
-  且 `windows-gpu` 空闲时执行；本机禁止模型下载/运行，test split 仍禁止访问。
+- P14 v1 在 10/120 完整 checkpoint 时按用户要求暂停；没有 finalized predictions、run manifest 或
+  结果报告，生成内容与 construction outcome 均未查看/评分。该目录和 cache 永久退出分析。
+  结果盲 v2 amendment 保留原 60/60 group-disjoint split、100-policy grid 和所有 gate，仅改为跨样本
+  keep-alive、独立 cache/output root 和 nonblocking systemd stop，并要求从零完成 120 条。v2 尚未
+  启动，只能在精确 v2 tag 且 `windows-gpu` 再次空闲时执行；本机与 test split 继续禁止。
 - 当前诊断安装源升级为不可变 `artifacts-v2`：336 文件、44,128,752 bytes、整树 SHA-256
   `362761dc...e92ae`；原 `artifacts-v1` 未覆盖并继续作为 P10-B 历史快照。
 - 活动 TMLR 路线现有独立的 `scripts/solo_paper_release_check.sh`：在 clean commit 上用

@@ -36,19 +36,22 @@ from far.paths import experiment_config_dir, repository_root
 ROOT = repository_root()
 PROTOCOL_PATH = ROOT / "docs" / "PREREG_SELECTIVE_ACCEPTANCE_2026-07-14.md"
 PROTOCOL_SHA256 = "bfb9546c26b05c44e99f9d85bdc62c0eb24653dd97bd4b5924a3f9c871383e89"
-PREREG_TAG = "prereg-selective-acceptance-v1"
-SCHEMA_VERSION = "far-selective-acceptance-result-v1"
-AUDIT_SCHEMA_VERSION = "far-selective-acceptance-result-audit-v1"
-PACKET_SCHEMA_VERSION = "far-selective-acceptance-input-v1"
-PROTOCOL_AUDIT_SCHEMA_VERSION = "far-selective-acceptance-protocol-audit-v1"
-ANALYSIS_PROFILE = "preregistered-reference-free-post-generation-acceptance-v1"
+AMENDMENT_PATH = ROOT / "docs" / "AMENDMENT_SELECTIVE_ACCEPTANCE_PERFORMANCE_2026-07-14.md"
+AMENDMENT_SHA256 = "735daa41d6417dcf5df0b03775a7d315eaab1973a646a812fd8c2b65f6be0080"
+PREREG_TAG = "prereg-selective-acceptance-v2"
+RETIRED_PREREG_TAG = "prereg-selective-acceptance-v1"
+SCHEMA_VERSION = "far-selective-acceptance-result-v2"
+AUDIT_SCHEMA_VERSION = "far-selective-acceptance-result-audit-v2"
+PACKET_SCHEMA_VERSION = "far-selective-acceptance-input-v2"
+PROTOCOL_AUDIT_SCHEMA_VERSION = "far-selective-acceptance-protocol-audit-v2"
+ANALYSIS_PROFILE = "preregistered-reference-free-post-generation-acceptance-v2"
 
 TRAIN_PATH = ROOT / "bench" / "splits" / "train.jsonl"
 CORPUS_PATH = ROOT / "bench" / "corpus.jsonl"
-CONFIG_PATH = experiment_config_dir() / "qwen_open.yaml"
+CONFIG_PATH = experiment_config_dir() / "qwen_selective_acceptance.yaml"
 TRAIN_SHA256 = "7796d44fd7673c7c4a6b22cce6829f9463d72635b08d6394887945ce8e561df4"
 CORPUS_SHA256 = "cca5f62db0fbb51e1bae8111ea85fe169fba7be5a8e63847a9c1c048cdae25cd"
-CONFIG_SHA256 = "a8da92080d9750b7d097b05f8e8ee5ea8f84f2e05432be3e26f13004b3cbb4ea"
+CONFIG_SHA256 = "e0a825fbac36c21ce7dc08f73f30f6bf75e7ed5da7dac561bf964d5388bd75d9"
 MODEL = "qwen3.5:9b"
 MODEL_DIGEST = "6488c96fa5faab64bb65cbd30d4289e20e6130ef535a93ef9a49f42eda893ea7"
 SPLIT_SEED = "far-p14-selective-acceptance-v1"
@@ -71,7 +74,8 @@ MIN_ENRICHMENT = 0.03
 BOOTSTRAP_SEED = 20260714
 BOOTSTRAP_RESAMPLES = 2000
 
-DEFAULT_OUTPUT_ROOT = ROOT / "outputs" / "selective_acceptance_v1"
+DEFAULT_OUTPUT_ROOT = ROOT / "outputs" / "selective_acceptance_v2"
+V2_CACHE_PATH = ROOT / "outputs" / "cache" / "qwen_selective_acceptance_v2.sqlite3"
 DEFAULT_REPORT_JSON = ROOT / "reports" / "selective_acceptance.json"
 DEFAULT_REPORT_MARKDOWN = ROOT / "reports" / "selective_acceptance.md"
 
@@ -244,7 +248,7 @@ def build_packet(
             "train_sha256": sha256_file(train_path),
             "corpus_path": "bench/corpus.jsonl",
             "corpus_sha256": sha256_file(corpus_path),
-            "config_path": "far/experiments/configs/qwen_open.yaml",
+            "config_path": "far/experiments/configs/qwen_selective_acceptance.yaml",
             "config_sha256": sha256_file(CONFIG_PATH),
             "model": MODEL,
             "model_digest": MODEL_DIGEST,
@@ -274,6 +278,9 @@ def build_packet(
         "allow_test": False,
         "test_accessed": False,
         "construction_references_exposed": False,
+        "performance_amendment_sha256": AMENDMENT_SHA256,
+        "fresh_restart_after_retired_v1": True,
+        "retired_v1_checkpoint_rows_reused": 0,
     }
     write_json(output_dir / "protocol_manifest.json", manifest)
     return manifest
@@ -283,6 +290,7 @@ def verify_protocol(*, require_tag: bool = True) -> dict[str, Any]:
     errors: list[str] = []
     for path, expected, label in (
         (PROTOCOL_PATH, PROTOCOL_SHA256, "preregistration"),
+        (AMENDMENT_PATH, AMENDMENT_SHA256, "performance amendment"),
         (TRAIN_PATH, TRAIN_SHA256, "train source"),
         (CORPUS_PATH, CORPUS_SHA256, "corpus"),
         (CONFIG_PATH, CONFIG_SHA256, "configuration"),
@@ -293,14 +301,18 @@ def verify_protocol(*, require_tag: bool = True) -> dict[str, Any]:
     try:
         commit = prereg_commit(required=require_tag)
         if commit is not None:
-            tagged_protocol = subprocess.run(
-                ["git", "show", f"{commit}:docs/{PROTOCOL_PATH.name}"],
-                cwd=ROOT,
-                check=True,
-                capture_output=True,
-            ).stdout
-            if hashlib.sha256(tagged_protocol).hexdigest() != PROTOCOL_SHA256:
-                errors.append("P14 tag does not contain the frozen preregistration")
+            for path, expected, label in (
+                (PROTOCOL_PATH, PROTOCOL_SHA256, "original preregistration"),
+                (AMENDMENT_PATH, AMENDMENT_SHA256, "performance amendment"),
+            ):
+                tagged_protocol = subprocess.run(
+                    ["git", "show", f"{commit}:docs/{path.name}"],
+                    cwd=ROOT,
+                    check=True,
+                    capture_output=True,
+                ).stdout
+                if hashlib.sha256(tagged_protocol).hexdigest() != expected:
+                    errors.append(f"P14 tag does not contain the frozen {label}")
     except (OSError, ValueError, subprocess.CalledProcessError) as exc:
         errors.append(str(exc))
     try:
@@ -318,7 +330,13 @@ def verify_protocol(*, require_tag: bool = True) -> dict[str, Any]:
         "valid": not errors,
         "errors": errors,
         "preregistration_tag": PREREG_TAG,
+        "retired_preregistration_tag": RETIRED_PREREG_TAG,
         "preregistration_commit": commit,
+        "performance_amendment": True,
+        "amendment_sha256": AMENDMENT_SHA256,
+        "fresh_restart_after_retired_v1": True,
+        "retired_v1_complete_checkpoint_rows": 10,
+        "retired_v1_rows_reused": 0,
         "calibration_samples": 60,
         "evaluation_samples": 60,
         "dependency_group_disjoint": not errors,
@@ -328,6 +346,9 @@ def verify_protocol(*, require_tag: bool = True) -> dict[str, Any]:
         "model_digest": MODEL_DIGEST,
         "model_execution_location": "windows-gpu",
         "local_model_execution": False,
+        "unload_after_sample": False,
+        "keep_alive": "24h",
+        "fresh_cache_namespace": "far-qwen3.5-9b-selective-acceptance-v2",
         "test_accessed": False,
         "human_review": False,
         "publication_gold": False,
@@ -637,6 +658,7 @@ def _validate_run(packet_dir: Path, run_dir: Path) -> dict[str, Any]:
     )
     commit = prereg_commit(required=True)
     runtime = identity.get("llm_runtime", {}).get("ollama_model", {})
+    llm = identity.get("llm", {})
     source_revision = identity.get("source_revision", {})
     checks = {
         "packet_valid": True,
@@ -656,6 +678,11 @@ def _validate_run(packet_dir: Path, run_dir: Path) -> dict[str, Any]:
         "config_hash_bound": identity.get("config_sha256") == CONFIG_SHA256,
         "model_digest_bound": identity.get("llm_runtime", {}).get("model") == MODEL
         and runtime.get("digest") == MODEL_DIGEST,
+        "v2_model_lifecycle_bound": llm.get("unload_after_sample") is False
+        and llm.get("keep_alive") == "24h",
+        "v2_cache_isolated": llm.get("cache_path")
+        == "outputs/cache/qwen_selective_acceptance_v2.sqlite3"
+        and llm.get("cache_namespace") == "far-qwen3.5-9b-selective-acceptance-v2",
         "clean_preregistered_source": source_revision.get("git_commit") == commit
         and source_revision.get("git_dirty") is False,
     }
@@ -775,6 +802,9 @@ def compute_report(
             "causal_policy_effect": False,
             "local_model_execution": False,
             "model_execution_location": "windows-gpu",
+            "performance_amendment": True,
+            "retired_v1_rows_reused": 0,
+            "fresh_v2_run_required": True,
         },
     }
 
@@ -902,6 +932,11 @@ def verify_reports(
 
 
 def run_registered(output_root: Path) -> dict[str, Any]:
+    if output_root.name != DEFAULT_OUTPUT_ROOT.name:
+        raise ValueError("formal P14 v2 run requires a fresh selective_acceptance_v2 output root")
+    run_identity = output_root / "runs" / "far" / "run_identity.json"
+    if V2_CACHE_PATH.exists() and not run_identity.is_file():
+        raise ValueError("formal P14 v2 run refuses a pre-existing unbound v2 cache")
     commit = _require_formal_source()
     packet_dir = output_root / "input"
     run_dir = output_root / "runs" / "far"

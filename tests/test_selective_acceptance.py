@@ -29,6 +29,12 @@ def test_protocol_freezes_balanced_group_disjoint_split() -> None:
     assert audit["evaluation_samples"] == 60
     assert audit["reference_free_operational_input"] is True
     assert audit["post_generation_policy"] is True
+    assert audit["performance_amendment"] is True
+    assert audit["fresh_restart_after_retired_v1"] is True
+    assert audit["retired_v1_complete_checkpoint_rows"] == 10
+    assert audit["retired_v1_rows_reused"] == 0
+    assert audit["unload_after_sample"] is False
+    assert audit["keep_alive"] == "24h"
     assert audit["test_accessed"] is False
     assert audit["local_model_execution"] is False
 
@@ -49,7 +55,36 @@ def test_packet_contains_only_operational_train_fields(tmp_path: Path) -> None:
         set(manifest["split"]["calibration_dependency_groups"])
         & set(manifest["split"]["evaluation_dependency_groups"])
     )
+    assert manifest["fresh_restart_after_retired_v1"] is True
+    assert manifest["retired_v1_checkpoint_rows_reused"] == 0
     assert verify_packet(packet_dir, require_tag=False)["valid"] is True
+
+
+def test_v2_runtime_uses_fresh_keepalive_configuration() -> None:
+    config = study.CONFIG_PATH.read_text(encoding="utf-8")
+
+    assert "unload_after_sample: false" in config
+    assert "keep_alive: 24h" in config
+    assert "qwen_selective_acceptance_v2.sqlite3" in config
+    assert "far-qwen3.5-9b-selective-acceptance-v2" in config
+    assert "qwen_open.sqlite3" not in config
+
+
+def test_formal_v2_runner_rejects_retired_v1_output_root(tmp_path: Path) -> None:
+    with pytest.raises(ValueError, match="selective_acceptance_v2 output root"):
+        study.run_registered(tmp_path / "selective_acceptance_v1")
+
+
+def test_formal_v2_runner_rejects_unbound_cache(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    cache = tmp_path / "unknown.sqlite3"
+    cache.write_bytes(b"unknown")
+    monkeypatch.setattr(study, "V2_CACHE_PATH", cache)
+
+    with pytest.raises(ValueError, match="pre-existing unbound v2 cache"):
+        study.run_registered(tmp_path / "selective_acceptance_v2")
 
 
 def test_packet_verifier_rejects_reference_injection(tmp_path: Path) -> None:
@@ -210,17 +245,27 @@ def test_remote_execution_path_is_guarded_and_never_pulls_a_model() -> None:
         encoding="utf-8"
     )
     start = (ROOT / "scripts/start_windows_selective_acceptance.sh").read_text(encoding="utf-8")
+    pause = (ROOT / "scripts/pause_windows_selective_acceptance.sh").read_text(encoding="utf-8")
     service = (ROOT / "scripts/systemd/far-selective-acceptance.service").read_text(
         encoding="utf-8"
     )
 
     assert "FAR_P14_PREP_ALLOWED" in prepare
     assert "FAR_P14_RUN_ALLOWED" in start
+    assert "FAR_P14_PAUSE_ALLOWED" in pause
     assert "--query-compute-apps" in preflight
     assert "GPU busy" in preflight
     assert "is already active; inspect it instead of starting again" in preflight
     assert "Ollama is already active outside the P14 start sequence" in preflight
     assert "6488c96f" in preflight
-    assert "prereg-selective-acceptance-v1" in prepare
-    assert "/mnt/d/FAR-outputs/selective_acceptance_v1" in service
-    assert "ollama pull" not in prepare + preflight + start + service
+    assert "prereg-selective-acceptance-v2" in prepare
+    assert "prereg-selective-acceptance-v1" not in prepare
+    assert "far-tmux-server.service" not in prepare
+    assert "unknown pre-existing P14 v2 output root" in prepare
+    assert "v2 cache without a bound run identity" in prepare
+    assert "/mnt/d/FAR-outputs/selective_acceptance_v2" in service
+    assert "/mnt/d/FAR-outputs/selective_acceptance_v1" not in service
+    assert "stop --no-block far-ollama-selective-acceptance.service" in service
+    assert "checkpoint retained" in pause
+    assert "rm " not in pause
+    assert "ollama pull" not in prepare + preflight + start + pause + service

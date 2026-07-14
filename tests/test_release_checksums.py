@@ -289,6 +289,9 @@ def test_completed_roadmap_does_not_require_unavailable_human_review() -> None:
     assert "immutable diagnostic and paper releases" in next_step
     assert "independent verifiers" in next_step
     assert "P14" in next_step
+    assert "v1 is retired unscored" in next_step
+    assert "v2" in next_step
+    assert "isolated cache" in next_step
     assert "idle windows-gpu" in next_step
     assert "human author review" not in next_step
 

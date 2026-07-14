@@ -3,7 +3,7 @@
 
 set -euo pipefail
 remote="${1:-${FAR_WINDOWS_REMOTE:-windows-gpu}}"
-output_root="${FAR_P14_OUTPUT_ROOT:-/mnt/d/FAR-outputs/selective_acceptance_v1}"
+output_root="/mnt/d/FAR-outputs/selective_acceptance_v2"
 ssh -o BatchMode=yes -o ConnectTimeout=15 "${remote}" 'bash -s' -- "${output_root}" <<'REMOTE'
 set -euo pipefail
 output_root="$1"

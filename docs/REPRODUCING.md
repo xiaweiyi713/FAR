@@ -1060,22 +1060,27 @@ to the public dev distribution and the fixed Qwen runtime.
 ## P14 selective acceptance
 
 P14 follows the negative P13 threshold audit with a preregistered,
-reference-free post-generation controller on new train rows. Verify the frozen
-protocol and inspect the guarded remote workflow with:
+reference-free post-generation controller on new train rows. The incomplete
+v1 attempt was paused at 10/120 and permanently retired before output content
+or outcomes were inspected. Verify the original protocol, result-blind v2
+performance amendment, and guarded remote workflow with:
 
 ```bash
 uv run falsirag diag selective-acceptance verify-protocol
 scripts/prepare_windows_selective_acceptance.sh
 scripts/start_windows_selective_acceptance.sh
 scripts/check_windows_selective_acceptance.sh
+scripts/pause_windows_selective_acceptance.sh
 ```
 
 Preparation and start scripts default to dry-run. Formal inference is permitted
-only on an idle `windows-gpu` at `prereg-selective-acceptance-v1`; the local Mac
-must not run or download a model. The packet contains 120 train inputs with
+only on an idle `windows-gpu` at `prereg-selective-acceptance-v2`; the local Mac
+must not run or download a model. v2 starts from zero with a fresh output root
+and cache namespace, keeps the exact Qwen digest resident across samples, and
+cannot reuse the ten v1 rows. The packet contains 120 train inputs with
 construction references removed, and a failed registered calibration gate
-stops before evaluation scoring. Full commands and recovery rules are in
-[P14_EXECUTION.md](P14_EXECUTION.md).
+stops before evaluation scoring. Full commands, pause behavior, and recovery
+rules are in [P14_EXECUTION.md](P14_EXECUTION.md).
 
 ## Paper
 

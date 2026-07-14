@@ -3566,3 +3566,28 @@ evidence bundle verified successfully, releasing the GPU.
 - No P14 model output existed when the protocol and code were written. The
   paper continues to report only P13 until a tagged remote result passes the
   independent verifier; null and calibration-stop outcomes remain terminal.
+
+## 2026-07-14 — P14 result-blind performance amendment
+
+- Started v1 only after its exact tag and idle-GPU preflight. Operational logs
+  showed that one FAR row made about ten sequential Qwen requests and that
+  `unload_after_sample: true` reloaded the 9B model for every row. The first ten
+  complete rows took roughly 97--233 seconds each.
+- Paused at a complete 10-row append-only checkpoint when the user reassigned
+  the GPU. No prediction content, construction outcome, policy feature,
+  calibration label, or evaluation label was inspected or scored. Finalized
+  predictions, run manifest, and result reports did not exist. The v1
+  checkpoint is retained but permanently excluded from analysis and cache use.
+- Recorded the v1 protocol-manifest, identity, checkpoint, input, configuration,
+  source revision, and model-digest fingerprints in the performance amendment.
+  GPU memory returned to the idle baseline; no local model was run or
+  downloaded.
+- Froze v2 as a complete restart with the same scientific protocol and a new
+  runtime configuration: `unload_after_sample: false`, `keep_alive: 24h`, a
+  fresh cache namespace/path, a new output root, and no v1 row reuse.
+- Fixed the systemd shutdown-order deadlock by making the dependency stop
+  nonblocking, added a guarded checkpoint-preserving pause script, and changed
+  preparation to ignore the benign persistent tmux infrastructure service while
+  still rejecting every registered FAR/model job.
+- v2 remains unstarted until its exact clean tag is pushed and `windows-gpu` is
+  again idle. The benchmark test split and all human claims remain prohibited.

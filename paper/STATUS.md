@@ -63,9 +63,12 @@ remains the immutable P12 snapshot.
 P14 is now preregistered as a future-evidence branch, not inserted as a paper
 result. It uses new train rows, a dependency-group-disjoint 60/60
 calibration/evaluation split, reference-free post-generation features, and a
-calibration-fail stop before evaluation scoring. Until the exact tagged run and
-independent verifier complete, the active paper retains the P13 conclusion that
-no deployable selector has been evaluated.
+calibration-fail stop before evaluation scoring. The incomplete v1 attempt was
+paused at 10/120 and permanently retired before generated content or outcomes
+were inspected; it is not paper evidence. A result-blind v2 amendment requires
+a zero-row restart with isolated cache/output and model keep-alive. Until that
+exact tagged v2 run and independent verifier complete, the active paper retains
+the P13 conclusion that no deployable selector has been evaluated.
 
 G-P estimates only 0.414 exact-McNemar power for the registered 3 x 60 family
 study at a +0.078 effect. WS2 is consequently a directional reproduction: a

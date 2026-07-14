@@ -5,10 +5,10 @@ set -euo pipefail
 
 remote="${1:-${FAR_WINDOWS_REMOTE:-windows-gpu}}"
 worktree="${FAR_P14_WORKTREE:-/mnt/d/FAR-workspace/FAR-longterm}"
-output_root="${FAR_P14_OUTPUT_ROOT:-/mnt/d/FAR-outputs/selective_acceptance_v1}"
+output_root="/mnt/d/FAR-outputs/selective_acceptance_v2"
 require_ollama="${FAR_P14_REQUIRE_OLLAMA:-0}"
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-expected_commit="${FAR_P14_EXPECTED_COMMIT:-$(git -C "${script_dir}/.." rev-list -n 1 prereg-selective-acceptance-v1)}"
+expected_commit="${FAR_P14_EXPECTED_COMMIT:-$(git -C "${script_dir}/.." rev-list -n 1 prereg-selective-acceptance-v2)}"
 
 ssh -o BatchMode=yes -o ConnectTimeout=15 "${remote}" 'bash -s' -- \
   "${worktree}" "${output_root}" "${expected_commit}" "${require_ollama}" <<'REMOTE'
@@ -48,13 +48,18 @@ if [[ ! -d "${worktree}/.git" ]]; then
   errors+=("missing worktree: ${worktree}")
 else
   head="$(git -C "${worktree}" rev-parse HEAD 2>/dev/null || true)"
-  tag="$(git -C "${worktree}" rev-list -n 1 prereg-selective-acceptance-v1 2>/dev/null || true)"
+  tag="$(git -C "${worktree}" rev-list -n 1 prereg-selective-acceptance-v2 2>/dev/null || true)"
   dirty="$(git -C "${worktree}" status --porcelain --untracked-files=all 2>/dev/null || true)"
   [[ "${head}" == "${expected_commit}" ]] \
     || errors+=("worktree HEAD ${head:-missing} != ${expected_commit}")
   [[ "${tag}" == "${expected_commit}" ]] \
     || errors+=("remote preregistration tag ${tag:-missing} != ${expected_commit}")
   [[ -z "${dirty}" ]] || errors+=("remote worktree is dirty")
+fi
+cache_path="${worktree}/outputs/cache/qwen_selective_acceptance_v2.sqlite3"
+run_identity="${output_root}/runs/far/run_identity.json"
+if [[ -e "${cache_path}" && ! -f "${run_identity}" ]]; then
+  errors+=("P14 v2 cache exists without a bound run identity")
 fi
 
 gpu="$(/usr/lib/wsl/lib/nvidia-smi --query-gpu=memory.used,utilization.gpu \

@@ -459,11 +459,12 @@ def build_status(root: Path = ROOT) -> dict[str, Any]:
     if goal_complete:
         next_training_step = (
             "no required roadmap work remains; maintain the immutable diagnostic and paper "
-            "releases plus their independent verifiers; P14 now freezes the reference-free, "
-            "group-disjoint selective-acceptance branch required by the negative P13 result; "
-            "its optional formal run may start only on an idle windows-gpu at the exact "
-            "preregistration tag, and a failed calibration gate terminates without evaluation "
-            "scoring; external publication or submission remains an author-owned action"
+            "releases plus their independent verifiers; P14 v1 is retired unscored after a "
+            "10-row user-requested pause, while its result-blind v2 amendment requires a fresh "
+            "reference-free, group-disjoint 120-row run with isolated cache and model keep-alive; "
+            "v2 may start only on an idle windows-gpu at the exact preregistration tag, and a "
+            "failed calibration gate terminates without evaluation scoring; external publication "
+            "or submission remains an author-owned action"
         )
     elif ws2_status == "complete" and ws3_status == "complete" and ws4_status != "complete":
         next_training_step = (

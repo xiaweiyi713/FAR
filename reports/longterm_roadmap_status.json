@@ -12,7 +12,7 @@
     ],
     "goal_complete": true,
     "incomplete_workstreams": [],
-    "next_training_step": "no required roadmap work remains; maintain the immutable diagnostic and paper releases plus their independent verifiers; P14 now freezes the reference-free, group-disjoint selective-acceptance branch required by the negative P13 result; its optional formal run may start only on an idle windows-gpu at the exact preregistration tag, and a failed calibration gate terminates without evaluation scoring; external publication or submission remains an author-owned action"
+    "next_training_step": "no required roadmap work remains; maintain the immutable diagnostic and paper releases plus their independent verifiers; P14 v1 is retired unscored after a 10-row user-requested pause, while its result-blind v2 amendment requires a fresh reference-free, group-disjoint 120-row run with isolated cache and model keep-alive; v2 may start only on an idle windows-gpu at the exact preregistration tag, and a failed calibration gate terminates without evaluation scoring; external publication or submission remains an author-owned action"
   },
   "roadmap": {
     "active_sha256": "09cd929fe7a5e0b822914b9009edd7494e3d58da6c5da5256e573c2d9664a6d2",
@@ -116,7 +116,7 @@
         {
           "exists": true,
           "path": "docs/CURRENT_OPERATIONAL_STATE.md",
-          "sha256": "19e2613e026a94d73450bfe0cb09ef193c62d6fb262ff620b1c4c8376ec6fe22"
+          "sha256": "b08b5933a2d96536febf66e310c262c7bb05cdd482d3121b7087ad10fff17d24"
         },
         {
           "exists": true,
@@ -199,7 +199,7 @@
         {
           "exists": true,
           "path": "paper/STATUS.md",
-          "sha256": "02fe4dfcf515051a48d68364a15d937a2c9db0dd50190f9f5848a02611c13a34"
+          "sha256": "5ed419ed709229b49ba1e44522c1faf2ce476a907174b10552930732e7f20007"
         },
         {
           "exists": true,
@@ -256,7 +256,7 @@
       "details": {
         "diagnostics_mib": 0.0,
         "outputs_tracks_only_gitkeep": true,
-        "tracked_files": 372
+        "tracked_files": 382
       },
       "errors": [],
       "gate": "repository-maintenance audit",
