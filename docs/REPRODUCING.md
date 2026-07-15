@@ -108,9 +108,12 @@ bash scripts/solo_diagnostic_check.sh
 ```
 
 This verifies the solo evidence bundle, the frozen FEVER binary diagnostic, the
-reader-facing report's numeric/source consistency, the generated JSON/Markdown
-project-status ledger's freshness, and inclusion of the reports in the source
-distribution. The ledger-only read-only check is
+reader-facing report's numeric/source consistency, all three generated
+JSON/Markdown repository-maintenance, long-term-roadmap, and project-status
+ledgers against current tracked evidence, and inclusion of the reports in the
+source distribution. The corresponding read-only checks are
+`uv run falsirag ops repository-maintenance --verify`,
+`uv run falsirag ops longterm-status --check`, and
 `uv run falsirag ops project-status --verify`.
 
 For the user-authorized paper profile with no human annotators, run:

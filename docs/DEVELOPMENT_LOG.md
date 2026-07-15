@@ -3629,3 +3629,21 @@ evidence bundle verified successfully, releasing the GPU.
 - Rebuilt the active 16-page anonymous TMLR PDF. The log contains no overfull
   box or unresolved-reference failure; all pages were rendered and visually
   inspected for clipping, overlap, table legibility, headers, and pagination.
+
+## 2026-07-15 — Generated-ledger freshness gate closure
+
+- The final completion audit found that `repository-maintenance --check`
+  correctly recomputed a valid 387-file tree but did not compare that result to
+  its tracked JSON/Markdown outputs. The older maintenance report therefore
+  still recorded 360 files, while the long-term ledger retained the pre-P14
+  count of 385 and was the only gate to fail visibly.
+- Added a separate read-only `repository-maintenance --verify` mode that
+  preserves `--check` as the invariant-only audit while rejecting unreadable or
+  stale tracked JSON and Markdown. Unit tests cover current, stale-JSON, and
+  stale-Markdown behavior.
+- The public diagnostic and solo-paper release gates now verify repository
+  maintenance output freshness, long-term roadmap freshness, and project-status
+  freshness together. CI uses the stronger maintenance verifier, preventing a
+  valid repository state from shipping with an obsolete maintenance snapshot.
+- This repair only inspects tracked engineering evidence. It makes zero model
+  calls, does not download a model, and does not read or score held-out/test.

@@ -267,9 +267,13 @@ def test_solo_paper_release_check_fingerprints_active_tmlr_artifacts() -> None:
         assert f"--artifact {role}=" in script
     assert "--profile solo-paper" in script
     assert "bash scripts/build_tmlr_paper.sh" in script
-    assert "falsirag release solo-paper-readiness" in (
+    diagnostic_script = (
         Path(__file__).resolve().parents[1] / "scripts/solo_diagnostic_check.sh"
     ).read_text(encoding="utf-8")
+    assert "falsirag ops repository-maintenance --verify" in diagnostic_script
+    assert "falsirag ops longterm-status --check" in diagnostic_script
+    assert "falsirag ops project-status --verify" in diagnostic_script
+    assert "falsirag release solo-paper-readiness" in diagnostic_script
     assert "submission/evidence" not in script
     assert "submission-readiness" not in script
     assert "falsirag release solo-paper-bundle pack" in script

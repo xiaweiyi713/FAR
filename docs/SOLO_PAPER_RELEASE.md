@@ -14,7 +14,10 @@ bash scripts/solo_paper_release_check.sh
 The command runs the complete model-free paper gate, rebuilds and checks the
 anonymous TMLR PDF, builds wheel/sdist and the SBOM, fingerprints the eleven
 required artifacts, then packs the portable archive twice and requires the two
-archives to be byte-identical.
+archives to be byte-identical. Before packaging, the gate independently
+recomputes and compares the tracked repository-maintenance, long-term-roadmap,
+and project-status ledgers, so a valid but stale maintenance snapshot cannot
+enter the release candidate.
 
 The publishable outputs are ignored local artifacts:
 

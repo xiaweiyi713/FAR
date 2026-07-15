@@ -70,7 +70,7 @@ jobs:
       - name: Check shell syntax
         run: bash -n scripts/*.sh
       - name: Audit repository maintenance invariants
-        run: uv run --locked falsirag ops repository-maintenance --check
+        run: uv run --locked falsirag ops repository-maintenance --verify
       - name: Audit long-term roadmap status
         run: uv run --locked falsirag ops longterm-status --check
       - name: Scan tracked files for secrets

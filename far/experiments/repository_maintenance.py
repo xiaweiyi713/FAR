@@ -19,6 +19,7 @@ from typing import Any
 from far.bench.build.common import sha256_file, write_json
 
 SCHEMA_VERSION = "far-repository-maintenance-audit-v1"
+OUTPUT_AUDIT_SCHEMA_VERSION = "far-repository-maintenance-output-audit-v1"
 DEFAULT_DIAGNOSTICS_THRESHOLD_MIB = 200.0
 DEFAULT_SINGLE_FILE_THRESHOLD_MIB = 50.0
 
@@ -235,14 +236,82 @@ def render_markdown(report: dict[str, Any]) -> str:
 """
 
 
+def _display_path(root: Path, path: Path) -> str:
+    try:
+        return path.relative_to(root).as_posix()
+    except ValueError:
+        return path.as_posix()
+
+
+def verify_outputs(root: Path, json_path: Path, markdown_path: Path) -> dict[str, Any]:
+    """Rebuild and compare both tracked maintenance reports without writing."""
+    root = root.resolve()
+    json_path = json_path.resolve()
+    markdown_path = markdown_path.resolve()
+    expected = audit(root)
+    expected_markdown = render_markdown(expected)
+    errors = list(expected["errors"])
+
+    try:
+        observed_json = json.loads(json_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        errors.append(f"JSON maintenance report unreadable: {exc}")
+    else:
+        if observed_json != expected:
+            errors.append(
+                "JSON maintenance report is stale; regenerate it with "
+                "falsirag ops repository-maintenance"
+            )
+
+    try:
+        observed_markdown = markdown_path.read_text(encoding="utf-8")
+    except OSError as exc:
+        errors.append(f"Markdown maintenance report unreadable: {exc}")
+    else:
+        if observed_markdown != expected_markdown:
+            errors.append(
+                "Markdown maintenance report is stale; regenerate it with "
+                "falsirag ops repository-maintenance"
+            )
+
+    return {
+        "schema_version": OUTPUT_AUDIT_SCHEMA_VERSION,
+        "valid": not errors,
+        "maintenance_valid": expected["valid"] is True,
+        "checked": {
+            "json": _display_path(root, json_path),
+            "markdown": _display_path(root, markdown_path),
+        },
+        "errors": errors,
+    }
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", type=Path, default=Path.cwd())
     parser.add_argument("--json-output", type=Path)
     parser.add_argument("--markdown-output", type=Path)
-    parser.add_argument("--check", action="store_true", help="exit nonzero if audit is invalid")
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument("--check", action="store_true", help="exit nonzero if audit is invalid")
+    mode.add_argument(
+        "--verify",
+        action="store_true",
+        help="compare tracked JSON and Markdown reports with a fresh audit without writing",
+    )
     args = parser.parse_args()
-    report = audit(args.root)
+    root = args.root.resolve()
+    if args.verify:
+        json_path = (args.json_output or root / "reports/repository_maintenance.json").resolve()
+        markdown_path = (
+            args.markdown_output or root / "reports/repository_maintenance.md"
+        ).resolve()
+        result = verify_outputs(root, json_path, markdown_path)
+        print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
+        if result["valid"] is not True:
+            raise SystemExit(1)
+        return
+
+    report = audit(root)
     if args.json_output:
         write_json(args.json_output, report)
     if args.markdown_output:

@@ -205,6 +205,8 @@ wheel 与 sdist 的隔离安装 smoke 会验证：包内基准、离线配置、
 ```bash
 uv run falsirag ops diagnostic-data install
 uv run falsirag release solo verify diagnostics/solo_v1
+uv run falsirag ops repository-maintenance --verify
+uv run falsirag ops longterm-status --check
 uv run falsirag ops project-status --verify
 uv run falsirag release solo-paper-readiness
 uv run falsirag diag revision-trace-audit verify

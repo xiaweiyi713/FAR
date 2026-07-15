@@ -11,6 +11,8 @@ uv run falsirag release solo verify diagnostics/solo_v1
 uv run falsirag diag fever-binary verify \
   --data-dir bench/external/fever_pair_candidates_v1 \
   diagnostics/fever_binary_v1
+uv run falsirag ops repository-maintenance --verify
+uv run falsirag ops longterm-status --check
 uv run falsirag ops project-status --verify
 uv run falsirag release solo-paper-readiness > /dev/null
 
@@ -18,6 +20,7 @@ uv run pytest -q \
   tests/test_diagnostic_release.py \
   tests/test_fever_binary_evaluation.py \
   tests/test_diagnostic_report.py \
+  tests/test_repository_maintenance.py \
   tests/test_project_status.py \
   tests/test_solo_paper_readiness.py \
   tests/test_release_checksums.py::test_source_archive_includes_reader_facing_reports
