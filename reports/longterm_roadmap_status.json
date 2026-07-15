@@ -12,7 +12,7 @@
     ],
     "goal_complete": true,
     "incomplete_workstreams": [],
-    "next_training_step": "no required roadmap work remains; maintain the immutable diagnostic and paper releases plus their independent verifiers; P14 v1 is retired unscored after a 10-row user-requested pause, while its result-blind v2 amendment requires a fresh reference-free, group-disjoint 120-row run with isolated cache and model keep-alive; v2 may start only on an idle windows-gpu at the exact preregistration tag, and a failed calibration gate terminates without evaluation scoring; external publication or submission remains an author-owned action"
+    "next_training_step": "no required roadmap work remains; maintain the immutable diagnostic and paper releases plus their independent verifiers; P14 v1 remains retired unscored at 10 rows, while exact-tag v2 completed a fresh reference-free, group-disjoint 120-row run with isolated cache, zero v1 reuse, and registered evaluation_success; maintain the tracked P14 report/readiness v6 and prepare a new versioned portable evidence release without changing historical releases; no required GPU experiment remains, and external publication or submission remains an author-owned action"
   },
   "roadmap": {
     "active_sha256": "09cd929fe7a5e0b822914b9009edd7494e3d58da6c5da5256e573c2d9664a6d2",
@@ -116,7 +116,7 @@
         {
           "exists": true,
           "path": "docs/CURRENT_OPERATIONAL_STATE.md",
-          "sha256": "b08b5933a2d96536febf66e310c262c7bb05cdd482d3121b7087ad10fff17d24"
+          "sha256": "4febe0aed6bea28819bda3223e51a490b4c5ccd4d062a76f0aa981a513cc1f8f"
         },
         {
           "exists": true,
@@ -199,22 +199,22 @@
         {
           "exists": true,
           "path": "paper/STATUS.md",
-          "sha256": "5ed419ed709229b49ba1e44522c1faf2ce476a907174b10552930732e7f20007"
+          "sha256": "22a154dce4f55d1ad92eeadb9114f1bd451a9a710cc833a8435c99b860898101"
         },
         {
           "exists": true,
           "path": "paper/main.tex",
-          "sha256": "e20cac907e6621602869fecf6fd038efc9836361916115564d9129e40e93ef2f"
+          "sha256": "25e15255f9f5f3ff81e6cbe366d27bd2cf458505a6059e12936785827d9de2d2"
         },
         {
           "exists": true,
           "path": "reports/solo_paper_readiness.json",
-          "sha256": "758a0ab41e6fea82b68b85330622ce37139da2c957db927ee4c061c2a3992f0a"
+          "sha256": "0c0fb6a19296cd3a34cef91f286795c15eca43a5331315214812b623bc4bc5b8"
         },
         {
           "exists": true,
           "path": "reports/tmlr_result_integration_matrix.md",
-          "sha256": "0bd3001d7303d7eece39f75b858560e32e35fbedff44e60e4ca90fefaa4d576b"
+          "sha256": "7ff6c847d68116a4e7cd90badd685e106181fec20af84c4e65e15817ed663181"
         }
       ],
       "name": "WS4 paper and venue repositioning",
@@ -256,7 +256,7 @@
       "details": {
         "diagnostics_mib": 0.0,
         "outputs_tracks_only_gitkeep": true,
-        "tracked_files": 382
+        "tracked_files": 385
       },
       "errors": [],
       "gate": "repository-maintenance audit",

@@ -37,6 +37,8 @@ uv run falsirag release checksums \
   --sbom build/sbom/far-sbom.cdx.json \
   --artifact benchmark_validation_report="${release_dir}/benchmark-validation.json" \
   --artifact secret_scan_report="${release_dir}/secret-scan.json" \
+  --artifact selective_acceptance_json=reports/selective_acceptance.json \
+  --artifact selective_acceptance_markdown=reports/selective_acceptance.md \
   --artifact solo_paper_readiness_json=reports/solo_paper_readiness.json \
   --artifact solo_paper_readiness_markdown=reports/solo_paper_readiness.md \
   --artifact tmlr_paper_pdf=paper/build/tmlr/tmlr.pdf \

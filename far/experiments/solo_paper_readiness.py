@@ -15,6 +15,27 @@ from far.experiments.diagnostic_release import verify_solo_release
 from far.experiments.evaluate_fever_binary import verify_evaluation as verify_fever_binary
 from far.experiments.evidence_family_dev import verify_release as verify_family_dev_release
 from far.experiments.revision_trace_audit import verify_reports as verify_revision_trace_reports
+from far.experiments.selective_acceptance import (
+    ANALYSIS_PROFILE as SELECTIVE_ACCEPTANCE_PROFILE,
+)
+from far.experiments.selective_acceptance import (
+    SCHEMA_VERSION as SELECTIVE_ACCEPTANCE_SCHEMA_VERSION,
+)
+from far.experiments.selective_acceptance import (
+    _calibration_gate as selective_acceptance_calibration_gate,
+)
+from far.experiments.selective_acceptance import (
+    _choose_policy as choose_selective_acceptance_policy,
+)
+from far.experiments.selective_acceptance import (
+    _enrichment_bootstrap as selective_acceptance_bootstrap,
+)
+from far.experiments.selective_acceptance import (
+    _policy_summary as selective_acceptance_policy_summary,
+)
+from far.experiments.selective_acceptance import (
+    render_markdown as render_selective_acceptance_markdown,
+)
 from far.experiments.selective_revision_audit import (
     verify_reports as verify_selective_revision_reports,
 )
@@ -24,7 +45,7 @@ from far.experiments.type_mappability_machine import (
 )
 from far.paths import repository_root
 
-SCHEMA_VERSION = "far-solo-paper-readiness-v5"
+SCHEMA_VERSION = "far-solo-paper-readiness-v6"
 REQUIRED_PAPER_FRAGMENTS = (
     "machine-audited synthetic benchmark",
     "single-model development diagnostic",
@@ -62,6 +83,12 @@ REQUIRED_PAPER_FRAGMENTS = (
     "5/31 target-complete",
     "25/31 carry collateral edits",
     "does not evaluate a deployable selector",
+    "preregistered reference-free post-generation acceptance study",
+    "Calibration selected 15 of 60",
+    "Evaluation accepted 18 of 60",
+    "delta enrichment of +0.235",
+    "95\\% category-stratified bootstrap interval of [+0.103,+0.386]",
+    "does not save inference",
     "both obtain 0.72 accuracy",
     "post-hoc label-audit sensitivity",
     "machine-confirmed subset ($n=35$)",
@@ -427,6 +454,235 @@ def _selective_revision_evidence(root: Path) -> dict[str, Any]:
     }
 
 
+def _tracked_selective_acceptance_evidence(root: Path) -> dict[str, Any]:
+    """Recompute P14 row summaries from tracked reports without requiring raw runs."""
+    json_path = root / "reports/selective_acceptance.json"
+    markdown_path = root / "reports/selective_acceptance.md"
+    errors: list[str] = []
+    checks: dict[str, bool] = {}
+    result: dict[str, Any] = {}
+    selected: dict[str, Any] | None = None
+    evaluation_summary: dict[str, Any] = {}
+    bootstrap: dict[str, Any] = {}
+    try:
+        result = json.loads(json_path.read_text(encoding="utf-8"))
+        markdown = markdown_path.read_text(encoding="utf-8")
+        calibration = result["calibration"]
+        evaluation = result["evaluation"]
+        calibration_rows = calibration["rows"]
+        evaluation_rows = evaluation["rows"]
+        selected, candidate_count = choose_selective_acceptance_policy(calibration_rows)
+        if selected is None:
+            raise ValueError("tracked P14 report has no eligible calibration policy")
+        calibration_checks = selective_acceptance_calibration_gate(selected)
+        evaluation_summary = selective_acceptance_policy_summary(
+            evaluation_rows, selected["policy"]
+        )
+        bootstrap = selective_acceptance_bootstrap(evaluation_rows, selected["policy"])
+        evaluation_checks = {
+            "coverage_registered": 0.25 <= float(evaluation_summary["coverage"]) <= 0.75,
+            "delta_enrichment_at_least_0_03": (
+                float(evaluation_summary["selected_delta_enrichment"]) >= 0.03
+            ),
+            "enrichment_interval_lower_positive": float(bootstrap["lower"]) > 0.0,
+            "collateral_not_worse": (
+                float(evaluation_summary["selected_collateral_rate"])
+                <= float(evaluation_summary["always_typed_collateral_rate"])
+            ),
+            "target_complete_not_worse": (
+                float(evaluation_summary["selected_target_complete_rate"])
+                >= float(evaluation_summary["always_typed_target_complete_rate"])
+            ),
+        }
+        protocol = result["protocol"]
+        run = result["run"]
+        boundaries = result["boundaries"]
+        calibration_ids = {str(row["sample_id"]) for row in calibration_rows}
+        evaluation_ids = {str(row["sample_id"]) for row in evaluation_rows}
+        expected_categories = {
+            "causal_overclaim",
+            "entity_confusion",
+            "multi_source_conflict",
+            "numerical_conflict",
+            "temporal_shift",
+        }
+        checks = {
+            "tracked_report_shape": (
+                result.get("schema_version") == SELECTIVE_ACCEPTANCE_SCHEMA_VERSION
+                and result.get("analysis_profile") == SELECTIVE_ACCEPTANCE_PROFILE
+                and result.get("valid") is True
+                and result.get("registered_outcome") == "evaluation_success"
+                and result.get("candidate_grid")
+                == {
+                    "candidate_count": 100,
+                    "confidence_min": [0.0, 0.75, 0.8, 0.85, 0.9],
+                    "coverage_bounds": [0.25, 0.75],
+                    "max_edit_fraction": [0.2, 0.35, 0.5, 1.0, 2.0],
+                    "min_trace_consistency_margin": [-1.0, 0.0, 0.1, 0.25],
+                    "minimum_enrichment": 0.03,
+                }
+                and set(result)
+                == {
+                    "analysis_profile",
+                    "boundaries",
+                    "calibration",
+                    "candidate_grid",
+                    "evaluation",
+                    "packet_manifest_sha256",
+                    "protocol",
+                    "registered_outcome",
+                    "run",
+                    "schema_version",
+                    "valid",
+                }
+            ),
+            "fresh_group_disjoint_120_rows": (
+                calibration.get("samples") == 60
+                and len(calibration_rows) == 60
+                and len(calibration_ids) == 60
+                and len(evaluation_rows) == 60
+                and len(evaluation_ids) == 60
+                and calibration_ids.isdisjoint(evaluation_ids)
+                and {str(row["category"]) for row in calibration_rows + evaluation_rows}
+                == expected_categories
+                and all(
+                    sum(str(row["category"]) == category for row in rows) == 12
+                    for rows in (calibration_rows, evaluation_rows)
+                    for category in expected_categories
+                )
+            ),
+            "calibration_policy_recomputed": (
+                candidate_count == 100
+                and _stable_floats(selected) == _stable_floats(calibration.get("selected_policy"))
+                and calibration_checks == calibration.get("gate_checks")
+                and calibration.get("gate_passed") is True
+                and all(calibration_checks.values())
+            ),
+            "evaluation_policy_recomputed": (
+                evaluation.get("scored") is True
+                and _stable_floats(evaluation_summary) == _stable_floats(evaluation.get("summary"))
+                and _stable_floats(bootstrap)
+                == _stable_floats(evaluation.get("enrichment_bootstrap"))
+                and evaluation_checks == evaluation.get("success_checks")
+                and evaluation.get("success") is True
+                and all(evaluation_checks.values())
+            ),
+            "registered_remote_protocol": (
+                protocol.get("schema_version") == "far-selective-acceptance-protocol-audit-v2"
+                and protocol.get("valid") is True
+                and protocol.get("errors") == []
+                and protocol.get("preregistration_tag") == "prereg-selective-acceptance-v2"
+                and protocol.get("preregistration_commit")
+                == "04b60a75960d24f911bef4889e2639e238457ccd"
+                and protocol.get("retired_preregistration_tag") == "prereg-selective-acceptance-v1"
+                and protocol.get("retired_v1_complete_checkpoint_rows") == 10
+                and protocol.get("retired_v1_rows_reused") == 0
+                and protocol.get("fresh_restart_after_retired_v1") is True
+                and protocol.get("fresh_cache_namespace")
+                == "far-qwen3.5-9b-selective-acceptance-v2"
+                and protocol.get("model") == "qwen3.5:9b"
+                and protocol.get("model_digest")
+                == "6488c96fa5faab64bb65cbd30d4289e20e6130ef535a93ef9a49f42eda893ea7"
+                and protocol.get("keep_alive") == "24h"
+                and protocol.get("unload_after_sample") is False
+                and protocol.get("performance_amendment") is True
+                and protocol.get("model_execution_location") == "windows-gpu"
+                and protocol.get("local_model_execution") is False
+                and protocol.get("test_accessed") is False
+                and protocol.get("human_review") is False
+                and protocol.get("publication_gold") is False
+                and protocol.get("semantic_correctness") is False
+                and protocol.get("dependency_group_disjoint") is True
+                and protocol.get("reference_free_operational_input") is True
+                and protocol.get("post_generation_policy") is True
+            ),
+            "bound_complete_run_identity": (
+                run.get("source_revision")
+                == {
+                    "git_commit": "04b60a75960d24f911bef4889e2639e238457ccd",
+                    "git_dirty": False,
+                }
+                and run.get("checkpoint_sha256")
+                == "7a11d24a737efe481aab669fa934465d405182b873ff4a92526a571287a05d28"
+                and run.get("predictions_sha256") == run.get("checkpoint_sha256")
+                and run.get("manifest_sha256")
+                == "3dec06783d34c807cb68561201e467e75bfbad34369a30915d9e8e6a9f301147"
+                and run.get("identity_sha256")
+                == "2fea46cddac7b5d4768a1c0d8ac9bfdd8583b7ca7b61fdc06b971002f5ed5dc5"
+                and run.get("implementation_sha256")
+                == "2d6094bf0ffc1c2a1b71a3843d5ca0f246e7d622b147dc1e59cdf6009d0a86b2"
+                and result.get("packet_manifest_sha256")
+                == "a2546f37978aa446f23bada5230b7e9ddddb95959602f5723b7c411bbee88f26"
+                and isinstance(run.get("checks"), dict)
+                and set(run["checks"])
+                == {
+                    "checkpoint_matches_predictions",
+                    "clean_preregistered_source",
+                    "complete_120",
+                    "config_hash_bound",
+                    "corpus_hash_bound",
+                    "method_far",
+                    "model_digest_bound",
+                    "no_limit",
+                    "packet_hash_bound",
+                    "packet_valid",
+                    "prediction_coverage",
+                    "prediction_hash_bound",
+                    "train_only",
+                    "v2_cache_isolated",
+                    "v2_model_lifecycle_bound",
+                }
+                and all(run["checks"].values())
+            ),
+            "claim_boundaries_preserved": boundaries
+            == {
+                "causal_policy_effect": False,
+                "dependency_group_disjoint": True,
+                "deterministic_preserve_fallback": True,
+                "exact_internal_llm_calls_claimed": False,
+                "external_validation": False,
+                "fresh_v2_run_required": True,
+                "human_iaa": False,
+                "human_review": False,
+                "local_model_execution": False,
+                "model_execution_location": "windows-gpu",
+                "new_inference": True,
+                "performance_amendment": True,
+                "pipeline_sample_executions": 120,
+                "post_generation_acceptance": True,
+                "pre_execution_selector": False,
+                "preregistered": True,
+                "publication_gold": False,
+                "reference_free_policy_features": True,
+                "retired_v1_rows_reused": 0,
+                "same_corpus_and_construction_process": True,
+                "semantic_correctness": False,
+                "test_accessed": False,
+            },
+            "reader_report_matches_json": markdown == render_selective_acceptance_markdown(result),
+        }
+        errors.extend(name for name, passed in checks.items() if not passed)
+    except (OSError, KeyError, TypeError, ValueError, json.JSONDecodeError) as exc:
+        errors.append(str(exc))
+    return {
+        "schema_version": "far-selective-acceptance-tracked-report-audit-v1",
+        "valid": not errors,
+        "errors": errors,
+        "checks": checks,
+        "registered_outcome": result.get("registered_outcome"),
+        "calibration_selected_policy": selected,
+        "evaluation_summary": evaluation_summary,
+        "enrichment_bootstrap": bootstrap,
+        "protocol": result.get("protocol"),
+        "run": result.get("run"),
+        "boundaries": result.get("boundaries"),
+        "report_rows_recomputed": True,
+        "raw_outputs_recomputed_by_this_gate": False,
+        "json_sha256": sha256_file(json_path) if json_path.is_file() else None,
+        "markdown_sha256": sha256_file(markdown_path) if markdown_path.is_file() else None,
+    }
+
+
 def _label_sensitivity(root: Path) -> dict[str, Any]:
     consensus_rows = read_jsonl(
         root / "diagnostics/solo_v1/machine_annotation/machine_consensus_rows.jsonl"
@@ -581,6 +837,7 @@ def audit(root: Path, *, paper_path: Path | None = None) -> dict[str, Any]:
     family_delta = _family_revision_delta_evidence(root)
     revision_trace = _revision_trace_evidence(root)
     selective_revision = _selective_revision_evidence(root)
+    selective_acceptance = _tracked_selective_acceptance_evidence(root)
     claim_scope = audit_claim_scope(root, paper_text)
     gates = {
         "tracked_solo_evidence": bool(solo.get("valid")),
@@ -592,6 +849,7 @@ def audit(root: Path, *, paper_path: Path | None = None) -> dict[str, Any]:
         "verified_post_hoc_family_revision_delta": bool(family_delta.get("valid")),
         "verified_post_hoc_revision_trace_fidelity": bool(revision_trace.get("valid")),
         "verified_post_hoc_selective_revision_feasibility": bool(selective_revision.get("valid")),
+        "verified_preregistered_selective_acceptance": bool(selective_acceptance.get("valid")),
     }
     ready = all(gates.values())
     return {
@@ -610,6 +868,7 @@ def audit(root: Path, *, paper_path: Path | None = None) -> dict[str, Any]:
             "family_revision_delta_sensitivity": family_delta,
             "revision_trace_fidelity": revision_trace,
             "selective_revision_feasibility": selective_revision,
+            "selective_acceptance": selective_acceptance,
             "paper_main_sha256": sha256_file(paper),
             "paper_appendix_sha256": sha256_file(root / "paper/appendix.tex"),
             "paper_supplement_sha256": sha256_file(root / "paper/supplement.tex"),
@@ -620,7 +879,10 @@ def audit(root: Path, *, paper_path: Path | None = None) -> dict[str, Any]:
         "allowed_claim": (
             "Across eight RAMDocs development methods, errors concentrate after retrieved "
             "evidence and answer transformation; FAR shows a narrower machine-audited typed-"
-            "control signal whose transport and ontology stability are explicitly bounded."
+            "control signal whose transport and ontology stability are explicitly bounded. "
+            "A preregistered reference-free post-generation policy also enriched typed "
+            "revision-delta on fresh machine-seeded train evidence under explicit "
+            "non-semantic and non-deployment boundaries."
         ),
         "required_limitations": [
             "labels are not human-validated gold",
@@ -633,6 +895,10 @@ def audit(root: Path, *, paper_path: Path | None = None) -> dict[str, Any]:
             "revision traces frequently miss the construction target or add collateral edits",
             "selective revision feasibility is post-hoc and does not evaluate a "
             "deployable selector",
+            "P14 selective acceptance is post-generation, uses construction-derived lexical "
+            "outcomes, and does not save inference",
+            "P14 calibration and evaluation share one machine-seeded train corpus and are "
+            "neither external nor test evidence",
             "raw baseline revision delta exceeds FAR despite zero typed action-conditioned delta",
             "FEVER binary transfer shows no paired accuracy gain",
             "machine-disposition sensitivity is post-hoc and not independent label validation",
@@ -651,6 +917,9 @@ def audit(root: Path, *, paper_path: Path | None = None) -> dict[str, Any]:
             "H3 equivalence or H4 confirmation",
             "P6-M as human review, human adjudication, or human IAA",
             "population mappability estimated from the 15 machine-consensus rows",
+            "P14 as semantic correctness, deployment safety, inference savings, or causal "
+            "policy effect",
+            "held-out or test validation from the P14 train-only split",
         ],
     }
 
@@ -671,6 +940,7 @@ def render_markdown(report: dict[str, Any]) -> str:
     family_delta_gate = str(gates["verified_post_hoc_family_revision_delta"]).lower()
     revision_trace_gate = str(gates["verified_post_hoc_revision_trace_fidelity"]).lower()
     selective_revision_gate = str(gates["verified_post_hoc_selective_revision_feasibility"]).lower()
+    selective_acceptance_gate = str(gates["verified_preregistered_selective_acceptance"]).lower()
     far_answer = observed["far_answer_correctness"]
     answer_delta = observed["typed_minus_untyped_answer_correctness"]
     f1_delta = observed["typed_minus_untyped_conflict_f1"]
@@ -692,6 +962,13 @@ def render_markdown(report: dict[str, Any]) -> str:
     selective_envelope = selective["reference_arm_choice_envelope"]
     selective_high = selective["confidence_threshold_0_90"]
     selective_high_complete = selective_high["selected_trace_target_complete_rate"]
+    acceptance = report["evidence"]["selective_acceptance"]
+    acceptance_calibration = acceptance["calibration_selected_policy"]
+    acceptance_evaluation = acceptance["evaluation_summary"]
+    acceptance_bootstrap = acceptance["enrichment_bootstrap"]
+    acceptance_enrichment = acceptance_evaluation["selected_delta_enrichment"]
+    acceptance_lower = acceptance_bootstrap["lower"]
+    acceptance_upper = acceptance_bootstrap["upper"]
     return f"""# Single-Author Machine-Audited Paper Readiness
 
 This report audits the explicitly relaxed paper profile. It does not certify
@@ -711,6 +988,7 @@ multi-model generality.
 | Verified post-hoc family revision-delta sensitivity | `{family_delta_gate}` |
 | Verified post-hoc revision-trace fidelity audit | `{revision_trace_gate}` |
 | Verified post-hoc selective-revision feasibility audit | `{selective_revision_gate}` |
+| Verified preregistered selective-acceptance study | `{selective_acceptance_gate}` |
 
 ## Narrow supported claim
 
@@ -731,6 +1009,10 @@ multi-model generality.
 - Reference-dependent delta-F1 arm envelope: `{selective_envelope["mean_per_item_max"]:.4f}`
 - Envelope gain over always typed: `{selective_envelope["gain_over_always_typed"]:+.4f}`
 - Confidence >=0.90 selected trace-complete rate: `{selective_high_complete:.4f}`
+- P14 calibration coverage: `{acceptance_calibration["coverage"]:.4f}`
+- P14 evaluation coverage: `{acceptance_evaluation["coverage"]:.4f}`
+- P14 evaluation selected delta enrichment: `{acceptance_enrichment:+.4f}`
+- P14 enrichment 95% interval: `[{acceptance_lower:+.4f}, {acceptance_upper:+.4f}]`
 - Machine-confirmed answer delta (`n=35`): `{confirmed["candidate_minus_baseline"]:+.3f}`
 - Machine-disputed answer delta (`n=25`): `{disputed["candidate_minus_baseline"]:+.3f}`
 

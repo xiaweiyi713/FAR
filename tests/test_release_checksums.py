@@ -162,7 +162,7 @@ def test_solo_paper_release_profile_requires_active_tmlr_artifacts(tmp_path: Pat
     )
 
     assert audit.valid is True
-    assert audit.artifact_count == 9
+    assert audit.artifact_count == 11
     assert RELEASE_PROFILES["solo-paper"] == SOLO_PAPER_RELEASE_ARTIFACT_ROLES
     assert "submission_evidence_snapshot" not in SOLO_PAPER_RELEASE_ARTIFACT_ROLES
     assert "aaai_reproducibility_checklist_pdf" not in SOLO_PAPER_RELEASE_ARTIFACT_ROLES
@@ -257,6 +257,8 @@ def test_solo_paper_release_check_fingerprints_active_tmlr_artifacts() -> None:
     for role in (
         "benchmark_validation_report",
         "secret_scan_report",
+        "selective_acceptance_json",
+        "selective_acceptance_markdown",
         "solo_paper_readiness_json",
         "solo_paper_readiness_markdown",
         "tmlr_paper_pdf",
@@ -289,10 +291,11 @@ def test_completed_roadmap_does_not_require_unavailable_human_review() -> None:
     assert "immutable diagnostic and paper releases" in next_step
     assert "independent verifiers" in next_step
     assert "P14" in next_step
-    assert "v1 is retired unscored" in next_step
-    assert "v2" in next_step
+    assert "v1 remains retired unscored" in next_step
+    assert "exact-tag v2 completed" in next_step
     assert "isolated cache" in next_step
-    assert "idle windows-gpu" in next_step
+    assert "zero v1 reuse" in next_step
+    assert "no required GPU experiment remains" in next_step
     assert "human author review" not in next_step
 
 
@@ -400,6 +403,8 @@ def test_source_archive_includes_reader_facing_reports(tmp_path: Path) -> None:
         "reports/revision_trace_fidelity.md",
         "reports/selective_revision_feasibility.json",
         "reports/selective_revision_feasibility.md",
+        "reports/selective_acceptance.json",
+        "reports/selective_acceptance.md",
         "reports/single_author_diagnostic_report.md",
         "reports/solo_human_review_priority.csv",
         "reports/solo_paper_readiness.json",

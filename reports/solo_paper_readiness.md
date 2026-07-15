@@ -17,10 +17,11 @@ multi-model generality.
 | Verified post-hoc family revision-delta sensitivity | `true` |
 | Verified post-hoc revision-trace fidelity audit | `true` |
 | Verified post-hoc selective-revision feasibility audit | `true` |
+| Verified preregistered selective-acceptance study | `true` |
 
 ## Narrow supported claim
 
-Across eight RAMDocs development methods, errors concentrate after retrieved evidence and answer transformation; FAR shows a narrower machine-audited typed-control signal whose transport and ontology stability are explicitly bounded.
+Across eight RAMDocs development methods, errors concentrate after retrieved evidence and answer transformation; FAR shows a narrower machine-audited typed-control signal whose transport and ontology stability are explicitly bounded. A preregistered reference-free post-generation policy also enriched typed revision-delta on fresh machine-seeded train evidence under explicit non-semantic and non-deployment boundaries.
 
 - FAR answer correctness: `0.797`
 - Typed minus untyped answer correctness: `+0.078`
@@ -37,6 +38,10 @@ Across eight RAMDocs development methods, errors concentrate after retrieved evi
 - Reference-dependent delta-F1 arm envelope: `0.1618`
 - Envelope gain over always typed: `+0.0164`
 - Confidence >=0.90 selected trace-complete rate: `0.1613`
+- P14 calibration coverage: `0.2500`
+- P14 evaluation coverage: `0.3000`
+- P14 evaluation selected delta enrichment: `+0.2351`
+- P14 enrichment 95% interval: `[+0.1028, +0.3856]`
 - Machine-confirmed answer delta (`n=35`): `+0.101`
 - Machine-disputed answer delta (`n=25`): `+0.047`
 
@@ -50,6 +55,8 @@ Across eight RAMDocs development methods, errors concentrate after retrieved evi
 - revision-delta metrics are post-hoc lexical diagnostics, not semantic correctness
 - revision traces frequently miss the construction target or add collateral edits
 - selective revision feasibility is post-hoc and does not evaluate a deployable selector
+- P14 selective acceptance is post-generation, uses construction-derived lexical outcomes, and does not save inference
+- P14 calibration and evaluation share one machine-seeded train corpus and are neither external nor test evidence
 - raw baseline revision delta exceeds FAR despite zero typed action-conditioned delta
 - FEVER binary transfer shows no paired accuracy gain
 - machine-disposition sensitivity is post-hoc and not independent label validation
@@ -69,3 +76,5 @@ Across eight RAMDocs development methods, errors concentrate after retrieved evi
 - H3 equivalence or H4 confirmation
 - P6-M as human review, human adjudication, or human IAA
 - population mappability estimated from the 15 machine-consensus rows
+- P14 as semantic correctness, deployment safety, inference savings, or causal policy effect
+- held-out or test validation from the P14 train-only split

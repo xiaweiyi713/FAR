@@ -3591,3 +3591,41 @@ evidence bundle verified successfully, releasing the GPU.
   still rejecting every registered FAR/model job.
 - v2 remains unstarted until its exact clean tag is pushed and `windows-gpu` is
   again idle. The benchmark test split and all human claims remain prohibited.
+
+## 2026-07-15 — P14 v2 completion and registered paper integration
+
+- Started v2 only after read-only GPU/process/service checks proved
+  `windows-gpu` strictly idle and local/remote `main` matched the peeled
+  `prereg-selective-acceptance-v2` commit
+  `04b60a75960d24f911bef4889e2639e238457ccd`. The fresh isolated run completed
+  120/120 rows and both dedicated services exited successfully.
+- Preserved the retired v1 directory unchanged at 10 rows. Its checkpoint hash
+  remains `f968b98b52aece126d5adfc7b6771e920cf508a896a22766a82ee9613713e123`;
+  v2 reused zero rows and no v1 cache. No model ran or was downloaded locally,
+  and the benchmark test split was not accessed.
+- Synchronized only packet/run result artifacts. The v2 checkpoint and
+  predictions are byte-identical at
+  `7a11d24a737efe481aab669fa934465d405182b873ff4a92526a571287a05d28`;
+  the run manifest is
+  `3dec06783d34c807cb68561201e467e75bfbad34369a30915d9e8e6a9f301147`.
+  Packet verification, one deterministic finalize, and an independent full
+  raw-to-report verifier all returned valid with no errors.
+- The registered outcome is `evaluation_success`. Calibration selected 15/60;
+  evaluation accepted 18/60. Selected revision-delta F1 is `0.4547` versus
+  always typed `0.2196`, enrichment is `+0.2351`, and the category-stratified
+  95% bootstrap interval is `[+0.1028,+0.3856]`. Selected collateral falls from
+  `0.8167` to `0.7222`, while target-complete rises from `0.3000` to `0.5556`.
+- Added a clean-clone tracked-report audit that recomputes the selected policy
+  and all row summaries without requiring ignored GPU outputs. Paper readiness
+  advances to v6 and the portable bundle to v3/eleven roles, adding the P14
+  JSON/Markdown reports while leaving immutable `paper-v1` and `paper-v2`
+  untouched.
+- Integrated the positive but bounded result into the TMLR text. The policy is
+  reference-free only at decision time, acts after generation, shares one
+  machine-seeded train corpus across partitions, and uses construction-derived
+  lexical outcomes. It does not save inference or establish semantic repair,
+  deployment safety, external/test validation, human agreement, or causal
+  policy effect.
+- Rebuilt the active 16-page anonymous TMLR PDF. The log contains no overfull
+  box or unresolved-reference failure; all pages were rendered and visually
+  inspected for clipping, overlap, table legibility, headers, and pagination.

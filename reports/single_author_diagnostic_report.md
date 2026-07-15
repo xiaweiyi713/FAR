@@ -1,12 +1,12 @@
 # FAR Single-Author Machine-Audited Diagnostic Report
 
-Generated from the frozen prediction evidence; metric and trace audits refreshed on 2026-07-14.
+Generated from the frozen diagnostic evidence plus the registered P14 train study; refreshed on 2026-07-15.
 
 ## Technical summary
 
 FAR is complete enough to support a single-author, machine-audited synthetic-benchmark diagnostic. The automated readiness gate passes all four diagnostic requirements: the 300-sample candidate benchmark is structurally valid; the machine-consensus audit is complete; the 11-method local Qwen development suite is complete on the 60-sample dev split; and the local 58-sample test bundle is gold-free and structurally audited.
 
-The evidence supports a narrow diagnostic claim: typed conflict control is useful as a development-set mechanism signal. FAR reaches 0.797 whole-answer correctness and 0.983 counter-evidence recall on the local Qwen dev suite, above the six transparent baselines on those two metrics. Against the untyped FAR ablation, FAR improves answer correctness by 7.83 points and revision accuracy by 21.67 points. A post-hoc metric audit adds raw revision-delta F1 0.145 and action-conditioned typed delta F1 0.096. A second frozen trace audit finds mean trace delta F1 0.082: only 15/60 traces completely cover the construction target, 19/60 are off-target, and 12/60 make no lexical target edit. P13 then shows that preserving the erroneous initial answer scores 0.978 whole-answer F1 with zero target edits, a reference-dependent three-arm envelope improves delta F1 over always typed by only 0.016, and confidence at least 0.90 does not select higher-fidelity traces. Typed exceeds untyped on trace F1, but broad baselines obtain higher final raw delta F1 and the refutation-query ablation also exceeds full FAR. The revision result is therefore modest and mixed rather than evidence that every FAR submodule has a positive marginal effect, that revision is generally reliable, or that a deployable selector has been evaluated.
+The evidence supports a narrow diagnostic claim: typed conflict control is useful as a development-set mechanism signal. FAR reaches 0.797 whole-answer correctness and 0.983 counter-evidence recall on the local Qwen dev suite, above the six transparent baselines on those two metrics. Against the untyped FAR ablation, FAR improves answer correctness by 7.83 points and revision accuracy by 21.67 points. A post-hoc metric audit adds raw revision-delta F1 0.145 and action-conditioned typed delta F1 0.096. A second frozen trace audit finds mean trace delta F1 0.082: only 15/60 traces completely cover the construction target, 19/60 are off-target, and 12/60 make no lexical target edit. P13 then shows that preserving the erroneous initial answer scores 0.978 whole-answer F1 with zero target edits, a reference-dependent three-arm envelope improves delta F1 over always typed by only 0.016, and confidence at least 0.90 does not select higher-fidelity traces. P14 prospectively tests a reference-free post-generation gate on 120 fresh train rows: calibration selects 15/60, evaluation accepts 18/60, and selected revision-delta F1 is 0.455 versus 0.220 for always typed, an enrichment of +0.235 with 95% interval [+0.103,+0.386]. Typed still does not dominate the broad baseline delta ranking, and P14 acts after generation with construction-derived outcome scoring. The combined revision evidence is therefore mixed and bounded rather than proof that every FAR submodule helps, revision is generally reliable, inference is saved, or semantic/deployment safety has been established.
 
 This report does not complete the strict AAAI submission path. The benchmark remains construction-derived and machine-audited rather than independently human-adjudicated; the local test bundle is not externally held blind evaluation; and the six-way baseline ranking plus P11 delta audit come from the Qwen diagnostic. A separate three-family typed/untyped sensitivity exists, but it is post-hoc for delta and does not constitute a final external multi-model matrix. These boundaries are intentional and enforced by the release verifiers.
 
@@ -90,6 +90,7 @@ Included evidence:
 - 11 complete local Qwen dev runs: FAR, six baselines, and four ablations.
 - A gold-free local test-bundle technical audit.
 - A separate 100-pair FEVER binary transfer diagnostic.
+- A preregistered 120-row, dependency-group-disjoint P14 train-only selective-acceptance study.
 
 Excluded evidence:
 

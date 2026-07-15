@@ -26,7 +26,7 @@
 - 已闭合或已建立基线: WS1, WS2, WS3, WS4, WS5, WS6
 - 仍未完成: none
 - 总目标完成: `true`
-- 当前首要动作: no required roadmap work remains; maintain the immutable diagnostic and paper releases plus their independent verifiers; P14 v1 is retired unscored after a 10-row user-requested pause, while its result-blind v2 amendment requires a fresh reference-free, group-disjoint 120-row run with isolated cache and model keep-alive; v2 may start only on an idle windows-gpu at the exact preregistration tag, and a failed calibration gate terminates without evaluation scoring; external publication or submission remains an author-owned action
+- 当前首要动作: no required roadmap work remains; maintain the immutable diagnostic and paper releases plus their independent verifiers; P14 v1 remains retired unscored at 10 rows, while exact-tag v2 completed a fresh reference-free, group-disjoint 120-row run with isolated cache, zero v1 reuse, and registered evaluation_success; maintain the tracked P14 report/readiness v6 and prepare a new versioned portable evidence release without changing historical releases; no required GPU experiment remains, and external publication or submission remains an author-owned action
 
 ## 安全边界
 

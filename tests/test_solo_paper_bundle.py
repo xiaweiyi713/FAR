@@ -21,6 +21,8 @@ from far.experiments.solo_paper_bundle import (
     MANIFEST_PATH,
     READINESS_GATES,
     REQUIRED_LIMITATIONS,
+    SELECTIVE_ACCEPTANCE_BOUNDARIES,
+    SELECTIVE_ACCEPTANCE_CHECKS,
     SUPPORT_PATHS,
     TMLR_STYLE_COMMIT,
     pack_bundle,
@@ -79,8 +81,29 @@ def _release_tree(tmp_path: Path) -> tuple[Path, Path]:
 
     main_sha = "1" * 64
     appendix_sha = "2" * 64
+    repository = Path(__file__).resolve().parents[1]
+    p14_json = (repository / "reports/selective_acceptance.json").read_bytes()
+    p14_markdown = (repository / "reports/selective_acceptance.md").read_bytes()
+    p14_report = json.loads(p14_json)
+    p14_evidence = {
+        "schema_version": "far-selective-acceptance-tracked-report-audit-v1",
+        "valid": True,
+        "errors": [],
+        "checks": SELECTIVE_ACCEPTANCE_CHECKS,
+        "registered_outcome": "evaluation_success",
+        "calibration_selected_policy": p14_report["calibration"]["selected_policy"],
+        "evaluation_summary": p14_report["evaluation"]["summary"],
+        "enrichment_bootstrap": p14_report["evaluation"]["enrichment_bootstrap"],
+        "protocol": p14_report["protocol"],
+        "run": p14_report["run"],
+        "boundaries": SELECTIVE_ACCEPTANCE_BOUNDARIES,
+        "report_rows_recomputed": True,
+        "raw_outputs_recomputed_by_this_gate": False,
+        "json_sha256": hashlib.sha256(p14_json).hexdigest(),
+        "markdown_sha256": hashlib.sha256(p14_markdown).hexdigest(),
+    }
     readiness = {
-        "schema_version": "far-solo-paper-readiness-v5",
+        "schema_version": "far-solo-paper-readiness-v6",
         "ready": True,
         "strict_aaai_submission_ready": False,
         "study_profile": "single_author_machine_audited_paper",
@@ -324,6 +347,7 @@ def _release_tree(tmp_path: Path) -> tuple[Path, Path]:
                     "selected_trace_collateral_rate": 25 / 31,
                 },
             },
+            "selective_acceptance": p14_evidence,
             "fever_binary": {
                 "valid": True,
                 "publication_ready_main_result": False,
@@ -363,6 +387,14 @@ def _release_tree(tmp_path: Path) -> tuple[Path, Path]:
         ),
         ("secret_scan_report", _write(root / "build/release/secrets.json", b"[]\n")),
         (
+            "selective_acceptance_json",
+            _write(root / "build/release/selective_acceptance.json", p14_json),
+        ),
+        (
+            "selective_acceptance_markdown",
+            _write(root / "build/release/selective_acceptance.md", p14_markdown),
+        ),
+        (
             "solo_paper_readiness_json",
             _write(root / "build/release/readiness.json", json.dumps(readiness).encode()),
         ),
@@ -383,6 +415,10 @@ def _release_tree(tmp_path: Path) -> tuple[Path, Path]:
                     b"- raw baseline revision delta exceeds FAR despite zero typed "
                     b"action-conditioned delta\n"
                     b"- P6-M as human review, human adjudication, or human IAA\n"
+                    b"- P14 selective acceptance is post-generation, uses "
+                    b"construction-derived lexical outcomes, and does not save inference\n"
+                    b"- P14 calibration and evaluation share one machine-seeded train "
+                    b"corpus and are neither external nor test evidence\n"
                 ),
             ),
         ),
@@ -535,11 +571,11 @@ def test_solo_paper_bundle_is_deterministic_and_independently_verifiable(
     )
     assert embedded_verifier_bytes == first_verifier.read_bytes()
     assert audit["valid"] is True
-    assert audit["artifact_count"] == 9
+    assert audit["artifact_count"] == 11
     assert audit["boundary_flags"]["strict_submission_ready"] is False
     assert audit["boundary_flags"]["human_review"] is False
     assert standalone_audit["valid"] is True
-    assert standalone_audit["schema_version"] == "far-solo-paper-release-bundle-audit-v2"
+    assert standalone_audit["schema_version"] == "far-solo-paper-release-bundle-audit-v3"
     assert standalone_audit["standalone_execution"] is True
     assert standalone_audit["python_isolated"] is True
 
@@ -715,6 +751,70 @@ def test_solo_paper_bundle_rejects_claim_boundary_upgrade(tmp_path: Path) -> Non
 
     assert selector_audit["valid"] is False
     assert "embedded selective-revision evidence or boundary is unsafe" in selector_audit["errors"]
+
+    readiness["evidence"]["selective_revision_feasibility"]["boundaries"][
+        "deployable_selector_evaluated"
+    ] = False
+    readiness["evidence"]["selective_acceptance"]["boundaries"]["semantic_correctness"] = True
+    readiness_payload = (json.dumps(readiness, indent=2, sort_keys=True) + "\n").encode()
+    upgraded_p14 = root / "build/release/upgraded-p14.tar.gz"
+    _coordinated_artifact_rewrite(
+        original,
+        upgraded_p14,
+        "solo_paper_readiness_json",
+        readiness_payload,
+    )
+    p14_audit = verify_bundle(upgraded_p14)
+
+    assert p14_audit["valid"] is False
+    assert "embedded selective-acceptance audit or hash binding is unsafe" in p14_audit["errors"]
+
+
+def test_solo_paper_bundle_rejects_p14_result_drift_after_rehash(tmp_path: Path) -> None:
+    root, checksums = _release_tree(tmp_path)
+    original = root / "build/release/original.tar.gz"
+    pack_bundle(root, checksums, original)
+    with tarfile.open(original, "r:gz") as archive:
+        manifest_file = archive.extractfile(MANIFEST_PATH)
+        assert manifest_file is not None
+        manifest = json.loads(manifest_file.read())
+        p14_entry = next(
+            item for item in manifest["artifacts"] if item["role"] == "selective_acceptance_json"
+        )
+        p14_file = archive.extractfile(p14_entry["archive_path"])
+        assert p14_file is not None
+        p14_report = json.loads(p14_file.read())
+    p14_report["evaluation"]["rows"][0]["typed_revision_delta_f1"] = 1.0
+    p14_payload = (json.dumps(p14_report, indent=2, sort_keys=True) + "\n").encode()
+    rewritten = root / "build/release/p14-drift.tar.gz"
+    _coordinated_artifact_rewrite(
+        original,
+        rewritten,
+        "selective_acceptance_json",
+        p14_payload,
+    )
+
+    audit = verify_bundle(rewritten)
+
+    assert audit["valid"] is False
+    assert "embedded selective-acceptance audit or hash binding is unsafe" in audit["errors"]
+
+    for partition in ("calibration", "evaluation"):
+        for row in p14_report[partition]["rows"]:
+            row["features"]["changed_non_keep"] = False
+    empty_payload = (json.dumps(p14_report, indent=2, sort_keys=True) + "\n").encode()
+    empty_selection = root / "build/release/p14-empty-selection.tar.gz"
+    _coordinated_artifact_rewrite(
+        original,
+        empty_selection,
+        "selective_acceptance_json",
+        empty_payload,
+    )
+
+    empty_audit = verify_bundle(empty_selection)
+
+    assert empty_audit["valid"] is False
+    assert "selective-acceptance policy selects no report rows" in empty_audit["errors"]
 
 
 def test_solo_paper_bundle_rejects_invalid_wheel_after_coordinated_rehash(

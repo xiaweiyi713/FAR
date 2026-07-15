@@ -27,9 +27,10 @@ bash scripts/solo_paper_release_check.sh
 
 This gate reruns the public evidence checks, tests, benchmark validation,
 redacting secret scan, SBOM and package builds, then builds the TMLR PDF and
-fails on layout overflow or unresolved references. Its nine-artifact
+fails on layout overflow or unresolved references. Its eleven-artifact
 `solo-paper` checksum profile binds the wheel, sdist, SBOM, two audit reports,
-both tracked readiness reports, the active TMLR PDF, and `SOURCE.lock`. It does
+both tracked readiness reports, the P14 JSON/Markdown result, the active TMLR
+PDF, and `SOURCE.lock`. It does
 not read submission evidence or claim human review, adjudication, IAA, external
 blindness, or publication gold.
 
@@ -122,8 +123,10 @@ This validates the fingerprinted solo evidence and checks that the paper uses
 only the supported typed-versus-untyped mechanism claim. It also requires the
 post-hoc P11 revision-delta profile, the higher raw baseline/no-refutation
 deltas, the P12 frozen trace-fidelity report, the P13 selective-revision
-feasibility boundary, and the explicit warning that delta/trace F1 is lexical
-rather than semantic correctness. It fails if pending
+feasibility boundary, the P14 registered selective-acceptance report, and the
+explicit warning that delta/trace F1 is lexical rather than semantic
+correctness. The v6 gate recomputes P14 policy selection and row summaries from
+the tracked report without requiring ignored raw GPU outputs. It fails if pending
 cells return or if the refutation, boundary,
 typed-revision, FEVER, non-human, non-blind, or single-model limitations are
 removed. A passing result certifies
@@ -1061,25 +1064,44 @@ to the public dev distribution and the fixed Qwen runtime.
 
 P14 follows the negative P13 threshold audit with a preregistered,
 reference-free post-generation controller on new train rows. The incomplete
-v1 attempt was paused at 10/120 and permanently retired before output content
-or outcomes were inspected. Verify the original protocol, result-blind v2
-performance amendment, and guarded remote workflow with:
+v1 attempt was paused at 10/120 and permanently retired unscored. Exact-tag v2
+then restarted from zero and completed 120/120 on `windows-gpu`, reusing no v1
+rows. Verify the protocol and tracked result with:
 
 ```bash
 uv run falsirag diag selective-acceptance verify-protocol
+uv run falsirag release solo-paper-readiness
+```
+
+When the ignored synchronized raw v2 packet and run are present, recompute the
+report end to end with:
+
+```bash
+uv run falsirag diag selective-acceptance verify \
+  --packet-dir outputs/selective_acceptance_v2/input \
+  --run-dir outputs/selective_acceptance_v2/runs/far \
+  --output-json reports/selective_acceptance.json \
+  --output-markdown reports/selective_acceptance.md
+```
+
+The following guarded commands remain the remote lifecycle interface; all
+default to read-only/dry-run unless their documented authorization variable is
+set:
+
+```bash
 scripts/prepare_windows_selective_acceptance.sh
 scripts/start_windows_selective_acceptance.sh
 scripts/check_windows_selective_acceptance.sh
 scripts/pause_windows_selective_acceptance.sh
 ```
 
-Preparation and start scripts default to dry-run. Formal inference is permitted
-only on an idle `windows-gpu` at `prereg-selective-acceptance-v2`; the local Mac
-must not run or download a model. v2 starts from zero with a fresh output root
-and cache namespace, keeps the exact Qwen digest resident across samples, and
-cannot reuse the ten v1 rows. The packet contains 120 train inputs with
-construction references removed, and a failed registered calibration gate
-stops before evaluation scoring. Full commands, pause behavior, and recovery
+Formal inference was permitted only on an idle `windows-gpu` at
+`prereg-selective-acceptance-v2`; the local Mac did not run or download a model.
+The packet contains 120 train inputs with construction references removed.
+Calibration selected 15/60; evaluation accepted 18/60 with delta enrichment
+`+0.2351` and 95% interval `[+0.1028,+0.3856]`. This is post-generation,
+construction-scored train evidence, not inference savings, semantic correctness,
+external/test validation, or causal policy utility. Full commands and recovery
 rules are in [P14_EXECUTION.md](P14_EXECUTION.md).
 
 ## Paper

@@ -34,9 +34,9 @@ This directory contains durable, versioned reports derived from tracked project 
   [machine-readable JSON](solo_paper_readiness.json): the explicitly relaxed
   paper gate. It permits only the narrow typed-control mechanism claim and
   requires disclosure of negative ablations and all non-human/non-blind limits.
-  The v5 gate additionally binds the registered P5 verdicts, independently
-  recomputes the P6-M negative stability audit, and verifies the P11--P13
-  lexical edit, trace-fidelity, and selective-revision feasibility boundaries.
+  The v6 gate additionally binds the registered P5 verdicts, independently
+  recomputes the P6-M negative stability audit, verifies the P11--P13 lexical
+  edit and selection boundaries, and recomputes the tracked P14 row summaries.
 - [P12 frozen revision-trace fidelity audit](revision_trace_fidelity.md) and
   [machine-readable JSON](revision_trace_fidelity.json): row-level lexical
   target alignment over frozen Qwen and WS2 traces. It is post-hoc and not
@@ -46,13 +46,14 @@ This directory contains durable, versioned reports derived from tracked project 
   conflict, a reference-dependent arm-choice envelope, and confidence-threshold
   replay over frozen Qwen outputs. It explicitly does not evaluate a deployable
   selector or causal policy effect.
-- P14 has a frozen protocol and result-blind performance amendment but no result
-  report. Its incomplete 10-row v1 attempt was paused before content/outcome
-  inspection and is permanently ineligible. The 60/60 group-disjoint split,
-  label-free packet, policy grid, calibration stop, fresh v2 cache/output, and
-  keep-alive lifecycle are defined by the original protocol plus
-  `docs/AMENDMENT_SELECTIVE_ACCEPTANCE_PERFORMANCE_2026-07-14.md`. A report may
-  be added only after the exact tagged 120-row v2 run and recomputation.
+- [P14 preregistered selective-acceptance result](selective_acceptance.md) and
+  [machine-readable JSON](selective_acceptance.json): the fresh exact-tag v2 run
+  completed 120/120 with zero v1 reuse. Calibration selected 15/60 and evaluation
+  accepted 18/60; selected delta enrichment is `+0.2351` with a positive 95%
+  bootstrap lower bound. The tracked gate recomputes row summaries and preserves
+  post-generation, construction-scored train-only, non-semantic,
+  no-inference-saving, non-human, and non-test boundaries. The retired v1
+  10-row checkpoint remains unscored.
 - The project-status snapshot also exposes the preregistered 2+4 profile:
   RAMDocs upstream-label validation, cross-family LLM jury, author-blind
   adjudication, multi-model jury-gold rescoring, and commit-bound one-shot tests.

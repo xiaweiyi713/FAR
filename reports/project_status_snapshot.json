@@ -114,7 +114,7 @@
           "meta": "4829dfae7697f1784830eeb09d493cd2a7d45858d2a0ddd706a1447907a15c77",
           "mistral": "156bcdd7a7bbf1a33b17982491731a6b08abfef1b11f9a29424c43758ead77b3"
         },
-        "paper_sha256": "e20cac907e6621602869fecf6fd038efc9836361916115564d9129e40e93ef2f",
+        "paper_sha256": "25e15255f9f5f3ff81e6cbe366d27bd2cf458505a6059e12936785827d9de2d2",
         "ramdocs_manifest_sha256": "5cd9ff842789afd69fa8e64ff89c0f85eca2f8bc934aa4c694aeec92388074df",
         "ramdocs_round2_manifest_sha256": "33978e7a198b5eaaf9d401ec36a774cf97ce3c760535f78fe0550f3fb24e00da"
       },
@@ -156,11 +156,11 @@
     },
     "reader_reports": {
       "files": {
-        "reports/README.md": "d7ae666112bc792088bcde2a8131b638fcd4cd0ce71133d569db2fea5ffd6350",
-        "reports/single_author_diagnostic_report.md": "cfaa84a14a82b2cba5b767940bb9f5bafd186713cc2575a58302424d5f6f7086",
+        "reports/README.md": "bbd356fdfd36b8bd8fdfd2343c91cafc52909fb11df8991e05a1acbfefc2f198",
+        "reports/single_author_diagnostic_report.md": "86336f9dccbd012fa03db280e579f902d900b5321dc8e677e1d11b4f0e598d5f",
         "reports/solo_human_review_priority.csv": "bb036eb51e27d4b654978dd2bd0a2330422c58bf7bc2e6769fced165242a5dee",
-        "reports/solo_paper_readiness.json": "758a0ab41e6fea82b68b85330622ce37139da2c957db927ee4c061c2a3992f0a",
-        "reports/solo_paper_readiness.md": "01be8bb3ed3f55db65b71c95edb5455d787a8a8e3384c8f084b19767fa3b449a"
+        "reports/solo_paper_readiness.json": "0c0fb6a19296cd3a34cef91f286795c15eca43a5331315214812b623bc4bc5b8",
+        "reports/solo_paper_readiness.md": "d45a0d85b0665425cf53d0b0deae16e9685b16b676c263841533112ea0be8831"
       },
       "missing": [],
       "valid": true
@@ -177,7 +177,7 @@
       "valid": true
     },
     "solo_paper_readiness": {
-      "allowed_claim": "Across eight RAMDocs development methods, errors concentrate after retrieved evidence and answer transformation; FAR shows a narrower machine-audited typed-control signal whose transport and ontology stability are explicitly bounded.",
+      "allowed_claim": "Across eight RAMDocs development methods, errors concentrate after retrieved evidence and answer transformation; FAR shows a narrower machine-audited typed-control signal whose transport and ontology stability are explicitly bounded. A preregistered reference-free post-generation policy also enriched typed revision-delta on fresh machine-seeded train evidence under explicit non-semantic and non-deployment boundaries.",
       "claim_scope": {
         "checks": {
           "boundary_ablation_not_positive": true,
@@ -420,9 +420,9 @@
           "test_accessed": false,
           "valid": true
         },
-        "paper_appendix_sha256": "e12fb8b7852e691f721ecced387e11d8b0f8a4142cad34bbb1c419b8bdda25b5",
+        "paper_appendix_sha256": "b93b1c3163fea5b524b0fd76449e344d98bc3a9c34caabdbff5c015546b88d97",
         "paper_checklist_sha256": "e3b92d8cc9e056eb1ebba33e91c6b338a6bbbb29e34e19abe7f3eb94c42b967a",
-        "paper_main_sha256": "e20cac907e6621602869fecf6fd038efc9836361916115564d9129e40e93ef2f",
+        "paper_main_sha256": "25e15255f9f5f3ff81e6cbe366d27bd2cf458505a6059e12936785827d9de2d2",
         "paper_supplement_sha256": "17a325914f811c66aa97ce5c996ca8365fb793b2b45fc284baa98b0d8b57aefb",
         "revision_trace_fidelity": {
           "analysis_profile": "post-hoc-frozen-revision-trace-fidelity-v1",
@@ -621,6 +621,193 @@
           "test_accessed": false,
           "valid": true
         },
+        "selective_acceptance": {
+          "boundaries": {
+            "causal_policy_effect": false,
+            "dependency_group_disjoint": true,
+            "deterministic_preserve_fallback": true,
+            "exact_internal_llm_calls_claimed": false,
+            "external_validation": false,
+            "fresh_v2_run_required": true,
+            "human_iaa": false,
+            "human_review": false,
+            "local_model_execution": false,
+            "model_execution_location": "windows-gpu",
+            "new_inference": true,
+            "performance_amendment": true,
+            "pipeline_sample_executions": 120,
+            "post_generation_acceptance": true,
+            "pre_execution_selector": false,
+            "preregistered": true,
+            "publication_gold": false,
+            "reference_free_policy_features": true,
+            "retired_v1_rows_reused": 0,
+            "same_corpus_and_construction_process": true,
+            "semantic_correctness": false,
+            "test_accessed": false
+          },
+          "calibration_selected_policy": {
+            "always_typed_collateral_rate": 0.8333333333333334,
+            "always_typed_mean_revision_delta_f1": 0.1525559534669538,
+            "always_typed_target_complete_rate": 0.18333333333333332,
+            "coverage": 0.25,
+            "policy": {
+              "confidence_min": 0.0,
+              "max_edit_fraction": 0.5,
+              "min_trace_consistency_margin": 0.1
+            },
+            "policy_global_answer_soft_f1": 0.9259912566224685,
+            "policy_global_revision_delta_f1": 0.06901785714285714,
+            "policy_id": "{\"confidence_min\":0.0,\"max_edit_fraction\":0.5,\"min_trace_consistency_margin\":0.1}",
+            "samples": 60,
+            "selected_collateral_rate": 0.8,
+            "selected_delta_enrichment": 0.12351547510447478,
+            "selected_mean_revision_delta_f1": 0.2760714285714286,
+            "selected_rows": 15,
+            "selected_sample_ids": [
+              "F0002",
+              "F0041",
+              "F0048",
+              "F0065",
+              "F0074",
+              "F0080",
+              "F0092",
+              "F0113",
+              "F0122",
+              "F0157",
+              "F0172",
+              "F0181",
+              "F0196",
+              "F0251",
+              "F0293"
+            ],
+            "selected_target_complete_rate": 0.26666666666666666
+          },
+          "checks": {
+            "bound_complete_run_identity": true,
+            "calibration_policy_recomputed": true,
+            "claim_boundaries_preserved": true,
+            "evaluation_policy_recomputed": true,
+            "fresh_group_disjoint_120_rows": true,
+            "reader_report_matches_json": true,
+            "registered_remote_protocol": true,
+            "tracked_report_shape": true
+          },
+          "enrichment_bootstrap": {
+            "confidence": 0.95,
+            "lower": 0.10275635129775829,
+            "method": "category-stratified-percentile-bootstrap-v1",
+            "probability_positive": 0.9995,
+            "resamples": 2000,
+            "seed": 20260714,
+            "upper": 0.38563243767698907
+          },
+          "errors": [],
+          "evaluation_summary": {
+            "always_typed_collateral_rate": 0.8166666666666667,
+            "always_typed_mean_revision_delta_f1": 0.21959193396398266,
+            "always_typed_target_complete_rate": 0.3,
+            "coverage": 0.3,
+            "policy": {
+              "confidence_min": 0.0,
+              "max_edit_fraction": 0.5,
+              "min_trace_consistency_margin": 0.1
+            },
+            "policy_global_answer_soft_f1": 0.943863099480529,
+            "policy_global_revision_delta_f1": 0.136421441480265,
+            "policy_id": "{\"confidence_min\":0.0,\"max_edit_fraction\":0.5,\"min_trace_consistency_margin\":0.1}",
+            "samples": 60,
+            "selected_collateral_rate": 0.7222222222222222,
+            "selected_delta_enrichment": 0.2351462043035674,
+            "selected_mean_revision_delta_f1": 0.45473813826755005,
+            "selected_rows": 18,
+            "selected_sample_ids": [
+              "F0027",
+              "F0028",
+              "F0062",
+              "F0067",
+              "F0070",
+              "F0077",
+              "F0088",
+              "F0103",
+              "F0112",
+              "F0114",
+              "F0141",
+              "F0156",
+              "F0173",
+              "F0187",
+              "F0230",
+              "F0246",
+              "F0274",
+              "F0298"
+            ],
+            "selected_target_complete_rate": 0.5555555555555556
+          },
+          "json_sha256": "a87fc2f58232cade3425b4568ba00f531f37980922d06a27e02ace0a92214d6f",
+          "markdown_sha256": "3fe7bfbccdbb35726f8341372dda30ebd282c0d739ac7dfdf86ddd216681d506",
+          "protocol": {
+            "amendment_sha256": "735daa41d6417dcf5df0b03775a7d315eaab1973a646a812fd8c2b65f6be0080",
+            "calibration_samples": 60,
+            "dependency_group_disjoint": true,
+            "errors": [],
+            "evaluation_samples": 60,
+            "fresh_cache_namespace": "far-qwen3.5-9b-selective-acceptance-v2",
+            "fresh_restart_after_retired_v1": true,
+            "human_review": false,
+            "keep_alive": "24h",
+            "local_model_execution": false,
+            "model": "qwen3.5:9b",
+            "model_digest": "6488c96fa5faab64bb65cbd30d4289e20e6130ef535a93ef9a49f42eda893ea7",
+            "model_execution_location": "windows-gpu",
+            "performance_amendment": true,
+            "post_generation_policy": true,
+            "preregistration_commit": "04b60a75960d24f911bef4889e2639e238457ccd",
+            "preregistration_tag": "prereg-selective-acceptance-v2",
+            "publication_gold": false,
+            "reference_free_operational_input": true,
+            "retired_preregistration_tag": "prereg-selective-acceptance-v1",
+            "retired_v1_complete_checkpoint_rows": 10,
+            "retired_v1_rows_reused": 0,
+            "schema_version": "far-selective-acceptance-protocol-audit-v2",
+            "semantic_correctness": false,
+            "test_accessed": false,
+            "unload_after_sample": false,
+            "valid": true
+          },
+          "raw_outputs_recomputed_by_this_gate": false,
+          "registered_outcome": "evaluation_success",
+          "report_rows_recomputed": true,
+          "run": {
+            "checkpoint_sha256": "7a11d24a737efe481aab669fa934465d405182b873ff4a92526a571287a05d28",
+            "checks": {
+              "checkpoint_matches_predictions": true,
+              "clean_preregistered_source": true,
+              "complete_120": true,
+              "config_hash_bound": true,
+              "corpus_hash_bound": true,
+              "method_far": true,
+              "model_digest_bound": true,
+              "no_limit": true,
+              "packet_hash_bound": true,
+              "packet_valid": true,
+              "prediction_coverage": true,
+              "prediction_hash_bound": true,
+              "train_only": true,
+              "v2_cache_isolated": true,
+              "v2_model_lifecycle_bound": true
+            },
+            "identity_sha256": "2fea46cddac7b5d4768a1c0d8ac9bfdd8583b7ca7b61fdc06b971002f5ed5dc5",
+            "implementation_sha256": "2d6094bf0ffc1c2a1b71a3843d5ca0f246e7d622b147dc1e59cdf6009d0a86b2",
+            "manifest_sha256": "3dec06783d34c807cb68561201e467e75bfbad34369a30915d9e8e6a9f301147",
+            "predictions_sha256": "7a11d24a737efe481aab669fa934465d405182b873ff4a92526a571287a05d28",
+            "source_revision": {
+              "git_commit": "04b60a75960d24f911bef4889e2639e238457ccd",
+              "git_dirty": false
+            }
+          },
+          "schema_version": "far-selective-acceptance-tracked-report-audit-v1",
+          "valid": true
+        },
         "selective_revision_feasibility": {
           "analysis_profile": "post-hoc-frozen-selective-revision-feasibility-v1",
           "boundaries": {
@@ -731,7 +918,9 @@
         "multi-model or external-domain generality",
         "H3 equivalence or H4 confirmation",
         "P6-M as human review, human adjudication, or human IAA",
-        "population mappability estimated from the 15 machine-consensus rows"
+        "population mappability estimated from the 15 machine-consensus rows",
+        "P14 as semantic correctness, deployment safety, inference savings, or causal policy effect",
+        "held-out or test validation from the P14 train-only split"
       ],
       "gates": {
         "claim_scope_matches_observed_ablations": true,
@@ -742,7 +931,8 @@
         "verified_p6m_negative_stability_audit": true,
         "verified_post_hoc_family_revision_delta": true,
         "verified_post_hoc_revision_trace_fidelity": true,
-        "verified_post_hoc_selective_revision_feasibility": true
+        "verified_post_hoc_selective_revision_feasibility": true,
+        "verified_preregistered_selective_acceptance": true
       },
       "ready": true,
       "required_limitations": [
@@ -754,6 +944,8 @@
         "revision-delta metrics are post-hoc lexical diagnostics, not semantic correctness",
         "revision traces frequently miss the construction target or add collateral edits",
         "selective revision feasibility is post-hoc and does not evaluate a deployable selector",
+        "P14 selective acceptance is post-generation, uses construction-derived lexical outcomes, and does not save inference",
+        "P14 calibration and evaluation share one machine-seeded train corpus and are neither external nor test evidence",
         "raw baseline revision delta exceeds FAR despite zero typed action-conditioned delta",
         "FEVER binary transfer shows no paired accuracy gain",
         "machine-disposition sensitivity is post-hoc and not independent label validation",
@@ -762,7 +954,7 @@
         "P6-M is machine-panel sensitivity, not population type mappability",
         "the strict human P6 analysis was not completed"
       ],
-      "schema_version": "far-solo-paper-readiness-v5",
+      "schema_version": "far-solo-paper-readiness-v6",
       "strict_aaai_submission_ready": false,
       "study_profile": "single_author_machine_audited_paper"
     },
@@ -788,7 +980,7 @@
     ]
   },
   "single_author_machine_audited_paper": {
-    "allowed_claim": "Across eight RAMDocs development methods, errors concentrate after retrieved evidence and answer transformation; FAR shows a narrower machine-audited typed-control signal whose transport and ontology stability are explicitly bounded.",
+    "allowed_claim": "Across eight RAMDocs development methods, errors concentrate after retrieved evidence and answer transformation; FAR shows a narrower machine-audited typed-control signal whose transport and ontology stability are explicitly bounded. A preregistered reference-free post-generation policy also enriched typed revision-delta on fresh machine-seeded train evidence under explicit non-semantic and non-deployment boundaries.",
     "ready": true,
     "required_limitations": [
       "labels are not human-validated gold",
@@ -799,6 +991,8 @@
       "revision-delta metrics are post-hoc lexical diagnostics, not semantic correctness",
       "revision traces frequently miss the construction target or add collateral edits",
       "selective revision feasibility is post-hoc and does not evaluate a deployable selector",
+      "P14 selective acceptance is post-generation, uses construction-derived lexical outcomes, and does not save inference",
+      "P14 calibration and evaluation share one machine-seeded train corpus and are neither external nor test evidence",
       "raw baseline revision delta exceeds FAR despite zero typed action-conditioned delta",
       "FEVER binary transfer shows no paired accuracy gain",
       "machine-disposition sensitivity is post-hoc and not independent label validation",

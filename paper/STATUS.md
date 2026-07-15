@@ -60,15 +60,15 @@ clean commit `30dc37f62deeaec79d44e23876e1787bd9876174` and independently verifi
 after remote download with system `python3 -I`. The earlier `paper-v1` release
 remains the immutable P12 snapshot.
 
-P14 is now preregistered as a future-evidence branch, not inserted as a paper
-result. It uses new train rows, a dependency-group-disjoint 60/60
-calibration/evaluation split, reference-free post-generation features, and a
-calibration-fail stop before evaluation scoring. The incomplete v1 attempt was
-paused at 10/120 and permanently retired before generated content or outcomes
-were inspected; it is not paper evidence. A result-blind v2 amendment requires
-a zero-row restart with isolated cache/output and model keep-alive. Until that
-exact tagged v2 run and independent verifier complete, the active paper retains
-the P13 conclusion that no deployable selector has been evaluated.
+P14 is complete and integrated. The exact tagged v2 run started from zero on
+`windows-gpu`, used an isolated cache, and completed 120/120 new train rows; the
+retired 10-row v1 attempt remains unscored with zero reused rows. Calibration
+selected 15/60 and froze the registered reference-free post-generation policy.
+Evaluation accepted 18/60, with selected revision-delta F1 0.4547 versus 0.2196
+for always typed, enrichment +0.2351, and a 95% category-stratified bootstrap
+interval [+0.1028,+0.3856]. The result is construction-scored train evidence,
+not semantic correctness, deployment safety, external/test validation, causal
+policy utility, or inference savings.
 
 G-P estimates only 0.414 exact-McNemar power for the registered 3 x 60 family
 study at a +0.078 effect. WS2 is consequently a directional reproduction: a
@@ -164,7 +164,7 @@ supplement and is not the active TMLR evidence appendix.
 The active route now also has a separate fail-closed release command,
 `scripts/solo_paper_release_check.sh`. On a clean commit it reruns the public
 diagnostic and package checks, builds the TMLR artifact, rejects layout overflow
-or unresolved references, and fingerprints a nine-artifact `solo-paper`
+or unresolved references, and fingerprints an eleven-artifact `solo-paper`
 profile containing the PDF and its source lock. It intentionally consumes no
 strict submission evidence and cannot be used to claim human review or AAAI
 readiness.
@@ -172,7 +172,7 @@ readiness.
 That command now also emits a deterministic portable
 `far-solo-paper-release.tar.gz`. It requires a byte-identical second pack and
 then runs the paired standard-library-only verifier in Python isolated mode
-over its byte-identical embedded copy, the nine-artifact checksums, TMLR source
+over its byte-identical embedded copy, the eleven-artifact checksums, TMLR source
 lock, P5/P6-M boundaries, package fingerprints, and claim flags. The verifier
 requires no FAR checkout or installation. The archive is a transferable
 machine-audited paper release, not human validation or submission itself.
@@ -181,8 +181,8 @@ The main text now contains a dedicated mechanism-interpretation section. It
 frames retrieval, type mapping, detection, action selection, and revision as an
 opportunity chain rather than a monotone pipeline; explains why the local Qwen
 signal and RAMDocs nulls can coexist without claiming that construct alignment
-is the proven sole cause; and marks selective revision as an unevaluated future
-design hypothesis. The verified WS2 result establishes directional family
+is the proven sole cause; and separates the negative P13 replay from the
+positive but tightly bounded preregistered P14 post-generation selector. The verified WS2 result establishes directional family
 recurrence; the verified WS3 result now adds a public-dev boundary matrix with
 near-null global transfer and a narrow positive outdated-information condition.
 

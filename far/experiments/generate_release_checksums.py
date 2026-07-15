@@ -31,6 +31,8 @@ SOLO_PAPER_RELEASE_ARTIFACT_ROLES = BASE_RELEASE_ARTIFACT_ROLES | frozenset(
     {
         "benchmark_validation_report",
         "secret_scan_report",
+        "selective_acceptance_json",
+        "selective_acceptance_markdown",
         "solo_paper_readiness_json",
         "solo_paper_readiness_markdown",
         "tmlr_paper_pdf",

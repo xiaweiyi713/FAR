@@ -459,12 +459,12 @@ def build_status(root: Path = ROOT) -> dict[str, Any]:
     if goal_complete:
         next_training_step = (
             "no required roadmap work remains; maintain the immutable diagnostic and paper "
-            "releases plus their independent verifiers; P14 v1 is retired unscored after a "
-            "10-row user-requested pause, while its result-blind v2 amendment requires a fresh "
-            "reference-free, group-disjoint 120-row run with isolated cache and model keep-alive; "
-            "v2 may start only on an idle windows-gpu at the exact preregistration tag, and a "
-            "failed calibration gate terminates without evaluation scoring; external publication "
-            "or submission remains an author-owned action"
+            "releases plus their independent verifiers; P14 v1 remains retired unscored at 10 "
+            "rows, while exact-tag v2 completed a fresh reference-free, group-disjoint 120-row "
+            "run with isolated cache, zero v1 reuse, and registered evaluation_success; maintain "
+            "the tracked P14 report/readiness v6 and prepare a new versioned portable evidence "
+            "release without changing historical releases; no required GPU experiment remains, "
+            "and external publication or submission remains an author-owned action"
         )
     elif ws2_status == "complete" and ws3_status == "complete" and ws4_status != "complete":
         next_training_step = (

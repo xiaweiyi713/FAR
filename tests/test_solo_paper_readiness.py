@@ -29,6 +29,7 @@ def test_relaxed_paper_profile_is_ready_but_not_strict_aaai_ready() -> None:
     assert report["gates"]["verified_post_hoc_family_revision_delta"] is True
     assert report["gates"]["verified_post_hoc_revision_trace_fidelity"] is True
     assert report["gates"]["verified_post_hoc_selective_revision_feasibility"] is True
+    assert report["gates"]["verified_preregistered_selective_acceptance"] is True
     p5 = report["evidence"]["p5_registered_ablations"]
     assert p5["valid"] is True
     assert p5["h3_verdict"] == "uncertain"
@@ -60,6 +61,20 @@ def test_relaxed_paper_profile_is_ready_but_not_strict_aaai_ready() -> None:
     assert selective["fixed_arms"]["preserve"]["answer_soft_f1_ge_0_8"] == 60
     assert selective["reference_arm_choice_envelope"]["gain_over_always_typed"] < 0.02
     assert selective["confidence_threshold_0_90"]["selected_rows"] == 31
+    acceptance = report["evidence"]["selective_acceptance"]
+    assert acceptance["valid"] is True
+    assert acceptance["registered_outcome"] == "evaluation_success"
+    assert acceptance["report_rows_recomputed"] is True
+    assert acceptance["raw_outputs_recomputed_by_this_gate"] is False
+    assert acceptance["calibration_selected_policy"]["selected_rows"] == 15
+    assert acceptance["evaluation_summary"]["selected_rows"] == 18
+    assert acceptance["evaluation_summary"]["selected_delta_enrichment"] > 0.23
+    assert acceptance["enrichment_bootstrap"]["lower"] > 0.10
+    assert acceptance["protocol"]["retired_v1_rows_reused"] == 0
+    assert acceptance["boundaries"]["local_model_execution"] is False
+    assert acceptance["boundaries"]["test_accessed"] is False
+    assert acceptance["boundaries"]["post_generation_acceptance"] is True
+    assert acceptance["boundaries"]["pre_execution_selector"] is False
     assert report["evidence"]["paper_appendix_sha256"]
     assert (
         report["claim_scope"]["checks"][
@@ -101,6 +116,10 @@ def test_relaxed_profile_never_claims_human_or_external_evidence() -> None:
     assert "multi-model or external-domain generality" in report["forbidden_claims"]
     assert "H3 equivalence or H4 confirmation" in report["forbidden_claims"]
     assert "P6-M as human review, human adjudication, or human IAA" in report["forbidden_claims"]
+    assert (
+        "P14 as semantic correctness, deployment safety, inference savings, or causal policy effect"
+        in report["forbidden_claims"]
+    )
 
 
 def test_relaxed_paper_profile_requires_final_p5_and_p6m_disclosures() -> None:

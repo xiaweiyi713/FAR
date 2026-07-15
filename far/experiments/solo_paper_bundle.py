@@ -17,9 +17,10 @@ import tempfile
 import zipfile
 import zlib
 from pathlib import Path, PurePosixPath
+from statistics import mean
 from typing import Any
 
-SCHEMA_VERSION = "far-solo-paper-release-bundle-v2"
+SCHEMA_VERSION = "far-solo-paper-release-bundle-v3"
 ARCHIVE_ROOT = "far-solo-paper-release"
 DEFAULT_CHECKSUM_MANIFEST = Path("build/solo-paper-release/release-checksums.json")
 DEFAULT_ARCHIVE = Path("build/solo-paper-release/far-solo-paper-release.tar.gz")
@@ -30,6 +31,8 @@ SOLO_PAPER_RELEASE_ARTIFACT_ROLES = frozenset(
         "cyclonedx_sbom",
         "sdist",
         "secret_scan_report",
+        "selective_acceptance_json",
+        "selective_acceptance_markdown",
         "solo_paper_readiness_json",
         "solo_paper_readiness_markdown",
         "tmlr_paper_pdf",
@@ -50,7 +53,9 @@ BOUNDARY_FLAGS = {
 ALLOWED_CLAIM = (
     "Across eight RAMDocs development methods, errors concentrate after retrieved evidence "
     "and answer transformation; FAR shows a narrower machine-audited typed-control signal "
-    "whose transport and ontology stability are explicitly bounded."
+    "whose transport and ontology stability are explicitly bounded. A preregistered "
+    "reference-free post-generation policy also enriched typed revision-delta on fresh "
+    "machine-seeded train evidence under explicit non-semantic and non-deployment boundaries."
 )
 REQUIRED_LIMITATIONS = (
     "labels are not human-validated gold",
@@ -61,6 +66,10 @@ REQUIRED_LIMITATIONS = (
     "revision-delta metrics are post-hoc lexical diagnostics, not semantic correctness",
     "revision traces frequently miss the construction target or add collateral edits",
     "selective revision feasibility is post-hoc and does not evaluate a deployable selector",
+    "P14 selective acceptance is post-generation, uses construction-derived lexical outcomes, "
+    "and does not save inference",
+    "P14 calibration and evaluation share one machine-seeded train corpus and are neither "
+    "external nor test evidence",
     "raw baseline revision delta exceeds FAR despite zero typed action-conditioned delta",
     "FEVER binary transfer shows no paired accuracy gain",
     "machine-disposition sensitivity is post-hoc and not independent label validation",
@@ -79,6 +88,8 @@ FORBIDDEN_CLAIMS = (
     "H3 equivalence or H4 confirmation",
     "P6-M as human review, human adjudication, or human IAA",
     "population mappability estimated from the 15 machine-consensus rows",
+    "P14 as semantic correctness, deployment safety, inference savings, or causal policy effect",
+    "held-out or test validation from the P14 train-only split",
 )
 READINESS_GATES = {
     "claim_scope_matches_observed_ablations": True,
@@ -90,6 +101,7 @@ READINESS_GATES = {
     "verified_post_hoc_family_revision_delta": True,
     "verified_post_hoc_revision_trace_fidelity": True,
     "verified_post_hoc_selective_revision_feasibility": True,
+    "verified_preregistered_selective_acceptance": True,
 }
 CLAIM_SCOPE_CHECKS = frozenset(
     {
@@ -176,6 +188,40 @@ SELECTIVE_REVISION_BOUNDARIES = {
     "semantic_correctness": False,
     "test_accessed": False,
 }
+SELECTIVE_ACCEPTANCE_CHECKS = {
+    "bound_complete_run_identity": True,
+    "calibration_policy_recomputed": True,
+    "claim_boundaries_preserved": True,
+    "evaluation_policy_recomputed": True,
+    "fresh_group_disjoint_120_rows": True,
+    "reader_report_matches_json": True,
+    "registered_remote_protocol": True,
+    "tracked_report_shape": True,
+}
+SELECTIVE_ACCEPTANCE_BOUNDARIES = {
+    "causal_policy_effect": False,
+    "dependency_group_disjoint": True,
+    "deterministic_preserve_fallback": True,
+    "exact_internal_llm_calls_claimed": False,
+    "external_validation": False,
+    "fresh_v2_run_required": True,
+    "human_iaa": False,
+    "human_review": False,
+    "local_model_execution": False,
+    "model_execution_location": "windows-gpu",
+    "new_inference": True,
+    "performance_amendment": True,
+    "pipeline_sample_executions": 120,
+    "post_generation_acceptance": True,
+    "pre_execution_selector": False,
+    "preregistered": True,
+    "publication_gold": False,
+    "reference_free_policy_features": True,
+    "retired_v1_rows_reused": 0,
+    "same_corpus_and_construction_process": True,
+    "semantic_correctness": False,
+    "test_accessed": False,
+}
 READINESS_TOP_LEVEL_KEYS = frozenset(
     {
         "allowed_claim",
@@ -219,6 +265,96 @@ def _sha256_bytes(value: bytes) -> str:
     return hashlib.sha256(value).hexdigest()
 
 
+def _p14_accept(features: dict[str, Any], policy: dict[str, Any]) -> bool:
+    return bool(
+        features["changed_non_keep"]
+        and float(features["primary_confidence"]) >= float(policy["confidence_min"])
+        and float(features["edit_fraction"]) <= float(policy["max_edit_fraction"])
+        and float(features["trace_consistency_margin"])
+        >= float(policy["min_trace_consistency_margin"])
+    )
+
+
+def _p14_mean(rows: list[dict[str, Any]], field: str) -> float:
+    return mean(float(row[field]) for row in rows)
+
+
+def _p14_policy_summary(rows: list[dict[str, Any]], policy: dict[str, Any]) -> dict[str, Any]:
+    if not rows:
+        raise ValueError("selective-acceptance report has no outcome rows")
+    for row in rows:
+        features = row.get("features")
+        if not isinstance(features, dict) or features.get("changed_non_keep") not in {
+            True,
+            False,
+        }:
+            raise ValueError("selective-acceptance row has invalid policy features")
+        feature_values = (
+            features.get("primary_confidence"),
+            features.get("edit_fraction"),
+            features.get("trace_consistency_margin"),
+        )
+        metric_values = tuple(
+            row.get(field)
+            for field in (
+                "typed_answer_soft_f1",
+                "typed_revision_delta_f1",
+                "typed_trace_collateral_edit",
+                "typed_trace_target_complete",
+                "preserve_answer_soft_f1",
+                "preserve_revision_delta_f1",
+            )
+        )
+        if any(
+            isinstance(value, bool)
+            or not isinstance(value, (int, float))
+            or not math.isfinite(value)
+            for value in feature_values + metric_values
+        ):
+            raise ValueError("selective-acceptance row has a non-finite numeric value")
+        if (
+            not 0.0 <= float(features["primary_confidence"]) <= 1.0
+            or float(features["edit_fraction"]) < 0.0
+            or any(not 0.0 <= float(value) <= 1.0 for value in metric_values)
+            or float(row["preserve_revision_delta_f1"]) != 0.0
+        ):
+            raise ValueError("selective-acceptance row has an out-of-range metric")
+    selected = [row for row in rows if _p14_accept(row["features"], policy)]
+    if not selected:
+        raise ValueError("selective-acceptance policy selects no report rows")
+    selected_ids = {str(row["sample_id"]) for row in selected}
+    always_delta = _p14_mean(rows, "typed_revision_delta_f1")
+    return {
+        "policy": policy,
+        "policy_id": json.dumps(policy, sort_keys=True, separators=(",", ":")),
+        "samples": len(rows),
+        "selected_rows": len(selected),
+        "coverage": len(selected) / len(rows),
+        "selected_sample_ids": sorted(selected_ids),
+        "selected_mean_revision_delta_f1": _p14_mean(selected, "typed_revision_delta_f1"),
+        "selected_collateral_rate": _p14_mean(selected, "typed_trace_collateral_edit"),
+        "selected_target_complete_rate": _p14_mean(selected, "typed_trace_target_complete"),
+        "always_typed_mean_revision_delta_f1": always_delta,
+        "always_typed_collateral_rate": _p14_mean(rows, "typed_trace_collateral_edit"),
+        "always_typed_target_complete_rate": _p14_mean(rows, "typed_trace_target_complete"),
+        "selected_delta_enrichment": (
+            _p14_mean(selected, "typed_revision_delta_f1") - always_delta
+        ),
+        "policy_global_answer_soft_f1": mean(
+            float(row["typed_answer_soft_f1"])
+            if str(row["sample_id"]) in selected_ids
+            else float(row["preserve_answer_soft_f1"])
+            for row in rows
+        ),
+        "policy_global_revision_delta_f1": mean(
+            float(row["typed_revision_delta_f1"])
+            if str(row["sample_id"]) in selected_ids
+            else float(row["preserve_revision_delta_f1"])
+            for row in rows
+        ),
+    }
+
+
 def sha256_file(path: Path) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as handle:
@@ -238,6 +374,8 @@ This portable archive contains the complete `solo-paper` checksum profile:
 the wheel, source distribution, CycloneDX SBOM, benchmark and redacted secret
 scan reports, JSON and Markdown paper-readiness reports, the active anonymous
 TMLR PDF, and its source lock.
+It also carries the tracked JSON and Markdown P14 selective-acceptance result
+that the readiness report audits without requiring the ignored raw GPU run.
 
 Verify the archive with the paired standard-library-only sidecar; no FAR
 checkout, package installation, network, or model runtime is required:
@@ -707,7 +845,7 @@ def _verify_semantics(payload_by_role: dict[str, bytes], checksums: Any, errors:
             raise TypeError("paper readiness is not an object")
         if readiness.get("ready") is not True:
             errors.append("embedded paper profile is not ready")
-        if readiness.get("schema_version") != "far-solo-paper-readiness-v5":
+        if readiness.get("schema_version") != "far-solo-paper-readiness-v6":
             errors.append("embedded paper readiness schema is unsupported")
         if readiness.get("strict_aaai_submission_ready") is not False:
             errors.append("embedded paper profile upgrades strict submission readiness")
@@ -1010,6 +1148,208 @@ def _verify_semantics(payload_by_role: dict[str, bytes], checksums: Any, errors:
         ):
             errors.append("embedded selective-revision result is incomplete or contradicted")
 
+        selective_acceptance = evidence.get("selective_acceptance")
+        if not isinstance(selective_acceptance, dict):
+            raise TypeError("paper readiness selective-acceptance evidence is not an object")
+        p14_json = payload_by_role["selective_acceptance_json"]
+        p14_markdown = payload_by_role["selective_acceptance_markdown"]
+        p14_report = json.loads(p14_json)
+        if not isinstance(p14_report, dict):
+            raise TypeError("selective-acceptance report is not an object")
+        if (
+            selective_acceptance.get("schema_version")
+            != "far-selective-acceptance-tracked-report-audit-v1"
+            or selective_acceptance.get("valid") is not True
+            or selective_acceptance.get("errors") != []
+            or selective_acceptance.get("checks") != SELECTIVE_ACCEPTANCE_CHECKS
+            or selective_acceptance.get("registered_outcome") != "evaluation_success"
+            or selective_acceptance.get("report_rows_recomputed") is not True
+            or selective_acceptance.get("raw_outputs_recomputed_by_this_gate") is not False
+            or selective_acceptance.get("boundaries") != SELECTIVE_ACCEPTANCE_BOUNDARIES
+            or selective_acceptance.get("json_sha256") != _sha256_bytes(p14_json)
+            or selective_acceptance.get("markdown_sha256") != _sha256_bytes(p14_markdown)
+        ):
+            errors.append("embedded selective-acceptance audit or hash binding is unsafe")
+        if (
+            p14_report.get("schema_version") != "far-selective-acceptance-result-v2"
+            or p14_report.get("analysis_profile")
+            != "preregistered-reference-free-post-generation-acceptance-v2"
+            or p14_report.get("valid") is not True
+            or p14_report.get("registered_outcome") != "evaluation_success"
+            or p14_report.get("boundaries") != SELECTIVE_ACCEPTANCE_BOUNDARIES
+            or p14_report.get("candidate_grid")
+            != {
+                "candidate_count": 100,
+                "confidence_min": [0.0, 0.75, 0.8, 0.85, 0.9],
+                "coverage_bounds": [0.25, 0.75],
+                "max_edit_fraction": [0.2, 0.35, 0.5, 1.0, 2.0],
+                "min_trace_consistency_margin": [-1.0, 0.0, 0.1, 0.25],
+                "minimum_enrichment": 0.03,
+            }
+        ):
+            errors.append("embedded selective-acceptance report or boundary is unsafe")
+        p14_protocol = p14_report.get("protocol")
+        p14_run = p14_report.get("run")
+        if (
+            not isinstance(p14_protocol, dict)
+            or p14_protocol.get("schema_version") != "far-selective-acceptance-protocol-audit-v2"
+            or p14_protocol.get("valid") is not True
+            or p14_protocol.get("errors") != []
+            or p14_protocol.get("preregistration_tag") != "prereg-selective-acceptance-v2"
+            or p14_protocol.get("preregistration_commit")
+            != "04b60a75960d24f911bef4889e2639e238457ccd"
+            or p14_protocol.get("retired_preregistration_tag") != "prereg-selective-acceptance-v1"
+            or p14_protocol.get("retired_v1_complete_checkpoint_rows") != 10
+            or p14_protocol.get("retired_v1_rows_reused") != 0
+            or p14_protocol.get("fresh_restart_after_retired_v1") is not True
+            or p14_protocol.get("fresh_cache_namespace") != "far-qwen3.5-9b-selective-acceptance-v2"
+            or p14_protocol.get("model") != "qwen3.5:9b"
+            or p14_protocol.get("model_digest")
+            != "6488c96fa5faab64bb65cbd30d4289e20e6130ef535a93ef9a49f42eda893ea7"
+            or p14_protocol.get("keep_alive") != "24h"
+            or p14_protocol.get("unload_after_sample") is not False
+            or p14_protocol.get("performance_amendment") is not True
+            or p14_protocol.get("model_execution_location") != "windows-gpu"
+            or p14_protocol.get("local_model_execution") is not False
+            or p14_protocol.get("test_accessed") is not False
+            or p14_protocol.get("human_review") is not False
+            or p14_protocol.get("publication_gold") is not False
+            or p14_protocol.get("semantic_correctness") is not False
+            or p14_protocol.get("dependency_group_disjoint") is not True
+            or p14_protocol.get("reference_free_operational_input") is not True
+            or p14_protocol.get("post_generation_policy") is not True
+        ):
+            errors.append("embedded selective-acceptance protocol is unsafe")
+        expected_p14_run_checks = {
+            "checkpoint_matches_predictions",
+            "clean_preregistered_source",
+            "complete_120",
+            "config_hash_bound",
+            "corpus_hash_bound",
+            "method_far",
+            "model_digest_bound",
+            "no_limit",
+            "packet_hash_bound",
+            "packet_valid",
+            "prediction_coverage",
+            "prediction_hash_bound",
+            "train_only",
+            "v2_cache_isolated",
+            "v2_model_lifecycle_bound",
+        }
+        if (
+            not isinstance(p14_run, dict)
+            or p14_run.get("source_revision")
+            != {
+                "git_commit": "04b60a75960d24f911bef4889e2639e238457ccd",
+                "git_dirty": False,
+            }
+            or p14_run.get("checkpoint_sha256")
+            != "7a11d24a737efe481aab669fa934465d405182b873ff4a92526a571287a05d28"
+            or p14_run.get("predictions_sha256") != p14_run.get("checkpoint_sha256")
+            or p14_run.get("manifest_sha256")
+            != "3dec06783d34c807cb68561201e467e75bfbad34369a30915d9e8e6a9f301147"
+            or p14_run.get("identity_sha256")
+            != "2fea46cddac7b5d4768a1c0d8ac9bfdd8583b7ca7b61fdc06b971002f5ed5dc5"
+            or p14_run.get("implementation_sha256")
+            != "2d6094bf0ffc1c2a1b71a3843d5ca0f246e7d622b147dc1e59cdf6009d0a86b2"
+            or p14_report.get("packet_manifest_sha256")
+            != "a2546f37978aa446f23bada5230b7e9ddddb95959602f5723b7c411bbee88f26"
+            or not isinstance(p14_run.get("checks"), dict)
+            or set(p14_run["checks"]) != expected_p14_run_checks
+            or any(value is not True for value in p14_run["checks"].values())
+            or p14_run != selective_acceptance.get("run")
+            or p14_protocol != selective_acceptance.get("protocol")
+        ):
+            errors.append("embedded selective-acceptance run identity is incomplete")
+        p14_calibration = p14_report.get("calibration")
+        p14_evaluation = p14_report.get("evaluation")
+        if not isinstance(p14_calibration, dict) or not isinstance(p14_evaluation, dict):
+            raise TypeError("selective-acceptance partitions are not objects")
+        p14_calibration_rows = p14_calibration.get("rows")
+        p14_evaluation_rows = p14_evaluation.get("rows")
+        if not isinstance(p14_calibration_rows, list) or not isinstance(p14_evaluation_rows, list):
+            raise TypeError("selective-acceptance row evidence is not a list")
+        p14_calibration_ids = {
+            str(row["sample_id"]) for row in p14_calibration_rows if isinstance(row, dict)
+        }
+        p14_evaluation_ids = {
+            str(row["sample_id"]) for row in p14_evaluation_rows if isinstance(row, dict)
+        }
+        expected_p14_policy = {
+            "confidence_min": 0.0,
+            "max_edit_fraction": 0.5,
+            "min_trace_consistency_margin": 0.1,
+        }
+        recomputed_calibration = _p14_policy_summary(p14_calibration_rows, expected_p14_policy)
+        recomputed_evaluation = _p14_policy_summary(p14_evaluation_rows, expected_p14_policy)
+        p14_bootstrap = p14_evaluation.get("enrichment_bootstrap")
+        expected_categories = {
+            "causal_overclaim",
+            "entity_confusion",
+            "multi_source_conflict",
+            "numerical_conflict",
+            "temporal_shift",
+        }
+        if (
+            len(p14_calibration_rows) != 60
+            or len(p14_evaluation_rows) != 60
+            or len(p14_calibration_ids) != 60
+            or len(p14_evaluation_ids) != 60
+            or not p14_calibration_ids.isdisjoint(p14_evaluation_ids)
+            or any(
+                sum(str(row["category"]) == category for row in rows) != 12
+                for rows in (p14_calibration_rows, p14_evaluation_rows)
+                for category in expected_categories
+            )
+            or p14_calibration.get("samples") != 60
+            or p14_calibration.get("gate_passed") is not True
+            or p14_calibration.get("gate_checks")
+            != {
+                "collateral_not_worse": True,
+                "coverage_registered": True,
+                "delta_enrichment_at_least_0_03": True,
+                "eligible_policy_found": True,
+                "target_complete_not_worse": True,
+            }
+            or recomputed_calibration != p14_calibration.get("selected_policy")
+            or recomputed_calibration != selective_acceptance.get("calibration_selected_policy")
+            or p14_evaluation.get("scored") is not True
+            or p14_evaluation.get("success") is not True
+            or p14_evaluation.get("success_checks")
+            != {
+                "collateral_not_worse": True,
+                "coverage_registered": True,
+                "delta_enrichment_at_least_0_03": True,
+                "enrichment_interval_lower_positive": True,
+                "target_complete_not_worse": True,
+            }
+            or recomputed_evaluation != p14_evaluation.get("summary")
+            or recomputed_evaluation != selective_acceptance.get("evaluation_summary")
+            or not isinstance(p14_bootstrap, dict)
+            or p14_bootstrap != selective_acceptance.get("enrichment_bootstrap")
+            or p14_bootstrap.get("method") != "category-stratified-percentile-bootstrap-v1"
+            or p14_bootstrap.get("confidence") != 0.95
+            or p14_bootstrap.get("resamples") != 2000
+            or p14_bootstrap.get("seed") != 20260714
+            or p14_bootstrap.get("lower", 0.0) <= 0.0
+            or p14_bootstrap.get("upper", 0.0) < p14_bootstrap.get("lower", 0.0)
+            or p14_bootstrap.get("probability_positive", 0.0) <= 0.99
+        ):
+            errors.append("embedded selective-acceptance result is incomplete or contradicted")
+        p14_markdown_text = p14_markdown.decode("utf-8")
+        for disclosure in (
+            "`evaluation_success`",
+            "Coverage: `0.3000` (18/60)",
+            "enrichment `+0.2351`",
+            "does not save inference",
+            "not semantic correctness",
+        ):
+            if disclosure not in p14_markdown_text:
+                errors.append(
+                    f"selective-acceptance Markdown omits a result boundary: {disclosure}"
+                )
+
         markdown = payload_by_role["solo_paper_readiness_markdown"].decode("utf-8")
         required_markdown_boundaries = (
             "| Strict AAAI submission | `false` |",
@@ -1021,6 +1361,8 @@ def _verify_semantics(payload_by_role: dict[str, bytes], checksums: Any, errors:
             "deployable selector",
             "raw baseline revision delta exceeds FAR despite zero typed action-conditioned delta",
             "P6-M as human review, human adjudication, or human IAA",
+            "P14 selective acceptance is post-generation",
+            "neither external nor test evidence",
         )
         for boundary in required_markdown_boundaries:
             if boundary not in markdown:
@@ -1215,7 +1557,7 @@ def verify_bundle(archive: Path) -> dict[str, Any]:
     archive_is_safe_file = archive.is_file() and archive.stat().st_size <= MAX_COMPRESSED_BYTES
     verifier_payload = payloads.get(SUPPORT_PATHS["standalone_verifier"])
     return {
-        "schema_version": "far-solo-paper-release-bundle-audit-v2",
+        "schema_version": "far-solo-paper-release-bundle-audit-v3",
         "valid": not errors,
         "errors": errors,
         "archive": str(archive),

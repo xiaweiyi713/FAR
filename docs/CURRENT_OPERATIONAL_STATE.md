@@ -1,8 +1,8 @@
 # FAR 当前运行状态
 
-状态时间：2026-07-14 22:12 CST
+状态时间：2026-07-15 CST
 适用范围：长期路线 WS1--WS6、重定位 P0--P14、P6-M 与 standalone paper release；
-P14 v1 已按用户要求暂停并释放远端 GPU；当前仅在本机修改代码和文档，不运行或下载模型。
+P14 v2 已完成并释放远端 GPU；当前仅在本机整合代码和文档，不运行或下载模型。
 
 ## 当前结论
 
@@ -17,9 +17,10 @@ P14 v1 已按用户要求暂停并释放远端 GPU；当前仅在本机修改代
   Ollama 或 llama-server 进程；本机从未下载或运行模型。
 - 原 P6 仍为 217/217 机器预标完成、`ready_to_analyze=false`。这是被保留的非活动严格人工协议；
   没有模型结果写入人工槽位，也不影响当前无真人 profile 的完成状态。
-- TMLR 主文和附录已纳入 P5 注册消融及 P6-M 阴性稳定性结果；paper-readiness 会同时校验
-  H3 `uncertain`、H5 scoped `equivalent`、P6-M 15/217 共识/202 contested 与全部非真人边界。
-  当前 15 页构建无 overfull box 或未解析引用；此更新没有调用模型或 GPU。
+- TMLR 主文和附录已纳入 P5、P6-M 与 P14 结果；paper-readiness v6 会同时校验
+  H3 `uncertain`、H5 scoped `equivalent`、P6-M 15/217 共识/202 contested、P14 注册成功及全部
+  非真人/非语义/非 test 边界。活动 16 页 PDF 构建无 overfull/未解析引用并已逐页视觉复核；此整合
+  没有调用本机模型或 GPU。
 - P11 在冻结 prediction 上完成零模型 revision-delta 度量审计。它修复了 whole-answer soft F1
   可给“原错误答案不修改”高分的盲点：FAR raw/typed delta F1 为 `0.145/0.096`，untyped
   conflict arm 为 `0.093/0`，但 CRAG-style 与 Vanilla raw delta F1 更高（`0.307/0.264`），
@@ -39,17 +40,20 @@ P14 v1 已按用户要求暂停并释放远端 GPU；当前仅在本机修改代
   typed 高 `+0.0164`。confidence `>=0.90` 的 31 条没有更高 fidelity（delta `0.1386`、
   5/31 target-complete、25/31 collateral）。因此当前瓶颈是 realization quality，不能把
   置信度阈值、reference oracle 或同一 dev replay 写成可部署 selector、校准风险或因果效果。
-- P14 v1 在 10/120 完整 checkpoint 时按用户要求暂停；没有 finalized predictions、run manifest 或
-  结果报告，生成内容与 construction outcome 均未查看/评分。该目录和 cache 永久退出分析。
-  结果盲 v2 amendment 保留原 60/60 group-disjoint split、100-policy grid 和所有 gate，仅改为跨样本
-  keep-alive、独立 cache/output root 和 nonblocking systemd stop，并要求从零完成 120 条。v2 尚未
-  启动，只能在精确 v2 tag 且 `windows-gpu` 再次空闲时执行；本机与 test split 继续禁止。
+- P14 v1 在 10/120 时暂停并永久退出分析；它没有 finalized predictions、run manifest 或结果报告，
+  checkpoint 保留但不评分，v2 复用行数为 0。v2 在精确 clean commit
+  `04b60a75960d24f911bef4889e2639e238457ccd` 上从零完成 120/120。校准选中 15/60；evaluation
+  接受 18/60，selected revision-delta F1 `0.4547`，always typed `0.2196`，enrichment `+0.2351`，
+  95% CI `[+0.1028,+0.3856]`，注册 outcome 为 `evaluation_success`。推理仅在 `windows-gpu`；
+  本机模型、test split、真人复核均未使用。它是生成后 controller，不节省推理，也不是语义安全、
+  外部验证或因果 policy effect。
 - 当前诊断安装源升级为不可变 `artifacts-v2`：336 文件、44,128,752 bytes、整树 SHA-256
   `362761dc...e92ae`；原 `artifacts-v1` 未覆盖并继续作为 P10-B 历史快照。
 - 活动 TMLR 路线现有独立的 `scripts/solo_paper_release_check.sh`：在 clean commit 上用
   `solo-paper` profile 强制绑定 wheel、sdist、SBOM、两个审计报告、两份 readiness 报告、
-  TMLR PDF 与 `SOURCE.lock`。它不读取真人/投稿 evidence，也不冒充严格 AAAI release gate。
-- 该门现会把九项产物打成确定性 `far-solo-paper-release.tar.gz`，二次打包必须 byte-identical；
+  P14 JSON/Markdown、TMLR PDF 与 `SOURCE.lock`。它不读取真人/投稿 evidence，也不冒充严格
+  AAAI release gate。
+- 该门现会把十一项产物打成确定性 `far-solo-paper-release.tar.gz`，二次打包必须 byte-identical；
   配对的 `verify_solo_paper_release.py` 也必须 byte-identical，并以 `python3 -I` 隔离模式只读
   自身与归档，独立拒绝内容/验证器篡改、额外/危险成员、source-lock 漂移以及任何真人或严格
   投稿主张升级；接收者不需要 checkout、安装 FAR、联网或模型运行时。
@@ -61,8 +65,8 @@ P14 v1 已按用户要求暂停并释放远端 GPU；当前仅在本机修改代
 
 ## 既有 WS1--WS6 结论（2026-07-09 冻结）
 
-- WS1--WS6 均已有本地可复算证据，长期路线账本返回 `valid=true` 且
-  `goal_complete=true`。后续不再需要 GPU；剩余动作是可选的 commit/push、portable release
+- WS1--WS6 与 P14 均已有本地可复算证据，长期路线账本返回 `valid=true` 且
+  `goal_complete=true`。后续没有已注册的必需 GPU 实验；剩余动作是 commit/push、portable release
   packaging/独立验真与作者自行决定的外部投稿，而不是路线内必需实验或真人复核依赖。
 - WS2 三个 family 已全部完成并正常退出；本地 release 已 finalize，独立 verifier 返回
   `valid=true`、`errors=[]`、`gate_f_passed=true`、`direction_consistent=true`。
@@ -85,8 +89,8 @@ P14 v1 已按用户要求暂停并释放远端 GPU；当前仅在本机修改代
   `far-ollama-family-dev.service`、旧 Mistral resume service 也均为 inactive。进程复核无
   `experiments.family_dev`、`experiments.boundary`、`ollama serve`、`llama-server` 或
   `train.py`；GPU compute app 为空，仅剩 `/Xwayland` 桌面基础显存占用约 600MiB。
-- 今晚不再启动 GPU、Ollama、远程训练或任何 held-out/test 运行。若继续工作，只做本地
-  非 test verifier、提交整理或论文人工审阅。
+- 当前没有已注册的必需 GPU 工作；如未来新增实验，仍须等待 `windows-gpu` 严格空闲并通过
+  guarded preflight。held-out/test 继续锁定。
 - 未访问 held-out/test；仍不得把 LLM jury 或机器标签称为真人 IAA。
 
 ## WS2 最终证据

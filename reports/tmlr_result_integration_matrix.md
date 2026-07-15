@@ -27,6 +27,10 @@ does not alter F1--F10, G-F, G-B, G-P, label status, or held-out/test policy.
 - P6-M supplies a terminal machine-only ontology-stability result: 15/217 stable
   consensus rows and 202 contested rows. It is not human mappability, IAA,
   adjudicated gold, or H4 confirmation.
+- P14 supplies a preregistered positive post-generation selection result on
+  fresh train evidence: evaluation accepts 18/60 with delta enrichment
+  `+0.2351` and a positive 95% bootstrap lower bound. It does not save inference
+  and is not semantic, external/test, deployment, or causal-policy evidence.
 
 ## Outcome-to-paper mapping
 
@@ -53,6 +57,16 @@ only in a weak, boundary-mapping sense: there is an identifiable public-dev
 condition where typed control helps, but the dataset-level external transfer is
 near null. The `directional_reproduction` and `directional_boundary_mapping`
 ceilings remain binding.
+
+P14 is also independently verified and integrated without changing that A-line
+selection. Its dependency-group-disjoint calibration chooses one reference-free
+policy at 15/60 coverage; evaluation accepts 18/60 with selected delta F1
+`0.4547` versus always typed `0.2196`. This strengthens the narrower claim that
+observable post-generation signals can enrich construction-derived lexical
+repair on new train rows. Because the gate runs after typed generation and both
+partitions share one machine-seeded corpus, it does not strengthen the paper's
+external-transfer, semantic-correctness, deployment, or inference-efficiency
+ceiling.
 
 ## Section-level editing rules
 
@@ -84,5 +98,8 @@ ceilings remain binding.
 - Insert P6-M only as negative machine-panel sensitivity. Never extrapolate the
   selected 15 consensus rows to population mappability or place them in human
   reviewer/adjudicator slots.
+- Insert P14 only with the tracked report and readiness v6 gate. Preserve zero
+  v1 reuse, train-only, shared-corpus, construction-scored, post-generation,
+  no-inference-saving, non-semantic, and non-causal boundaries.
 - Keep the AAAI strict profile inactive unless real independent human
   annotation, adjudication, and external custody become available.

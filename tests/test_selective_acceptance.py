@@ -12,8 +12,12 @@ from far.experiments.selective_acceptance import (
     OPERATIONAL_FIELDS,
     _calibration_gate,
     _choose_policy,
+    _enrichment_bootstrap,
+    _policy_summary,
     build_packet,
+    prereg_commit,
     reference_free_features,
+    render_markdown,
     verify_packet,
     verify_protocol,
 )
@@ -41,7 +45,7 @@ def test_protocol_freezes_balanced_group_disjoint_split() -> None:
 
 def test_packet_contains_only_operational_train_fields(tmp_path: Path) -> None:
     packet_dir = tmp_path / "packet"
-    manifest = build_packet(packet_dir, source_commit=None)
+    manifest = build_packet(packet_dir, source_commit=prereg_commit(required=False))
     rows = read_jsonl(packet_dir / "falsirag_bench.jsonl")
 
     assert len(rows) == 120
@@ -165,6 +169,35 @@ def test_registered_policy_selection_can_pass_only_on_calibration_outcomes() -> 
     assert selected["coverage"] == 0.5
     assert selected["selected_delta_enrichment"] == 0.25
     assert all(gate.values())
+
+
+def test_tracked_v2_result_recomputes_registered_success() -> None:
+    report = json.loads((ROOT / "reports/selective_acceptance.json").read_text(encoding="utf-8"))
+    selected, candidates = _choose_policy(report["calibration"]["rows"])
+
+    assert candidates == 100
+    assert selected == report["calibration"]["selected_policy"]
+    assert selected is not None
+    assert all(_calibration_gate(selected).values())
+    assert (
+        _policy_summary(report["evaluation"]["rows"], selected["policy"])
+        == report["evaluation"]["summary"]
+    )
+    assert (
+        _enrichment_bootstrap(report["evaluation"]["rows"], selected["policy"])
+        == report["evaluation"]["enrichment_bootstrap"]
+    )
+    assert report["registered_outcome"] == "evaluation_success"
+    assert report["run"]["source_revision"] == {
+        "git_commit": "04b60a75960d24f911bef4889e2639e238457ccd",
+        "git_dirty": False,
+    }
+    assert report["protocol"]["retired_v1_rows_reused"] == 0
+    assert report["boundaries"]["local_model_execution"] is False
+    assert report["boundaries"]["test_accessed"] is False
+    assert (ROOT / "reports/selective_acceptance.md").read_text(
+        encoding="utf-8"
+    ) == render_markdown(report)
 
 
 def test_full_report_path_keeps_evaluation_separate_until_calibration_passes(

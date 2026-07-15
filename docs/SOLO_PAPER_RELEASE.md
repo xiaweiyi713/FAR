@@ -12,7 +12,7 @@ bash scripts/solo_paper_release_check.sh
 ```
 
 The command runs the complete model-free paper gate, rebuilds and checks the
-anonymous TMLR PDF, builds wheel/sdist and the SBOM, fingerprints the nine
+anonymous TMLR PDF, builds wheel/sdist and the SBOM, fingerprints the eleven
 required artifacts, then packs the portable archive twice and requires the two
 archives to be byte-identical.
 
@@ -48,11 +48,13 @@ The verifier rejects:
 - a dirty or malformed source revision;
 - a changed TMLR style commit or a source-lock/readiness hash mismatch;
 - non-empty secret-scan findings or an invalid candidate benchmark/SBOM/package;
-- changed P5 verdicts, changed P6-M negative-stability counts, or any upgrade to
+- changed P5 verdicts, changed P6-M negative-stability counts, changed P14
+  report rows/run bindings/boundaries, or any upgrade to
   strict readiness, human review/adjudication/IAA, external blindness, or
   publication gold.
 
-The archive contains exactly the nine `solo-paper` roles plus an embedded
+The active v3 archive contains exactly the eleven `solo-paper` roles, including
+the tracked P14 JSON and Markdown reports, plus an embedded
 checksum manifest, interpretation-boundary README, byte-identical standalone
 verifier, and bundle manifest. It does not contain ignored model outputs, raw
 credentials, strict submission evidence, or a human-review substitute.
@@ -65,7 +67,12 @@ Publish the `.tar.gz` together with `verify_solo_paper_release.py`,
 action; generating this bundle does not itself submit the paper or upgrade its
 evidence tier.
 
-## Public release v2
+The active source now targets bundle schema v3/readiness v6 with P14 evidence.
+No v3 GitHub release is implied by this repository update; `paper-v2` remains
+the latest immutable public artifact until an author explicitly publishes a new
+version.
+
+## Public release v2 (historical active-public cut)
 
 The current immutable public cut is
 [`paper-v2`](https://github.com/xiaweiyi713/FAR/releases/tag/paper-v2), bound to

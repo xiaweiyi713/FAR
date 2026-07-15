@@ -12,6 +12,12 @@ any generated content or construction outcome was inspected or scored. It is
 permanently retired and must not be resumed, combined, or used as a cache. Only
 a fresh v2 run is eligible.
 
+Status: v2 completed 120/120 at clean commit
+`04b60a75960d24f911bef4889e2639e238457ccd`; both remote services exited
+successfully and the GPU returned to its idle baseline. The synchronized raw
+artifacts passed packet verification, one finalize, and an independent full
+recomputation. The tracked result is `reports/selective_acceptance.{json,md}`.
+
 ## Safety contract
 
 - Never run or download a model on the local Mac.
@@ -118,3 +124,11 @@ uv run falsirag diag selective-acceptance verify \
 Only after independent recomputation may the registered outcome be integrated
 into the paper. A null or calibration stop is a completed result and must not be
 replaced by post-hoc threshold search.
+
+The registered v2 outcome is `evaluation_success`. Calibration selected 15/60;
+evaluation accepted 18/60 with selected revision-delta F1 `0.4547` versus
+always typed `0.2196`, enrichment `+0.2351`, and 95% bootstrap interval
+`[+0.1028,+0.3856]`. v1 contributed zero rows. These metrics remain
+construction-derived lexical train diagnostics; the after-generation policy
+does not save inference or establish semantic correctness, deployment safety,
+external/test validation, human agreement, or causal policy effect.
