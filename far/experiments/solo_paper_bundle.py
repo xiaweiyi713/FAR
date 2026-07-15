@@ -290,12 +290,12 @@ def _p14_policy_summary(rows: list[dict[str, Any]], policy: dict[str, Any]) -> d
         }:
             raise ValueError("selective-acceptance row has invalid policy features")
         feature_values = (
-            features.get("primary_confidence"),
-            features.get("edit_fraction"),
-            features.get("trace_consistency_margin"),
+            features["primary_confidence"],
+            features["edit_fraction"],
+            features["trace_consistency_margin"],
         )
         metric_values = tuple(
-            row.get(field)
+            row[field]
             for field in (
                 "typed_answer_soft_f1",
                 "typed_revision_delta_f1",
