@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import shutil
 import tempfile
 from collections import Counter
@@ -37,8 +38,8 @@ def fleiss_kappa(ratings: list[list[str]]) -> float:
         agreements.append(
             (sum(count * count for count in counts.values()) - raters) / (raters * (raters - 1))
         )
-    observed = sum(agreements) / len(agreements)
-    expected = sum(
+    observed = math.fsum(agreements) / len(agreements)
+    expected = math.fsum(
         (category_totals[category] / (len(ratings) * raters)) ** 2 for category in categories
     )
     if expected == 1.0:

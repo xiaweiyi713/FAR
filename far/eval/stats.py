@@ -51,13 +51,13 @@ def stratified_bootstrap_ci(
         sampled = [
             rng.choice(values) for _, values in sorted(strata.items()) for _ in range(len(values))
         ]
-        estimates.append(sum(sampled) / len(sampled))
+        estimates.append(math.fsum(sampled) / len(sampled))
     observed_values = [value for values in strata.values() for value in values]
     alpha = (1.0 - confidence) / 2.0
     return {
         "method": "stratified-percentile-bootstrap-v1",
         "metric": metric,
-        "estimate": sum(observed_values) / len(observed_values),
+        "estimate": math.fsum(observed_values) / len(observed_values),
         "lower": _percentile(estimates, alpha),
         "upper": _percentile(estimates, 1.0 - alpha),
         "confidence": confidence,
@@ -112,8 +112,10 @@ def paired_bootstrap_comparison(
             for _, values in sorted(by_category.items())
             for _ in range(len(values))
         ]
-        differences.append(sum(candidate - base for base, candidate in sampled) / len(sampled))
-    observed = sum(candidate - base for base, candidate, _ in pairs) / len(pairs)
+        differences.append(
+            math.fsum(candidate - base for base, candidate in sampled) / len(sampled)
+        )
+    observed = math.fsum(candidate - base for base, candidate, _ in pairs) / len(pairs)
     alpha = (1.0 - confidence) / 2.0
     return {
         "method": "paired-stratified-percentile-bootstrap-v1",
@@ -176,10 +178,10 @@ def paired_sample_cluster_bootstrap_comparison(
     ]
     rng = random.Random(seed)
     bootstrap = [
-        sum(rng.choice(differences) for _ in differences) / len(differences)
+        math.fsum(rng.choice(differences) for _ in differences) / len(differences)
         for _ in range(resamples)
     ]
-    observed = sum(differences) / len(differences)
+    observed = math.fsum(differences) / len(differences)
     alpha = (1.0 - confidence) / 2.0
     return {
         "method": "paired-sample-cluster-percentile-bootstrap-v1",
@@ -456,13 +458,13 @@ def dependency_cluster_bootstrap_ci(
     for _ in range(resamples):
         sampled_ids = [rng.choice(cluster_ids) for _ in cluster_ids]
         sampled = [value for cluster_id in sampled_ids for value in clusters[cluster_id]]
-        estimates.append(sum(sampled) / len(sampled))
+        estimates.append(math.fsum(sampled) / len(sampled))
     observed = [value for values in clusters.values() for value in values]
     alpha = (1.0 - confidence) / 2.0
     return {
         "method": "source-dependency-cluster-bootstrap-v1",
         "metric": metric,
-        "estimate": sum(observed) / len(observed),
+        "estimate": math.fsum(observed) / len(observed),
         "lower": _percentile(estimates, alpha),
         "upper": _percentile(estimates, 1.0 - alpha),
         "confidence": confidence,

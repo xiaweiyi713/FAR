@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 import re
 from collections import Counter, defaultdict
 from dataclasses import dataclass, field
@@ -238,7 +239,7 @@ def aggregate_scores(rows: list[dict[str, Any]]) -> dict[str, Any]:
         result: dict[str, float] = {}
         for name in metric_names:
             values = [float(row[name]) for row in items if row.get(name) is not None]
-            result[name] = sum(values) / len(values) if values else 0.0
+            result[name] = math.fsum(values) / len(values) if values else 0.0
         return result
 
     typed_rows = [row for row in rows if row.get("typed_conflict_correct") is not None]

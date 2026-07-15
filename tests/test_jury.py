@@ -206,6 +206,12 @@ def test_fleiss_kappa_perfect_agreement() -> None:
     assert fleiss_kappa([["a", "a", "a"], ["b", "b", "b"]]) == 1.0
 
 
+def test_fleiss_kappa_float_aggregation_is_cross_python_stable() -> None:
+    ratings = [["b", "a", "b"], ["b", "b", "b"], ["c", "c", "c"]]
+
+    assert fleiss_kappa(ratings) == 0.6086956521739131
+
+
 def test_jury_consensus_and_delayed_author_adjudication(tmp_path: Path) -> None:
     data, packet, jurors = _fixture(tmp_path)
     consensus_dir = tmp_path / "consensus"

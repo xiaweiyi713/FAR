@@ -3647,3 +3647,21 @@ evidence bundle verified successfully, releasing the GPU.
   valid repository state from shipping with an obsolete maintenance snapshot.
 - This repair only inspects tracked engineering evidence. It makes zero model
   calls, does not download a model, and does not read or score held-out/test.
+
+## 2026-07-15 — Cross-Python deterministic verifier repair
+
+- The first pushed ledger-freshness repair passed the full local Python 3.12
+  release gate, but public CI exposed 13 cascading failures on Python 3.11.
+  Direct log inspection and local 3.11 reproduction showed only last-bit float
+  differences (roughly `1e-15`) in bootstrap means and Fleiss kappa; P14,
+  P6-M, WS2, and paper evidence had not changed.
+- Python 3.12 improved built-in floating-point `sum`, while the tracked reports
+  were generated with that newer behavior. Replaced only floating-point
+  aggregations in the shared statistics and Fleiss-kappa paths with
+  `math.fsum`, retaining ordinary integer/count sums.
+- Added adversarial cancellation and kappa regression fixtures whose old
+  implementations differ across supported interpreters. The new values are
+  stable on Python 3.10--3.13 and reproduce the existing tracked research
+  reports without changing their metrics or fingerprints.
+- This is a deterministic verification repair only: zero model calls, no local
+  model download, no GPU execution, and no held-out/test access or scoring.

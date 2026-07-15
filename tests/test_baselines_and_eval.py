@@ -263,6 +263,53 @@ def test_statistics_are_deterministic_and_paired() -> None:
     assert clustered["clusters"] == 2
 
 
+def test_paired_float_aggregation_is_cross_python_stable() -> None:
+    baseline = [{"sample_id": f"F{index}", "category": "a", "score": 0.0} for index in range(3)]
+    candidate = [
+        {**row, "score": score} for row, score in zip(baseline, (1e16, 1.0, -1e16), strict=True)
+    ]
+
+    comparison = paired_bootstrap_comparison(
+        baseline,
+        candidate,
+        "score",
+        resamples=1,
+        seed=7,
+    )
+
+    assert comparison["candidate_minus_baseline"] == 1.0 / 3.0
+
+    aggregate_rows = []
+    for index, score in enumerate((1e16, 1.0, -1e16)):
+        aggregate_rows.append(
+            {
+                "sample_id": f"F{index}",
+                "category": "a",
+                "answer_correctness": score,
+                "answer_exact_match": 0.0,
+                "unsupported_claim_rate": 0.0,
+                "evidence_precision": 0.0,
+                "evidence_recall": 0.0,
+                "counter_evidence_recall": 0.0,
+                "conflict_detected": 0.0,
+                "typed_conflict_correct": None,
+                "gold_conflict_present": True,
+                "predicted_conflict_count": 0,
+                "revision_action_correct": 0.0,
+                "revision_accuracy": 0.0,
+                "revision_delta_precision": 0.0,
+                "revision_delta_recall": 0.0,
+                "revision_delta_f1": 0.0,
+                "typed_revision_delta_f1": 0.0,
+                "overclaim_reduction": None,
+            }
+        )
+
+    aggregate = aggregate_scores(aggregate_rows)
+
+    assert aggregate["metrics"]["answer_correctness"] == 1.0 / 3.0
+
+
 def test_typed_conflict_f1_is_recomputed_within_resamples() -> None:
     baseline = [
         {
